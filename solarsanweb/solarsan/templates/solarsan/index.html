@@ -1,0 +1,142 @@
+{% extends "solarsan/base_site.html" %}
+{% load i18n %}
+
+{% load dajaxice_templatetags %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css" />{% endblock %}
+
+{% block extrahead %}
+	<style type="text/css">
+		@import url({{ STATIC_URL }}attc/flash_chart_style.css);
+	</style>
+	<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}swfobject/swfobject.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}ofc/json2.js"></script>
+
+	{% dajaxice_js_import %}
+	<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dajax.core.js" charset="utf-8"></script>
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+{% block graph_js %}
+<script type="text/javascript">
+var timerID = 0;
+
+function reload() {
+	if (timerID) {
+		clearTimeout(timerID);
+	}
+
+	try {
+		tmp = findSWF("graph_utilization");
+    	tmp.reload("{% url solarsan.ajax.graph_utilization %}");
+		tmp = findSWF("graph_iops");
+    	tmp.reload("{% url solarsan.ajax.graph_iops %}");
+		tmp = findSWF("graph_throughput");
+    	tmp.reload("{% url solarsan.ajax.graph_throughput %}");
+	} finally {
+		timerID  = setTimeout("reload()", 3000);
+	}
+}
+
+function findSWF(movieName) {
+	if (navigator.appName.indexOf("Microsoft")!= -1) {
+		//return window["ie_" + movieName];
+		return document.getElementById('ie_'+movieName);
+	} else {
+		//return document[movieName];
+		return document.getElementById(movieName);
+	}
+}
+
+timerID  = setTimeout("reload()", 3000);
+</script>
+{% endblock %}
+
+{% block graphs %}
+<table>
+<tr>
+
+<td>
+{% block graph_utilization %}
+<div id="graph_utilization"></div>
+<script type="text/javascript">
+    swfobject.embedSWF("{{ STATIC_URL }}ofc/ofc.swf", "graph_utilization",
+    "200", "200", "9.0.0", "{{ STATIC_URL }}swfobject/expressInstall.swf",
+    {'data-file':"{% url solarsan.ajax.graph_utilization %}"} );
+</script>
+{% endblock %}
+</td>
+
+<td>
+{% block graph_iops %}
+<div id="graph_iops"></div>
+<script type="text/javascript">
+    swfobject.embedSWF("{{ STATIC_URL }}ofc/ofc.swf", "graph_iops",
+    "200", "200", "9.0.0", "{{ STATIC_URL }}swfobject/expressInstall.swf",
+    {'data-file':"{% url solarsan.ajax.graph_iops %}", 'id':'graph_iops'} );
+</script>
+{% endblock %}
+</td>
+
+<td>
+{% block graph_throughput %}
+<div id="graph_throughput"></div>
+<script type="text/javascript">
+    swfobject.embedSWF("{{ STATIC_URL }}ofc/ofc.swf", "graph_throughput",
+    "200", "200", "9.0.0", "{{ STATIC_URL }}swfobject/expressInstall.swf",
+    {'data-file':"{% url solarsan.ajax.graph_throughput %}", 'id':'graph_throughput'} );
+</script>
+{% endblock %}
+</td>
+
+</tr>
+</table>
+{% endblock %}
+
+
+
+{% if app_list %}
+    {% for app in app_list %}
+        <div class="module">
+        <table summary="{% blocktrans with app.name as name %}Models available in the {{ name }} application.{% endblocktrans %}">
+        <caption><a href="{{ app.app_url }}" class="section">{% blocktrans with app.name as name %}{{ name }}{% endblocktrans %}</a></caption>
+        {% for model in app.models %}
+            <tr>
+            {% if model.perms.change %}
+                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+            {% else %}
+                <th scope="row">{{ model.name }}</th>
+            {% endif %}
+
+            {% if model.perms.add %}
+                <td><a href="{{ model.admin_url }}add/" class="addlink">{% trans 'Add' %}</a></td>
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+
+            {% if model.perms.change %}
+                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+            </tr>
+        {% endfor %}
+        </table>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>{% trans "You don't have permission to edit anything." %}</p>
+{% endif %}
+</div>
+{% endblock %}
+
+

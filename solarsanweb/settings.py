@@ -72,6 +72,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    '/home/trevorj/Projects/solarsanweb/solarsanweb/static',
 )
 
 # List of finder classes that know how to find static files in
@@ -87,9 +88,12 @@ SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+#    ('django.template.loaders.cached.Loader', (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+        # Dajaxice needs this
+        'django.template.loaders.eggs.Loader',
+#    )),
 )
 
 MIDDLEWARE_CLASSES = (
@@ -106,6 +110,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    '/home/trevorj/Projects/solarsanweb/solarsanweb/templates',
 )
 
 INSTALLED_APPS = (
@@ -119,7 +124,17 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
+
+    # Dajax
+    'dajaxice',
+    'dajax',
+    
+    'polls',
+    'solarsan',
 )
+
+# Dajaxice
+DAJAXICE_MEDIA_PREFIX="dajaxice"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

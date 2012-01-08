@@ -4,10 +4,22 @@ from django.conf.urls.defaults import patterns, include, url
 from django.contrib import admin
 admin.autodiscover()
 
+# Dajaxice
+from django.conf import settings
+from dajaxice.core import dajaxice_autodiscover
+dajaxice_autodiscover()
+
 urlpatterns = patterns('',
     # Examples:
     #url(r'^$', 'solarsanweb.views.home', name='home'),
-    #url(r'^solarsanweb/', include('solarsanweb.foo.urls')),
+    url(r'^polls/', include('polls.urls')),
+
+    # Dajaxice
+    (r'^%s/' % settings.DAJAXICE_MEDIA_PREFIX, include('dajaxice.urls')),
+
+    # SolarSAN
+    url(r'^$', include('solarsan.urls')),
+    url(r'^solarsan/', include('solarsan.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
