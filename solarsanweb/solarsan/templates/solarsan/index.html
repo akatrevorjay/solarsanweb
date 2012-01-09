@@ -6,12 +6,11 @@
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css" />{% endblock %}
 
 {% block extrahead %}
-	<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}flot/jquery.flot.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}flot/jquery.flot.pie.resize_update.js"></script>
-
+    {% load collect %}
+    {% collect 'js/jquery.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.dot.js' 'raphael/pie.js' 'js/jquery.dajax.core.js' 'js/status.js' as js %}
+    {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
+    
 	{% dajaxice_js_import %}
-	<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dajax.core.js" charset="utf-8"></script>
 {% endblock %}
 
 {% block coltype %}colMS{% endblock %}
@@ -28,95 +27,116 @@
 
 var graphs = {};
 
-$(function () {
-    function MergeJSON (o, ob) {
-        for (var z in ob) {
-           o[z] = ob[z];
-        }
-        return o;
-    }
+$(function() {
+    function graphs_update_ajax_callback(timeout, series) {
+        console.log("graphs_update_ajax_callback");
 
-    function graph_update_ajax_callback(graph, timeout, series) {
-        console.log("graph_update_ajax_callback: "+graph);
-        var graph_plot = graphs[graph];
+        for (var g in series) {
+            if (graphs[g]) {
+                graphs[g]['values'] = series[g]['values'];
+                graph_redraw(g);
+            }
+        }
         
-        if ($("#"+graph).hasClass("ajax_graph_donut")) {
-            graph_plot.setData(series);            
-        } else if ($("#"+graph).hasClass("ajax_graph_line")) {
-            for (var z in series) {
-                data[]
-            }
-            graph_plot.setData(MergeJSON(graph_plot.getData(), series));
-        }
-
-        graph_plot.setupGrid();
-        graph_plot.draw();
-        //graph_plot.triggerRedrawOverlay();
-
-        delete graph_plot
-
-        if (timeout) {
-            setTimeout(function() { graph_update_ajax(graph, timeout); }, timeout);
-        }
+        if (timeout)
+            setTimeout(function() { graphs_update_ajax(timeout); }, timeout);
     }
 
-    function graph_update_ajax(graph, timeout) {
-        //console.log("graph_update_ajax: "+graph);
+    function graphs_update_ajax(timeout) {
         $.ajax({
-            type: "GET",
-            url: "{% url solarsan.views.graph_stats %}",
-            data: "graph="+graph,
-            dataType: 'json',
-            success: function(ret) { graph_update_ajax_callback(graph, timeout, ret); }
+            type : "GET",
+            url : "{% url solarsan.views.graph_stats %}",
+            dataType : 'json',
+            success : function(ret) { graphs_update_ajax_callback(timeout, ret); }
         });
     }
+    
+    function graph_redraw(g) {
+        if (!graphs[g]['pie']) {
+            //graphs[g]['r'].text(graphs[g]['width'], graphs[g]['radius'], graphs[g]['title']).attr({ font : "12px sans-serif" });
+            graphs[g]['opts']['legend'] = graphs[g]['legend'];
+            graphs[g]['pie'] = graphs[g]['r'].piechart(graphs[g]['width'], graphs[g]['height'], graphs[g]['radius'], graphs[g]['values'], graphs[g]['opts'] );
+            delete graphs[g]['opts']['legend'];
+        } else {
+            graphs[g]['pie'] = graphs[g]['r'].piechart(graphs[g]['width'], graphs[g]['height'], graphs[g]['radius'], graphs[g]['values'], graphs[g]['opts'] );
+        }
 
-    function graph_donut_hover(event, pos, obj) {
-        if (!obj)
-            return;
-        percent = parsefloat(obj.series.percent).toFixed(2);
-        $("#hover").html('<span style="font-weight: bold; color: '+obj.series.color+'">'+obj.series.label+' ('+percent+'%)</span>');
+        graphs[g]['pie'].hover(graphs[g]['hover'], graphs[g]['unhover']);
+        graphs[g]['pie'].click(graphs[g]['click']);
+
+        /*
+        graphs[g]['pie'].each(function() {
+            //this.sector.animate({"opacity": 0}, 500);
+            console.log("yup");
+        });
+        */
+
+        /*
+        //Then for each bar in our chart (c), animate to our new chart's path (c2)
+        $.each(c.bars[0], function(k, v) {
+            v.animate({ path: c2.bars[0][k].attr("path") }, 200);
+            v.value[0] = bdata[k][0];
+        });
+        */
     }
 
-    $(".ajax_graph_donut").each( function() {
-        graphs[$(this).attr("id")] = $.plot($(this), [], {
-            series: {
-                pie: {
-                    innerRadius: 0.5,
-                    show: true
-                }
-            },
-            grid: {
-                hoverable: true,
-                clickable: true
-            }
-        });
-        $(this).bind("plothover", graph_donut_hover);
-        //$(this).bind("plotclick", graph_donut_click);
+    graphs['graph_utilization'] = {
+        title: 'Utilization',
+        width: 150, height: 120, radius: 100,
+        opts: {
+            
+            strokewidth: 2,
+            colors: ["90-#7BCC55-#A7FB73", "45-#0B73D2-#0E99FA", "0-#E37201-#FC9B03"],
+        },
+        legend: ["Free", "Used"],
+        hover: graph_pie_hover, unhover: graph_pie_unhover, click: graph_pie_click,
+    };
+    graphs['graph_iops'] = {
+        title: 'IOPs',
+        width: 150, height: 120, radius: 100,
+        opts: {
+            
+            strokewidth: 2,
+            colors: ["90-#7BCC55-#A7FB73", "45-#0B73D2-#0E99FA", "0-#E37201-#FC9B03"],
+        },
+        legend: ["Read", "Write"],
+        hover: graph_pie_hover, unhover: graph_pie_unhover, click: graph_pie_click,
+    };
+    graphs['graph_throughput'] = {
+        title: 'Throughput',
+        width: 150, height: 120, radius: 100,
+        opts: {
+            
+            strokewidth: 2,
+            colors: ["90-#7BCC55-#A7FB73", "45-#0B73D2-#0E99FA", "0-#E37201-#FC9B03"],
+        },
+        legend: ["Read", "Write"],
+        hover: graph_pie_hover, unhover: graph_pie_unhover, click: graph_pie_click,
+    };
+
+    $(".ajax_graph").each(function() {
+        var g = $(this).attr('id');
+        graphs[g]['r'] = Raphael(g);
+        delete g
     });
-    
-    $(".ajax_graph_line").each( function() {
-        graphs[$(this).attr("id")] = $.plot($(this),[], {
-            lines: { show: true },
-            points: { show: true },
-            xaxis: { tickDecimals: 0, tickSize: 1 }
-        });
-    });
-    
-    $(".ajax_graph").each( function() {
-        graph_update_ajax($(this).attr("id"), 5000);
-    });
+
+    graphs_update_ajax(2000);
+
 });
+
 
 </script>
 {% endblock %}
 
 {% block graphs %}
-<div id="graph_utilization" class="ajax_graph_donut ajax_graph" style="width: 600px; height: 200px;"></div><br />
+<table><tr><td>
+<div id="graph_utilization" class="ajax_graph_pie ajax_graph"></div>
+</td><td>
+<div id="graph_iops" class="ajax_graph_pie ajax_graph"></div>
+</td><td>
+<div id="graph_throughput" class="ajax_graph_pie ajax_graph"></div>
+</td></tr></table>
 <br />
-<div id="graph_iops" class="ajax_graph_line ajax_graph" style="width: 600px; height: 200px;"></div><br />
-<br />
-<div id="graph_throughput" class="ajax_graph_line ajax_graph"  style="width: 600px; height: 200px;"></div><br />
 {% endblock %}
 
 
