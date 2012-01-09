@@ -6,6 +6,7 @@ from django.views.generic import DetailView, ListView
 urlpatterns = patterns('solarsan.views',
     # Non-generic views
     url(r'^(?:status)?$', 'status'),
+    url(r'^graph/stats.json', 'graph_stats'),
 #    url(r'^graph/utilization.json$', 'graph_utilization'),
 #    url(r'^graph/utilization.json$', 'graph_iops'),
 #    url(r'^graph/ajax/utilization.json$', 'graph_utilization_ajax'),
@@ -36,9 +37,7 @@ urlpatterns = patterns('solarsan.views',
 #    url(r'^(?P<poll_id>\d+)/vote/$', 'vote'),
 )
 
-urlpatterns += patterns('solarsan.ajax',
-    url(r'^graph/utilization.json$', 'graph_utilization'),
-    url(r'^graph/iops.json$', 'graph_iops'),
-    url(r'^graph/throughput.json$', 'graph_throughput'),
-)
+#urlpatterns += patterns('solarsan.ajax',
+#    url(r'^graph/stats.json', 'graph_stats'),
+#)
 

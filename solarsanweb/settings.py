@@ -125,9 +125,10 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
 
-    # Dajax
+    # Libs
     'dajaxice',
     'dajax',
+    'kronos',
     
     'polls',
     'solarsan',
