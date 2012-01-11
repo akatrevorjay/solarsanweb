@@ -6,7 +6,7 @@ from django.views.generic import DetailView, ListView
 urlpatterns = patterns('solarsan.views',
     # Non-generic views
     url(r'^(?:status)?$', 'status'),
-    url(r'^graph/stats.json', 'graph_stats'),
+    url(r'^graph/stats.json', 'graph_stats_json'),
 #    url(r'^graph/utilization.json$', 'graph_utilization'),
 #    url(r'^graph/utilization.json$', 'graph_iops'),
 #    url(r'^graph/ajax/utilization.json$', 'graph_utilization_ajax'),

@@ -33,7 +33,92 @@
         
     }
 
+    function graphs_update_ajax_callback(url, timeout, data, series) {
+        console.log("graphs_update_ajax_callback");
 
+        for (var g in series) {
+            if (graphs[g] && $('#'+g).hasClass('ajax')) {
+                if (graphs[g]['type']=='pie' || graphs[g]['type']=='pie2') {
+                    graphs[g]['values'] = series[g]['values'];
+                } else if (graphs[g]['type']=='analytics') {
+                    if (!graphs[g]['values'])
+                        graphs[g]['values'] = [];
+                    //for (var i in series[g]['values']) {
+                        if (graphs[g]['values'].length >= 10)
+                            graphs[g]['values'].shift();
+                        graphs[g]['values'].push( (series[g]['values'][0] + series[g]['values'][1]) );
+                    //}
+                }
+                graph_redraw(g);
+            }
+        }
+        
+        if (timeout)
+            setTimeout(function() { graphs_update_ajax(url, timeout, data); }, timeout);
+    }
+
+    function graphs_update_ajax(url, timeout, data) {
+        $.ajax({
+            type: "GET",
+            url: url,
+            data: data,
+            dataType: 'json',
+            success: function(ret) { graphs_update_ajax_callback(url, timeout, data, ret); }
+        });
+    }
+    
+    function graph_redraw(g) {
+        if (graphs[g]['type']=='pie') {
+            if (!graphs[g]['r'])
+                graphs[g]['r'] = Raphael(g);
+            else
+                graphs[g]['r'].clear();
+
+            //graphs[g]['r'].text(graphs[g]['width'], graphs[g]['radius'], graphs[g]['title']).attr({ font : "12px sans-serif" });
+            graphs[g]['pie'] = graphs[g]['r'].piechart(graphs[g]['width'], graphs[g]['height'], graphs[g]['radius'], graphs[g]['values'], graphs[g]['opts'] );
+
+            graphs[g]['pie'].hover(graphs[g]['hover'], graphs[g]['unhover']);
+            graphs[g]['pie'].click(graphs[g]['click']);
+        } else if (graphs[g]['type']=='pie2') {
+            if (!graphs[g]['r'])
+                graphs[g]['r'] = Raphael(g);
+            else
+                graphs[g]['r'].clear();
+
+            if (!graphs[g]['pie']) {
+                graphs[g]['r'].customAttributes.segment = function (x, y, r, a1, a2) {
+                    var flag = (a2 - a1) > 180,
+                        clr = (a2 - a1) / 360;
+                    a1 = (a1 % 360) * Math.PI / 180;
+                    a2 = (a2 % 360) * Math.PI / 180;
+                    return {
+                        path: [["M", x, y], ["l", r * Math.cos(a1), r * Math.sin(a1)], ["A", r, r, 0, +flag, 1, x + r * Math.cos(a2), y + r * Math.sin(a2)], ["z"]],
+                        fill: "hsb(" + clr + ", .75, .8)"
+                    };
+                };
+            }
+            graphs[g]['pie'] = graphs[g]['r'].pieChart(graphs[g]['width'], graphs[g]['height'], graphs[g]['radius'], graphs[g]['values'], graphs[g]['legend'], "#000");
+        } else if (graphs[g]['type']=='analytics') {
+            if (!graphs[g]['r'])
+                graphs[g]['r'] = Raphael(g, graphs[g]['width'], graphs[g]['height']);
+            else
+                graphs[g]['r'].clear();
+
+            console.log("graph_redraw: "+g+" values: "+graphs[g]['values']);
+            
+            graphs[g]['labels'] = [];
+            for (i in graphs[g]['values']) {
+                graphs[g]['labels'].push(i);
+            }
+            graphs[g]['analytics'] = draw_analytics(g);
+        } else if (graphs[g]['type']=='line') {
+            if (!graphs[g]['r'])
+                graphs[g]['r'] = Raphael(g);
+            else
+                graphs[g]['r'].clear();
+            
+        }
+    }
 
 
 

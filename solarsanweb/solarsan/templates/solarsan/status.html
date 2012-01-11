@@ -1,0 +1,124 @@
+{% extends "solarsan/base_site.html" %}
+{% load i18n %}
+
+{% load dajaxice_templatetags %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css" />{% endblock %}
+
+{% block extrahead %}
+    {% load collect %}
+    {% collect 'js/jquery.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/status.js' as js %}
+    {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
+    
+	{% dajaxice_js_import %}
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+{% block graph_js %}
+<script type="text/javascript">
+
+var graphs = {};
+
+$(function() {
+    graphs['graph_utilization'] = {
+        type: 'pie',
+        title: 'Utilization',
+        width: 100, height: 100, radius: 75,
+        opts: {
+            legend: ["Free", "Used"],
+            strokewidth: 3,
+            stroke: "#000",
+            colors: ["90-#7BCC55-#A7FB73", "45-#0B73D2-#0E99FA", "0-#E37201-#FC9B03"],
+        },
+        hover: graph_pie_hover, unhover: graph_pie_unhover, click: graph_pie_click,
+    };
+    
+    graphs['graph_iops'] = {
+        type: 'analytics',
+        title: 'IOPs',
+        width: 800, height: 250,
+        values: [0,0,0,0,0,0,0,0,0,0],
+    };
+    
+    graphs['graph_throughput'] = {
+        type: 'analytics',
+        title: 'Throughput',
+        width: 800, height: 250,
+        values: [0,0,0,0,0,0,0,0,0,0],
+    };
+
+    // Use the callback so we can provide initial data
+    graphs_update_ajax_callback("{% url solarsan.views.graph_stats_json %}", 1000, {}, {% autoescape off %}{{ graph_stats }}{% endautoescape %});
+});
+
+
+</script>
+{% endblock %}
+
+{% block graphs %}
+<table>
+
+<tr><td>
+<div id="graph_utilization" class="ajax"></div>
+</td></tr>
+
+<tr><td>
+<div id="graph_iops" class="ajax"></div>
+</td></tr>
+
+<tr><td>
+<div id="graph_throughput" class="ajax"></div>
+</td></tr>
+
+</table>
+
+<br />
+<div id="holder"></div>
+<br />
+{% endblock %}
+
+
+{% if app_list %}
+    {% for app in app_list %}
+        <div class="module">
+        <table summary="{% blocktrans with app.name as name %}Models available in the {{ name }} application.{% endblocktrans %}">
+        <caption><a href="{{ app.app_url }}" class="section">{% blocktrans with app.name as name %}{{ name }}{% endblocktrans %}</a></caption>
+        {% for model in app.models %}
+            <tr>
+            {% if model.perms.change %}
+                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+            {% else %}
+                <th scope="row">{{ model.name }}</th>
+            {% endif %}
+
+            {% if model.perms.add %}
+                <td><a href="{{ model.admin_url }}add/" class="addlink">{% trans 'Add' %}</a></td>
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+
+            {% if model.perms.change %}
+                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+            </tr>
+        {% endfor %}
+        </table>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>{% trans "You don't have permission to edit anything." %}</p>
+{% endif %}
+</div>
+{% endblock %}
+
+

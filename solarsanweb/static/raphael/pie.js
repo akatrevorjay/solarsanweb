@@ -20,46 +20,34 @@ Raphael.fn.pieChart = function (cx, cy, r, values, labels, stroke) {
                 ms = 500,
                 delta = 30,
                 bcolor = Raphael.hsb(start, 1, 1),
-                p = sector(cx, cy, r, angle, angle + angleplus, {fill: "90-" + bcolor + "-" + color, stroke: stroke, "stroke-width": 3}),
-                txt = paper.text(cx + (r + delta + 55) * Math.cos(-popangle * rad), cy + (r + delta + 25) * Math.sin(-popangle * rad), labels[j]).attr({fill: bcolor, stroke: "none", opacity: 0, "font-size": 20});
+                p = sector(cx, cy, r, angle, angle + angleplus, {fill: "90-" + bcolor + "-" + color, stroke: stroke, "stroke-width": 3}) //,
+                //txt = paper.text(cx + (r + delta + 55) * Math.cos(-popangle * rad), cy + (r + delta + 25) * Math.sin(-popangle * rad), labels[j]).attr({fill: bcolor, stroke: "none", opacity: 0, "font-size": 20});
             p.mouseover(function () {
                 p.stop().animate({transform: "s1.1 1.1 " + cx + " " + cy}, ms, "elastic");
-                txt.stop().animate({opacity: 1}, ms, "elastic");
+                //txt.stop().animate({opacity: 1}, ms, "elastic");
             }).mouseout(function () {
                 p.stop().animate({transform: ""}, ms, "elastic");
-                txt.stop().animate({opacity: 0}, ms);
+                //txt.stop().animate({opacity: 0}, ms);
             });
             angle += angleplus;
             chart.push(p);
-            chart.push(txt);
+            //chart.push(txt);
             start += .1;
         };
-    for (var i = 0, ii = values.length; i < ii; i++) {
-        total += values[i];
+    
+    function update_values() {
+        for (var i = 0, ii = values.length; i < ii; i++) {
+            total += values[i];
+        }
+        for (i = 0; i < ii; i++) {
+            process(i);
+        }
+        return chart;
     }
-    for (i = 0; i < ii; i++) {
-        process(i);
-    }
-    return chart;
+    update_values();
 };
 
 /*
-
-$(function () {
-    var values = [],
-        labels = [];
-    $("tr").each(function () {
-        values.push(parseInt($("td", this).text(), 10));
-        labels.push($("th", this).text());
-    });
-    $("table").hide();
-    Raphael("holder", 700, 700).pieChart(350, 350, 200, values, labels, "#fff");
-});
-
- */
-
-/*
- 
 var r = Raphael("holder");
 r.customAttributes.segment = function (x, y, r, a1, a2) {
     var flag = (a2 - a1) > 180,
@@ -71,6 +59,7 @@ r.customAttributes.segment = function (x, y, r, a1, a2) {
         fill: "hsb(" + clr + ", .75, .8)"
     };
 };
+
 points = [10, 20, 15];
 total = 45;
 start = 0;
@@ -82,7 +71,9 @@ for(i=0; i<=2; i++) {
   paths.push(slice);
   start += size;
 }
+*/
 
+/*
 newPoints = [5, 20, 20];
 start = 0;
 for(i=0; i<=2; i++) {
@@ -91,5 +82,4 @@ for(i=0; i<=2; i++) {
   paths[i].angle = start - size / 2;
   start += size;
 }
-
 */
