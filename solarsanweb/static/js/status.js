@@ -43,11 +43,19 @@
                 } else if (graphs[g]['type']=='analytics') {
                     if (!graphs[g]['values'])
                         graphs[g]['values'] = [];
-                    //for (var i in series[g]['values']) {
-                        if (graphs[g]['values'].length >= 10)
-                            graphs[g]['values'].shift();
-                        graphs[g]['values'].push( (series[g]['values'][0] + series[g]['values'][1]) );
-                    //}
+                    if (graphs[g]['values'].length >= 10)
+                        graphs[g]['values'].shift();
+                    graphs[g]['values'].push( (series[g]['values'][0] + series[g]['values'][1]) );
+                } else if (graphs[g]['type']=='line') {
+                    if (!graphs[g]['values'])
+                        graphs[g]['values'] = [];
+                    for (var i in series[g]['values']) {
+                        if (!graphs[g]['values'][i])
+                            graphs[g]['values'][i] = [];
+                        if (graphs[g]['values'][i].length >= 10)
+                            graphs[g]['values'][i].shift();
+                        graphs[g]['values'][i].push(series[g]['values'][i]);
+                    }
                 }
                 graph_redraw(g);
             }
@@ -113,10 +121,30 @@
             graphs[g]['analytics'] = draw_analytics(g);
         } else if (graphs[g]['type']=='line') {
             if (!graphs[g]['r'])
-                graphs[g]['r'] = Raphael(g);
+                graphs[g]['r'] = Raphael(g, graphs[g]['width'], graphs[g]['height']);
             else
                 graphs[g]['r'].clear();
-            
+
+            graphs[g]['lines'] = graphs[g]['r'].linechart(10, 0, graphs[g]['width'] - 10, graphs[g]['height'] - 10,
+                //graphs[g]['values']
+                [[0,1,2,3,4,5,6,7,8,9], [0,1,2,3,4,5,6,7,8,9]], [graphs[g]['values'][0], graphs[g]['values'][1]],
+                //[[1, 2, 3, 4, 5, 6, 7, 8, 9],[3.5, 4.5, 5.5, 6.5, 7, 8]], [[12, 32, 23, 15, 17, 27, 22], [10, 20, 30, 25, 15, 28]],
+                { nostroke: false, axis: "0 0 1 1", symbol: "circle", smooth: true }).hoverColumn(function () {
+                    //this.tags = r.set();
+
+                    //for (var i = 0, ii = this.y.length; i < ii; i++) {
+                    //    this.tags.push(r.tag(this.x, this.y[i], this.values[i], 160, 10).insertBefore(this).attr([{ fill: "#fff" }, { fill: this.symbols[i].attr("fill") }]));
+                    //}
+                }, function () {
+                    //this.tags && this.tags.remove();
+                });
+
+                graphs[g]['lines'].symbols.attr({ r: 6 });
+                // lines.lines[0].animate({"stroke-width": 6}, 1000);
+                // lines.symbols[0].attr({stroke: "#fff"});
+                // lines.symbols[0][1].animate({fill: "#f00"}, 1000);
+
+
         }
     }
 

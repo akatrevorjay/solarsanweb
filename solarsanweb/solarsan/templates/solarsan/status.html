@@ -42,17 +42,17 @@ $(function() {
     };
     
     graphs['graph_iops'] = {
-        type: 'analytics',
+        type: 'line',
         title: 'IOPs',
-        width: 800, height: 250,
-        values: [0,0,0,0,0,0,0,0,0,0],
+        width: 400, height: 150,
+        values: [[0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0]],
     };
     
     graphs['graph_throughput'] = {
-        type: 'analytics',
+        type: 'line',
         title: 'Throughput',
-        width: 800, height: 250,
-        values: [0,0,0,0,0,0,0,0,0,0],
+        width: 400, height: 150,
+        values: [[0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0]],
     };
 
     // Use the callback so we can provide initial data
@@ -68,13 +68,10 @@ $(function() {
 
 <tr><td>
 <div id="graph_utilization" class="ajax"></div>
-</td></tr>
+</td>
 
-<tr><td>
-<div id="graph_iops" class="ajax"></div>
-</td></tr>
-
-<tr><td>
+<td>
+<div id="graph_iops" class="ajax"></div><br />
 <div id="graph_throughput" class="ajax"></div>
 </td></tr>
 

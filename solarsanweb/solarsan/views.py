@@ -44,7 +44,7 @@ def graph_stats():
     graph['graph_iops'] = {'values': [iops_read, iops_write]}
     
     read = int(convert_human_to_bytes(iostats[5]))
-    write = int(convert_human_to_bytes(iostats[5]))
+    write = int(convert_human_to_bytes(iostats[6]))
     graph['graph_throughput'] = {'values': [read, write]}
 
     return graph
