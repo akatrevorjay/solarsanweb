@@ -125,26 +125,23 @@
             else
                 graphs[g]['r'].clear();
 
-            graphs[g]['lines'] = graphs[g]['r'].linechart(10, 0, graphs[g]['width'] - 10, graphs[g]['height'] - 10,
-                //graphs[g]['values']
+            graphs[g]['lines'] = graphs[g]['r'].linechart(50, 0, graphs[g]['width'] - 50, graphs[g]['height'] - 10,
                 [[0,1,2,3,4,5,6,7,8,9], [0,1,2,3,4,5,6,7,8,9]], [graphs[g]['values'][0], graphs[g]['values'][1]],
-                //[[1, 2, 3, 4, 5, 6, 7, 8, 9],[3.5, 4.5, 5.5, 6.5, 7, 8]], [[12, 32, 23, 15, 17, 27, 22], [10, 20, 30, 25, 15, 28]],
                 { nostroke: false, axis: "0 0 1 1", symbol: "circle", smooth: true }).hoverColumn(function () {
-                    //this.tags = r.set();
+                    this.tags = this.paper.set();
 
-                    //for (var i = 0, ii = this.y.length; i < ii; i++) {
-                    //    this.tags.push(r.tag(this.x, this.y[i], this.values[i], 160, 10).insertBefore(this).attr([{ fill: "#fff" }, { fill: this.symbols[i].attr("fill") }]));
-                    //}
+                    for (var i = 0, ii = this.y.length; i < ii; i++) {
+                        //this.symbols[i].animate({ 'stroke-width': 6 }, 500);
+                        this.tags.push(this.paper.tag(this.x, this.y[i], this.values[i], 180, 10).insertBefore(this).attr([{ fill: "#fff" }, { fill: this.symbols[i].attr("fill") }]));
+                    }
                 }, function () {
-                    //this.tags && this.tags.remove();
+                    this.tags && this.tags.remove();
                 });
 
                 graphs[g]['lines'].symbols.attr({ r: 6 });
-                // lines.lines[0].animate({"stroke-width": 6}, 1000);
-                // lines.symbols[0].attr({stroke: "#fff"});
-                // lines.symbols[0][1].animate({fill: "#f00"}, 1000);
-
-
+                //graphs[g]['lines'].lines[0].animate({"stroke-width": 6}, 1000);
+                //graphs[g]['lines'].symbols[0].attr({stroke: "#fff"});
+                //graphs[g]['lines'].symbols[0][1].animate({fill: "#f00"}, 1000);
         }
     }
 
