@@ -44,37 +44,31 @@ $(function() {
     graphs['graph_iops'] = {
         type: 'line',
         title: 'IOPs',
-        width: 400, height: 150,
+        width: 600, height: 100,
         values: [[0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0]],
     };
     
     graphs['graph_throughput'] = {
         type: 'line',
         title: 'Throughput',
-        width: 400, height: 150,
+        width: 600, height: 100,
         values: [[0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0]],
     };
 
     // Use the callback so we can provide initial data
-    graphs_update_ajax_callback("{% url solarsan.views.graph_stats_json %}", 1000, {}, {% autoescape off %}{{ graph_stats }}{% endautoescape %});
+    graphs_update_ajax_callback("{% url solarsan.views.graph_stats_json %}", 100, {}, {% autoescape off %}{{ graph_stats }}{% endautoescape %});
 });
-
 
 </script>
 {% endblock %}
 
 {% block graphs %}
+<h2><b>Storage Pool:</b> rpool</h2>
 <table>
-
-<tr><td>
-<div id="graph_utilization" class="ajax"></div>
-</td>
-
-<td>
-<div id="graph_iops" class="ajax"></div><br />
-<div id="graph_throughput" class="ajax"></div>
-</td></tr>
-
+    <tr>
+        <td width="300"><div id="graph_utilization" class="ajax"></div></td>
+        <td><div id="graph_iops" class="ajax"></div><br /><div id="graph_throughput" class="ajax"></div></td>
+    </tr>
 </table>
 
 <br />
