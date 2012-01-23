@@ -34,30 +34,34 @@
     }
 
     function graphs_update_ajax_callback(url, timeout, data, series) {
-        console.log("graphs_update_ajax_callback");
+        //console.log("graphs_update_ajax_callback");
 
-        for (var g in series) {
-            if (graphs[g] && $('#'+g).hasClass('ajax')) {
-                if (graphs[g]['type']=='pie' || graphs[g]['type']=='pie2') {
-                    graphs[g]['values'] = series[g]['values'];
-                } else if (graphs[g]['type']=='analytics') {
-                    if (!graphs[g]['values'])
-                        graphs[g]['values'] = [];
-                    if (graphs[g]['values'].length >= 10)
-                        graphs[g]['values'].shift();
-                    graphs[g]['values'].push( (series[g]['values'][0] + series[g]['values'][1]) );
-                } else if (graphs[g]['type']=='line') {
-                    if (!graphs[g]['values'])
-                        graphs[g]['values'] = [];
-                    for (var i in series[g]['values']) {
-                        if (!graphs[g]['values'][i])
-                            graphs[g]['values'][i] = [];
-                        if (graphs[g]['values'][i].length >= 10)
-                            graphs[g]['values'][i].shift();
-                        graphs[g]['values'][i].push(series[g]['values'][i]);
+        for (var p in series) {
+            for (var g in series[p]) {
+                if (graphs[p][g] && $('#'+p+'__'+g).hasClass('ajax')) {
+                    if (graphs[p][g]['type']=='pie' || graphs[p][g]['type']=='pie2') {
+                        graphs[p][g]['values'] = series[p][g]['values'];
+                    } else if (graphs[p][g]['type']=='analytics') {
+                        if (!graphs[p][g]['values'])
+                            graphs[p][g]['values'] = [];
+                        if (graphs[p][g]['values'].length >= 10)
+                            graphs[p][g]['values'].shift();
+                        graphs[p][g]['values'].push( (series[p][g]['values'][0] + series[p][g]['values'][1]) );
+                    } else if (graphs[p][g]['type']=='line') {
+                        if (!graphs[p][g]['values'])
+                            graphs[p][g]['values'] = [];
+                        for (var j in series[p][g]['values']) {
+                            for (var i in series[p][g]['values'][j]) {
+                                if (!graphs[p][g]['values'][i])
+                                    graphs[p][g]['values'][i] = [];
+                                if (graphs[p][g]['values'][i].length >= 10)
+                                    graphs[p][g]['values'][i].shift();
+                                graphs[p][g]['values'][i].push(series[p][g]['values'][j][i]);
+                            }
+                        }
                     }
+                    graph_redraw(p, g);
                 }
-                graph_redraw(g);
             }
         }
         
@@ -75,26 +79,28 @@
         });
     }
     
-    function graph_redraw(g) {
-        if (graphs[g]['type']=='pie') {
-            if (!graphs[g]['r'])
-                graphs[g]['r'] = Raphael(g);
+    function graph_redraw(p, g) {
+        graph = graphs[p][g];
+        
+        if (graph['type']=='pie') {
+            if (!graph['r'])
+                graph['r'] = Raphael(p+'__'+g, graph['width']*2 +graph['legend_width'], graph['height']*2);
             else
-                graphs[g]['r'].clear();
+                graph['r'].clear();
 
-            //graphs[g]['r'].text(graphs[g]['width'], graphs[g]['radius'], graphs[g]['title']).attr({ font : "12px sans-serif" });
-            graphs[g]['pie'] = graphs[g]['r'].piechart(graphs[g]['width'], graphs[g]['height'], graphs[g]['radius'], graphs[g]['values'], graphs[g]['opts'] );
+            //graph['r'].text(graph['width'], graph['radius'], graph['title']).attr({ font : "12px sans-serif" });
+            graph['pie'] = graph['r'].piechart(graph['width'], graph['height'], graph['radius'], graph['values'], graph['opts'] );
 
-            graphs[g]['pie'].hover(graphs[g]['hover'], graphs[g]['unhover']);
-            graphs[g]['pie'].click(graphs[g]['click']);
-        } else if (graphs[g]['type']=='pie2') {
-            if (!graphs[g]['r'])
-                graphs[g]['r'] = Raphael(g);
+            graph['pie'].hover(graph['hover'], graph['unhover']);
+            graph['pie'].click(graph['click']);
+        } else if (graph['type']=='pie2') {
+            if (!graph['r'])
+                graph['r'] = Raphael(p+'__'+g);
             else
-                graphs[g]['r'].clear();
+                graph['r'].clear();
 
-            if (!graphs[g]['pie']) {
-                graphs[g]['r'].customAttributes.segment = function (x, y, r, a1, a2) {
+            if (!graph['pie']) {
+                graph['r'].customAttributes.segment = function (x, y, r, a1, a2) {
                     var flag = (a2 - a1) > 180,
                         clr = (a2 - a1) / 360;
                     a1 = (a1 % 360) * Math.PI / 180;
@@ -105,28 +111,28 @@
                     };
                 };
             }
-            graphs[g]['pie'] = graphs[g]['r'].pieChart(graphs[g]['width'], graphs[g]['height'], graphs[g]['radius'], graphs[g]['values'], graphs[g]['legend'], "#000");
-        } else if (graphs[g]['type']=='analytics') {
-            if (!graphs[g]['r'])
-                graphs[g]['r'] = Raphael(g, graphs[g]['width'], graphs[g]['height']);
+            graph['pie'] = graph['r'].pieChart(graph['width'], graph['height'], graph['radius'], graph['values'], graph['legend'], "#000");
+        } else if (graph['type']=='analytics') {
+            if (!graph['r'])
+                graph['r'] = Raphael(p+'__'+g, graph['width'], graph['height']);
             else
-                graphs[g]['r'].clear();
+                graph['r'].clear();
 
-            console.log("graph_redraw: "+g+" values: "+graphs[g]['values']);
+            console.log("graph_redraw: "+g+" values: "+graph['values']);
             
-            graphs[g]['labels'] = [];
-            for (i in graphs[g]['values']) {
-                graphs[g]['labels'].push(i);
+            graph['labels'] = [];
+            for (i in graph['values']) {
+                graph['labels'].push(i);
             }
-            graphs[g]['analytics'] = draw_analytics(g);
-        } else if (graphs[g]['type']=='line') {
-            if (!graphs[g]['r'])
-                graphs[g]['r'] = Raphael(g, graphs[g]['width'], graphs[g]['height']);
+            graph['analytics'] = draw_analytics(g);
+        } else if (graph['type']=='line') {
+            if (!graph['r'])
+                graph['r'] = Raphael(p+'__'+g, graph['width'], graph['height']);
             else
-                graphs[g]['r'].clear();
+                graph['r'].clear();
 
-            graphs[g]['lines'] = graphs[g]['r'].linechart(50, 0, graphs[g]['width'] - 50, graphs[g]['height'] - 10,
-                [[0,1,2,3,4,5,6,7,8,9], [0,1,2,3,4,5,6,7,8,9]], [graphs[g]['values'][0], graphs[g]['values'][1]],
+            graph['lines'] = graph['r'].linechart(50, 0, graph['width'] - 50, graph['height'] - 10,
+                [[0,1,2,3,4,5,6,7,8,9], [0,1,2,3,4,5,6,7,8,9]], [graph['values'][0], graph['values'][1]],
                 { nostroke: false, axis: "0 0 1 1", symbol: "circle", smooth: true }).hoverColumn(function () {
                     this.tags = this.paper.set();
 
@@ -138,11 +144,14 @@
                     this.tags && this.tags.remove();
                 });
 
-                graphs[g]['lines'].symbols.attr({ r: 6 });
-                //graphs[g]['lines'].lines[0].animate({"stroke-width": 6}, 1000);
-                //graphs[g]['lines'].symbols[0].attr({stroke: "#fff"});
-                //graphs[g]['lines'].symbols[0][1].animate({fill: "#f00"}, 1000);
+                graph['lines'].symbols.attr({ r: 6 });
+                //graph['lines'].lines[0].animate({"stroke-width": 6}, 1000);
+                //graph['lines'].symbols[0].attr({stroke: "#fff"});
+                //graph['lines'].symbols[0][1].animate({fill: "#f00"}, 1000);
         }
+        
+        graphs[p][g] = graph;
+        delete graph;
     }
 
 
@@ -219,7 +228,7 @@ $(function() {
         });
         //graphs["graph_utilization"].pieChart(150, 150, 50, values, labels, "#fff");
 
-        var r = graphs[g];
+        var r = graphs[p][g];
         var legends = {
             legend : ["Free", "Used"]
         };
@@ -282,9 +291,9 @@ $(function() {
 
     $(".ajax_graph_pie").each(function() {
         var g = $(this).attr('id');
-        graphs[g] = Raphael(g);
+        graphs[p][g] = Raphael(g);
 
-        graphs[g].text(320, 100, "Utilization").attr({
+        graphs[p][g].text(320, 100, "Utilization").attr({
             font : "12px sans-serif"
         });
 

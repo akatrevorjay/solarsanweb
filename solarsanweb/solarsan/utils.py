@@ -6,10 +6,45 @@ from django.db.models.base import ModelBase
 
 import string, os, sys
 
-def zfs_list(opts={}):
+def zpool_list(zfs_zpools='', opts=''):
     """ Utility to get a list of zfs volumes and associated properties.
     Also aggregates parent/children information """
+    if len(zfs_zpools) == 0:
+        zfs_zpools = []
+    if len(opts) == 0:
+        opts = {}
+    args = ''
     
+    if not opts.has_key('props'):
+        opts['props'] = ['name','allocated','capacity','dedupratio','free','guid','health',
+                         'size','altroot','ashift','autoexpand','autoreplace','bootfs',
+                         'cachefile','dedupditto','delegation','failmode','listsnapshots',
+                         'readonly','version']
+    args += ' -o '+','.join(opts['props'])
+
+    if len(zfs_zpools) > 0:
+        args += " '"+ "' '".join(zfs_zpools) +"'"
+
+    pools = {}
+    
+    zfs_list_out = str(os.popen('/usr/sbin/zpool list -H'+args).read()).splitlines()
+    for i in zfs_list_out:
+        i = str(i).split("\t")
+        d = {}
+
+        for j_count,j in enumerate(opts['props']):
+            d[j] = i[j_count]
+        
+        pools[d['name']] = d
+
+    return pools
+
+def zfs_list(opts=''):
+    """ Utility to get a list of zfs volumes and associated properties.
+    Also aggregates parent/children information """
+    if len(opts) == 0:
+        opts = {}
+
     args = ''
     
     if not opts.has_key('type'):
@@ -19,10 +54,8 @@ def zfs_list(opts={}):
     if opts.has_key('depth'):
         args += ' -d '+str(opts['depth'])
 
-    if opts.has_key('props'):
-        zfs_props = opts['props']
-    else:
-        zfs_props = ['name', 'type', 'used', 'available', 'creation', 'referenced',
+    if not opts.has_key('props'):
+        opts['props'] = ['name', 'type', 'used', 'available', 'creation', 'referenced',
                      'compressratio', 'mounted', 'quota', 'reservation', 'recordsize',
                      'mountpoint', 'sharenfs', 'checksum', 'compression', 'atime',
                      'devices', 'exec', 'setuid', 'readonly', 'zoned', 'snapdir',
@@ -32,7 +65,7 @@ def zfs_list(opts={}):
                      'usedbysnapshots', 'usedbydataset', 'usedbychildren',
                      'usedbyrefreservation', 'logbias', 'dedup', 'mlslabel', 'sync',
                      'refcompressratio']
-    args += ' -o '+','.join(zfs_props)
+    args += ' -o '+','.join(opts['props'])
 
     if opts.has_key('dataset'):
         args += ' '+opts['dataset']
@@ -44,7 +77,7 @@ def zfs_list(opts={}):
         i = str(i).split("\t")
         d = {}
 
-        for j_count,j in enumerate(zfs_props):
+        for j_count,j in enumerate(opts['props']):
             d[j] = i[j_count]
         
         datasets[d['name']] = d
@@ -63,11 +96,17 @@ def zfs_list(opts={}):
 
     return datasets
 
-def zpool_iostat(zpool, capture_length):
-    """ Utility to return zpool iostat on the specified zpool """
-    return str(os.popen('/usr/sbin/zpool iostat \''+zpool+'\' '+str(capture_length)+' 2 | tail -n +5').read()).split()
-
-
+def zpool_iostat(capture_length=2, zfs_zpools=''):
+    """ Utility to return zpool iostat on the specified zpools """
+    args = ''
+    if len(zfs_zpools) > 0:
+        args += " '"+ "' '".join(zfs_zpools) +"'"
+    iostats = {}
+    for line in str(os.popen('/usr/sbin/zpool iostat '+args+' '+str(capture_length)+' 2 | tail -n +5').read()).splitlines():
+        i = {}
+        (i['name'], i['alloc'], i['free'], i['iops_read'], i['iops_write'], i['bandwidth_read'], i['bandwidth_write']) = line.split()
+        iostats[i['name']] = i
+    return iostats
 
 def convert_bytes_to_human(n):
     """ Utility to convert bytes to human readable (K/M/G/etc) """

@@ -1,6 +1,21 @@
 from dajax.core.Dajax import Dajax
 from dajaxice.decorators import dajaxice_register
 from django.http import HttpResponseRedirect, HttpResponse
+from django.template.loader import render_to_string
+from solarsan.utils import zfs_list
+
+@dajaxice_register
+def status_dataset(request, dataset):
+    dajax = Dajax()
+    datasets = zfs_list()
+    
+    render = render_to_string('solarsan/status_dataset_info.html',
+                              {'dataset': datasets[dataset],
+                               'tempjson': simplejson.dumps(datasets[dataset], sort_keys=True, indent=4) })
+    
+    dajax.assign('#dataset_info', 'innerHTML', render)
+    
+    return dajax.json()
 
 @dajaxice_register
 def graph_utilization2(request):
@@ -9,4 +24,8 @@ def graph_utilization2(request):
     dajax.assign('#graph_utilization td.used','innerHTML','25')
     return dajax.json()
 
-
+from dajaxice.core import dajaxice_functions
+from django.utils import simplejson
+def myexample(request):
+    return simplejson.dumps({'message':'Hello World'})
+dajaxice_functions.register(myexample)
