@@ -39,7 +39,8 @@
         for (var p in series) {
             for (var g in series[p]) {
                 if (graphs[p][g] && $('#'+p+'__'+g).hasClass('ajax')) {
-                    if (graphs[p][g]['type']=='pie' || graphs[p][g]['type']=='pie2') {
+                    if (graphs[p][g]['type']=='pie' || graphs[p][g]['type']=='pie2' || graphs[p][g]['type']=='line') {
+                        console.log('g='+g+' values='+series[p][g]['values']);
                         graphs[p][g]['values'] = series[p][g]['values'];
                     } else if (graphs[p][g]['type']=='analytics') {
                         if (!graphs[p][g]['values'])
@@ -47,18 +48,6 @@
                         if (graphs[p][g]['values'].length >= 10)
                             graphs[p][g]['values'].shift();
                         graphs[p][g]['values'].push( (series[p][g]['values'][0] + series[p][g]['values'][1]) );
-                    } else if (graphs[p][g]['type']=='line') {
-                        if (!graphs[p][g]['values'])
-                            graphs[p][g]['values'] = [];
-                        for (var j in series[p][g]['values']) {
-                            for (var i in series[p][g]['values'][j]) {
-                                if (!graphs[p][g]['values'][i])
-                                    graphs[p][g]['values'][i] = [];
-                                if (graphs[p][g]['values'][i].length >= 10)
-                                    graphs[p][g]['values'][i].shift();
-                                graphs[p][g]['values'][i].push(series[p][g]['values'][j][i]);
-                            }
-                        }
                     }
                     graph_redraw(p, g);
                 }

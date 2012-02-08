@@ -15,34 +15,35 @@ def status(request):
     """ Displays status of SAN """
 
     datasets = zfs_list()
-    #zpools = [i for i in zfs_datasets if len(zfs_datasets[i]['parent']) <= 0]
-    zpools = zpool_list()
+    #pools = [i for i in zfs_datasets if len(zfs_datasets[i]['parent']) <= 0]
+    pools = zpool_list()
     
     return render_to_response('solarsan/status.html',
         {'title': 'Status',
          'datasets': datasets,
-         'pools': zpools,
-         'graph_stats': graph_stats(20)},
+         'pools': pools},
         context_instance=RequestContext(request))
 
 def graph_stats(count=1):
+    """ Gets graph stats """
     graph = {}
 
     for p in Pool.objects.all():
-        #iostats = p.pool_iostat_set.order_by('timestamp')[:count:offset]
         iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
+        #iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
         
         graph[p.name] = {}
 
         total = int(iostats[0].alloc + iostats[0].free)
         graph[p.name]['graph_utilization'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
 
-        graph[p.name]['graph_iops'] = {'values': []}
-        graph[p.name]['graph_throughput'] = {'values': []}
+        graph[p.name]['graph_iops'] = {'values': [[], []]}
+        graph[p.name]['graph_throughput'] = {'values': [[], []]}
         for iostat in iostats:
-            graph[p.name]['graph_iops']['values'].append([int(iostat.iops_read), int(iostat.iops_write)])
-            graph[p.name]['graph_throughput']['values'].append([int(iostat.bandwidth_read) / 1024 / 1024, int(iostat.bandwidth_write) / 1024 / 1024])
-
+            graph[p.name]['graph_iops']['values'][0].insert(0, int(iostat.iops_read))
+            graph[p.name]['graph_iops']['values'][1].insert(0, int(iostat.iops_write))
+            graph[p.name]['graph_throughput']['values'][0].insert(0, int(iostat.bandwidth_read))
+            graph[p.name]['graph_throughput']['values'][1].insert(0, int(iostat.bandwidth_write))
     return graph
 
 def pool_utilization():
@@ -63,5 +64,5 @@ def pool_utilization():
 
 @csrf_exempt
 def graph_stats_json(request):
-    return JSONResponse(graph_stats(20))
+    return JSONResponse(graph_stats(10))
 

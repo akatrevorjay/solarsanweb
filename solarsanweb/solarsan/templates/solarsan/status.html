@@ -48,19 +48,17 @@ $(function() {
         type: 'line',
         title: 'IOPs',
         width: 600, height: 100,
-        values: [[0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0]],
     };
     
     graphs['{{ pool }}']['graph_throughput'] = {
         type: 'line',
         title: 'Throughput',
         width: 600, height: 100,
-        values: [[0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0]],
     };
     {% endfor %}
     
     // Use the callback so we can provide initial data
-    graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 5000, {});
+    graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
 });
 
 function dataset_select(dataset) {

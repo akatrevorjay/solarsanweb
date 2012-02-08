@@ -4,7 +4,28 @@ from django.utils import simplejson
 from django.utils.encoding import force_unicode
 from django.db.models.base import ModelBase
 
-import string, os, sys
+from solarsan.models import Pool, Dataset
+import string, os, sys, logging, datetime
+
+def zfs_snapshot(*datasets, **kwargs):
+    """ Utility to create snapshots """
+    
+    kwargs['name'] = kwargs.get('name', datetime.datetime.now().strftime('auto-%F_%T'))
+
+    if not len(datasets) > 0:
+        datasets = []
+        for p in Pool.objects.all():
+            datasets.append(str(p.name))
+
+    args = ''
+    recursive_debug_out = ''
+    if kwargs.get('recursive', True) == True:
+        args+=' -r'
+        recursive_debug_out = "recursive "
+    
+    logging.info('Creating %ssnapshot "%s" on %s', recursive_debug_out, kwargs['name'], datasets)
+    for d in datasets:
+        os.popen('/usr/sbin/zfs snapshot '+args+' "'+d+'@'+kwargs['name']+'"').read()
 
 def zpool_list(zfs_zpools='', opts=''):
     """ Utility to get a list of zfs volumes and associated properties.
@@ -33,7 +54,16 @@ def zpool_list(zfs_zpools='', opts=''):
         d = {}
 
         for j_count,j in enumerate(opts['props']):
-            d[j] = i[j_count]
+            v = i[j_count]
+
+            ## Booleanize
+            if j == 'autoexpand' or j == 'autoreplace' or j == 'delegation' or j == 'listsnapshots' or j == 'readonly':
+                if v == "on":
+                    v = True
+                elif v == "off":
+                    v = False
+            
+            d[j] = v
         
         pools[d['name']] = d
 
@@ -78,7 +108,23 @@ def zfs_list(opts=''):
         d = {}
 
         for j_count,j in enumerate(opts['props']):
-            d[j] = i[j_count]
+            v = i[j_count]
+            
+            ## Booleanize
+            if j == 'mounted':
+                if v == 'yes':
+                    v = True
+                elif v == 'no':
+                    v = False
+            if j == 'defer_destroy' or j == 'atime' or j == 'devices' or j == 'exec' or j == 'nbmand' or \
+               j == 'readonly' or j == 'setuid' or j == 'shareiscsi' or j == 'vscan' or j == 'xattr' or \
+               j == 'zoned' or j == 'utf8only':
+                if v == "on":
+                    v = True
+                elif v == "off":
+                    v = False
+            
+            d[j] = v
         
         datasets[d['name']] = d
 
