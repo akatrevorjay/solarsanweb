@@ -50,16 +50,15 @@ def zfs_snapshot(*datasets, **kwargs):
 
     if not len(datasets) > 0:
         datasets = []
+        kwargs['recursive'] = kwargs.get('recursive', True)
         for p in Pool.objects.all():
             datasets.append(str(p.name))
 
     args = ''
-    recursive_debug_out = ''
-    if kwargs.get('recursive', True) == True:
+    if kwargs.get('recursive', False) == True:
         args+=' -r'
-        recursive_debug_out = "recursive "
     
-    logging.info('Creating %ssnapshot "%s" on %s', recursive_debug_out, kwargs['name'], datasets)
+    logging.info('Creating snapshot on %s with %s', datasets, kwargs)
     for d in datasets:
         os.popen('/usr/sbin/zfs snapshot '+args+' "'+d+'@'+kwargs['name']+'"').read()
 

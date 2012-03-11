@@ -55,10 +55,11 @@ def cron_pool_iostats_cleanup():
 @kronos.register('0 * * * *')
 def cron_snapshot():
     """ Cron job to periodically take a snapshot of datasets """
-    zfs_snapshot()
     
-    #TODO cleanup old snapshots
+    for p in Pool.objects.all():
+        d = p.dataset_set.get(name=p.name).snapshot(recursive=True)
 
+    #TODO cleanup old auto snapshots
 
 @kronos.register('*/2 * * * *')
 def sync_zfs_db():
