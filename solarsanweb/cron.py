@@ -2,7 +2,7 @@ import kronos
 import datetime, time
 import logging
 from solarsan.models import Pool, Pool_IOStat, Dataset, Snapshot
-from solarsan.utils import zpool_iostat, zpool_list, zfs_list, convert_human_to_bytes
+from solarsan.utils import zpool_iostat, zpool_list, zfs_list, convert_human_to_bytes, zfs_snapshot
 
 @kronos.register('*/2 * * * *')
 def cron_pool_iostats():
@@ -55,13 +55,10 @@ def cron_pool_iostats_cleanup():
 @kronos.register('0 * * * *')
 def cron_snapshot():
     """ Cron job to periodically take a snapshot of datasets """
+    zfs_snapshot()
     
-    ##TODO Make this editable through the GUI per dataset
-    datasets = Dataset.objects.all()
-    
-    print datasets
-    
-    #for d in datasets:
+    #TODO cleanup old snapshots
+
 
 @kronos.register('*/2 * * * *')
 def sync_zfs_db():
