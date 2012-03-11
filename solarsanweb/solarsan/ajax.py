@@ -9,11 +9,10 @@ def status_dataset(request, dataset):
     dajax = Dajax()
     datasets = zfs_list()
     
-    render = render_to_string('solarsan/status_dataset_info.html',
-                              {'dataset': datasets[dataset],
-                               'tempjson': simplejson.dumps(datasets[dataset], sort_keys=True, indent=4) })
-    
-    dajax.assign('#dataset_info', 'innerHTML', render)
+    dajax.assign('#dataset_info', 'innerHTML',
+                 render_to_string('solarsan/status_dataset_info.html',
+                                  {'dataset': datasets[dataset],
+                                   'tempjson': simplejson.dumps(datasets[dataset], sort_keys=True, indent=4) }))
     
     return dajax.json()
 

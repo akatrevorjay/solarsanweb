@@ -57,7 +57,7 @@ $(function() {
     };
     {% endfor %}
     
-    // Use the callback so we can provide initial data
+    // Update every 30s
     graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
 });
 
@@ -68,7 +68,7 @@ function dataset_select(dataset) {
 </script>
 {% endblock %}
 
-{% block graphs %}
+{% block pools %}
 {% for pool in pools %}
 <h2>Storage Pool: {{ pool }}</h2>
 <table>
@@ -79,16 +79,22 @@ function dataset_select(dataset) {
     <tr>
         <td style="width: 150px;">
             <table id="dataset_list" width="100%">
-                {% for dataset in datasets %}
+                {% for dataset in pool.dataset_set.all|dictsort:"name" %}
                 <tr onclick="dataset_select('{{ dataset }}')">
                     <td>
                         <a href="#">{{ dataset }}</a>
                     <td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td>
+                        <i>(none)</i>
+                    </td>
+                </tr>
                 {% endfor %}
                 <tr>
                     <td>
-                        <a href="">+ add dataset</a>
+                        <a href="">+ add dataset +</a>
                     </td>
                 </tr>
             </table>
@@ -105,44 +111,12 @@ function dataset_select(dataset) {
 {% empty %}
 <h2>There are no storage pools?</h2>
 {% endfor %}
-
-<br />
-yup
 {% endblock %}
 
+<br />
+eof
 
-{% if app_list %}
-    {% for app in app_list %}
-        <div class="module">
-        <table summary="{% blocktrans with app.name as name %}Models available in the {{ name }} application.{% endblocktrans %}">
-        <caption><a href="{{ app.app_url }}" class="section">{% blocktrans with app.name as name %}{{ name }}{% endblocktrans %}</a></caption>
-        {% for model in app.models %}
-            <tr>
-            {% if model.perms.change %}
-                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
-            {% else %}
-                <th scope="row">{{ model.name }}</th>
-            {% endif %}
 
-            {% if model.perms.add %}
-                <td><a href="{{ model.admin_url }}add/" class="addlink">{% trans 'Add' %}</a></td>
-            {% else %}
-                <td>&nbsp;</td>
-            {% endif %}
-
-            {% if model.perms.change %}
-                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
-            {% else %}
-                <td>&nbsp;</td>
-            {% endif %}
-            </tr>
-        {% endfor %}
-        </table>
-        </div>
-    {% endfor %}
-{% else %}
-    <p>{% trans "You don't have permission to edit anything." %}</p>
-{% endif %}
 </div>
 {% endblock %}
 
