@@ -60,6 +60,7 @@ def zfs_snapshot(*datasets, **kwargs):
     
     logging.info('Creating snapshot on %s with %s', datasets, kwargs)
     for d in datasets:
+        #TODO error checking
         os.popen('/usr/sbin/zfs snapshot '+args+' "'+d+'@'+kwargs['name']+'"').read()
 
 def zpool_list(zfs_zpools='', opts=''):
@@ -104,36 +105,29 @@ def zpool_list(zfs_zpools='', opts=''):
 
     return pools
 
-def zfs_list(opts=''):
+def zfs_list(*datasets, **kwargs):
     """ Utility to get a list of zfs volumes and associated properties.
     Also aggregates parent/children information """
-    if len(opts) == 0:
-        opts = {}
 
-    args = ''
-    
-    if not opts.has_key('type'):
-        opts['type']='filesystem'
-    args += ' -t '+opts['type']
+    args = ' -t '+kwargs.get('type', 'filesystem')
 
-    if opts.has_key('depth'):
-        args += ' -d '+str(opts['depth'])
+    if kwargs.has_key('depth'):
+        args += ' -d '+str(kwargs['depth'])
 
-    if not opts.has_key('props'):
-        opts['props'] = ['name', 'type', 'used', 'available', 'creation', 'referenced',
-                     'compressratio', 'mounted', 'quota', 'reservation', 'recordsize',
-                     'mountpoint', 'sharenfs', 'checksum', 'compression', 'atime',
-                     'devices', 'exec', 'setuid', 'readonly', 'zoned', 'snapdir',
-                     'aclinherit', 'canmount', 'xattr', 'copies', 'version', 'utf8only',
-                     'normalization', 'casesensitivity', 'vscan', 'nbmand', 'sharesmb',
-                     'refquota', 'refreservation', 'primarycache', 'secondarycache',
-                     'usedbysnapshots', 'usedbydataset', 'usedbychildren',
-                     'usedbyrefreservation', 'logbias', 'dedup', 'mlslabel', 'sync',
-                     'refcompressratio']
-    args += ' -o '+','.join(opts['props'])
+    kwargs['props'] = kwargs.get('props', ['name', 'type', 'used', 'available', 'creation', 'referenced',
+                 'compressratio', 'mounted', 'quota', 'reservation', 'recordsize',
+                 'mountpoint', 'sharenfs', 'checksum', 'compression', 'atime',
+                 'devices', 'exec', 'setuid', 'readonly', 'zoned', 'snapdir',
+                 'aclinherit', 'canmount', 'xattr', 'copies', 'version', 'utf8only',
+                 'normalization', 'casesensitivity', 'vscan', 'nbmand', 'sharesmb',
+                 'refquota', 'refreservation', 'primarycache', 'secondarycache',
+                 'usedbysnapshots', 'usedbydataset', 'usedbychildren',
+                 'usedbyrefreservation', 'logbias', 'dedup', 'mlslabel', 'sync',
+                 'refcompressratio'])
+    args += ' -o '+','.join(kwargs['props'])
 
-    if opts.has_key('dataset'):
-        args += ' '+opts['dataset']
+    if kwargs.has_key('dataset'):
+        args += ' '+kwargs['dataset']
 
     datasets = {}
     
@@ -142,22 +136,28 @@ def zfs_list(opts=''):
         i = str(i).split("\t")
         d = {}
 
-        for j_count,j in enumerate(opts['props']):
+        for j_count,j in enumerate(kwargs['props']):
             v = i[j_count]
             
             ## Booleanize
             if j == 'mounted':
                 if v == 'yes':
                     v = True
-                elif v == 'no':
+                elif v == 'no' or v == '-':
                     v = False
-            if j == 'defer_destroy' or j == 'atime' or j == 'devices' or j == 'exec' or j == 'nbmand' or \
+            elif j == 'defer_destroy' or j == 'atime' or j == 'devices' or j == 'exec' or j == 'nbmand' or \
                j == 'readonly' or j == 'setuid' or j == 'shareiscsi' or j == 'vscan' or j == 'xattr' or \
                j == 'zoned' or j == 'utf8only':
                 if v == "on":
                     v = True
-                elif v == "off":
+                elif v == "off" or v == '-':
                     v = False
+            ## Nullize
+            elif v == '-':
+                if j == 'copies' or v == 'version':
+                    v = 0
+                else:
+                    v = ''
             
             d[j] = v
         

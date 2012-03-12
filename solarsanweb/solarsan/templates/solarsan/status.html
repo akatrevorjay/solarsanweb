@@ -65,6 +65,10 @@ function dataset_select(dataset) {
     Dajaxice.solarsan.status_dataset(Dajax.process, {'dataset': dataset})
 }
 
+function dataset_snapshots_list(dataset) {
+    Dajaxice.solarsan.snapshot_list(Dajax.process, {'dataset': dataset})
+}
+
 </script>
 {% endblock %}
 
@@ -79,7 +83,7 @@ function dataset_select(dataset) {
     <tr>
         <td style="width: 150px;">
             <table id="dataset_list" width="100%">
-                {% for dataset in pool.dataset_set.all|dictsort:"name" %}
+                {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
                 <tr onclick="dataset_select('{{ dataset }}')">
                     <td>
                         <a href="#">{{ dataset }}</a>

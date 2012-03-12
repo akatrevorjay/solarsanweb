@@ -1,7 +1,7 @@
 import kronos
 import datetime, time
 import logging
-from solarsan.models import Pool, Pool_IOStat, Dataset, Snapshot
+from solarsan.models import Pool, Pool_IOStat, Dataset
 from solarsan.utils import zpool_iostat, zpool_list, zfs_list, convert_human_to_bytes, zfs_snapshot
 
 @kronos.register('*/2 * * * *')
@@ -65,9 +65,10 @@ def cron_snapshot():
 def sync_zfs_db():
     """ Syncs ZFS pools/datasets to DB """
     
-    datasets = zfs_list()
+    datasets = zfs_list(type='all')
     pools = zpool_list()
-    
+
+    # Pools
     for p in pools:
         try:
             pool = Pool.objects.get(name=p)
@@ -79,7 +80,8 @@ def sync_zfs_db():
             pool = Pool(**pools[p])
 
         pool.save()
-    
+
+    # Datasets (and snapshots)
     for d in datasets:
         dataset = datasets[d]
         
@@ -93,21 +95,20 @@ def sync_zfs_db():
         
         time_format = "%a %b %d %H:%M %Y"
         dataset['creation'] = datetime.datetime.fromtimestamp(time.mktime(time.strptime(dataset['creation'], time_format)))
-        
-        try:
-            pool_dataset = Dataset.objects.get(name=d)
-            for k in dataset.keys():
-                setattr(pool_dataset, k, dataset[k])
-        except (KeyError, Dataset.DoesNotExist):
-            logging.info('Found previously unknown dataset "%s"', d)
-            logging.debug('Dataset: %s %s', d, dataset)
-            
-            dataset_path = d.split('/')
-            dataset_pool = Pool.objects.get(name=dataset_path[0])
-            
-            pool_dataset = dataset_pool.dataset_set.create(**dataset)
-            
-        pool_dataset.save()
 
+        # Dataset
+        if dataset['type'] == 'filesystem' or dataset['type'] == 'snapshot':
+            try:
+                pool_dataset = Dataset.objects.get(name=d)
+                for k in dataset.keys():
+                    setattr(pool_dataset, k, dataset[k])
+            except (KeyError, Dataset.DoesNotExist):
+                logging.info('Found previously unknown %s "%s"', dataset['type'], d)
+                logging.debug('%s: %s %s', str(dataset['type']).capitalize(), d, dataset)
+                
+                dataset_path = d.split('@')[0].split('/')
+                dataset_pool = Pool.objects.get(name=dataset_path[0])
+                
+                pool_dataset = dataset_pool.dataset_set.create(**dataset)
+            pool_dataset.save()
 
-        

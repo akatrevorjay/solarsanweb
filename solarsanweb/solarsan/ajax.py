@@ -2,17 +2,17 @@ from dajax.core.Dajax import Dajax
 from dajaxice.decorators import dajaxice_register
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
-from solarsan.utils import zfs_list
+from solarsan.models import Dataset
 
 @dajaxice_register
 def status_dataset(request, dataset):
     dajax = Dajax()
-    datasets = zfs_list()
+    d = Dataset.objects.get(name=dataset)
     
     dajax.assign('#dataset_info', 'innerHTML',
                  render_to_string('solarsan/status_dataset_info.html',
-                                  {'dataset': datasets[dataset],
-                                   'tempjson': simplejson.dumps(datasets[dataset], sort_keys=True, indent=4) }))
+                                  {'dataset': d,
+                                   }))
     
     return dajax.json()
 

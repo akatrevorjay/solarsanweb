@@ -14,24 +14,21 @@ from solarsan.models import *
 def snapshots_list(request):
     """ Lists snapshots of dataset """
     
-    dataset = request.GET['dataset']
-    
+    d = request.GET['dataset']
+    dataset = Dataset.objects.get(name=d, type='filesystem')
     
     return render_to_response('solarsan/snapshots_list.html',
-        {'title', 'Snapshots'},
+        {'title': 'Snapshots',
+         'dataset': dataset,},
         context_instance=RequestContext(request))
 
 def status(request):
     """ Displays status of SAN """
 
-    #datasets = zfs_list()
-    ##pools = [i for i in zfs_datasets if len(zfs_datasets[i]['parent']) <= 0]
-    #pools = zpool_list()
     pools = Pool.objects.all()
     
     return render_to_response('solarsan/status.html',
         {'title': 'Status',
-         #'datasets': datasets,
          'pools': pools},
         context_instance=RequestContext(request))
 
