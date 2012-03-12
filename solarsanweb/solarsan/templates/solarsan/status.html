@@ -1,7 +1,19 @@
 {% extends "solarsan/base_site.html" %}
 {% load i18n %}
 
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css" />{% endblock %}
+{% block extrastyle %}
+    {{ block.super }}<link rel="stylesheet" type="text/css" href="{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css" />
+<!--TODO Move this to css link rel -->
+<style type="text/css">
+
+@import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700);
+
+body: {
+    font-family: "Ubuntu Mono", sans-serif
+}
+
+</style>
+{% endblock %}
 
 {% block extrahead %}
     {% load collect %}
@@ -62,12 +74,37 @@ $(function() {
 });
 
 function dataset_select(dataset) {
-    Dajaxice.solarsan.status_dataset(Dajax.process, {'dataset': dataset})
+    Dajaxice.solarsan.dataset_info(Dajax.process, {'dataset': dataset});
 }
 
 function dataset_snapshots_list(dataset) {
-    Dajaxice.solarsan.snapshot_list(Dajax.process, {'dataset': dataset})
+    Dajaxice.solarsan.dataset_snapshots_list(Dajax.process, {'dataset': dataset});
 }
+
+function dataset_hover() {
+    $(this).setAttribute('style', 'background-color: lightblue;');
+}
+function dataset_unhover() {
+    $(this).setAttribute('style', '');
+}
+
+$("#dataset_list tr").each(function (i) {
+    $(this).hover(function() {
+        $(this).stop().animate({color: "lightblue"}, 'slow');
+    },
+    function() {
+        $(this).stop().animate({color: "white"}, 'slow');
+    });
+});
+
+$("#dataset_list tr a").each(function (i) {
+    $(this).hover(function() {
+        $(this).stop().animate({color: "lightblue"}, 'slow');
+    },
+    function() {
+        $(this).stop().animate({color: "white"}, 'slow');
+    });
+});
 
 </script>
 {% endblock %}
@@ -86,7 +123,8 @@ function dataset_snapshots_list(dataset) {
                 {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
                 <tr onclick="dataset_select('{{ dataset }}')">
                     <td>
-                        <a href="#">{{ dataset }}</a>
+                        <a href="#">{{ dataset }}</a><br />
+                        {{ dataset.used }}/{{ dataset.available }}
                     <td>
                 </tr>
                 {% empty %}
@@ -105,8 +143,9 @@ function dataset_snapshots_list(dataset) {
         </td>
         <td colspan="2" style="background-color: #eee">
             <div id="dataset_info">
-                <div class="dataset_info_title">info for selected dataset</div>
-                <div class="dataset_info_content">show quota, free, snaps, make snap, delete snap, etc</div>
+                <h3><div id="dataset_info_title">info for selected dataset</div></h3>
+                <div id="dataset_info_menu">menu</div>
+                <div id="dataset_info_content">show quota, free, snaps, make snap, delete snap, etc</div>
                 </div>
             </div>
         </td>

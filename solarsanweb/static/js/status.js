@@ -40,7 +40,7 @@
             for (var g in series[p]) {
                 if (graphs[p][g] && $('#'+p+'__'+g).hasClass('ajax')) {
                     if (graphs[p][g]['type']=='pie' || graphs[p][g]['type']=='pie2' || graphs[p][g]['type']=='line') {
-                        console.log('g='+g+' values='+series[p][g]['values']);
+                        //console.log('g='+g+' values='+series[p][g]['values']);
                         graphs[p][g]['values'] = series[p][g]['values'];
                     } else if (graphs[p][g]['type']=='analytics') {
                         if (!graphs[p][g]['values'])

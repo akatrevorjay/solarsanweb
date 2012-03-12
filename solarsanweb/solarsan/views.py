@@ -11,17 +11,6 @@ from django.views.decorators.csrf import csrf_exempt
 from solarsan.utils import *
 from solarsan.models import *
 
-def snapshots_list(request):
-    """ Lists snapshots of dataset """
-    
-    d = request.GET['dataset']
-    dataset = Dataset.objects.get(name=d, type='filesystem')
-    
-    return render_to_response('solarsan/snapshots_list.html',
-        {'title': 'Snapshots',
-         'dataset': dataset,},
-        context_instance=RequestContext(request))
-
 def status(request):
     """ Displays status of SAN """
 

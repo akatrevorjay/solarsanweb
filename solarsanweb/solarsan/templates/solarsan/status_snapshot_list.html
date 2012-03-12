@@ -1,0 +1,10 @@
+<table>
+{% for snapshot in dataset.snapshots|dictsort:"name" %}
+<tr>
+    <td>{{ snapshot.name }}</td>
+    <td>{{ snapshot.creation }}</td>
+    <td>{{ snapshot.used }}/{{ dataset.available }}</td>
+    <td><a href="#">[X]</a></td>
+</tr>
+{% endfor %}
+</table>
