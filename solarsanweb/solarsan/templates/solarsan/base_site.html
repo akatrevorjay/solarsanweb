@@ -1,10 +1,177 @@
 {% extends "solarsan/base.html" %}
-{% load i18n %}
 
-{% block title %}{{ title }} | {% trans 'SolarSAN Administration' %}{% endblock %}
+{% block title %}{{ title }} | SolarSAN Administration{% endblock %}
 
-{% block branding %}
-<h1 id="site-name">{% trans 'SolarSAN Administration' %}</h1>
+{% block extrastyle %}
+<!--TODO Move this to css link rel -->
+<link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.18.custom.css" rel="Stylesheet" />
+<link type="text/css" href="{{ STATIC_URL }}css/ui.jqgrid.css" rel="Stylesheet" />
+<style type="text/css">
+@import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700);
+
+/* Generics */
+
+/*
+body {
+    margin-bottom: 20px;
+}
+*/
+
+body, body * {
+/*    font-family: "Ubuntu Mono", sans-serif; */
+    font-family: "Ubuntu";
+}
+
+/*
+table {
+    border-collapse: collapse;
+}
+
+table td, table th {
+    padding: 0;
+}
+*/
+
+.left {
+    float: left;
+}
+
+.right {
+    float: right;
+}
+
+/* Common */
+
+/*
+#container {
+    width: 100%;
+}
+*/
+
+#content {
+    width: 910px;
+    min-width: 910px;
+    margin: 15px;
+}
+
+/*
+#content > div {
+    margin: 15px;
+}
+*/
+
+/*
+#content h1:first-of-type, #content h2:first-of-type {
+    background-color: #ccc;
+    display: inline;
+}
+*/
+
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+    font-weight: normal;
+}
+
+/* Status */
+
+#content-main > div.pool > div.graphs {
+    width: auto;
+    height: 200px;
+    padding: 10px;
+}
+
+/* Graphs */
+
+#content-main > div.pool > div.graphs > div {
+    text-align: right;
+}
+
+#content-main > div.pool > div.graphs > div.graphs_left {
+    text-align: left;
+    float: left;
+}
+
+/* dataset_list */
+
+div.pool > div.dataset_list {
+    width: 25%;
+
+    float: left;
+    margin-right: 10px;
+}
+
+div.pool > div.dataset_list > div :first-child {
+    padding: 0px;
+    margin: 0px;
+    text-decoration: none;
+    font-weight: normal;
+    text-align: left;
+}
+
+div.pool > div.dataset_list > div {
+    display: block;
+    cursor: pointer;
+    color: #555;
+
+    padding: 5px;
+    margin: 5px;
+}
+
+/*
+div.pool > div.dataset_list > div.hover:not(.selected) {
+    color: #333;
+}
+*/
+
+div.pool > div.dataset_list > div.selected {
+    color: #000;
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+    
+    border: 1px solid #fbcb09; background: #fdf5ce url({{ STATIC_URL }}/css/ui-lightness/images/ui-bg_glass_100_fdf5ce_1x400.png) 50% 50% repeat-x; font-weight: bold;
+}
+div.pool > div.dataset_list > div.selected a {
+    color: #c77405;
+}
+
+div.pool > div.dataset_list > div div {
+    display: none;
+}
+
+div.pool > div.dataset_list > div.selected div, div.pool > div.dataset_list > div.hover div, div.pool > div.dataset_list > div.ui-state-hover div {
+    display: inline;
+}
+
+/* dataset_info */
+
+div.pool > div.dataset_info {
+    width: auto;
+    overflow: hidden;
+
+    padding: 10px;
+}
+
+div.pool > div {
+    margin-top: 10px;
+}
+
+/* footer */
+
+#footer {
+    margin-top: 10px;
+    padding: 10px;
+    overflow: hidden;
+    text-align: right;
+}
+
+</style>
 {% endblock %}
 
-{% block nav-global %}{% endblock %}
+{% block extrahead %}
+    {% load collect %}
+    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/status.js' as js %}
+    {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
+    
+    {% load dajaxice_templatetags %}
+    {% dajaxice_js_import %}
+{% endblock %}

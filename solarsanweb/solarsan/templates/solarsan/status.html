@@ -1,41 +1,11 @@
 {% extends "solarsan/base_site.html" %}
-{% load i18n %}
-
-{% block extrastyle %}
-    {{ block.super }}<link rel="stylesheet" type="text/css" href="{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css" />
-<!--TODO Move this to css link rel -->
-<style type="text/css">
-
-@import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700);
-
-body: {
-    font-family: "Ubuntu Mono", sans-serif
-}
-
-</style>
-{% endblock %}
-
-{% block extrahead %}
-    {% load collect %}
-    {% collect 'js/jquery.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/status.js' as js %}
-    {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
-    
-    {% load dajaxice_templatetags %}
-    {% dajaxice_js_import %}
-{% endblock %}
-
-{% block coltype %}colMS{% endblock %}
-
-{% block bodyclass %}dashboard{% endblock %}
-
-{% block breadcrumbs %}{% endblock %}
 
 {% block content %}
 <div id="content-main">
 
-{% block graph_js %}
 <script type="text/javascript">
 
+// Graphs
 var graphs = {};
 
 $(function() {
@@ -73,94 +43,70 @@ $(function() {
     graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
 });
 
-function dataset_select(dataset) {
-    Dajaxice.solarsan.dataset_info(Dajax.process, {'dataset': dataset});
-}
+// dataset_list
+$(function() {
 
-function dataset_snapshots_list(dataset) {
-    Dajaxice.solarsan.dataset_snapshots_list(Dajax.process, {'dataset': dataset});
-}
-
-function dataset_hover() {
-    $(this).setAttribute('style', 'background-color: lightblue;');
-}
-function dataset_unhover() {
-    $(this).setAttribute('style', '');
-}
-
-$("#dataset_list tr").each(function (i) {
+$("div.pool > div.dataset_list > div").each(function (i) {
     $(this).hover(function() {
-        $(this).stop().animate({color: "lightblue"}, 'slow');
-    },
-    function() {
-        $(this).stop().animate({color: "white"}, 'slow');
+            $(this).addClass("hover", "fast");
+        }, function() {
+            $(this).removeClass("hover", "fast");
+        });
+    $(this).click(function() {
+        $(this).parent().children("div.selected").removeClass("selected", "fast");
+        $(this).addClass("selected", "fast");
+
+        $.ajax({type: "GET",
+            url: "{% url solarsan.views.status_dataset_info %}/list/"+$(this).find('a:first').html(),
+            context: $(this),
+            }).done(function(data) { $(this).parent().parent().children("div.dataset_info").html(data); });
+    });
+    $(this).button();
+});
+$("div.pool > div.dataset_list > div:first-child").click();
+
+$('div.pool > div.dataset_list').resizable({
+    handles: "e",
+});
+
+$("#container > div").each(function(i) {
+    $(this).center({inside: $("#container"), vertical: false})
+    $(this).bind('resize', function() {
+        $(this).center({inside: $("#container"), transition: 50, vertical: false});
     });
 });
 
-$("#dataset_list tr a").each(function (i) {
-    $(this).hover(function() {
-        $(this).stop().animate({color: "lightblue"}, 'slow');
-    },
-    function() {
-        $(this).stop().animate({color: "white"}, 'slow');
-    });
 });
 
 </script>
-{% endblock %}
 
-{% block pools %}
 {% for pool in pools %}
+<div class="pool" id="pool_{{ pool }}">
 <h2>Storage Pool: {{ pool }}</h2>
-<table>
-    <tr>
-        <td colspan="2" width="300"><div id="{{ pool }}__graph_utilization" class="ajax"></div></td>
-        <td><div id="{{ pool }}__graph_iops" class="ajax"></div><br /><div id="{{ pool }}__graph_throughput" class="ajax"></div></td>
-    </tr>
-    <tr>
-        <td style="width: 150px;">
-            <table id="dataset_list" width="100%">
-                {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
-                <tr onclick="dataset_select('{{ dataset }}')">
-                    <td>
-                        <a href="#">{{ dataset }}</a><br />
-                        {{ dataset.used }}/{{ dataset.available }}
-                    <td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td>
-                        <i>(none)</i>
-                    </td>
-                </tr>
-                {% endfor %}
-                <tr>
-                    <td>
-                        <a href="">+ add dataset +</a>
-                    </td>
-                </tr>
-            </table>
-        </td>
-        <td colspan="2" style="background-color: #eee">
-            <div id="dataset_info">
-                <h3><div id="dataset_info_title">info for selected dataset</div></h3>
-                <div id="dataset_info_menu">menu</div>
-                <div id="dataset_info_content">show quota, free, snaps, make snap, delete snap, etc</div>
-                </div>
+    <div class="graphs">
+        <div id="{{ pool }}__graph_utilization" class="ajax graphs_left"></div>
+        <div id="{{ pool }}__graph_iops" class="ajax"></div>
+        <div id="{{ pool }}__graph_throughput" class="ajax"></div>
+    </div>
+    <div class="dataset_list ui-widget-content">
+            {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
+            <div>
+                <a>{{ dataset }}</a><br />
+                <div>{{ dataset.used }}/{{ dataset.available }}</div>
             </div>
-        </td>
-    </tr>
-</table>
+            {% empty %}
+            <div>
+                <i>(none)</i>
+            </div>
+            {% endfor %}
+            <div>
+                <a>+ add dataset +</a>
+            </div>
+    </div>
+    <div class="dataset_info ui-widget-content"></div>
+</div>
 {% empty %}
 <h2>There are no storage pools?</h2>
 {% endfor %}
+
 {% endblock %}
-
-<br />
-eof
-
-
-</div>
-{% endblock %}
-
-

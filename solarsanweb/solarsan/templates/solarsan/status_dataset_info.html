@@ -1,1 +1,71 @@
-{{ dataset }}
+{% if action == "list" %}
+<script type="text/javascript">
+$( "#dataset_info_tabs" ).tabs();
+</script>
+
+<h3>{{ dataset }}</h3>
+
+<div id="dataset_info_tabs">
+    <ul>
+        <!-- <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots" %}"><span>snapshots</span></a></li> -->
+        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots_xml" %}"><span>Snapshots</span></a></li>
+        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="health" %}"><span>Health</span></a></li>
+        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots_xml" %}"><span>Cluster</span></a></li>
+        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="info" %}"><span>Info</span></a></li>
+    </ul>
+</div>
+{% endif %}
+
+{% if action == "info" %}
+    {{ dataset }}
+{% endif %}
+
+{% if action == "snapshots" %}
+    {% for snapshot in dataset.snapshots|dictsort:"name" %}
+    <div class="snapshot">
+        <a>{{ snapshot.name }}</a>
+        {{ snapshot.creation }}
+        {{ snapshot.used }}/{{ dataset.available }}
+        <a href="#">[X]</a>
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% if action == "snapshots_xml" %}
+
+<table id="list1"></table>
+<div id="pager1"></div>
+
+<script type="text/javascript">
+
+$("#list1").jqGrid({ url: '{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots_xml_jqgrid" %}',
+    datatype: "xml",
+    colNames: ['Name', 'Created', 'Used', 'Avail' ],
+    colModel: [
+        {name:'name', index:'name'},
+        {name:'created', index:'created', width: 110},
+        {name:'used', index:'used', width: 25},
+        {name:'available', index:'available', width: 25}, ],
+    rowNum: 20, rowList: [10,20,30],
+    autowidth: true,
+    height: 250,
+    pager: '#pager1',
+    sortname: 'name',
+    viewrecords: true,
+    sortorder: "desc"}).navGrid('#pager1', {edit:false, add:true, del:true});
+
+</script>
+{% endif %}
+
+{% if action == "snapshots_xml_jqgrid" %}
+<rows>
+    {% for snapshot in dataset.snapshots|dictsort:"name" %}
+    <row>
+        <cell><![CDATA[{{ snapshot.basename }}]]></cell>
+        <cell>{{ snapshot.creation }}</cell>
+        <cell>{{ snapshot.used }}</cell>
+        <cell>{{ dataset.available }}</cell>
+    </row>
+    {% endfor %}
+</rows>
+{% endif %}

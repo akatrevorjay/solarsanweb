@@ -10,13 +10,8 @@ def dataset_info(request, dataset):
     dajax = Dajax()
     d = Dataset.objects.get(name=dataset)
     
-    dajax.assign('#dataset_info_title', 'innerHTML', dataset)
-    dajax.assign('#dataset_info_menu', 'innerHTML',
-                 render_to_string('solarsan/status_dataset_menu.html',
-                                  {'dataset': d,
-                                   }))
-    dajax.assign('#dataset_info_content', 'innerHTML',
-                 render_to_string('solarsan/status_dataset_info.html',
+    dajax.assign('#dataset_info', 'innerHTML',
+                 render_to_string('solarsan/status_dataset.html',
                                   {'dataset': d,
                                    }))    
 
@@ -28,14 +23,10 @@ def dataset_snapshots_list(request, dataset):
     dajax = Dajax()
     d = Dataset.objects.get(name=dataset, type='filesystem')
 
-    #dajax.assign('#dataset_info_title', 'innerHTML', dataset)
-#    dajax.assign('#dataset_info_menu', 'innerHTML',
-#                 render_to_string('solarsan/status_dataset_menu.html',
-#                                  {'dataset': d,
-#                                   }))
-    dajax.assign('#dataset_info_content', 'innerHTML',
-                 render_to_string('solarsan/status_snapshot_list.html',
+    dajax.assign('#dataset_info', 'innerHTML',
+                 render_to_string('solarsan/status_dataset.html',
                                   {'dataset': d,
+                                   'action': 'snapshots_list',
                                    }))
     return dajax.json()
 
