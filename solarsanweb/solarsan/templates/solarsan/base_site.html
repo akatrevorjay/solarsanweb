@@ -9,29 +9,37 @@
 <style type="text/css">
 @import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700);
 
-/* Generics */
-
 /*
+ * Common
+ */
+
 body {
-    margin-bottom: 20px;
+    margin: 15px;
 }
-*/
 
-body, body * {
-/*    font-family: "Ubuntu Mono", sans-serif; */
-    font-family: "Ubuntu";
+#container {}
+
+#content {
+    /* width: 910px; */
+    width; auto;
+    min-width: 910px;
+    margin: 15px;
+    
+    /* font defaults */
+    font-family: "Ubuntu"; 
+    font-size: 0.8em;
+}
+
+/* remove bold from some jquery ui elements */
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+    font-weight: normal;
 }
 
 /*
-table {
-    border-collapse: collapse;
-}
+ * Generics
+ */
 
-table td, table th {
-    padding: 0;
-}
-*/
-
+/* positional classes */
 .left {
     float: left;
 }
@@ -40,59 +48,27 @@ table td, table th {
     float: right;
 }
 
-/* Common */
-
 /*
-#container {
-    width: 100%;
-}
-*/
+ * Status
+ */
 
-#content {
-    width: 910px;
-    min-width: 910px;
-    margin: 15px;
-    
-    font-size: 0.8em;
-}
-
-/*
-#content > div {
-    margin: 15px;
-}
-*/
-
-/*
-#content h1:first-of-type, #content h2:first-of-type {
-    background-color: #ccc;
-    display: inline;
-}
-*/
-
-.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
-    font-weight: normal;
-}
-
-/* Status */
-
+/* Graphs */
 #content-main > div.pool > div.graphs {
     width: auto;
     height: 200px;
     padding: 10px;
 }
-
-/* Graphs */
-
 #content-main > div.pool > div.graphs > div {
     text-align: right;
 }
-
 #content-main > div.pool > div.graphs > div.graphs_left {
     text-align: left;
     float: left;
 }
 
-/* dataset_list */
+/*
+ * dataset_list
+ */
 
 div.pool > div.dataset_list {
     width: 25%;
@@ -101,15 +77,8 @@ div.pool > div.dataset_list {
     margin-right: 10px;
 }
 
-div.pool > div.dataset_list > div :first-child {
-    padding: 0px;
-    margin: 0px;
-    text-decoration: none;
-    font-weight: normal;
-    text-align: left;
-}
-
-div.pool > div.dataset_list > div {
+/* dataset */
+div.pool > div.dataset_list > div.ui-button {
     display: block;
     cursor: pointer;
     color: #555;
@@ -117,34 +86,43 @@ div.pool > div.dataset_list > div {
     padding: 5px;
     margin: 5px;
 }
-
-/*
-div.pool > div.dataset_list > div.hover:not(.selected) {
-    color: #333;
+/* dataset dragging */
+div.pool > div.dataset_list > div.ui-button.ui-state-dragging {
+    z-index: auto;
 }
-*/
-
-div.pool > div.dataset_list > div.selected {
-    color: #000;
-
+/* dataset selected */
+div.pool > div.dataset_list > div.ui-button.selected {
     padding-top: 10px;
     padding-bottom: 10px;
-    
+    color: #333;
     border: 1px solid #fbcb09; background: #fdf5ce url({{ STATIC_URL }}/css/ui-lightness/images/ui-bg_glass_100_fdf5ce_1x400.png) 50% 50% repeat-x; font-weight: bold;
 }
-div.pool > div.dataset_list > div.selected a {
+div.pool > div.dataset_list > div.ui-button.selected a {
     color: #c77405;
 }
 
-div.pool > div.dataset_list > div div {
-    display: none;
+/* dataset header */
+div.pool > div.dataset_list > div.ui-button :first-child {
+    /* jquery ui overrides */
+    padding: 0px;
+    margin: 0px;
+    text-decoration: none;
+    font-weight: normal;
+    text-align: left;
 }
 
-div.pool > div.dataset_list > div.selected div, div.pool > div.dataset_list > div.hover div, div.pool > div.dataset_list > div.ui-state-hover div {
+/* dataset additional */
+div.pool > div.dataset_list > div.ui-button div {
+    display: none;
+}
+/* dataset additional (selected|hover) */
+div.pool > div.dataset_list > div.ui-button.selected div, div.pool > div.dataset_list > div.ui-button.ui-state-hover div {
     display: inline;
 }
 
-/* dataset_info */
+/*
+ * dataset_info
+ */
 
 div.pool > div.dataset_info {
     width: auto;
@@ -154,6 +132,7 @@ div.pool > div.dataset_info {
 }
 
 div.pool > div.dataset_info .ui-tabs-panel {
+    /* jquery ui overrides */
     padding: 0;
 }
 
@@ -175,7 +154,7 @@ div.pool > div {
 
 {% block extrahead %}
     {% load collect %}
-    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/graphs.js' as js %}
+    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'js/jquery.form-defaults.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/graphs.js' as js %}
     {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
     
     {% load dajaxice_templatetags %}

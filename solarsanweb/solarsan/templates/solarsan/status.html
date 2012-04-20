@@ -4,11 +4,19 @@
 <div id="content-main">
 
 <script type="text/javascript">
-
-// Graphs
+/*
+ * vars
+ */
 var graphs = {};
 
+/*
+ * main
+ */
 $(function() {
+
+    /*
+     * graphs
+    */
     {% for pool in pools %}
     graphs['{{ pool }}'] = {};
     
@@ -40,19 +48,21 @@ $(function() {
     {% endfor %}
     
     // Update every 30s
-    graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
-});
+    //graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
 
-// dataset_list
-$(function() {
+/*
+ * dataset_list
+ */
+$('div.pool > div.dataset_list').resizable({ handles: "e" });
 
-$("div.pool > div.dataset_list > div").each(function (i) {
-    $(this).hover(function() {
-            $(this).addClass("hover", "fast");
+// dataset_list datasets
+$("div.pool > div.dataset_list > div.dataset")
+/*    .hover(function() {
+            $(this).addClass("ui-state-hover", "fast");
         }, function() {
-            $(this).removeClass("hover", "fast");
-        });
-    $(this).click(function() {
+            $(this).removeClass("ui-state-hover", "fast");
+        }) */
+    .click(function() {
         $(this).parent().children("div.selected").removeClass("selected", "fast");
         $(this).addClass("selected", "fast");
 
@@ -60,21 +70,31 @@ $("div.pool > div.dataset_list > div").each(function (i) {
             url: "{% url solarsan.views.status_dataset_info %}/list/"+$(this).find('a:first').html(),
             context: $(this),
             }).done(function(data) { $(this).parent().parent().children("div.dataset_info").html(data); });
-    });
-    $(this).button();
-});
+    })
+    .button()
+    .draggable({ revert: true, zIndex: 100,
+        //helper: "clone",
+        helper: function() {
+           return  $('<div>'+$("a", this).html()+'</div>').button();
+            },
+        });
+
+// Act as if the first dataset has been clicked
 $("div.pool > div.dataset_list > div:first-child").click();
 
-$('div.pool > div.dataset_list').resizable({
-    handles: "e",
-});
+/*
+ * misc
+ */
 
+/*
+// center content
 $("#container > div").each(function(i) {
     $(this).center({inside: $("#container"), vertical: false})
     $(this).bind('resize', function() {
         $(this).center({inside: $("#container"), transition: 50, vertical: false});
     });
 });
+*/
 
 });
 
@@ -90,16 +110,16 @@ $("#container > div").each(function(i) {
     </div>
     <div class="dataset_list ui-widget-content">
             {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
-            <div>
+            <div class="dataset">
                 <a>{{ dataset }}</a><br />
                 <div>{{ dataset.used }}/{{ dataset.available }}</div>
             </div>
             {% empty %}
-            <div>
+            <div class="dataset empty">
                 <i>(none)</i>
             </div>
             {% endfor %}
-            <div>
+            <div class="dataset add">
                 <a>+ add dataset +</a>
             </div>
     </div>

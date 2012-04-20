@@ -1,18 +1,30 @@
 {% if action == "list" %}
 <script type="text/javascript">
-$( "#dataset_info_tabs" ).tabs({padding: 0,});
+
+if (typeof status_dataset_info_last_tab === 'undefined') var status_dataset_info_last_tab = 1;
+
+$(".dataset_info_tabs").tabs({
+    padding: 0,
+    selected: (typeof status_dataset_info_last_tab === 'undefined') ? 1 : status_dataset_info_last_tab,
+    //fx: { opacity: 'toggle', duration: 'fast' },
+    spinner: '',
+    select: function(event, ui) { status_dataset_info_last_tab = ui.index; },
+});
 </script>
 
 <h3>{{ dataset }}</h3>
 
-<div id="dataset_info_tabs">
+<div class="dataset_info_tabs">
     <ul>
-        <!-- <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots" %}"><span>snapshots</span></a></li> -->
-        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots_xml" %}"><span>Snapshots</span></a></li>
-        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="health" %}"><span>Health</span></a></li>
-        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="cluster" %}"><span>Cluster</span></a></li>
-        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="info" %}"><span>Info</span></a></li>
+        {% load collect %}
+        {% collect 'health' 'snapshots' 'cron' 'cluster' 'backup' as tabs %}
+        {% for t in tabs %}
+        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action=t %}" title="{{ t }}"><span>{{ t|capfirst }}</span></a></li>
+        {% endfor %}
     </ul>
+    {% for t in tabs %}
+    <div id="{{ t }}"></div>
+    {% endfor %}
 </div>
 {% endif %}
 
@@ -24,22 +36,52 @@ $( "#dataset_info_tabs" ).tabs({padding: 0,});
     setup gluster mirror
 {% endif %}
 
-{% if action == "info" %}
-    {{ dataset }}
+{% if action == "cron" %}
+    schedule snapshots, backups
+{% endif %}
+
+{% if action == "backup" %}
+<script type="text/javascript">
+
+$(".online_backup").each(function() {
+    // assign default values
+    $("textarea, input", this).DefaultValue();
+
+    // datasets drop
+    $(".datasets", this).droppable({
+            activeClass: "ui-state-hover",
+            hoverClass: "ui-state-active",
+            drop: function( event, ui ) {
+                $( this )
+                    .addClass( "ui-state-highlight" )
+                    .value( "Dropped!" );
+            },
+    });
+/*
+    $(".datasets").sortable({
+            placeholder: "ui-state-highlight",
+            items: 'div',
+        });
+    $(".datasets").disableSelection();
+*/
+});
+
+</script>
+
+<div class="online_backup" style="padding: 10px;">
+    enter in locsol backup key, drag and drop datasets from the left to backup<br />
+    show graph with space available / remaining<br/>
+    show backup status<br />
+    <form>
+        <input type="text" name="username" label="Username" />
+        <textarea name="key" style="width: 100%" label="Online Backup Key"></textarea>
+        <div class="datasets" style="width: 100%; height: 50px;" label="Datasets"></div>
+        <input type="submit" value="Save"/>
+    </form>
+</div>
 {% endif %}
 
 {% if action == "snapshots" %}
-    {% for snapshot in dataset.snapshots|dictsort:"name" %}
-    <div class="snapshot">
-        <a>{{ snapshot.name }}</a>
-        {{ snapshot.creation }}
-        {{ snapshot.used }}/{{ dataset.available }}
-        <a href="#">[X]</a>
-    </div>
-    {% endfor %}
-{% endif %}
-
-{% if action == "snapshots_xml" %}
 
 <table id="list1"></table>
 <div id="pager1"></div>
