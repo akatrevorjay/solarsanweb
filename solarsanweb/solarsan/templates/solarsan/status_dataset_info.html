@@ -12,9 +12,11 @@ $(".dataset_info_tabs").tabs({
 });
 </script>
 
-<h3>{{ dataset }}</h3>
+<h3 class="ui-widget" style="margin: 0 0 0.5em 0; font-size: 1.2em;">
+    <div class="ui-widget-content"style="padding: 1em; color: #333;">{{ dataset }}</div>
+</h3>
 
-<div class="dataset_info_tabs">
+<div class="dataset_info_tabs ui-widget-content">
     <ul>
         {% load collect %}
         {% collect 'health' 'snapshots' 'cron' 'cluster' 'backup' as tabs %}
@@ -51,19 +53,29 @@ $(".online_backup").each(function() {
     $(".datasets", this).droppable({
             activeClass: "ui-state-hover",
             hoverClass: "ui-state-active",
+            accept: ":not(.ui-sortable-helper)",
             drop: function( event, ui ) {
-                $( this )
-                    .addClass( "ui-state-highlight" )
-                    .value( "Dropped!" );
+                $( this ).find( ".placeholder" ).remove();
+                //console.log(ui);
+                
+                $( "<li></li>" ).text( ui.helper.text() ).button().css("padding", "5").appendTo(this);
+                
+                //$( "<div></div>" ).text( ui.draggable.find("a").text() ).button().appendTo( this );
             },
+    }).sortable({
+        items: "li:not(.placeholder)",
+        tolerance: 'pointer',
+        sort: function() {
+            // gets added unintentionally by droppable interacting with sortable
+            // using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+            $( this ).removeClass( "ui-state-default" );
+        },
+        //placeholder: "ui-state-highlight",
+        //revert: true,
+        //axis: 'x',
+        //containment: 'parent',
     });
-/*
-    $(".datasets").sortable({
-            placeholder: "ui-state-highlight",
-            items: 'div',
-        });
-    $(".datasets").disableSelection();
-*/
+    //$(".datasets", this).disableSelection();
 });
 
 </script>
@@ -75,7 +87,9 @@ $(".online_backup").each(function() {
     <form>
         <input type="text" name="username" label="Username" />
         <textarea name="key" style="width: 100%" label="Online Backup Key"></textarea>
-        <div class="datasets" style="width: 100%; height: 50px;" label="Datasets"></div>
+        <div class="datasets ui-state-default" style="width: 100%; height: 100px; overflow: hidden;" label="Datasets">
+            <ul></ul>
+        </div>
         <input type="submit" value="Save"/>
     </form>
 </div>

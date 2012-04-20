@@ -4,6 +4,8 @@
 <title>{% block title %}{% endblock %}</title>
 {% block extrastyle %}{% endblock %}
 {% block extrahead %}{% endblock %}
+{% block pagestyle %}{% endblock %}
+{% block pagehead %}{% endblock %}
 </head>
 
 <body>
@@ -12,15 +14,44 @@
 <div id="container">
     <!-- Content -->
     <div id="content">
-        {% block content_title %}
+        <!-- Header -->
         <div id="header">
-            <h1>SolarSAN Administration{% if title %} | {{ title }}{% endif %}</h1>
+            <h1 class="ui-widget">
+                <div class="ui-widget-header">
+                    {% block header %}{% endblock %}
+                </div>
+            </h1>
+            <div id="nav" class="ui-widget-content">
+                <div class="btnset left">
+                    <button>{{ title|lower }}</button>
+                    <button class="no_text ui-icon-triangle-1-s">Main menu</button>
+                </div>
+                <div id="pagenav" class="left">
+                    {% block pagenav %}{% endblock %}
+                </div>
+                <div class="btnset">
+                    <button>configure</button>
+                    <button class="no_text ui-icon-triangle-1-s">Main menu</button>
+                </div>
+                <div class="btnset rightnav">
+                    <button><span style="color: #555;">graphs</span> iops</button>
+                    <button class="no_text ui-icon-triangle-1-s">Graph menu</button>
+                </div>
+            <div id="header">
+                {% block pageheader %}{% endblock %}
+            </div>
         </div>
-        {% endblock %}
-        {% block content %}
-        {{ content }}
-        {% endblock %}
-        <div id="footer" class="ui-widget-content">Localhost Solutions &copy; 2012</div>
+        <!-- END Header -->
+        <!-- Main -->
+        <div id="main">
+            {% block main %}{% endblock %}
+        </div>
+        <!-- END Main -->
+        <!-- Footer -->
+        <div id="footer" class="ui-widget-content">
+            {% block footer %}{% endblock %}
+        </div>
+        <!-- END Footer -->
     </div>
     <!-- END Content -->
 </div>

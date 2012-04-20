@@ -91,8 +91,7 @@ TEMPLATE_LOADERS = (
 #    ('django.template.loaders.cached.Loader', (
         'django.template.loaders.filesystem.Loader',
         'django.template.loaders.app_directories.Loader',
-        # Dajaxice needs this
-        'django.template.loaders.eggs.Loader',
+        #'django.template.loaders.eggs.Loader',
 #    )),
 )
 
@@ -126,16 +125,11 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
 
     # Libs
-    'dajaxice',
-    'dajax',
     'kronos',
     
     'polls',
     'solarsan',
 )
-
-# Dajaxice
-DAJAXICE_MEDIA_PREFIX="dajaxice"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

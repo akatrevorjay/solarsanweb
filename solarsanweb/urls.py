@@ -5,9 +5,9 @@ from django.contrib import admin
 admin.autodiscover()
 
 # Dajaxice
-from django.conf import settings
-from dajaxice.core import dajaxice_autodiscover
-dajaxice_autodiscover()
+#from django.conf import settings
+#from dajaxice.core import dajaxice_autodiscover
+#dajaxice_autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
@@ -15,7 +15,7 @@ urlpatterns = patterns('',
     url(r'^polls/', include('polls.urls')),
 
     # Dajaxice
-    (r'^%s/' % settings.DAJAXICE_MEDIA_PREFIX, include('dajaxice.urls')),
+    #(r'^%s/' % settings.DAJAXICE_MEDIA_PREFIX, include('dajaxice.urls')),
 
     # SolarSAN
     url(r'^$', include('solarsan.urls')),

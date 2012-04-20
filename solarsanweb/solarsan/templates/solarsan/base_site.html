@@ -1,162 +1,19 @@
 {% extends "solarsan/base.html" %}
 
-{% block title %}{{ title }} | SolarSAN Administration{% endblock %}
+{% block title %}{% if title %}{{ title }} | {% endif %}SolarSAN Administration{% endblock %}
+{% block header %}SolarSAN Administration{% if title %} | {{ title }}{% endif %}{% endblock %}
 
 {% block extrastyle %}
-<!--TODO Move this to css link rel -->
-<link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.18.custom.css" rel="Stylesheet" />
-<link type="text/css" href="{{ STATIC_URL }}css/ui.jqgrid.css" rel="Stylesheet" />
-<style type="text/css">
-@import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700);
-
-/*
- * Common
- */
-
-body {
-    margin: 15px;
-}
-
-#container {}
-
-#content {
-    /* width: 910px; */
-    width; auto;
-    min-width: 910px;
-    margin: 15px;
-    
-    /* font defaults */
-    font-family: "Ubuntu"; 
-    font-size: 0.8em;
-}
-
-/* remove bold from some jquery ui elements */
-.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
-    font-weight: normal;
-}
-
-/*
- * Generics
- */
-
-/* positional classes */
-.left {
-    float: left;
-}
-
-.right {
-    float: right;
-}
-
-/*
- * Status
- */
-
-/* Graphs */
-#content-main > div.pool > div.graphs {
-    width: auto;
-    height: 200px;
-    padding: 10px;
-}
-#content-main > div.pool > div.graphs > div {
-    text-align: right;
-}
-#content-main > div.pool > div.graphs > div.graphs_left {
-    text-align: left;
-    float: left;
-}
-
-/*
- * dataset_list
- */
-
-div.pool > div.dataset_list {
-    width: 25%;
-
-    float: left;
-    margin-right: 10px;
-}
-
-/* dataset */
-div.pool > div.dataset_list > div.ui-button {
-    display: block;
-    cursor: pointer;
-    color: #555;
-
-    padding: 5px;
-    margin: 5px;
-}
-/* dataset dragging */
-div.pool > div.dataset_list > div.ui-button.ui-state-dragging {
-    z-index: auto;
-}
-/* dataset selected */
-div.pool > div.dataset_list > div.ui-button.selected {
-    padding-top: 10px;
-    padding-bottom: 10px;
-    color: #333;
-    border: 1px solid #fbcb09; background: #fdf5ce url({{ STATIC_URL }}/css/ui-lightness/images/ui-bg_glass_100_fdf5ce_1x400.png) 50% 50% repeat-x; font-weight: bold;
-}
-div.pool > div.dataset_list > div.ui-button.selected a {
-    color: #c77405;
-}
-
-/* dataset header */
-div.pool > div.dataset_list > div.ui-button :first-child {
-    /* jquery ui overrides */
-    padding: 0px;
-    margin: 0px;
-    text-decoration: none;
-    font-weight: normal;
-    text-align: left;
-}
-
-/* dataset additional */
-div.pool > div.dataset_list > div.ui-button div {
-    display: none;
-}
-/* dataset additional (selected|hover) */
-div.pool > div.dataset_list > div.ui-button.selected div, div.pool > div.dataset_list > div.ui-button.ui-state-hover div {
-    display: inline;
-}
-
-/*
- * dataset_info
- */
-
-div.pool > div.dataset_info {
-    width: auto;
-    overflow: hidden;
-
-    padding: 10px;
-}
-
-div.pool > div.dataset_info .ui-tabs-panel {
-    /* jquery ui overrides */
-    padding: 0;
-}
-
-div.pool > div {
-    margin-top: 10px;
-}
-
-/* footer */
-
-#footer {
-    margin-top: 10px;
-    padding: 10px;
-    overflow: hidden;
-    text-align: right;
-}
-
-</style>
+{% load collect %}
+{% collect 'css/ui-lightness/jquery-ui-1.8.18.custom.css' 'css/ui.jqgrid.css' 'css/base.css' as css %}
+{% for c in css %}<link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" />{% endfor %}
+<link type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700" rel="stylesheet" />
 {% endblock %}
 
 {% block extrahead %}
     {% load collect %}
-    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'js/jquery.form-defaults.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/graphs.js' as js %}
+    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'js/jquery.form-defaults.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/graphs.js' as js %}
     {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
-    
-    {% load dajaxice_templatetags %}
-    {% dajaxice_js_import %}
 {% endblock %}
+
+{% block footer %}Localhost Solutions &copy; 2012{% endblock %}

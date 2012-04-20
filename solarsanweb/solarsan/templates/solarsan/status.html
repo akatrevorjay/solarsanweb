@@ -1,8 +1,6 @@
 {% extends "solarsan/base_site.html" %}
 
-{% block content %}
-<div id="content-main">
-
+{% block pagehead %}
 <script type="text/javascript">
 /*
  * vars
@@ -48,7 +46,7 @@ $(function() {
     {% endfor %}
     
     // Update every 30s
-    //graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
+    graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
 
 /*
  * dataset_list
@@ -56,7 +54,7 @@ $(function() {
 $('div.pool > div.dataset_list').resizable({ handles: "e" });
 
 // dataset_list datasets
-$("div.pool > div.dataset_list > div.dataset")
+$("div.pool > div.dataset_list > div > div.dataset")
 /*    .hover(function() {
             $(this).addClass("ui-state-hover", "fast");
         }, function() {
@@ -69,18 +67,21 @@ $("div.pool > div.dataset_list > div.dataset")
         $.ajax({type: "GET",
             url: "{% url solarsan.views.status_dataset_info %}/list/"+$(this).find('a:first').html(),
             context: $(this),
-            }).done(function(data) { $(this).parent().parent().children("div.dataset_info").html(data); });
+            }).done(function(data) { $(this).parent().parent().parent().children("div.dataset_info").html(data); });
     })
     .button()
     .draggable({ revert: true, zIndex: 100,
+        //connectToSortable: ".datasets",
+        //appendTo: "body",
         //helper: "clone",
+        cursorAt: { left: 5 },
         helper: function() {
-           return  $('<div>'+$("a", this).html()+'</div>').button();
+           return  $( "<li></li>" ).text( $("a", this).text() ).button();
             },
         });
 
 // Act as if the first dataset has been clicked
-$("div.pool > div.dataset_list > div:first-child").click();
+$("div.pool > div.dataset_list > div > div.dataset:first-child").click();
 
 /*
  * misc
@@ -96,19 +97,69 @@ $("#container > div").each(function(i) {
 });
 */
 
+$("div.btnset").each(function() {
+    $("button", this).button();
+
+    $("button.no_text", this).button('option', {
+        text: false,
+    });
+
+    $("button.ui-icon-arrowstop-1-e", this).button('option', {
+        icons: {
+            primary: "ui-icon-circle-check"
+        }
+    });
+
+    $("button.ui-icon-triangle-1-s", this).button('option', {
+        icons: {
+            primary: "ui-icon-triangle-1-s"
+        },
+    });
+
+    $(this).buttonset();
+});
+
+$("div.btn").button();
+$("div.btn.ui-icon-plus").button('option', {
+        icons: {
+            primary: "ui-icon-plus",
+            secondary: "ui-icon-plus",
+        },
+    });
 });
 
 </script>
+{% endblock %}
+
+
+{% block pagenav %}
+<div class="btnset">
+    <button><span style="color: #555;">pool</span> {{ pools|first }}</button>
+    <button class="no_text ui-icon-triangle-1-s">Select a pool</button>
+    <div class="dropdown_menu" style="display: none;">
+        <ul>
+            {% for pool in pools %}
+            <li>{{ pool }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block main %}
 
 {% for pool in pools %}
 <div class="pool" id="pool_{{ pool }}">
-<h2>Storage Pool: {{ pool }}</h2>
-    <div class="graphs">
+    <div class="graphs ui-widget">
+        <!-- TODO Convert these to RRD -->
         <div id="{{ pool }}__graph_utilization" class="ajax graphs_left"></div>
-        <div id="{{ pool }}__graph_iops" class="ajax"></div>
-        <div id="{{ pool }}__graph_throughput" class="ajax"></div>
+        <div id="{{ pool }}__graph_iops" class="ajax" style="overflow: hidden; width: auto;"></div>
+        <div id="{{ pool }}__graph_throughput" class="ajax" style="overflow: hidden; width: auto;"></div>
     </div>
-    <div class="dataset_list ui-widget-content">
+    <!-- -->
+    <div class="dataset_list">
+        <div class="ui-widget-content" style="padding: 0.5em; color: #333; text-align: center; font-weight: 600; margin-bottom: 0.5em;">Datasets</div>
+        <div class="ui-widget-content">
             {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
             <div class="dataset">
                 <a>{{ dataset }}</a><br />
@@ -119,11 +170,10 @@ $("#container > div").each(function(i) {
                 <i>(none)</i>
             </div>
             {% endfor %}
-            <div class="dataset add">
-                <a>+ add dataset +</a>
-            </div>
+            <div class="btn ui-icon-plus">add dataset</div>
+        </div>
     </div>
-    <div class="dataset_info ui-widget-content"></div>
+    <div class="dataset_info"></div>
 </div>
 {% empty %}
 <h2>There are no storage pools?</h2>
