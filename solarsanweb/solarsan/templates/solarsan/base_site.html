@@ -175,7 +175,7 @@ div.pool > div {
 
 {% block extrahead %}
     {% load collect %}
-    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/status.js' as js %}
+    {% collect 'js/jquery.js' 'js/jquery-ui.js' 'js/jquery.center.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/jquery.dajax.core.js' 'js/graphs.js' as js %}
     {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
     
     {% load dajaxice_templatetags %}
