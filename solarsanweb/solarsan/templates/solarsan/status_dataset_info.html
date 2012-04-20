@@ -1,6 +1,6 @@
 {% if action == "list" %}
 <script type="text/javascript">
-$( "#dataset_info_tabs" ).tabs();
+$( "#dataset_info_tabs" ).tabs({padding: 0,});
 </script>
 
 <h3>{{ dataset }}</h3>
@@ -10,10 +10,18 @@ $( "#dataset_info_tabs" ).tabs();
         <!-- <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots" %}"><span>snapshots</span></a></li> -->
         <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots_xml" %}"><span>Snapshots</span></a></li>
         <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="health" %}"><span>Health</span></a></li>
-        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="snapshots_xml" %}"><span>Cluster</span></a></li>
+        <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="cluster" %}"><span>Cluster</span></a></li>
         <li><a href="{% url solarsan.views.status_dataset_info dataset=dataset.name action="info" %}"><span>Info</span></a></li>
     </ul>
 </div>
+{% endif %}
+
+{% if action == "health" %}
+    not ok?
+{% endif %}
+
+{% if action == "cluster" %}
+    setup gluster mirror
 {% endif %}
 
 {% if action == "info" %}
