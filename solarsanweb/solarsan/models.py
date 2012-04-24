@@ -39,8 +39,8 @@ class Pool_IOStat(models.Model):
     pool = models.ForeignKey(Pool)
     timestamp = models.DateTimeField()
     timestamp_end = models.DateTimeField()
-    alloc = models.IntegerField()
-    free = models.IntegerField()
+    alloc = models.FloatField()
+    free = models.FloatField()
     bandwidth_read = models.IntegerField()
     bandwidth_write = models.IntegerField()
     iops_read = models.IntegerField()
@@ -135,4 +135,18 @@ def dataset_snapshots(*datasets, **kwargs):
 
 from solarsan.utils import zfs_snapshot
 from cron import sync_zfs_db
+
+## Schedule backups, snapshots, health status checks, etc
+class Dataset_Cron(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    dataset = models.ForeignKey(Dataset)
+    recursive = models.BooleanField()
+
+    task = models.CharField(max_length=128)
+    schedule = models.CharField(max_length=128)
+
+
+
 

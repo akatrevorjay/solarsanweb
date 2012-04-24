@@ -12,7 +12,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Examples:
     #url(r'^$', 'solarsanweb.views.home', name='home'),
-    url(r'^polls/', include('polls.urls')),
+    #url(r'^polls/', include('polls.urls')),
 
     # Dajaxice
     #(r'^%s/' % settings.DAJAXICE_MEDIA_PREFIX, include('dajaxice.urls')),

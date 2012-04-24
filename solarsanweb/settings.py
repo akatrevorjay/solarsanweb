@@ -11,10 +11,10 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/home/trevorj/Projects/solarsanweb/sqlite.db',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'solarsanweb',                      # Or path to database file if using sqlite3.
+        'USER': 'root',                      # Not used with sqlite3.
+        'PASSWORD': 'thiiv9rujeoLoe2Eenashixohxohfei8',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -37,7 +37,7 @@ SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
 
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
@@ -126,10 +126,24 @@ INSTALLED_APPS = (
 
     # Libs
     'kronos',
-    
-    'polls',
+	'djcelery',
+	'kombu.transport.django',
+
+    #'polls',
     'solarsan',
 )
+
+import os
+import sys
+sys.path.append(os.getcwd())
+
+import djcelery
+djcelery.setup_loader()
+
+#BROKER_URL = "django://"
+BROKER_URL = "amqp://guest:guest@localhost:5672//"
+CELERY_IMPORTS = ("solarsan.tasks", )
+CELERY_RESULT_BACKEND = "amqp"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -162,3 +176,4 @@ logging.basicConfig(
     #filename = '/tmp/myapp.log',
     #filemode = 'w'
 )
+

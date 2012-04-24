@@ -4,8 +4,12 @@ import logging
 from solarsan.models import Pool, Pool_IOStat, Dataset
 from solarsan.utils import zpool_iostat, zpool_list, zfs_list, convert_human_to_bytes, zfs_snapshot
 
-@kronos.register('*/2 * * * *')
-def cron_pool_iostats():
+from celery.schedules import crontab
+from datetime import timedelta
+from celery.task import periodic_task, task
+
+@periodic_task(run_every=timedelta(seconds=30))
+def cron_pool_iostats(*args, **kwargs):
     """ Cron job to periodically log iostats per pool to db.
         Also creates pools that do not exist in db """
     capture_length=30
@@ -31,8 +35,8 @@ def cron_pool_iostats():
         
         pool.pool_iostat_set.create(**iostats[i])
 
-@kronos.register('0 * * * *')
-def cron_pool_iostats_cleanup():
+@periodic_task(run_every=crontab(minute="0", hour="0"))
+def cron_pool_iostats_cleanup(*args, **kwargs):
     """ Cron job to cleanup old iostat entries """
 
     delete_older_than = datetime.timedelta(days=180)
@@ -52,17 +56,15 @@ def cron_pool_iostats_cleanup():
 
     return 0
 
-@kronos.register('0 * * * *')
-def cron_snapshot():
+@task
+def cron_snapshot(*args, **kwargs):
     """ Cron job to periodically take a snapshot of datasets """
     
     for p in Pool.objects.all():
         d = p.dataset_set.get(name=p.name).snapshot(recursive=True)
 
-    #TODO cleanup old auto snapshots
-
-@kronos.register('*/2 * * * *')
-def sync_zfs_db():
+@task
+def sync_zfs_db(*args, **kwargs):
     """ Syncs ZFS pools/datasets to DB """
     
     datasets = zfs_list(type='all')
