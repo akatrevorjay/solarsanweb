@@ -1,78 +1,47 @@
-from django.shortcuts import get_object_or_404, render_to_response
-from django.http import HttpResponseRedirect, HttpResponse
-from django.core.urlresolvers import reverse
-from django.template import RequestContext
-from django.template.loader import render_to_string
-from django.core import serializers
-
-from utils import qdct_as_kwargs, dict_diff
-from response import JSONResponse
-from django.views.decorators.csrf import csrf_exempt
-
-from solarsan.utils import *
-from solarsan.models import *
-
-import time
+import datetime, time
+import os, logging, time
+import os, sys, logging
 import re
 
-import os
-import sys
-import logging
-
-# RRD Graphs
-from pyrrd.rrd import DataSource, RRA, RRD
+from celery.task import periodic_task, task
+from datetime import timedelta
+from django.core import serializers
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404, render_to_response
+from django.template import RequestContext
+from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
+from kstats import kstats
+from math import sin, pi
+from pyrrd.backend import bindings
 from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, GPRINT, ColorAttributes, Graph
+from pyrrd.rrd import DataSource, RRA, RRD
+from solarsan.utils import dict_diff
+from heapq import merge
 
-class rarrd:
-    def __init__(self, *args, **kwargs):
-            self.data = kwargs
-
-            if not self.data.has_key('dss'):
-                self.data['dss'] = []
-                self.data['dss'].append( DataSource(dsName=self.data.get('dsName', self.data['name'][:16]),
-                                       dsType=self.data.get('dsType', 'COUNTER'),
-                                       heartbeat=self.data.get('heartbeat', 300) ) )
-
-            if not self.data.has_key('rras'):
-                self.data['rras'] = []
-                self.data['rras'].append(RRA(cf='AVERAGE', xff=0.5, steps=1, rows=600))
-                self.data['rras'].append(RRA(cf='AVERAGE', xff=0.5, steps=6, rows=700))
-                self.data['rras'].append(RRA(cf='AVERAGE', xff=0.5, steps=24, rows=775))
-                self.data['rras'].append(RRA(cf='AVERAGE', xff=0.5, steps=288, rows=797))
-                #self.data['rras'].append(RRA(cf='MAX', xff=0.5, steps=1, rows=600))
-                #self.data['rras'].append(RRA(cf='MAX', xff=0.5, steps=6, rows=700))
-                #self.data['rras'].append(RRA(cf='MAX', xff=0.5, steps=24, rows=775))
-                #self.data['rras'].append(RRA(cf='MAX', xff=0.5, steps=288, rows=797))
-
-            self.data['filename'] = self.data.get('filename', "rrd/"+self.data['name']+".rrd")
-
-            self.data['rrd'] = RRD(self.data['filename'],
-                        ds=self.data['dss'], rra=self.data['rras'], start=self.data.get('start', 920804400))
-    def create_or_update(self, *args, **kwargs):
-        if not os.path.isfile(self.data['filename']):
-            return self.data['rrd'].create()
-        else:
-            return self.data['rrd'].update()
-    def bufval(self, *args, **kwargs):
-            return self.data['rrd'].bufferValue(kwargs.get('time', int(time.time())), *args)
-
+@periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):
-    k = Kstat()
-    k.get_kstat()
-    ks = k.kstat
+    StartTime = int(time.time())
+    ks = kstats().kstat
 
-    ## arcstats
-    arcstats = ks['zfs']['arcstats']
-
-    rrds = {'zfs': {
+    ksMap = {'zfs': {
                     'zfetchstats': {},
                     'xuio_stats': {},
-                    'dmu_tx': {},
+                    'dmu_tx': {
+                            'GAUGE': {
+                                    'dmu_tx': ['dmu_tx_assigned', 'dmu_tx_delay', 'dmu_tx_error', 'dmu_tx_suspended', 'dmu_tx_group',
+                                               'dmu_tx_how', 'dmu_tx_dirty_throttle', 'dmu_tx_write_limit', 'dmu_tx_quota'],
+                            },
+                            'DERIVE': {
+                                    'dmu_tx_memory': ['dmu_tx_memory_reserve', 'dmu_tx_memory_reclaim', 'dmu_tx_memory_inflight'],
+                            },
+                    },
                     'vdev_cache_stats': {},
                     'fm': {},
                     'arcstats': {
-                            'GAUGE': {
-                                'cache_size': ['size', 'l2_size'],
+                        'GAUGE': {
+                            'cache_size': ['size', 'l2_size'],
                                 'arc_hitmiss': ['hits', 'misses'],
                                 'l2_hitmiss': ['l2_hits', 'l2_misses'],
                             },
@@ -81,137 +50,186 @@ def rrd_update(*args, **kwargs):
                                 'mutex_operation': ['mutex_miss'],
                                 'hash_collisions': ['hash_collisions'],
                                 'cache_eviction': ['evict_l2_cached', 'evict_l2_eligible', 'evict_l2_ineligible'],
-                                'cache_result': ['demand_data_hits', 'demand_metadata_hits', 'prefetch_data_hits', 'prefetch_metadata_hits', 'demand_data_misses', 'demand_metadata_misses',
-                                                 'prefetch_data_misses', 'prefetch_metadata_misses'],
+                                'cache_result': ['demand_data_hits', 'demand_metadata_hits', 'prefetch_data_hits', 'prefetch_metadata_hits',
+                                                 'demand_data_misses', 'demand_metadata_misses', 'prefetch_data_misses', 
+                                                 'prefetch_metadata_misses'],
                             },
                     }}}
 
-    rarrds = {}
-    for rmodule in rrds.keys():
-            for kmodule in rrds[rmodule].keys():
-                    for dsType in rrds[rmodule][kmodule].keys():
-                            for filename in rrds[rmodule][kmodule][dsType].keys():
-                                    for kstat in rrds[rmodule][kmodule][dsType][filename]:
-                                            logging.debug("Arr kstat=" + kstat)
-                                            rarrds[kstat] = rarrd(name=kstat, data={'dsType': dsType})
-                                            rarrds[kstat].bufval(k.kstat[rmodule][kmodule][kstat])
-                                            rarrds[kstat].create_or_update()
-    return 0
+    RRDs = {}
+    for rmodule in ksMap.keys():
+        for kmodule in ksMap[rmodule].keys():
+            for dsType in ksMap[rmodule][kmodule].keys():
+                for filename in ksMap[rmodule][kmodule][dsType].keys():
+                    rrd_path = "rrd/" + filename + ".rrd"
 
-def rrdgraph(*args, **kwargs):
-        # Let's set up the objects that will be added to the graph
-        def1 = DEF(rrdfile=myRRD.filename, vname='in', dsName=ds1.name)
-        def2 = DEF(rrdfile=myRRD.filename, vname='out', dsName=ds2.name)
-        # Here we're just going to mulitply the in bits by 100, solely for
-        # the purpose of display
-        cdef1 = CDEF(vname='hundredin', rpn='%s,%s,*' % (def1.vname, 100))
-        cdef2 = CDEF(vname='negout', rpn='%s,-1,*' % def2.vname)
-        area1 = AREA(defObj=cdef1, color='#FFA902', legend='Bits In')
-        area2 = AREA(defObj=cdef2, color='#A32001', legend='Bits Out')
+                    DSs = []
+                    Values = []
+                    RRAs = []
 
-        # Let's configure some custom colors for the graph
-        ca = ColorAttributes()
-        ca.back = '#333333'
-        ca.canvas = '#333333'
-        ca.shadea = '#000000'
-        ca.shadeb = '#111111'
-        ca.mgrid = '#CCCCCC'
-        ca.axis = '#FFFFFF'
-        ca.frame = '#AAAAAA'
-        ca.font = '#FFFFFF'
-        ca.arrow = '#FFFFFF'
+                    GItems = []
 
-        # Now that we've got everything set up, let's make a graph
-        g = Graph('dummy.png', end=endTime, vertical_label='Bits', 
-            color=ca)
-        g.data.extend([def1, def2, cdef1, cdef2, area2, area1])
-        g.title = '"In- and Out-bound Traffic Across Local Router"'
-        #g.logarithmic = ' '
+                    for i, kstat_raw in enumerate( ksMap[rmodule][kmodule][dsType][filename] ):
+                        s_kstat = kstat_raw.split('_')
+                        for x,y in enumerate( filename.split('_') ):
+                            #logging.debug("x=%s y=%s %s", s_kstat[0], y, x)
 
-        # Iterate through the different resoltions for which we want to 
-        # generate graphs.
-        for time, step in times:
-            # First, the small graph
-            g.filename = graphfile % (exampleNum, time)
-            g.width = 400
-            g.height = 100
-            g.start=endTime - time
-            g.step = step
-            g.write(debug=False)
-            
-            # Then the big one
-            g.filename = graphfileLg % (exampleNum, time)
-            g.width = 800
-            g.height = 400
-            g.write()
+                            if (len(s_kstat) == 1) or (s_kstat[0] != y):
+                              break
+                            s_kstat = s_kstat[1:]
+
+                        for x,y in enumerate( s_kstat ):
+                            kstat = '_'.join(s_kstat)
+                            if len(kstat) < 16:
+                                break
+                            s_kstat[x] = s_kstat[x][:1]
+
+                        kstat_pretty = kstat.replace('_', ' ').capitalize()
+                        logging.debug("dstype=%s, filename=%s, kstat_raw=%s, kstat=%s, kstat_pretty=%s, value=%s",
+                                      dsType, filename, kstat_raw, kstat, kstat_pretty,
+                                      ks[rmodule][kmodule][kstat_raw])
+
+                        ds1 = DataSource(dsName='%s' % kstat, dsType=dsType, heartbeat=300)
+
+                        ds1_def     = DEF(rrdfile=rrd_path, vname='%s_n' % kstat, dsName=ds1.name)
+                        ds1_area    = AREA(defObj=ds1_def,
+                                           color='#00C000', legend='%s' % kstat_pretty )
+
+                        ds1avg_vdef = VDEF(vname='%savg' % kstat, rpn='%s,AVERAGE' % ds1_def.vname)
+                        ds1avg_line = LINE(defObj=ds1avg_vdef,
+                                           color='#0000FF', legend='%s (avg)' % kstat_pretty, stack=True)
+
+                        DSs.append(ds1)
+                        Values.append( ks[rmodule][kmodule][kstat_raw] )
+
+                        for i in ds1_def, ds1_area, ds1avg_vdef, ds1avg_line:
+                            GItems.append(i)
+
+                    for (x, y) in ([1,600], [6,700], [24,775], [288,797]):
+                        RRAs.append( RRA(cf='AVERAGE', xff=0.5, steps=x, rows=y) )
+
+                    rrd = RRD(rrd_path, ds=DSs, rra=RRAs, start=920804400, backend=bindings)
+                    
+                    rrd.bufferValue(StartTime, *Values)
+
+                    if not os.path.isfile(rrd_path):
+                        rrd.create()
+                    else:
+                        rrd.update()
+
+                    ##
+                    ## Graph
+                    ##
+
+                    # Let's configure some custom colors for the graph
+                    #ca = ColorAttributes()
+                    #ca.back = '#333333'
+                    #ca.canvas = '#333333'
+                    #ca.shadea = '#000000'
+                    #ca.shadeb = '#111111'
+                    #ca.mgrid = '#CCCCCC'
+                    #ca.axis = '#FFFFFF'
+                    #ca.frame = '#AAAAAA'
+                    #ca.font = '#FFFFFF'
+                    #ca.arrow = '#FFFFFF'
+
+                    endTime = int(round(time.time()))
+                    delta = timedelta(hours=1)
+                    startTime = int(endTime - delta.seconds)
+                    step = 300
+                    maxSteps = int((endTime-startTime)/step)
+
+                    # Now that we've got everything set up, let's make a graph
+                    g = Graph(rrd_path+'-last_hour.png',
+                              start=int(startTime), end=int(endTime),
+                              vertical_label='%s' % filename.replace('_', ' ').capitalize(),
+                              backend=bindings)
+                    #color=ca, backend=bindings)
+
+#    VDEF:ds0max=ds0,MAXIMUM
+    #VDEF:ds0avg=ds0,AVERAGE
+    #VDEF:ds0min=ds0,MINIMUM
+    #VDEF:ds0pct=ds0,95,PERCENT
+    #VDEF:ds1max=ds1,MAXIMUM
+    #VDEF:ds1avg=ds1,AVERAGE
+    #VDEF:ds1min=ds1,MINIMUM
+    #VDEF:ds1pct=ds1,95,PERCENT
+
+                    g.data.extend(GItems)
+
+                    g.write()
+
+                    #g.filename = graphfileLg
+                    #g.width = 800
+                    #g.height = 400
+                    #g.write()
+
+                    ## Let's set up the objects that will be added to the graph
+                    #def1 = DEF(rrdfile=myRRD.filename, vname='in', dsName=ds1.name)
+                    #def2 = DEF(rrdfile=myRRD.filename, vname='out', dsName=ds2.name)
+                    ## Here we're just going to mulitply the in bits by 100, solely for
+                    ## the purpose of display
+                    #cdef1 = CDEF(vname='hundredin', rpn='%s,%s,*' % (def1.vname, 100))
+                    #cdef2 = CDEF(vname='negout', rpn='%s,-1,*' % def2.vname)
+                    #area1 = AREA(defObj=cdef1, color='#FFA902', legend='Bits In')
+                    #area2 = AREA(defObj=cdef2, color='#A32001', legend='Bits Out')
+
+                    ## Let's configure some custom colors for the graph
+                    #ca = ColorAttributes()
+                    #ca.back = '#333333'
+                    #ca.canvas = '#333333'
+                    #ca.shadea = '#000000'
+                    #ca.shadeb = '#111111'
+                    #ca.mgrid = '#CCCCCC'
+                    #ca.axis = '#FFFFFF'
+                    #ca.frame = '#AAAAAA'
+                    #ca.font = '#FFFFFF'
+                    #ca.arrow = '#FFFFFF'
+
+                    ## Now that we've got everything set up, let's make a graph
+                    #g = Graph('dummy.png', end=endTime, vertical_label='Bits', 
+                        #color=ca)
+                    #g.data.extend([def1, def2, cdef1, cdef2, area2, area1])
+                    #g.title = '"In- and Out-bound Traffic Across Local Router"'
+                    ##g.logarithmic = ' '
+
+                    ## Iterate through the different resoltions for which we want to 
+                    ## generate graphs.
+                    #for time, step in times:
+                        ## First, the small graph
+                        #g.filename = graphfile % (exampleNum, time)
+                        #g.width = 400
+                        #g.height = 100
+                        #g.start=endTime - time
+                        #g.step = step
+                        #g.write(debug=False)
+                        
+                        ## Then the big one
+                        #g.filename = graphfileLg % (exampleNum, time)
+                        #g.width = 800
+                        #g.height = 400
+                        #g.write()
 
 
-def temp_graphs_rrd_update(*args, **kwargs):
-        graphs = {'arcstats': {
-                # time
-                fields: ['mtxmis','arcsz','mrug','l2hit%','mh%','l2miss%','read','c','mfug','miss','dm%','dhit','pread','dread','pmis','l2miss','l2bytes','pm%','mm%','hits','mfu','l2read','mmis','rmis','mhit','mru','ph%','eskip','l2size','l2hits','hit%','miss%','dh%','mread','phit'],
-        }, '<pool>_iostats': {
-                fields: ['pool', 'alloc', 'free', 'bandwidth_read', 'bandwidth_write', 'iops_read', 'iops_write'],
-        }, '<dataset>_properties': {
-                fields: ['available', 'compressratio', 'refcompressratio', 'referenced', 'used', 'usedbychildren', 'usedbydataset', 'usedbyrefreservation',
-                         'usedbysnapshots', 'userrefs', 'copies', 'quota', 'recordsize', 'refquota', 'refreservation', 'reservation', 'volsize'],
-        }}
 
-class Kstat:
-    def __init__(self):
-        self.data = []
-    def get_kstat(self, *args, **kwargs):
-        if not hasattr(self, 'kstat'):
-            self.kstat = {}
-        self.kstat_next = {}
-        self.kstat_diff = {}
-        kstat_path = "/proc/spl/kstat/"
-        try:
-            modules = os.listdir(kstat_path)
-        except:
-            logging.error('Could not get list of kstat modules')
+                    RRDs[filename] = rrd
 
-        for i in modules:
-            self.kstat_next[i] = {}
-            self.kstat_diff[i] = {}
-            for j in os.listdir(os.path.join(kstat_path, i)):
-                self.kstat_next[i][j] = {}
-                for k, line in enumerate(str(open(os.path.join(kstat_path, i, j), 'r').read()).splitlines()):
-                    if k < 2:
-                        continue
-                    l = line.split()
-                    self.kstat_next[i][j][ l[0] ] = l[2]
-                if self.kstat.has_key(i) and self.kstat_next.has_key(i):
-                    if self.kstat[i].has_key(j) and self.kstat_next[i].has_key(j):
-                        self.kstat_diff[i][j] = dict_diff(self.kstat[i][j], self.kstat_next[i][j])
 
-        self.kstat_prev = self.kstat
-        self.kstat = self.kstat_next
-        del self.kstat_next
-    def get_kmem(self, *args, **kwargs):
-        if not hasattr(self, 'kmem'):
-            self.kmem = {}
-        self.kmem_next = {}
-        self.kmem_diff = {}
-        kmem_path = "/proc/spl/kmem/"
-        try:
-            modules = os.listdir(kmem_path)
-        except:
-            logging.error('Could not get list of kmem modules')
 
-        for i in modules:
-            self.kmem_next[i] = {}
-            self.kmem_diff[i] = {}
-            for j, line in enumerate(str(open(os.path.join(kmem_path, i), 'r').read()).splitlines()):
-                if j < 2:
-                    continue
-                l = line.split()
-                self.kmem_next[i][ l[0] ] = l[1:]
-                if self.kmem.has_key(i) and self.kmem_next.has_key(i):
-                    self.kmem_diff[i] = dict_diff(self.kmem[i], self.kmem_next[i])
 
-        self.kmem_prev = self.kmem
-        self.kmem = self.kmem_next
-        del self.kmem_next
+
+
+
+#def temp_graphs_rrd_update(*args, **kwargs):
+        #graphs = {'arcstats': {
+                ## time
+                #fields: ['mtxmis','arcsz','mrug','l2hit%','mh%','l2miss%','read','c','mfug','miss','dm%','dhit','pread','dread','pmis','l2miss','l2bytes','pm%','mm%','hits','mfu','l2read','mmis','rmis','mhit','mru','ph%','eskip','l2size','l2hits','hit%','miss%','dh%','mread','phit'],
+        #}, '<pool>_iostats': {
+                #fields: ['pool', 'alloc', 'free', 'bandwidth_read', 'bandwidth_write', 'iops_read', 'iops_write'],
+        #}, '<dataset>_properties': {
+                #fields: ['available', 'compressratio', 'refcompressratio', 'referenced', 'used', 'usedbychildren', 'usedbydataset', 'usedbyrefreservation',
+                         #'usedbysnapshots', 'userrefs', 'copies', 'quota', 'recordsize', 'refquota', 'refreservation', 'reservation', 'volsize'],
+        #}}
+
 
 

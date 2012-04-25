@@ -1,4 +1,3 @@
-import kronos
 import datetime, time
 import logging
 from solarsan.models import Pool, Pool_IOStat, Dataset
