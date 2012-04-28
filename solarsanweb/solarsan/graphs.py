@@ -1,7 +1,7 @@
 import datetime, time
 import os, logging, time
 import os, sys, logging
-import re
+import re, whisper
 
 from celery.task import periodic_task, task
 from datetime import timedelta

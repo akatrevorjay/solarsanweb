@@ -157,6 +157,7 @@ INSTALLED_APPS = (
 	'djcelery',
 	'kombu.transport.django',
     'debug_toolbar',
+	'bootstrap',
 
 	# Apps
     'solarsan',
