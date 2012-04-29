@@ -1,0 +1,19 @@
+[submodule "solarsanweb/vendor"]
+	path = slarsanweb/vendor
+	url = git://github.com/mozilla/playdoh-lib.git
+[submodule "solarsanweb/static/3rd/g.raphael"]
+	path = solarsanweb/static/3rd/g.raphael
+	url = git://github.com/DmitryBaranovskiy/g.raphael.git
+[submodule "solarsanweb/static/3rd/g.raphael2"]
+	path = solarsanweb/static/3rd/g.raphael2
+	url = git://github.com/kennyshen/g.raphael.git
+[submodule "solarsanweb/static/jquery/packages/jquery-colors"]
+	path = solarsanweb/static/jquery/packages/jquery-colors
+	url = git://github.com/Enideo/jquery-colors.git
+[submodule "solarsanweb/static/jquery/packages/jquery-cron"]
+	path = solarsanweb/static/jquery/packages/jquery-cron
+	url = git://github.com/shawnchin/jquery-cron.git
+[submodule "solarsanweb/static/jquery/packages/jquery-gentleSelect"]
+	path = solarsanweb/static/jquery/packages/jquery-gentleSelect
+	url = git://github.com/shawnchin/jquery-gentleSelect.git
+
