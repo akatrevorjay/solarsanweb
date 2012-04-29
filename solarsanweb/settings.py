@@ -89,11 +89,15 @@ SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
 #    ('django.template.loaders.cached.Loader', (
+       	'jingo.Loader',
         'django.template.loaders.filesystem.Loader',
         'django.template.loaders.app_directories.Loader',
         'django.template.loaders.eggs.Loader',
 #    )),
 )
+
+# List of apps that do not use Jingo
+JINGO_EXCLUDE_APPS = ['admin', 'debug_toolbar', 'solarsan']
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -142,6 +146,7 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+	'bootstrap',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
