@@ -22,3 +22,4 @@
 [submodule "solarsanweb/vendor"]
 	path = solarsanweb/vendor
 	url = git://github.com/mozilla/playdoh-lib.git
+
