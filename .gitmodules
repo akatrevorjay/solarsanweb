@@ -16,4 +16,9 @@
 [submodule "solarsanweb/static/jquery/packages/jquery-gentleSelect"]
 	path = solarsanweb/static/jquery/packages/jquery-gentleSelect
 	url = git://github.com/shawnchin/jquery-gentleSelect.git
-
+[submodule "solarsanweb/static/3rd/highcharts"]
+	path = solarsanweb/static/3rd/highcharts
+	url = git://github.com/highslide-software/highcharts.com.git
+[submodule "solarsanweb/vendor"]
+	path = solarsanweb/vendor
+	url = git://github.com/mozilla/playdoh-lib.git
