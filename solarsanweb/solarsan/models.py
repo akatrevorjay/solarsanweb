@@ -47,6 +47,8 @@ class Pool_IOStat(models.Model):
     iops_write = models.IntegerField()
     def __unicode__(self):
         return self.pool.name+'_'+self.timestamp.strftime('%F_%T')
+    def timestamp_epoch(self):
+        return self.timestamp.strftime('%s')
 
 class Dataset(models.Model):
     name = models.CharField(max_length=128, unique=True)

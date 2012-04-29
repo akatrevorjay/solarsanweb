@@ -51,7 +51,7 @@ def rrd_update(*args, **kwargs):
                                 'hash_collisions': ['hash_collisions'],
                                 'cache_eviction': ['evict_l2_cached', 'evict_l2_eligible', 'evict_l2_ineligible'],
                                 'cache_result': ['demand_data_hits', 'demand_metadata_hits', 'prefetch_data_hits', 'prefetch_metadata_hits',
-                                                 'demand_data_misses', 'demand_metadata_misses', 'prefetch_data_misses', 
+                                                 'demand_data_misses', 'demand_metadata_misses', 'prefetch_data_misses',
                                                  'prefetch_metadata_misses'],
                             },
                     }}}
@@ -69,16 +69,16 @@ def rrd_update(*args, **kwargs):
 
                     GItems = []
 
-                    for i, kstat_raw in enumerate( ksMap[rmodule][kmodule][dsType][filename] ):
+                    for i, kstat_raw in enumerate(ksMap[rmodule][kmodule][dsType][filename]):
                         s_kstat = kstat_raw.split('_')
-                        for x,y in enumerate( filename.split('_') ):
+                        for x, y in enumerate(filename.split('_')):
                             #logging.debug("x=%s y=%s %s", s_kstat[0], y, x)
 
                             if (len(s_kstat) == 1) or (s_kstat[0] != y):
                               break
                             s_kstat = s_kstat[1:]
 
-                        for x,y in enumerate( s_kstat ):
+                        for x, y in enumerate(s_kstat):
                             kstat = '_'.join(s_kstat)
                             if len(kstat) < 16:
                                 break
@@ -91,25 +91,25 @@ def rrd_update(*args, **kwargs):
 
                         ds1 = DataSource(dsName='%s' % kstat, dsType=dsType, heartbeat=300)
 
-                        ds1_def     = DEF(rrdfile=rrd_path, vname='%s_n' % kstat, dsName=ds1.name)
-                        ds1_area    = AREA(defObj=ds1_def,
-                                           color='#00C000', legend='%s' % kstat_pretty )
+                        ds1_def = DEF(rrdfile=rrd_path, vname='%s_n' % kstat, dsName=ds1.name)
+                        ds1_area = AREA(defObj=ds1_def,
+                                           color='#00C000', legend='%s' % kstat_pretty)
 
                         ds1avg_vdef = VDEF(vname='%savg' % kstat, rpn='%s,AVERAGE' % ds1_def.vname)
                         ds1avg_line = LINE(defObj=ds1avg_vdef,
                                            color='#0000FF', legend='%s (avg)' % kstat_pretty, stack=True)
 
                         DSs.append(ds1)
-                        Values.append( ks[rmodule][kmodule][kstat_raw] )
+                        Values.append(ks[rmodule][kmodule][kstat_raw])
 
                         for i in ds1_def, ds1_area, ds1avg_vdef, ds1avg_line:
                             GItems.append(i)
 
-                    for (x, y) in ([1,600], [6,700], [24,775], [288,797]):
-                        RRAs.append( RRA(cf='AVERAGE', xff=0.5, steps=x, rows=y) )
+                    for (x, y) in ([1, 600], [6, 700], [24, 775], [288, 797]):
+                        RRAs.append(RRA(cf='AVERAGE', xff=0.5, steps=x, rows=y))
 
                     rrd = RRD(rrd_path, ds=DSs, rra=RRAs, start=920804400, backend=bindings)
-                    
+
                     rrd.bufferValue(StartTime, *Values)
 
                     if not os.path.isfile(rrd_path):
@@ -137,10 +137,10 @@ def rrd_update(*args, **kwargs):
                     delta = timedelta(hours=1)
                     startTime = int(endTime - delta.seconds)
                     step = 300
-                    maxSteps = int((endTime-startTime)/step)
+                    maxSteps = int((endTime - startTime) / step)
 
                     # Now that we've got everything set up, let's make a graph
-                    g = Graph(rrd_path+'-last_hour.png',
+                    g = Graph(rrd_path + '-last_hour.png',
                               start=int(startTime), end=int(endTime),
                               vertical_label='%s' % filename.replace('_', ' ').capitalize(),
                               backend=bindings)
@@ -203,7 +203,7 @@ def rrd_update(*args, **kwargs):
                         #g.start=endTime - time
                         #g.step = step
                         #g.write(debug=False)
-                        
+
                         ## Then the big one
                         #g.filename = graphfileLg % (exampleNum, time)
                         #g.width = 800

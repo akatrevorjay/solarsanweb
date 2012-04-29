@@ -159,10 +159,11 @@ $("#menu_conf").gentleSelect();
 {% for pool in pools %}
 <div class="pool" id="pool_{{ pool }}">
     <div class="graphs ui-widget">
-        <!-- TODO Convert these to RRD -->
-        <div id="{{ pool }}__graph_utilization" class="ajax graphs_left"></div>
-        <div id="{{ pool }}__graph_iops" class="ajax" style="overflow: hidden; width: auto;"></div>
-        <div id="{{ pool }}__graph_throughput" class="ajax" style="overflow: hidden; width: auto;"></div>
+    	{% load chartit %}
+		<div id="testcont2" style="width: 600px; height: 200px; float: left; "></div>
+		<div id="testcont" style="width: 600px; height: 200px; "></div>
+		{{ graph_capacity|load_charts:"testcont" }}
+		{{ graph_activity|load_charts:"testcont2" }}
     </div>
     <!-- -->
     <div class="dataset_list">

@@ -12,7 +12,7 @@
 
 {% block extrahead %}
     {% load collect %}
-    {% collect 'js/jquery.js' 'js/jquery-ui-git.js' 'js/jquery.center.mlklc.js' 'js/jquery.selectrange.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'js/jquery.form-defaults.js' 'jquery/jquery-ui-dropdown-list.js' 'jquery/jquery.ui.selectmenu.js' 'raphael/raphael-min.js' 'raphael/g.raphael-min.js' 'g.raphael/g.pie.js' 'g.raphael/g.line.js' 'raphael/pie.js' 'raphael/analytics.js' 'js/graphs.js' 'jquery/jquery-gentleSelect-min.js' 'jquery/jquery-cron-min.js' as js %}
+    {% collect 'js/jquery.js' 'js/jquery-ui-git.js' 'js/jquery.center.mlklc.js' 'js/jquery.selectrange.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'js/jquery.form-defaults.js' 'js/graphs.js' 'jquery/jquery-gentleSelect-min.js' 'jquery/jquery-cron-min.js' '3rd/Highcharts-2.2.2/js/highcharts.js' '3rd/Highcharts-2.2.2/js/modules/exporting.js' as js %}
     {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
 {% endblock %}
 
