@@ -168,6 +168,7 @@ INSTALLED_APPS = (
 
 	# Apps
     'solarsan',
+    'bootstrap_example_project',
 )
 
 import os, sys
