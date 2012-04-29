@@ -22,4 +22,6 @@
 [submodule "solarsanweb/vendor"]
 	path = solarsanweb/vendor
 	url = git://github.com/mozilla/playdoh-lib.git
-
+[submodule "solarsanweb/static/3rd/flot"]
+	path = solarsanweb/static/3rd/flot
+	url = git://github.com/flot/flot.git
