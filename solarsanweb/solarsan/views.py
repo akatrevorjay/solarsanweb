@@ -29,11 +29,10 @@ def status_dataset_info(request, *args, **kwargs):
     action = kwargs.get('action', request.GET.get('action'))
     dataset = kwargs.get('dataset', request.GET.get('dataset'))
 
-    if action == "snapshots":
+    if action == "snapshots" or action == "health":
         d = Dataset.objects.get(name=dataset, type='filesystem')
     else:
         d = Dataset.objects.get(name=dataset)
-
     return render_to_response('solarsan/status_dataset_info.html',
                                   {'dataset': d,
                                    'action': action,

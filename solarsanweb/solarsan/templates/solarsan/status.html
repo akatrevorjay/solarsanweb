@@ -94,7 +94,6 @@ $("#container > div").each(function(i) {
     $(this).bind('resize', function() {
         $(this).center({inside: $("#container"), transition: 50, vertical: false});
     });
-});
 */
 
 $("div.btnset").each(function() {
@@ -119,6 +118,8 @@ $("div.btnset").each(function() {
     $(this).buttonset();
 });
 
+//$("#pool_menu").menu();
+
 $("div.btn").button();
 $("div.btn.ui-icon-plus").button('option', {
         icons: {
@@ -126,6 +127,17 @@ $("div.btn.ui-icon-plus").button('option', {
             secondary: "ui-icon-plus",
         },
     });
+
+
+
+$("#menu_main").gentleSelect();
+$("#menu_pool").gentleSelect({
+	title:	'Pool',
+});
+$("#menu_conf").gentleSelect();
+//$("#menu_graphs").gentleSelect();
+
+
 });
 
 </script>
@@ -133,16 +145,12 @@ $("div.btn.ui-icon-plus").button('option', {
 
 
 {% block pagenav %}
-<div class="btnset">
-    <button><span style="color: #555;">pool</span> {{ pools|first }}</button>
-    <button class="no_text ui-icon-triangle-1-s">Select a pool</button>
-    <div class="dropdown_menu" style="display: none;">
-        <ul>
-            {% for pool in pools %}
-            <li>{{ pool }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+<div class="gentlenavwrap">
+	<select class="gentlenav" id="menu_pool">
+		{% for pool in pools %}
+			<option value="{{ pool.name }}">Pool {{ pool.name }}</option>
+		{% endfor %}
+	</select>
 </div>
 {% endblock %}
 
@@ -180,3 +188,4 @@ $("div.btn.ui-icon-plus").button('option', {
 {% endfor %}
 
 {% endblock %}
+

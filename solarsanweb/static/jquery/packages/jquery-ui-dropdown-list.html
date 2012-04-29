@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Combo Demo</title>
+    <meta charset="utf-8">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="http://www.onemoretake.com/wp-content/uploads/2011/04/jquery.combobox.js" type="text/javascript"></script>
+   <script type="text/javascript">
+        (function ($) {
+            $(function () {
+                $('#combolist').combobox();
+
+           });
+        })(jQuery);
+    </script>
+
+    <style type="text/css">       
+        /*Standard Reset Styles*/
+        html, body, address, blockquote, div, dl, form, h1, h2, h3, h4, h5, h6, ol, p, pre, table, ul,
+        dd, dt, li, tbody, td, tfoot, th, thead, tr, button, del, ins, map, object,
+        a, abbr, acronym, b, bdo, big, br, cite, code, dfn, em, i, img, kbd, q, samp, small, span,
+        strong, sub, sup, tt, var, legend, fieldset {
+	        margin: 0;
+	        padding: 0;
+	        font-weight: inherit;
+	        font-style: inherit;
+	        vertical-align: baseline;
+        }
+
+        body {
+	        font-size: 81.25%; /*13px*/
+	        background-color:#fff;
+	        line-height:1.538em;/*20px*/
+        }
+
+        * {font-family: Helvetica, Arial, sans-serif;}
+
+        img, 
+        fieldset {
+	        border: 0;
+        }
+
+        q:before, 
+        q:after 
+        {
+            content: ""; 
+        }
+
+        ol, 
+        ul {
+	        list-style: none;
+        }
+        /*END: Reset Styles*/
+
+
+        body {
+            padding-top:50px;
+        }
+        fieldset {
+            width:285px;
+            margin:0 auto;
+        }
+
+        input[type=text] {
+            margin:0;
+        }
+
+        .ui-autocomplete-input {
+            font-family:Arial, sans-serif;
+            font-size:15px;  
+        }
+		
+		input[type=text],
+        .combowrap {
+            color:#333;
+            padding:6px;
+            width:268px;
+            border-collapse:collapse;
+            border-spacing:0;
+            border:solid 1px #999;
+            -moz-border-radius:3px;
+            -webkit-border-radius: 3px;
+            border-radius:3px;
+            -webkit-box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+            -moz-box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+            background-color: #f2f3f2; 
+        }
+
+        input[type=text]:focus,
+        input.focus {
+            background-color:#fff;
+            outline: none;
+        }
+
+        .ui-autocomplete-input:focus {
+            outline: none;
+        }
+
+        .formrow {
+            position:relative;
+            padding-bottom:15px;
+        }
+
+        label {
+            color: #666;
+			display: block;
+			font-size: 11px;
+			line-height: 11px;
+			padding-bottom: 5px;
+			text-transform: uppercase;
+        }
+
+       
+        /* Combobox styles */
+
+        .combowrap {
+            background-color: #fff; 
+            overflow:hidden;
+            padding:0;
+            width:280px;
+        }
+
+        .combogrey {
+            background-color: #f2f3f2; 
+        }		
+
+        .combowrap input {
+            border:0px;
+            background:none;
+            -webkit-box-shadow:none;
+            -moz-box-shadow: none;
+            box-shadow: none;
+            -moz-border-radius:0;
+            -webkit-border-radius:0;
+            border-radius:0;
+        }
+
+        .combowrap .ui-button {
+            border:none;
+            border-spacing:0;
+            background:transparent url('http://www.onemoretake.com/wp-content/uploads/2011/04/arrow.png') no-repeat center 12px;
+            padding:6px 0;
+            height:30px;
+            width:29px;
+            cursor:pointer;
+            vertical-align: bottom;
+        }
+
+        .combowrap .ui-button:hover {
+            background-position:center -16px;
+        }
+
+        .combowrap input[type=text]:focus,
+        .combowrap input[type=email]:focus,
+        .combowrap input.hasvalue {
+            background:none;
+        }
+
+        .combowrap .ui-autocomplete-input {
+            width:239px;
+            line-height:18px;
+            margin:0;
+			cursor:default;
+        }
+
+        .ui-autocomplete {
+            position: absolute; 
+            cursor: default;    
+            background:#fff; 
+            border:1px solid #999;
+            -moz-border-radius:0 0 3px 3px;
+            -webkit-border-radius:0 0 3px 3px;
+            border-radius:0 0 3px 3px;
+            -webkit-box-shadow:0 3px 5px rgba(0,0,0,0.35);
+            -moz-box-shadow: 0 3px 5px rgba(0,0,0,0.35);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.35); 
+			max-height:200px;
+			min-width:278px;
+			overflow-y:auto;
+			overflow-x:hidden;			
+        }	
+
+        .ui-menu {
+	        display:block;
+        }
+
+        .ui-menu .ui-menu {
+	        margin-top: -3px;
+        }
+
+        .ui-menu .ui-menu-item {
+	        margin:0;
+	        padding: 0;
+	        width: 100%;
+        }
+
+        .ui-menu .ui-menu-item a {
+	        text-decoration:none;
+	        display:block;
+	        padding:0 20px 0 8px;
+	        line-height:24px;
+	        font-size:15px;
+	        color:#666;
+	        white-space:nowrap;
+        }
+
+        .ui-menu .ui-menu-item a.ui-state-hover,
+        .ui-menu .ui-menu-item a.ui-state-active {
+            background-color:#54bdcc;
+            color:#fff;
+        }
+
+
+    </style>
+
+</head>
+<body>
+    <form action="/" id="myform" method="post">
+    <fieldset>
+		<div class="formrow">
+            <label for="combolist">Combo Demo</label>
+            <div class="combowrap">
+                <select id="combolist" name="combolist">
+				<option value="0">Option 0</option>
+				<option value="1">Option 1</option>
+				<option value="2">Option 2</option>
+				<option value="3">Option 3</option>
+				<option value="4">Option 4</option>
+				</select>
+            </div>
+        </div>
+    </fieldset>
+    </form>
+</body>
+</html>
+

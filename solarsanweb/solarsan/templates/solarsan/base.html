@@ -22,16 +22,18 @@
                 </div>
             </h1>
             <div id="nav" class="ui-widget-content">
-                <div class="btnset left">
-                    <button>{{ title|lower }}</button>
-                    <button class="no_text ui-icon-triangle-1-s">Main menu</button>
+                <div class="left gentlenav">
+					<select id="menu_main">
+						<option value="{{ title }}">{{ title }}</option>
+					</select>
                 </div>
-                <div id="pagenav" class="left">
+                <div id="pagenav" class="left gentlenav">
                     {% block pagenav %}{% endblock %}
                 </div>
-                <div class="btnset">
-                    <button>configure</button>
-                    <button class="no_text ui-icon-triangle-1-s">Main menu</button>
+                <div class="gentlenav">
+					<select id="menu_conf">
+						<option value="Configure">Configure</option>
+					</select>
                 </div>
                 <div class="btnset rightnav">
                     <button><span style="color: #555;">graphs</span> iops</button>

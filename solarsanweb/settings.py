@@ -158,6 +158,7 @@ INSTALLED_APPS = (
 	'kombu.transport.django',
     'debug_toolbar',
 	'bootstrap',
+	'django_extensions',
 
 	# Apps
     'solarsan',

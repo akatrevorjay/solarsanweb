@@ -10,10 +10,15 @@ $(".dataset_info_tabs").tabs({
     spinner: '',
     select: function(event, ui) { status_dataset_info_last_tab = ui.index; },
 });
+
 </script>
 
-<h3 class="ui-widget" style="margin: 0 0 0.5em 0; font-size: 1.2em;">
-    <div class="ui-widget-content"style="padding: 1em; color: #333;">{{ dataset }}</div>
+<h3 class="ui-widget" style="margin: 0 0 0.5em 0; font-size: 1.2em; width: auto;">
+    <div class="ui-widget-content" style="padding: 1em; color: #333;">
+		{{ dataset }}
+
+		<div class="right">test</div>
+	</div>
 </h3>
 
 <div class="dataset_info_tabs ui-widget-content">
@@ -31,7 +36,18 @@ $(".dataset_info_tabs").tabs({
 {% endif %}
 
 {% if action == "health" %}
-    not ok?
+<pre>
+
+	Pool "{{ dataset.pool.name }}"
+		- Health: {{ dataset.pool.health }}
+
+
+	Dataset:
+		Used: {{ dataset.used }} / {{ dataset.available 
+		- By children: {{ dataset.usedbychildren }}
+		- By snapshots: {{ dataset.usedbysnapshots }}
+		
+</pre>
 {% endif %}
 
 {% if action == "cluster" %}
@@ -39,7 +55,56 @@ $(".dataset_info_tabs").tabs({
 {% endif %}
 
 {% if action == "cron" %}
-    schedule snapshots, backups
+<script type="text/javascript">
+
+$(".cronselect").each(function() {
+	$(this).cron({
+			onChange: function() {
+				console.log('onchange');
+		}});
+});
+
+</script>
+<div style="min-height: 400px;">
+
+<table>
+	<tr>
+		<td><h3>Automated Snapshots</h3></th>
+		<td>Schedule</th>
+	</tr>
+	<tr>
+		<td>
+			<label for="cron_autosnap">Enable</label>
+			<input type="checkbox" id="cron_autosnap" style="display: inline;" {% if dataset.cron.autosnap.enabled %}checked{% endif %}/>
+		</td>
+		<td>
+			<div class="cronselect" style="display: inline;"></div>&nbsp;
+			<a href="#" onclick="$(this).next().toggle().prev().toggle();">advanced</a>
+			<input type="text" style="display: none;"/>
+		</td>
+	</tr>
+	<tr>
+		<td><h3>Integrated Online Backup</h3></td>
+		<td>Schedule</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="cron_backup">Enable</label>
+			<input type="checkbox" id="cron_backup" {% if dataset.cron.backup.enabled %}checked{% endif %}/>
+		</td>
+		<td>
+			<div class="cronselect" style="display: inline;"></div>&nbsp;
+			<a href="#" onclick="$(this).next().toggle().prev().toggle();">advanced</a>
+			<input type="text" style="display: none;"/>
+		</td>
+	</tr>
+</table>
+
+<div style="text-align: right">
+	<input type="submit" value="Save" />
+</div>
+
+</div>
 {% endif %}
 
 {% if action == "backup" %}

@@ -8,6 +8,8 @@ urlpatterns = patterns('solarsan.views',
     url(r'^graph/utilization.json$', 'graph_stats_json'),
     url(r'^status/dataset_info/(?P<action>[^/]+)/(?P<dataset>.+)$', 'status_dataset_info'),
     url(r'^status/dataset_info$', 'status_dataset_info'),
+                       
+#    url('^', include('contact_list.urls', namespace='contact_list')),
 
 #    url(r'^graph/utilization.json$', 'graph_utilization'),
 #    url(r'^graph/utilization.json$', 'graph_iops'),
