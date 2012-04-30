@@ -1,3 +1,13 @@
 *.pyc
+#*.swp
+#*.swo
+
+data/*
+
+*.log
+*.pid
+celerybeat-schedule
+
 /sqlite.db
 tmp
+

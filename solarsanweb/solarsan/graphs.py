@@ -9,6 +9,7 @@ from kstats import kstats
 from pyrrd.backend import bindings
 from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
 from pyrrd.rrd import DataSource, RRA, RRD
+from django.conf import settings
 
 @periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):
@@ -51,7 +52,7 @@ def rrd_update(*args, **kwargs):
         for kmodule in ksMap[rmodule].keys():
             for dsType in ksMap[rmodule][kmodule].keys():
                 for filename in ksMap[rmodule][kmodule][dsType].keys():
-                    rrd_path = "rrd/" + filename + ".rrd"
+                    rrd_path = os.path.join(settings.DATA_DIR, "rrd", filename + ".rrd")
 
                     DSs = []
                     Values = []

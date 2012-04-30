@@ -44,5 +44,6 @@ debug "cmd=\"$cmd\" args=\"$*\""
 [[ -z "$cmd" ]] || set -- "$cmd" "$@"
 
 debug "Running manage.py" "$@"
-"$basedir/../manage.py" "$@"
+pushd "$basedir"
+exec "./manage.py" "$@"
 

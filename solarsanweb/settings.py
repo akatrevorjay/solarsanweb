@@ -20,6 +20,19 @@ DATABASES = {
     }
 }
 
+## Paths
+import os, sys
+TOP_DIR = os.path.dirname(__file__)
+DATA_DIR = os.path.join(TOP_DIR, os.path.pardir, "data")
+
+sys.path.insert(0, TOP_DIR)
+
+for i in ['vendor', 'vendor-local']:
+    sys.path.insert(0, os.path.join(TOP_DIR, os.path.pardir, i))
+
+#sys.path.insert(0, os.getcwd())
+
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -169,17 +182,6 @@ INSTALLED_APPS = (
     'solarsan',
     'bootstrap_example.root',
 )
-
-## Paths
-import os, sys
-TOP_DIR = os.path.dirname(__file__)
-
-sys.path.insert(0, TOP_DIR)
-
-for i in ['vendor', 'vendor-local']:
-    sys.path.insert(0, os.path.join(TOP_DIR, os.path.pardir, i))
-
-#sys.path.insert(0, os.getcwd())
 
 # Jinja2 env config
 JINJA_CONFIG = {'auto_reload': True}

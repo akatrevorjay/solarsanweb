@@ -28,9 +28,9 @@
 [submodule "solarsanweb/static/3rd/font-Awesome"]
 	path = solarsanweb/static/3rd/font-Awesome
 	url = git://github.com/FortAwesome/Font-Awesome.git
-[submodule "solarsanweb/bin/lib/bashism"]
-	path = solarsanweb/bin/lib/bashism
-	url = git://github.com/akatrevorjay/bashism.git
 [submodule "vendor-local/django-chartit"]
 	path = vendor-local/django-chartit
 	url = git://github.com/akatrevorjay/django-chartit.git
+[submodule "bin/lib/bashism"]
+	path = bin/lib/bashism
+	url = git://github.com/akatrevorjay/bashism.git
