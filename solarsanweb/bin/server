@@ -1,7 +1,0 @@
-#!/bin/bash
-[[ -n "$basedir" ]] || . "${BASH_SOURCE[0]%/*}/env"
-
-while sleep 1; do
-    "$basedir/bin/manage" runserver "$@"
-done
-
