@@ -80,7 +80,7 @@ def status(request):
                 #labelFormatter: null or (fn: string, series object -> string)
                 #labelBoxBorderColor: color
                 'noColumns': 2,
-                'position': "nw",
+                'position': "ne",
                 #position: "ne" or "nw" or "se" or "sw"
                 #margin: number of pixels or [x margin, y margin]
                 #'margin': 0,

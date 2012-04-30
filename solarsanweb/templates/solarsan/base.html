@@ -1,0 +1,50 @@
+{% extends "b/layouts/base_navbar_responsive.html" %}
+
+{% block title %}SolarSan Console{% endblock %}
+
+{% block navbar_links %}
+    <a class="brand" href="#">SolarSan Console</a>
+    <div class="nav-collapse">
+        <ul class="nav">
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">pool: rpool<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                     <li><a href="#">rpool</a></li>
+                </ul>
+            </li>
+        </ul>
+
+        <ul class="nav pull-right">
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">debug<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="#">Stuff</a></li>
+                </ul>
+            </li>
+
+            <li class="dropdown"><a href="http://www.localhostsolutions.com">support</a></li>
+
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">graphs<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="#">Overall Stats</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#" onclick="$('#graphs').toggle();">Hide / Show</a></li>
+                </ul>
+            </li>
+
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="icon-user"></i> admin
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="#">Profile</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">Sign Out</a></li>
+                </ul>
+            </li>
+        </ul>
+
+    </div>
+{% endblock %}

@@ -1,37 +1,60 @@
 {% if action == "list" %}
 <script type="text/javascript">
 
-if (typeof status_dataset_info_last_tab === 'undefined') var status_dataset_info_last_tab = 1;
-
-$(".dataset_info_tabs").tabs({
-    padding: 0,
-    selected: (typeof status_dataset_info_last_tab === 'undefined') ? 1 : status_dataset_info_last_tab,
-    //fx: { opacity: 'toggle', duration: 'fast' },
-    spinner: '',
-    select: function(event, ui) { status_dataset_info_last_tab = ui.index; },
-});
 
 </script>
 
-<h3 class="ui-widget" style="margin: 0 0 0.5em 0; font-size: 1.2em; width: auto;">
-    <div class="ui-widget-content" style="padding: 1em; color: #333;">
-		{{ dataset }}
+<div class="span9">
+<div style="padding-left: 10px">
 
-		<div class="right">test</div>
-	</div>
-</h3>
+<div class="row">
+    <div class="navbar">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto;">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+                <a class="brand" href="#">{{ dataset.name }}</a>
+                <div class="nav-collapse">
+                    <ul class="nav">
+                        <li class="active"><a href="#">Health</a></li>
+                        {% set tabs = ['health', 'snapshots', 'cron', 'cluster', 'backup'] %}
+                        {% for t in tabs %}
+                        <li><a href="#">{{ t|capitalize }}</a></li>
+                        {% endfor %}
+                    </ul>
 
-<div class="dataset_info_tabs ui-widget-content">
-    <ul>
-        {% set tabs = ['health', 'snapshots', 'cron', 'cluster', 'backup'] %}
-        {% for t in tabs %}
-        <li><a href="{{ url('solarsan.views.status_dataset_info', dataset=dataset.name, action=t) }}" title="{{ t }}"><span>{{ t|capitalize }}</span></a></li>
-        {% endfor %}
-    </ul>
-    {% for t in tabs %}
-    <div id="{{ t }}"></div>
-    {% endfor %}
+                    <ul class="nav pull-right">
+                        {#<li><a href="#">Link</a></li>#}
+                        {#<li class="divider-vertical"></li>#}
+
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Services <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">Automatic Snapshot</a></li>
+                                <li><a href="#">Online Backup</a></li>
+                                {#<li class="divider"></li>
+                                <li><a href="#">Separated link</a></li>#}
+                            </ul>
+                        </li>         
+                    </ul>
+                </div><!-- /.nav-collapse -->
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
 </div>
+
+<div class="row">
+    <div id="dataset-info-content" class="hero-unit">
+        content
+    </div>
+</div>
+
+</div>
+</div>
+
 {% endif %}
 
 {% if action == "health" %}
@@ -74,7 +97,7 @@ $(".cronselect").each(function() {
 	<tr>
 		<td>
 			<label for="cron_autosnap">Enable</label>
-			<input type="checkbox" id="cron_autosnap" style="display: inline;" {% if dataset.cron.autosnap.enabled %}checked{% endif %}/>
+			<input type="checkbox" id="cron_autosnap" style="display: inline;"/>
 		</td>
 		<td>
 			<div class="cronselect" style="display: inline;"></div>&nbsp;
@@ -89,7 +112,7 @@ $(".cronselect").each(function() {
 	<tr>
 		<td>
 			<label for="cron_backup">Enable</label>
-			<input type="checkbox" id="cron_backup" {% if dataset.cron.backup.enabled %}checked{% endif %}/>
+			<input type="checkbox" id="cron_backup"/>
 		</td>
 		<td>
 			<div class="cronselect" style="display: inline;"></div>&nbsp;

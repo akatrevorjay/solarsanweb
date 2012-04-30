@@ -119,7 +119,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+#    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 DEBUG_TOOLBAR_PANELS = (
@@ -201,7 +201,7 @@ CELERY_RESULT_BACKEND = "amqp"
 CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
 
 ## Bootstrap
-import bootstrap
+#import bootstrap
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

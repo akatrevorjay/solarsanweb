@@ -1,0 +1,123 @@
+{% extends "solarsan/base_site.html" %}
+{% from "bootstrap/macros.html" import alert  %}
+{% from "bootstrap/forms/macros.html" import field, input  %}
+
+{% block css_extra %}
+    <style></style>
+{% endblock %}
+
+{# Navbar is set in the app-specific override "base.html #}
+
+{% block pre_content %}
+{% endblock %}
+
+{% block content %}
+
+{% for pool in pools %}
+{#
+<div class="row">
+    <div class="page-header">
+        <h2>Pool {{ pool.name }}</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span4">
+        <h3>header3</h3>
+    </div>
+</div>
+#}
+
+<div id="graphs" class="hero-unit" style="padding: 0px">
+    <div class="row">
+        {% set row_class = cycler('row', 'boat') %}
+        {% for g in graphs.keys() %}
+
+        <div class="span6" style="text-align: center;">
+            <p>
+                <div id="flot_{{ g }}" style="height: 200px;"></div>
+                <div>{{ graphs[g]|flotjson('flot_'+g) }}</div>
+            </p>
+        </div>
+
+        {% if row_class.next() == 'boat' %}
+    </div>
+    <div class="row">
+        {% endif %}
+
+        {% endfor %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="span3">
+        <div class="well sidebar-nav">
+            <ul class="nav nav-list dataset-list">
+                <li class="nav-header">Datasets</li>
+
+                {% for dataset in pool.dataset_set.filter(type='filesystem').order_by('name') %}
+                    <li class="dataset"><a class="dropdown-toggle" href="javascript:void();">{{ dataset }}</a></li>
+                    <div class="dropdown-menu dataset-info">
+                        {{ dataset.used }}/{{ dataset.available }}
+                    </div>
+                {% endfor %}
+
+                <li><a href="#">add dataset</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="dataset-info">
+    </div>
+</div>
+
+{% endfor %}
+
+
+<script type="text/javascript">
+/*
+ * main
+ */
+$(function() {
+
+/*
+ * dataset-list
+ */
+//$('div.dataset-list').resizable({ handles: "e" });
+
+// dataset-list datasets
+$(".dataset-list .dataset")
+/*    .hover(function() {
+            $(this).addClass("ui-state-hover", "fast");
+        }, function() {
+            $(this).removeClass("ui-state-hover", "fast");
+        }) */
+    .click(function() {
+        $(this).parent().children(".active").removeClass("active", "fast");
+        $(this).addClass("active");
+
+        $.ajax({type: "GET",
+                url: "{{ url('solarsan.views.status_dataset_info') }}/list/"+$(this).find('a:first').html(),
+            context: $(this),
+            }).done(function(data) { $("#dataset-info").html(data); });
+    });
+/*    .draggable({ revert: true, zIndex: 100,
+        //connectToSortable: ".datasets",
+        //appendTo: "body",
+        //helper: "clone",
+        cursorAt: { left: 5 },
+        helper: function() {
+           return  $( "<li></li>" ).text( $("a", this).text() ).button();
+            },
+        });*/
+
+// Act as if the first dataset has been clicked
+$(".dataset-list .dataset:first-child").click();
+
+});
+
+</script>
+
+
+
+{% endblock %}
+
