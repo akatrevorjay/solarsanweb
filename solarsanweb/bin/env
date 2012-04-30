@@ -1,6 +1,6 @@
 #!/bin/bash
 basedir_raw="${BASH_SOURCE[0]%/*}"
-basedir="$PWD/${basedir_raw%/bin}"
+basedir=$(readlink -f "${basedir_raw%/bin}")
 virtualenv="$basedir/../env"
 
 if [[ "$0" != "bash" ]]; then

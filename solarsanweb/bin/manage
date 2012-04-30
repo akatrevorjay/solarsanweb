@@ -27,10 +27,9 @@ case "$cmd" in
         set -- -E -B --autoreload --traceback -v 2 -l DEBUG -P threads --purge
         ;;
     *)
-        if [[ -n "$1" && -x "$basedir/bin/$1" ]]; then
-            debug "Found \"$1\" as \"$1\""
-            echo "$1"
-            exit 0
+        if [[ -n "$cmd" && -x "$basedir/bin/$cmd" ]]; then
+            debug "Found \"$cmd\" as \"$basedir/bin/$cmd\""
+            exec "$basedir/bin/$cmd" "$@"
         fi
         ;;
 esac
