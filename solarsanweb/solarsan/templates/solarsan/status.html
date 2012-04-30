@@ -117,11 +117,17 @@ $("#menu_conf").gentleSelect();
 
 {% for pool in pools %}
 <div class="pool" id="pool_{{ pool }}">
-    <div class="graphs ui-widget">
-		<div id="testcont2" style="width: 600px; height: 200px; float: left; "></div>
-		<div id="testcont" style="width: 600px; height: 200px; "></div>
-        {{ graph_capacity|load_charts("testcont") }}
-        {{ graph_activity|load_charts("testcont2") }}
+    <div>
+        <table style="text-align: center; width: auto;">
+            <tr>
+            {% for g in graphs.keys() %}
+                <td>
+                    <div id="flot_{{ g }}" style="width: 24%; height: 200px;"></div>
+                    {{ graphs[g]|flotjson('flot_'+g) }}
+                </td>
+            {% endfor %}
+            </tr>
+        </table>
     </div>
     <div class="dataset_list">
         <div class="ui-widget-content" style="padding: 0.5em; color: #333; text-align: center; font-weight: 600; margin-bottom: 0.5em;">Datasets</div>
