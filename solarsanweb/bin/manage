@@ -4,7 +4,13 @@
 cmd="${__BASHISM[script_self]}"
 debug "cmd=\"$cmd\" args=\"$*\""
 
-[[ "$cmd" != "manage" ]] || cmd="$1"; shift
+if [[ "$cmd" == "manage" ]]; then
+    if [[ -n "$*" ]]; then
+        cmd="$1"; shift
+    else
+        cmd="help"
+    fi
+fi
 
 case "$cmd" in
     shell) cmd="shell_plus" ;;
@@ -36,7 +42,6 @@ esac
 
 debug "cmd=\"$cmd\" args=\"$*\""
 [[ -z "$cmd" ]] || set -- "$cmd" "$@"
-[[ -n "$cmd" && -n "$*" ]] || set -- help
 
 debug "Running manage.py" "$@"
 "$basedir/../manage.py" "$@"

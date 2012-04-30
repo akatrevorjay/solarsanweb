@@ -16,5 +16,5 @@ unset basedir_raw
 
 debug "Activating virtualenv in \"$virtualenv\""
 . "$virtualenv/bin/activate"
-e "Python is now `which python`"
+debug "Python is now `which python`"
 
