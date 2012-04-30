@@ -4,16 +4,36 @@
 {% block header %}SolarSAN Administration{% if title %} | {{ title }}{% endif %}{% endblock %}
 
 {% block extrastyle %}
-{% load collect %}
-{% collect 'jquery/jquery.ui.selectmenu.css' 'js/jquery-ui-git.css' 'jquery/jquery-gentleSelect.css'  'jquery/jquery-cron.css' 'css/ui-lightness/jquery-ui-1.8.18.custom.css' 'css/ui.jqgrid.css' 'css/base.css' as css %}
-{% for c in css %}<link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" />{% endfor %}
+{% for c in 'jquery/jquery.ui.selectmenu.css',
+    'js/jquery-ui-git.css',
+    'jquery/jquery-gentleSelect.css',
+    'jquery/jquery-cron.css',
+    'css/ui-lightness/jquery-ui-1.8.18.custom.css',
+    'css/ui.jqgrid.css',
+    'css/base.css'
+    %}
+    <link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" />
+{% endfor %}
 <link type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700" rel="stylesheet" />
 {% endblock %}
 
 {% block extrahead %}
-    {% load collect %}
-    {% collect 'js/jquery.js' 'js/jquery-ui-git.js' 'js/jquery.center.mlklc.js' 'js/jquery.selectrange.mlklc.js' 'js/jquery.corner.js' 'js/jquery.jqGrid.js' 'js/i18n/grid.locale-en.js' 'js/jquery.form-defaults.js' 'js/graphs.js' 'jquery/jquery-gentleSelect-min.js' 'jquery/jquery-cron-min.js' '3rd/Highcharts-2.2.2/js/highcharts.js' '3rd/Highcharts-2.2.2/js/modules/exporting.js' as js %}
-    {% for j in js %}<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>{% endfor %}
+    {% for j in 'js/jquery.js',
+		'js/jquery-ui-git.js',
+		'js/jquery.center.mlklc.js',
+		'js/jquery.selectrange.mlklc.js',
+		'js/jquery.corner.js',
+		'js/jquery.jqGrid.js',
+		'js/i18n/grid.locale-en.js',
+		'js/jquery.form-defaults.js',
+		'js/graphs.js',
+		'jquery/jquery-gentleSelect-min.js',
+		'jquery/jquery-cron-min.js',
+		'3rd/Highcharts-2.2.2/js/highcharts.js',
+		'3rd/Highcharts-2.2.2/js/modules/exporting.js'
+		%}
+		<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>
+	{% endfor %}
 {% endblock %}
 
 {% block footer %}Localhost Solutions &copy; 2012{% endblock %}

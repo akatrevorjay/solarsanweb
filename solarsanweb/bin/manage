@@ -1,0 +1,44 @@
+#!/bin/bash
+[[ -n "$basedir" ]] || . "${BASH_SOURCE[0]%/*}/env"
+
+cmd="${__BASHISM[script_self]}"
+debug "cmd=\"$cmd\" args=\"$*\""
+
+[[ "$cmd" != "manage" ]] || cmd="$1"; shift
+
+case "$cmd" in
+    shell) cmd="shell_plus" ;;
+    dev_maint)
+        pushd "$basedir"
+            pushd ".."
+                e "[pysmell]"
+                pysmell .
+            popd
+
+            e "[django-lint]"
+            django-lint
+        popd
+        exit 0
+        ;;
+    celery)
+        cmd="celeryd"
+        # --autoscale=10,1
+        # -P processes (default), eventlet, gevent, solo, threads
+        set -- -E -B --autoreload --traceback -v 2 -l DEBUG -P threads --purge
+        ;;
+    *)
+        if [[ -n "$1" && -x "$basedir/bin/$1" ]]; then
+            debug "Found \"$1\" as \"$1\""
+            echo "$1"
+            exit 0
+        fi
+        ;;
+esac
+
+debug "cmd=\"$cmd\" args=\"$*\""
+[[ -z "$cmd" ]] || set -- "$cmd" "$@"
+[[ -n "$cmd" && -n "$*" ]] || set -- help
+
+debug "Running manage.py" "$@"
+"$basedir/../manage.py" "$@"
+

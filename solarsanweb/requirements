@@ -7,10 +7,14 @@ anyjson==0.3.1
 celery==2.5.3
 distribute==0.6.19
 django-celery==2.5.5
-django-chartit==0.1
+#django-chartit==0.1
 django-debug-toolbar==0.9.4
 django-extensions==0.8
 django-picklefield==0.2.1
+ipdb==0.6.1
+ipython==0.12.1
+ipython-extensions==0.2
+iterpipes==0.4
 jingo==0.4
 jinja-bootstrap==0.2.0
 kombu==2.1.7

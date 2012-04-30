@@ -1,13 +1,7 @@
-from django.shortcuts import get_object_or_404, render_to_response
-from django.http import HttpResponseRedirect, HttpResponse
-from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.template.loader import render_to_string
-from django.core import serializers
 
 from chartit import DataPool, Chart
-from utils import qdct_as_kwargs
-from response import JSONResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from solarsan.utils import *
@@ -129,8 +123,4 @@ def status_dataset_info(request, *args, **kwargs):
                                   {'dataset': d,
                                    'action': action,
                                    }, context_instance=RequestContext(request))
-
-@csrf_exempt
-def graph_stats_json(request):
-    return JSONResponse(graph_stats(10))
 

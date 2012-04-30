@@ -1,24 +1,14 @@
-import datetime, time
+import time
 import os, logging, time
-import os, sys, logging
+import os, logging
 import re
 
-from celery.task import periodic_task, task
+from celery.task import periodic_task
 from datetime import timedelta
-from django.core import serializers
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import RequestContext
-from django.template.loader import render_to_string
-from django.views.decorators.csrf import csrf_exempt
 from kstats import kstats
-from math import sin, pi
 from pyrrd.backend import bindings
-from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, GPRINT, ColorAttributes, Graph
+from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
 from pyrrd.rrd import DataSource, RRA, RRD
-from solarsan.utils import dict_diff
-from heapq import merge
 
 @periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):

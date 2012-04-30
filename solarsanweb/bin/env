@@ -1,0 +1,20 @@
+#!/bin/bash
+basedir_raw="${BASH_SOURCE[0]%/*}"
+basedir="$PWD/${basedir_raw%/bin}"
+virtualenv="$basedir/../env"
+
+if [[ "$0" != "bash" ]]; then
+    BASHISM_OUTPUT="output/output"
+    . "$basedir/bin/lib/bashism/bashism"
+else
+    e() { echo "$@"; }
+    debug() { [[ ! "$DEBUG" ]] || echo "$@"; }
+fi
+
+debug "basedir=\"$basedir\" basedir_raw=\"$basedir_raw\""
+unset basedir_raw
+
+debug "Activating virtualenv in \"$virtualenv\""
+. "$virtualenv/bin/activate"
+e "Python is now `which python`"
+

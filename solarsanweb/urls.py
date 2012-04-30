@@ -20,6 +20,7 @@ urlpatterns = patterns('',
     # SolarSAN
     url(r'^$', include('solarsan.urls')),
     url(r'^solarsan/', include('solarsan.urls')),
+    url(r'^bootstrap_example/', include('bootstrap_example.root.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     #url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

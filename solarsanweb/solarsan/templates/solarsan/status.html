@@ -3,50 +3,9 @@
 {% block pagehead %}
 <script type="text/javascript">
 /*
- * vars
- */
-var graphs = {};
-
-/*
  * main
  */
 $(function() {
-
-    /*
-     * graphs
-    */
-    {% for pool in pools %}
-    graphs['{{ pool }}'] = {};
-    
-    graphs['{{ pool }}']['graph_utilization'] = {
-        type: 'pie',
-        title: 'Utilization',
-        width: 100, height: 100, radius: 75,
-        legend_width: 40,
-        opts: {
-            legend: ["Free", "Used"],
-            strokewidth: 3,
-            stroke: "#000",
-            colors: ["90-#7BCC55-#A7FB73", "45-#0B73D2-#0E99FA", "0-#E37201-#FC9B03"],
-        },
-        hover: graph_pie_hover, unhover: graph_pie_unhover, click: graph_pie_click,
-    };
-    
-    graphs['{{ pool }}']['graph_iops'] = {
-        type: 'line',
-        title: 'IOPs',
-        width: 600, height: 100,
-    };
-    
-    graphs['{{ pool }}']['graph_throughput'] = {
-        type: 'line',
-        title: 'Throughput',
-        width: 600, height: 100,
-    };
-    {% endfor %}
-    
-    // Update every 30s
-    graphs_update_ajax("{% url solarsan.views.graph_stats_json %}", 30000, {});
 
 /*
  * dataset_list
@@ -65,7 +24,7 @@ $("div.pool > div.dataset_list > div > div.dataset")
         $(this).addClass("selected", "fast");
 
         $.ajax({type: "GET",
-            url: "{% url solarsan.views.status_dataset_info %}/list/"+$(this).find('a:first').html(),
+                url: "{{ url('solarsan.views.status_dataset_info') }}/list/"+$(this).find('a:first').html(),
             context: $(this),
             }).done(function(data) { $(this).parent().parent().parent().children("div.dataset_info").html(data); });
     })
@@ -159,24 +118,18 @@ $("#menu_conf").gentleSelect();
 {% for pool in pools %}
 <div class="pool" id="pool_{{ pool }}">
     <div class="graphs ui-widget">
-    	{% load chartit %}
 		<div id="testcont2" style="width: 600px; height: 200px; float: left; "></div>
 		<div id="testcont" style="width: 600px; height: 200px; "></div>
-		{{ graph_capacity|load_charts:"testcont" }}
-		{{ graph_activity|load_charts:"testcont2" }}
+        {{ graph_capacity|load_charts("testcont") }}
+        {{ graph_activity|load_charts("testcont2") }}
     </div>
-    <!-- -->
     <div class="dataset_list">
         <div class="ui-widget-content" style="padding: 0.5em; color: #333; text-align: center; font-weight: 600; margin-bottom: 0.5em;">Datasets</div>
         <div class="ui-widget-content">
-            {% for dataset in pool.dataset_filesystems.all|dictsort:"name" %}
+            {% for dataset in pool.dataset_set.filter(type='filesystem').order_by('name') %}
             <div class="dataset">
                 <a>{{ dataset }}</a><br />
                 <div>{{ dataset.used }}/{{ dataset.available }}</div>
-            </div>
-            {% empty %}
-            <div class="dataset empty">
-                <i>(none)</i>
             </div>
             {% endfor %}
             <div class="btn ui-icon-plus">add dataset</div>
@@ -184,8 +137,6 @@ $("#menu_conf").gentleSelect();
     </div>
     <div class="dataset_info"></div>
 </div>
-{% empty %}
-<h2>There are no storage pools?</h2>
 {% endfor %}
 
 {% endblock %}

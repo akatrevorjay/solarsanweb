@@ -96,9 +96,6 @@ TEMPLATE_LOADERS = (
 #    )),
 )
 
-# List of apps that do not use Jingo
-JINGO_EXCLUDE_APPS = ['admin', 'debug_toolbar', 'solarsan']
-
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -147,6 +144,7 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
 	'bootstrap',
+
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -162,24 +160,42 @@ INSTALLED_APPS = (
 	'djcelery',
 	'kombu.transport.django',
     'debug_toolbar',
-	'bootstrap',
 	'django_extensions',
 	'chartit',
 
 	# Apps
     'solarsan',
-    'bootstrap_example_project',
+    'bootstrap_example.root',
 )
 
+## Paths
 import os, sys
-sys.path.append(os.getcwd())
+TOP_DIR = os.path.dirname(__file__)
 
+sys.path.insert(0, TOP_DIR)
+
+for i in ['vendor', 'vendor-local']:
+    sys.path.insert(0, os.path.join(TOP_DIR, os.path.pardir, i))
+
+#sys.path.insert(0, os.getcwd())
+
+# Jinja2 env config
+JINJA_CONFIG = {'auto_reload': True}
+
+# List of apps that do not use Jingo
+JINGO_EXCLUDE_APPS = ('admin', 'debug_toolbar')
+
+## Celery
+# django-celery
 import djcelery
 djcelery.setup_loader()
-
+# celery
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
 CELERY_RESULT_BACKEND = "amqp"
 CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
+
+## Bootstrap
+import bootstrap
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
