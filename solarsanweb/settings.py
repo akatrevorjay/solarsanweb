@@ -119,6 +119,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
+    'django.contrib.sessions.middleware.SessionMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
@@ -179,11 +180,16 @@ INSTALLED_APPS = (
 	'django_extensions',
 	'chartit',
     'djsupervisor',
+    'south',
 
 	# Apps
     'solarsan',
     'bootstrap_example.root',
 )
+
+# Persistent sessions
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # Jinja2 env config
 JINJA_CONFIG = {'auto_reload': True}

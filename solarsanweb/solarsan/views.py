@@ -1,5 +1,6 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.generic import TemplateView
 
 from chartit import DataPool, Chart
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +17,9 @@ from pyrrd.backend import bindings
 from django.conf import settings
 import pyflot
 import os, sys
+
+#class StatusView(TemplateView):
+#        template_name = "status.html"
 
 def status(request):
 

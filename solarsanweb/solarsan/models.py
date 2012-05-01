@@ -4,12 +4,12 @@ from django.db import models
 class Config(models.Model):
     key = models.CharField(max_length=255)
     value = models.CharField(max_length=255)
-    #default_value = models.CharField(max_length=255)
     def __unicode__(self):
         return self.key
 
 class Pool(models.Model):
     name = models.CharField(max_length=128, unique=True)
+    
     last_modified = models.DateTimeField(auto_now=True)
     delegation = models.BooleanField()
     listsnapshots = models.BooleanField()
@@ -55,7 +55,7 @@ class Dataset(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     basename = models.CharField(max_length=128)
     pool = models.ForeignKey(Pool)
-    
+
     setuid = models.BooleanField()
     referenced = models.CharField(max_length=32)
     zoned = models.BooleanField()
