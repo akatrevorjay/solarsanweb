@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from solarsan.utils import *
 from solarsan.models import *
+from solarsan.forms import *
 
 from datetime import datetime, timedelta
 from time import time
@@ -194,15 +195,24 @@ def status(request):
 def status_dataset_info(request, *args, **kwargs):
     """ Status: Gets dataset info """
 
+    ctxt = {}
+
     action = kwargs.get('action', request.GET.get('action'))
     dataset = kwargs.get('dataset', request.GET.get('dataset'))
 
     if action == "snapshots" or action == "health":
-        d = Dataset.objects.get(name=dataset, type='filesystem')
+        ctxt['dataset'] = Dataset.objects.get(name=dataset, type='filesystem')
     else:
-        d = Dataset.objects.get(name=dataset)
+        ctxt['dataset'] = Dataset.objects.get(name=dataset)
+
+    if action == "cron":
+        ctxt['dataset_service_form'] = DatasetServiceForm()
+        ctxt['dataset_cron_form'] = DatasetCronForm()
+        #ctxt['dataset_autosnap_form'] = DatasetAutoSnapForm()
+        #ctxt['dataset_online_backup_form'] = DatasetOnlineBackupForm()
+
+    ctxt['action'] = action
+
     return render_to_response('status_dataset_info.html',
-                                  {'dataset': d,
-                                   'action': action,
-                                   }, context_instance=RequestContext(request))
+                              ctxt, context_instance=RequestContext(request))
 
