@@ -203,11 +203,18 @@ import djcelery
 djcelery.setup_loader()
 # celery
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
+#BROKER_USE_SSL = True
 CELERY_RESULT_BACKEND = "amqp"
 CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
-
-## Bootstrap
-#import bootstrap
+CELERY_DEFAULT_RATE_LIMIT = "100/s"
+#if DEBUG:
+CELERY_SEND_EVENTS = True
+CELERY_SEND_TASK_SENT_EVENT = True
+#CELERY_QUEUES
+#CELERY_ROUTES
+#CELERY_DEFAULT_QUEUE
+#CELERY_CREATE_MISSING_QUEUES
+#CELERY_DEFAULT_ROUTING_KEY
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

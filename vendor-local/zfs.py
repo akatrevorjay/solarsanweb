@@ -109,41 +109,38 @@ class pool(object):
 
         args = ['iostat', '-Tu']
 
-        if len(pools) > 0 and int(capture_length) > 0:
+        if len(pools) > 0:
             args.extend(pools)
-        else:
-            ##TODO Exceptions
-            return False
-
-        args.extend([str(capture_length), str(2)])
+        if int(capture_length) > 0:
+            args.extend([str(capture_length), str(2)])
 
         cmdf = []
         for i in args:
             cmdf.append('{}')
 
         pool_iostat = {}
-        date = 0
-        for i in run(zfs._zfs__zpool(' '.join(cmdf), *args)):
+        timestamp = 0
+        skip = 1000
+        for (x,i) in enumerate(run(zfs._zfs__zpool(' '.join(cmdf), *args))):
+            if i.startswith('-----'):
+                skip = x - 1
+            if x < skip:
+                continue
             i = ' '.join( str( str(i).rstrip('\\n')).split() )
 
             if i.isdigit():
-                try:
-                    date = datetime.datetime.fromtimestamp(int(i))
-                except:
-                    return False
+                timestamp = datetime.datetime.fromtimestamp(int(i))
                 continue
-            if date == 0:
+            if timestamp == 0:
                 continue
-            j = { 'date': date }
+            j = { 'timestamp': timestamp }
 
-            for k in pools:
-                if i.startswith(k):
-                    try:
-                        (j['name'], j['alloc'], j['free'], j['iops_read'], j['iops_write'], j['bandwidth_read'],
-                         j['bandwidth_write']) = i.split()
-                        pool_iostat[j['name']] = j
-                    except:
-                        continue
+            try:
+                (j['name'], j['alloc'], j['free'], j['iops_read'], j['iops_write'], j['bandwidth_read'],
+                 j['bandwidth_write']) = i.split()
+                pool_iostat[j['name']] = j
+            except:
+                continue
         return pool_iostat
     iostat = staticmethod(iostat)
 ## }}
