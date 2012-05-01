@@ -2,7 +2,6 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import TemplateView
 
-from chartit import DataPool, Chart
 from django.views.decorators.csrf import csrf_exempt
 
 from solarsan.utils import *
@@ -97,101 +96,9 @@ def status(request):
             },
         }
 
-    def convert_timestamp(dt):
-        return dt.strftime('%I:%M%P')
-
-   ## TODO ArcStats
-    ds = DataPool(
-           series=
-            [{  'options':    { 'source': Pool_IOStat.objects.all()[:10],  },
-                'terms':      [ 'iops_read', 'iops_write', 'bandwidth_read', 'bandwidth_write', 'timestamp', 'free', 'alloc', ], },
-             #{  'options':    { 'source': Dataset.objects.filter(type='filesystem'), },
-             #   'terms':      [ 'compressratio', 'used', 'usedbychildren', 'usedbyrefreservation', 'usedbydataset', 'usedbysnapshots', ],
-
-             #}
-            ]
-    )
-
-    graph_activity = Chart(
-            datasource=ds,
-            series_options=
-              [{'options':{
-                  'type': 'line',
-                  'stacking': False},
-                'terms':{
-                   'timestamp': [ 'bandwidth_read', 'bandwidth_write', 'iops_read', 'iops_write', ],
-                   #'timestamp': [ 'used', 'usedbychildren', 'usedbyrefreservation', 'usedbydataset', 'usedbysnapshots', ],
-                  }}],
-            chart_options=
-              { #'title': { 'text': 'Pool/Dataset Activity'},
-               'xAxis': {
-                    'title': {
-                       'text': 'Timestamp'}}}, x_sortf_mapf_mts=(None, convert_timestamp, False))
-
-#  s = DataPool(
-           #series=
-            #[{'options': {
-                #'source': pools,
-              #'terms': [
-                #'name',
-                #'capacity'
-                #''
-                #'']}
-             #])
-
-    #cht = Chart(
-            #datasource=ds,
-            #series_options=
-              #[{'options':{
-                  #'type': 'pie',
-                  #'stacking': False},
-                #'terms':{
-                  #'month': [
-                    #'boston_temp']
-                  #}}],
-            #chart_options=
-              #{'title': {
-                   #'text': 'Monthly Temperature of Boston'}},
-            #x_sortf_mapf_mts=(None, monthname, False))
-    ##end_code
-
-    #Step 1: Create a DataPool with the data we want to retrieve.
-    capacitydata = \
-        DataPool(
-           series=[
-               {'options': {
-                   'source': Pool_IOStat.objects.all()[:20]
-                },
-                   'terms': [ 'timestamp',
-                        'alloc',
-                        'free',
-                  ]},
-                ])
-
-    #Step 2: Create the Chart object
-    graph_capacity = Chart(
-            datasource=capacitydata,
-            series_options=
-              [{'options':{
-                  'type': 'line',
-                  'stacking': False},
-                'terms':{
-                  'timestamp': [
-                    'alloc',
-                    'free']
-                  }}],
-            chart_options=
-              {'title': {
-                   'text': 'Pool capacity over time'},
-               'xAxis': {
-                    'title': {
-                       'text': 'Timestamp'}}}, x_sortf_mapf_mts=(None, convert_timestamp, False))
-
     return render_to_response('status.html',
         {'title': 'Status',
          'pools': pools,
-         'graph_capacity': graph_capacity,
-         'graph_activity': graph_activity,
          'graphs': graphs, },
         context_instance=RequestContext(request))
 
