@@ -182,7 +182,7 @@ def status(request):
                     'title': {
                        'text': 'Timestamp'}}}, x_sortf_mapf_mts=(None, convert_timestamp, False))
 
-    return render_to_response('solarsan/status.html',
+    return render_to_response('status.html',
         {'title': 'Status',
          'pools': pools,
          'graph_capacity': graph_capacity,
@@ -201,7 +201,7 @@ def status_dataset_info(request, *args, **kwargs):
         d = Dataset.objects.get(name=dataset, type='filesystem')
     else:
         d = Dataset.objects.get(name=dataset)
-    return render_to_response('solarsan/status_dataset_info.html',
+    return render_to_response('status_dataset_info.html',
                                   {'dataset': d,
                                    'action': action,
                                    }, context_instance=RequestContext(request))
