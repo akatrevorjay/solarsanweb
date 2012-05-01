@@ -2,15 +2,18 @@ Django==1.5.dev20120429194431
 Jinja2==2.6
 MySQL-python==1.2.3
 PyRRD==0.1.0
+PyYAML==3.10
+-e hg+http://bitbucket.org/andrewgodwin/south/@c8fc82619ac9bb9549484a248cb16e65274da9d3#egg=South-dev
 amqplib==1.0.2
 anyjson==0.3.1
+argh==0.15.1
 celery==2.5.3
 distribute==0.6.19
 django-celery==2.5.5
-#django-chartit==0.1
 django-debug-toolbar==0.9.4
 django-extensions==0.8
 django-picklefield==0.2.1
+django-supervisor==0.2.7
 ipdb==0.6.1
 ipython==0.12.1
 ipython-extensions==0.2
@@ -18,7 +21,13 @@ iterpipes==0.4
 jingo==0.4
 jinja-bootstrap==0.2.0
 kombu==2.1.7
+meld3==0.6.8
+pathtools==0.1.2
 py-rrdtool==0.2.1
 python-dateutil==1.5
+python-flot-utils==0.2.1
+pytz==2012c
+supervisor==3.0a12
 threadpool==1.2.7
+watchdog==0.6.0
 wsgiref==0.1.2
