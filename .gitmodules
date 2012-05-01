@@ -34,9 +34,6 @@
 [submodule "bin/lib/bashism"]
 	path = bin/lib/bashism
 	url = git://github.com/akatrevorjay/bashism.git
-[submodule "vendor-local/pyrrd"]
-	path = vendor-local/pyrrd
-	url = git://github.com/akatrevorjay/pyrrd.git
 [submodule "vendor-local/pkgs/pyrrd"]
 	path = vendor-local/pkgs/pyrrd
 	url = git://github.com/akatrevorjay/pyrrd.git
