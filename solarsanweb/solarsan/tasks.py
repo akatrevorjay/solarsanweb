@@ -1,9 +1,9 @@
 ## {{{ imports
-from models import Pool, Pool_IOStat, Dataset
-from utils import convert_human_to_bytes, convert_bytes_to_human
+from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+from solarsan.models import Pool, Pool_IOStat, Dataset
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task, chord, group, sets
+from celery.task import periodic_task, task, chord
 from celery.task.base import PeriodicTask, Task
 from celery.task.sets import subtask
 
@@ -14,8 +14,8 @@ import logging
 import zfs
 ## }}}
 
-## {{{ @abstract CachedZFSTask
-class CachedZFSTask(PeriodicTask):
+## {{{ @abstract CachedZFSPeriodicTask
+class CachedZFSPeriodicTask(PeriodicTask):
     """ Abstract template class that caches our ZFS object per worker """
     abstract = True
     _zfs = None
@@ -27,14 +27,19 @@ class CachedZFSTask(PeriodicTask):
         return self._zfs
 ## }}}
 
-## {{{ CronPoolIOStats
-class CronPoolIOStats(CachedZFSTask):
-    """ Cron job to periodically log iostats per pool to db.
-        Also creates pools that do not eist in db """
+## {{{ @30s Pool_IOStats_Populate
+class Pool_IOStats_Populate(CachedZFSPeriodicTask):
+    """ Periodic task to log iostats per pool to db. """
     run_every=timedelta(seconds=30)
 
-    def run(self, capture_length=30, *args, **kwargs):
-        timestamp_start = datetime.datetime.now()
+    ## {{{ @30s run
+    def run(self, *args, **kwargs):
+        return self.populate(*args, **kwargs)
+    ## }}}
+
+    ## {{{ @daily Pool_IOStats_Clean
+    #@periodic_task(run_every=timedelta(seconds=30))
+    def populate(self, capture_length=30, *args, **kwargs):
         iostats = self.zfs.pool.iostat(capture_length)
         timestamp_end = datetime.datetime.now()
         
@@ -46,7 +51,7 @@ class CronPoolIOStats(CachedZFSTask):
             try:
                 pool = Pool.objects.get(name=i)
             except (KeyError, Pool.DoesNotExist):
-                logging.error('Got iostats for unknown pool "%s"', i)
+                logging.error('Got data for an unknown pool "%s"', i)
                 continue
 
             iostats[i]['timestamp_end'] = timestamp_end
@@ -54,14 +59,12 @@ class CronPoolIOStats(CachedZFSTask):
             
             pool.pool_iostat_set.create(**iostats[i])
             return 0
-## }}}
 
-## {{{ CronPoolIOStatsCleanup
-class CronPoolIOStatsCleanup(CachedZFSTask):
-    """ Cron job to cleanup old iostat entries """
-    run_every=crontab(minute="0", hour="0")
+    ## {{{ @daily Pool_IOStats_Clean
+    #@periodic_task(run_every=timedelta(days=1))
+    def clean(self, *args, **kwargs):
+        """ Cron job to cleanup old iostat entries """
 
-    def run(self, *args, **kwargs):
         delete_older_than = datetime.timedelta(days=180)
         count = Pool_IOStat.objects.all().count()
         
@@ -77,10 +80,11 @@ class CronPoolIOStatsCleanup(CachedZFSTask):
             logging.debug("Deleted %d/%d entires", count_to_remove, count)
 
         return 0
+    ## }}}
 ## }}}
 
-## {{{ CronOnlineBackup
-class CronOnlineBackup(CachedZFSTask):
+## {{{ @hourly LocSol_Backup_Begin
+class LocSol_Backup_Begin(CachedZFSPeriodicTask):
     """ Cron job to periodically backup configured dataset snapshots to LocSol """
     run_every=timedelta(seconds=60)
 
@@ -89,11 +93,13 @@ class CronOnlineBackup(CachedZFSTask):
 
         for p in Pool.objects.all():
             d = p.dataset_set.get(name=p.name)
-            logging.debug('CronOnlineBackup on pool %s', p.name)
+            logging.debug('LocSol_Backup on pool %s', p.name)
+
+        return 0
 ## }}}
 
-## {{{ CronAutoSnapshot
-class CronAutoSnapshot(CachedZFSTask):
+## {{{ @minute Auto_Snapshot
+class Auto_Snapshot(CachedZFSPeriodicTask):
     """ Cron job to periodically take a snapshot of datasets """
     run_every=timedelta(seconds=60)
 
@@ -132,8 +138,8 @@ class CronAutoSnapshot(CachedZFSTask):
 
 ## }}}
 
-## {{{ SyncZFSdb
-class SyncZFSdb(CachedZFSTask):
+## {{{ @daily Import_ZFS_Metadata ## TODO This function should only beneeded on initial deploys of solarsanweb and shoud not be a crutch
+class Import_ZFS_Metadata(CachedZFSPeriodicTask):
     """ Syncs ZFS pools/datasets to DB """
     run_every=timedelta(days=1)
 

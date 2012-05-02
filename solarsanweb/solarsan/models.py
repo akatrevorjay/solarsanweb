@@ -30,23 +30,34 @@ class Pool(models.Model):
     guid = models.CharField(max_length=32)
     altroot = models.CharField(max_length=255)
     size = models.CharField(max_length=32)
+
     def __unicode__(self):
         return self.name
+
+    ## TODO Now that this uses Jinja2 for templates, we can call methods froe template markup, so this function is deprecated.
     def dataset_filesystems(self, **kwargs):
         return self.dataset_set.filter(type='filesystem')
 
+    def dataset(self):
+        """ Returns the matching Dataset for Pool """
+        return self.dataset_set.get(name=self.name)
+
 class Pool_IOStat(models.Model):
     pool = models.ForeignKey(Pool)
+
     timestamp = models.DateTimeField()
     timestamp_end = models.DateTimeField()
+
     alloc = models.FloatField()
     free = models.FloatField()
     bandwidth_read = models.IntegerField()
     bandwidth_write = models.IntegerField()
     iops_read = models.IntegerField()
     iops_write = models.IntegerField()
+
     def __unicode__(self):
         return self.pool.name+'_'+self.timestamp.strftime('%F_%T')
+
     def timestamp_epoch(self):
         return self.timestamp.strftime('%s')
 
@@ -117,12 +128,11 @@ class Dataset(models.Model):
         try:
             #zfs_snapshot(self.name, **kwargs)
             #TODO create database snapshot
-            SyncZFSdb.delay()
+            HACK_Import_ZFS_Metadata.delay()
         except:
             print "nope"
 
-#from solarsan.utils import zfs_snapshot
-from solarsan.tasks import SyncZFSdb
+from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
 
 #class Snapshot_Backup_Log(models.Model):
 #    dataset = models.ForeignKey(Dataset)

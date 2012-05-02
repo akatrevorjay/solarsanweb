@@ -81,7 +81,7 @@ STATIC_URL = '/solarsan/static/'
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
 # Examples: "http://foo.com/static/admin/", "/static/admin/".
-#ADMIN_MEDIA_PREFIX = '/static/admin/'
+ADMIN_MEDIA_PREFIX = '/solarsan/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -212,6 +212,7 @@ CELERY_RESULT_BACKEND = "amqp"
 if DEBUG:
     CELERY_SEND_EVENTS = True
     CELERY_SEND_TASK_SENT_EVENT = True
+## queues=[cluster, default]
 #CELERY_QUEUES
 #CELERY_ROUTES = ({"myapp.tasks.compress_video": {
 #                        "queue": "video",
