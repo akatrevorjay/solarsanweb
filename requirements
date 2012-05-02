@@ -8,12 +8,14 @@ amqplib==1.0.2
 anyjson==0.3.1
 argh==0.15.1
 celery==2.5.3
+celerymon==0.4.0
 distribute==0.6.19
 django-celery==2.5.5
 django-debug-toolbar==0.9.4
 django-extensions==0.8
 django-picklefield==0.2.1
 django-supervisor==0.2.7
+gunicorn==0.14.2
 ipdb==0.6.1
 ipython==0.12.1
 ipython-extensions==0.2
@@ -29,5 +31,7 @@ python-flot-utils==0.2.1
 pytz==2012c
 supervisor==3.0a12
 threadpool==1.2.7
+tornado==2.2.1
+uWSGI==1.2
 watchdog==0.6.0
 wsgiref==0.1.2

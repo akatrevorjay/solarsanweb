@@ -14,6 +14,7 @@ fi
 
 case "$cmd" in
     shell) cmd="shell_plus" ;;
+    uwsgi|wsgi) uwsgi --ini "$basedir/uwsgi.ini" ;;
     dev_maint)
         pushd "$basedir"
             pushd ".."
@@ -25,12 +26,6 @@ case "$cmd" in
             django-lint
         popd
         exit 0
-        ;;
-    celery)
-        cmd="celeryd"
-        # --autoscale=10,1
-        # -P processes (default), eventlet, gevent, solo, threads
-        set -- -E -B --autoreload --traceback -v 2 -l DEBUG -P threads --purge
         ;;
     *)
         if [[ -n "$cmd" && -x "$basedir/bin/$cmd" ]]; then

@@ -115,11 +115,14 @@ class Dataset(models.Model):
         # Make the filesystem-level snapshot
         #TODO check retval
         try:
-            zfs_snapshot(self.name, **kwargs)
+            #zfs_snapshot(self.name, **kwargs)
             #TODO create database snapshot
-            sync_zfs_db()
+            SyncZFSdb.delay()
         except:
             print "nope"
+
+#from solarsan.utils import zfs_snapshot
+from solarsan.tasks import SyncZFSdb
 
 #class Snapshot_Backup_Log(models.Model):
 #    dataset = models.ForeignKey(Dataset)
@@ -134,9 +137,6 @@ def dataset_snapshots(*datasets, **kwargs):
     except (KeyError, Dataset.DoesNotExist):
         datasets = []
     return datasets
-
-from solarsan.utils import zfs_snapshot
-from cron import sync_zfs_db
 
 ## Schedule backups, snapshots, health status checks, etc
 class Dataset_Cron(models.Model):

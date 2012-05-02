@@ -1,19 +1,22 @@
 ## {{{ imports
-import datetime, time
-import logging
-from solarsan.models import Pool, Pool_IOStat, Dataset
-from solarsan.utils import zpool_iostat, zpool_list, zfs_list, convert_human_to_bytes, zfs_snapshot
+from models import Pool, Pool_IOStat, Dataset
+from utils import convert_human_to_bytes, convert_bytes_to_human
 
 from celery.schedules import crontab
-from datetime import timedelta
 from celery.task import periodic_task, task, chord, group, sets
 from celery.task.base import PeriodicTask, Task
 from celery.task.sets import subtask
+
+import datetime
+from datetime import timedelta
+import time
+import logging
 import zfs
 ## }}}
 
-## {{{ Abstract Task Class -- CachedZFSTask
+## {{{ @abstract CachedZFSTask
 class CachedZFSTask(PeriodicTask):
+    """ Abstract template class that caches our ZFS object per worker """
     abstract = True
     _zfs = None
 
@@ -76,21 +79,63 @@ class CronPoolIOStatsCleanup(CachedZFSTask):
         return 0
 ## }}}
 
-## {{{ CronAutoSnapshot (abstract)
-class CronAutoSnapshot(CachedZFSTask):
-    abstract = True
+## {{{ CronOnlineBackup
+class CronOnlineBackup(CachedZFSTask):
+    """ Cron job to periodically backup configured dataset snapshots to LocSol """
+    run_every=timedelta(seconds=60)
 
     def run(self, *args, **kwargs):
-        """ Cron job to periodically take a snapshot of datasets """
-        
+        logging = self.get_logger()
+
         for p in Pool.objects.all():
-            d = p.dataset_set.get(name=p.name).snapshot(recursive=True)
+            d = p.dataset_set.get(name=p.name)
+            logging.debug('CronOnlineBackup on pool %s', p.name)
+## }}}
+
+## {{{ CronAutoSnapshot
+class CronAutoSnapshot(CachedZFSTask):
+    """ Cron job to periodically take a snapshot of datasets """
+    run_every=timedelta(seconds=60)
+
+    def __init__(self):
+        self.config = {
+            'schedules': {
+                'testing': {
+                    ## Schedule
+                    'snapshot-every':   timedelta(seconds=30),
+                    'remove-every':     timedelta(seconds=30),
+
+                    ## Creation
+                    'datasets':         ['rpool/tmp'],
+                    #'datasets-all':    True,
+                    'snapshot-prefix':  'auto-testing-%F_%T',
+                    'recursive':        False,
+                    
+                    ## Removal
+                    'snapshot-max-age': timedelta(minutes=5),
+                },
+            },
+        }
+        
+    def run(self, *args, **kwargs):
+        logging = self.get_logger()
+
+        ## Get config and schedules
+        schedules = self.config['schedules']
+        for sched_name in schedules.keys():
+            sched = schedules[sched_name]
+            logging.debug("Schedule \"%s\"", sched_name)
+
+            #str(sched['snapshot-prefix'])
+            #for dataset in sched['datasets']:
+                #d = p.dataset_set.get(name=p.name).snapshot(name=SnapshotName, recursive=True)
+
 ## }}}
 
 ## {{{ SyncZFSdb
 class SyncZFSdb(CachedZFSTask):
     """ Syncs ZFS pools/datasets to DB """
-    abstract = True
+    run_every=timedelta(days=1)
 
     def run(self, *args, **kwargs):
         datasets = self.zfs.dataset.list(type='all')

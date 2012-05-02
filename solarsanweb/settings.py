@@ -81,7 +81,7 @@ STATIC_URL = '/static/'
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
 # Examples: "http://foo.com/static/admin/", "/static/admin/".
-ADMIN_MEDIA_PREFIX = '/static/admin/'
+#ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -152,6 +152,9 @@ DEBUG_TOOLBAR_CONFIG = {
 
 ROOT_URLCONF = PROJECT_NAME + '.urls'
 
+# Python dotted path to the WSGI application used by Django's runserver.
+WSGI_APPLICATION = PROJECT_NAME + '.wsgi.application'
+
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
@@ -176,9 +179,8 @@ INSTALLED_APPS = (
     # Libs
 	'djcelery',
 	'kombu.transport.django',
-    'debug_toolbar',
+    #'debug_toolbar',
 	'django_extensions',
-	'chartit',
     'djsupervisor',
     'south',
 
@@ -205,13 +207,16 @@ djcelery.setup_loader()
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
 #BROKER_USE_SSL = True
 CELERY_RESULT_BACKEND = "amqp"
-CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
-CELERY_DEFAULT_RATE_LIMIT = "100/s"
-#if DEBUG:
-CELERY_SEND_EVENTS = True
-CELERY_SEND_TASK_SENT_EVENT = True
+#CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
+#CELERY_DEFAULT_RATE_LIMIT = "100/s"
+if DEBUG:
+    CELERY_SEND_EVENTS = True
+    CELERY_SEND_TASK_SENT_EVENT = True
 #CELERY_QUEUES
-#CELERY_ROUTES
+#CELERY_ROUTES = ({"myapp.tasks.compress_video": {
+#                        "queue": "video",
+#                        "routing_key": "video.compress"
+#                 }}, )
 #CELERY_DEFAULT_QUEUE
 #CELERY_CREATE_MISSING_QUEUES
 #CELERY_DEFAULT_ROUTING_KEY
@@ -224,6 +229,11 @@ CELERY_SEND_TASK_SENT_EVENT = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
