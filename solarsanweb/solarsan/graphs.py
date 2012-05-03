@@ -11,6 +11,44 @@ from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
 from pyrrd.rrd import DataSource, RRA, RRD
 from django.conf import settings
 
+def pool_utilization():
+   graph = {}
+
+   for p in Pool.objects.all():
+       #iostats = p.pool_iostat_set.order_by('timestamp')[:count:offset]
+       iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
+       
+       graph[p.name] = {}
+
+       total = int(iostats[0].alloc + iostats[0].free)
+       graph[p.name]['graph_utilization'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
+
+   return graph
+
+
+def graph_stats(count=1):
+    """ Gets graph stats """
+    graph = {}
+
+    for p in Pool.objects.all():
+        iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
+        #iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
+        
+        graph[p.name] = {}
+
+        total = int(iostats[0].alloc + iostats[0].free)
+        graph[p.name]['graph_utilization'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
+
+        graph[p.name]['graph_iops'] = {'values': [[], []]}
+        graph[p.name]['graph_throughput'] = {'values': [[], []]}
+        for iostat in iostats:
+            graph[p.name]['graph_iops']['values'][0].insert(0, int(iostat.iops_read))
+            graph[p.name]['graph_iops']['values'][1].insert(0, int(iostat.iops_write))
+            graph[p.name]['graph_throughput']['values'][0].insert(0, int(iostat.bandwidth_read))
+            graph[p.name]['graph_throughput']['values'][1].insert(0, int(iostat.bandwidth_write))
+    return graph
+
+
 @periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):
     StartTime = int(time.time())

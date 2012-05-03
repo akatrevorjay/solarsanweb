@@ -207,7 +207,7 @@ djcelery.setup_loader()
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
 #BROKER_USE_SSL = True
 CELERY_RESULT_BACKEND = "amqp"
-#CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
+CELERY_IMPORTS = ("solarsan.tasks", "solarsan.graphs", )
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
 if DEBUG:
     CELERY_SEND_EVENTS = True

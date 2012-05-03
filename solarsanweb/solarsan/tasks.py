@@ -1,5 +1,5 @@
-## {{{ imports
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+
 from solarsan.models import Pool, Pool_IOStat, Dataset
 
 from celery.schedules import crontab
@@ -12,7 +12,6 @@ from datetime import timedelta
 import time
 import logging
 import zfs
-## }}}
 
 ## {{{ @abstract CachedZFSPeriodicTask
 class CachedZFSPeriodicTask(PeriodicTask):
@@ -34,7 +33,10 @@ class Pool_IOStats_Populate(CachedZFSPeriodicTask):
 
     ## {{{ @30s run
     def run(self, *args, **kwargs):
-        return self.populate(*args, **kwargs)
+        if kwargs.get('type', 'populate') == 'populate':
+            return self.populate(*args, **kwargs)
+        else:
+            return self.clean(*args, **kwargs)
     ## }}}
 
     ## {{{ @daily Pool_IOStats_Clean
@@ -59,6 +61,7 @@ class Pool_IOStats_Populate(CachedZFSPeriodicTask):
             
             pool.pool_iostat_set.create(**iostats[i])
             return 0
+    ## }}}
 
     ## {{{ @daily Pool_IOStats_Clean
     #@periodic_task(run_every=timedelta(days=1))
@@ -103,26 +106,25 @@ class Auto_Snapshot(CachedZFSPeriodicTask):
     """ Cron job to periodically take a snapshot of datasets """
     run_every=timedelta(seconds=60)
 
-    def __init__(self):
-        self.config = {
-            'schedules': {
-                'testing': {
-                    ## Schedule
-                    'snapshot-every':   timedelta(seconds=30),
-                    'remove-every':     timedelta(seconds=30),
+    config = {
+        'schedules': {
+            'testing': {
+                ## Schedule
+                'snapshot-every':   timedelta(seconds=30),
+                'remove-every':     timedelta(seconds=30),
 
-                    ## Creation
-                    'datasets':         ['rpool/tmp'],
-                    #'datasets-all':    True,
-                    'snapshot-prefix':  'auto-testing-%F_%T',
-                    'recursive':        False,
-                    
-                    ## Removal
-                    'snapshot-max-age': timedelta(minutes=5),
-                },
+                ## Creation
+                'datasets':         ['rpool/tmp'],
+                #'datasets-all':    True,
+                'snapshot-prefix':  'auto-testing-%F_%T',
+                'recursive':        False,
+                
+                ## Removal
+                'snapshot-max-age': timedelta(minutes=5),
             },
-        }
-        
+        },
+    }
+    
     def run(self, *args, **kwargs):
         logging = self.get_logger()
 
@@ -130,7 +132,7 @@ class Auto_Snapshot(CachedZFSPeriodicTask):
         schedules = self.config['schedules']
         for sched_name in schedules.keys():
             sched = schedules[sched_name]
-            logging.debug("Schedule \"%s\"", sched_name)
+            logging.debug("Schedule \"%s\"=%s", sched_name, sched)
 
             #str(sched['snapshot-prefix'])
             #for dataset in sched['datasets']:
@@ -144,9 +146,11 @@ class Import_ZFS_Metadata(CachedZFSPeriodicTask):
     run_every=timedelta(days=1)
 
     def run(self, *args, **kwargs):
+        logging = self.get_logger()
+
         datasets = self.zfs.dataset.list(type='all')
         pools = self.zfs.pool.list().keys()
-
+        
         # Pools
         for p in pools:
             try:

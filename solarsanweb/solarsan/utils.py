@@ -4,44 +4,7 @@ from django.utils import simplejson
 from django.utils.encoding import force_unicode
 from django.db.models.base import ModelBase
 
-from solarsan.models import Pool, Dataset
 import string, os, sys, logging, datetime
-
-def graph_stats(count=1):
-    """ Gets graph stats """
-    graph = {}
-
-    for p in Pool.objects.all():
-        iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
-        #iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
-        
-        graph[p.name] = {}
-
-        total = int(iostats[0].alloc + iostats[0].free)
-        graph[p.name]['graph_utilization'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
-
-        graph[p.name]['graph_iops'] = {'values': [[], []]}
-        graph[p.name]['graph_throughput'] = {'values': [[], []]}
-        for iostat in iostats:
-            graph[p.name]['graph_iops']['values'][0].insert(0, int(iostat.iops_read))
-            graph[p.name]['graph_iops']['values'][1].insert(0, int(iostat.iops_write))
-            graph[p.name]['graph_throughput']['values'][0].insert(0, int(iostat.bandwidth_read))
-            graph[p.name]['graph_throughput']['values'][1].insert(0, int(iostat.bandwidth_write))
-    return graph
-
-#def pool_utilization():
-#    graph = {}
-#
-#    for p in Pool.objects.all():
-#        #iostats = p.pool_iostat_set.order_by('timestamp')[:count:offset]
-#        iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
-#        
-#        graph[p.name] = {}
-#
-#        total = int(iostats[0].alloc + iostats[0].free)
-#        graph[p.name]['graph_utilization'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
-#
-#    return graph
 
 def convert_bytes_to_human(n):
     """ Utility to convert bytes to human readable (K/M/G/etc) """
@@ -71,7 +34,7 @@ def convert_human_to_bytes(s):
     #TODO What if it's invalid data? How should that be handled?
     return '%.0f' % float(s)
 
-#KEYNOTFOUND = '<KEYNOTFOUND>'       # KeyNotFound for dictDiff
+KEYNOTFOUND = '<KEYNOTFOUND>'       # KeyNotFound for dictDiff
 
 def dict_diff(first, second):
     """ Return a dict of keys that differ with another config object.  If a value is
