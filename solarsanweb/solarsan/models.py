@@ -7,6 +7,10 @@ class Config(models.Model):
     def __unicode__(self):
         return self.key
 
+##
+## {{{ Pool
+##
+
 class Pool(models.Model):
     name = models.CharField(max_length=128, unique=True)
     
@@ -34,10 +38,6 @@ class Pool(models.Model):
     def __unicode__(self):
         return self.name
 
-    ## TODO Now that this uses Jinja2 for templates, we can call methods froe template markup, so this function is deprecated.
-    def dataset_filesystems(self, **kwargs):
-        return self.dataset_set.filter(type='filesystem')
-
     def dataset(self):
         """ Returns the matching Dataset for Pool """
         return self.dataset_set.get(name=self.name)
@@ -61,7 +61,26 @@ class Pool_IOStat(models.Model):
     def timestamp_epoch(self):
         return self.timestamp.strftime('%s')
 
+##
+## Pool }}}
+##
+
+##
+## {{{ Dataset
+##
+
+class FilesystemManager(models.Manager):
+    def get_query_set(self):
+        return super(FilesystemManager, self).get_query_set().filter(type='filesystem')
+
+class SnapshotManager(models.Manager):
+    def get_query_set(self):
+        return super(SnapshotManager, self).get_query_set().filter(type='snapshot')
+
 class Dataset(models.Model):
+    class Meta:
+        ordering = ['name', 'creation']
+
     name = models.CharField(max_length=128, unique=True)
     last_modified = models.DateTimeField(auto_now=True)
     basename = models.CharField(max_length=128)
@@ -115,10 +134,16 @@ class Dataset(models.Model):
 
     def __unicode__(self):
         return self.name
-    
+
+class Filesystem(Dataset):
+    class Meta:
+        proxy = True
+    objects = FilesystemManager()
+
     def snapshots(self, **kwargs):
-        return dataset_snapshots(self.name, kwargs)
-    
+        """ Lists snapshots of this Filesystem """
+        return self._base_manager.filter(type='snapshot', name__startswith=self.name+'@')
+
     def snapshot(self, **kwargs):
         """ Snapshot this dataset """
         logging.debug('Snapshot %s %s', self, kwargs)
@@ -132,7 +157,23 @@ class Dataset(models.Model):
         except:
             print "nope"
 
+#   def pre_create(self, **kwargs):
+#   def pre_delete(self, **kwargs):
+
+class Snapshot(Dataset):
+    class Meta:
+        proxy = True
+        ordering = ['creation']
+    objects = SnapshotManager()
+
+#   def pre_save(self, **kwargs):
+#   def pre_delete(self, **kwargs):
+
 from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
+
+##
+## Dataset }}}
+##
 
 #class Snapshot_Backup_Log(models.Model):
 #    dataset = models.ForeignKey(Dataset)
@@ -140,13 +181,9 @@ from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
 #    success = models.BooleanField()
 #    description = models.CharField(max_length=255)
 
-def dataset_snapshots(*datasets, **kwargs):
-    dataset = datasets[0]
-    try:
-        datasets = Dataset.objects.filter(type='snapshot', name__startswith=dataset+'@')
-    except (KeyError, Dataset.DoesNotExist):
-        datasets = []
-    return datasets
+##
+## {{{ Cron
+##
 
 ## Schedule backups, snapshots, health status checks, etc
 class Dataset_Cron(models.Model):
@@ -159,6 +196,8 @@ class Dataset_Cron(models.Model):
     task = models.CharField(max_length=128)
     schedule = models.CharField(max_length=128)
 
-
+##
+## Cron }}}
+##
 
 
