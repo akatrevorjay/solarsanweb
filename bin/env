@@ -9,7 +9,7 @@ if [[ "$0" != "bash" ]]; then
 else
     e() { echo "$@"; }
     debug() { [[ ! "$DEBUG" ]] || echo "$@"; }
-    export PATH="$PATH:$basedir/bin"
+    export PATH="$basedir/bin:$PATH"
 fi
 
 debug "basedir=\"$basedir\" basedir_raw=\"$basedir_raw\""

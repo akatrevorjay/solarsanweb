@@ -7,13 +7,10 @@ class Config(models.Model):
     def __unicode__(self):
         return self.key
 
-##
-## {{{ Pool
-##
 
 class Pool(models.Model):
     name = models.CharField(max_length=128, unique=True)
-    
+
     last_modified = models.DateTimeField(auto_now=True)
     delegation = models.BooleanField()
     listsnapshots = models.BooleanField()
@@ -42,6 +39,7 @@ class Pool(models.Model):
         """ Returns the matching Dataset for Pool """
         return self.dataset_set.get(name=self.name)
 
+
 class Pool_IOStat(models.Model):
     pool = models.ForeignKey(Pool)
 
@@ -61,13 +59,6 @@ class Pool_IOStat(models.Model):
     def timestamp_epoch(self):
         return self.timestamp.strftime('%s')
 
-##
-## Pool }}}
-##
-
-##
-## {{{ Dataset
-##
 
 class FilesystemManager(models.Manager):
     def get_query_set(self):
@@ -109,7 +100,7 @@ class Dataset(models.Model):
     aclinherit = models.CharField(max_length=32)
     compressratio = models.CharField(max_length=32)
     readonly = models.BooleanField()
-    version = models.IntegerField() 
+    version = models.IntegerField()
     normalization = models.CharField(max_length=32)
     type = models.CharField(max_length=32)
     secondarycache = models.CharField(max_length=32)
@@ -135,6 +126,7 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class Filesystem(Dataset):
     class Meta:
         proxy = True
@@ -146,8 +138,8 @@ class Filesystem(Dataset):
 
     def snapshot(self, **kwargs):
         """ Snapshot this dataset """
-        logging.debug('Snapshot %s %s', self, kwargs)
-        
+        logging.info('Snapshot %s %s', self, kwargs)
+
         # Make the filesystem-level snapshot
         #TODO check retval
         try:
@@ -160,20 +152,22 @@ class Filesystem(Dataset):
 #   def pre_create(self, **kwargs):
 #   def pre_delete(self, **kwargs):
 
+
 class Snapshot(Dataset):
     class Meta:
         proxy = True
         ordering = ['creation']
     objects = SnapshotManager()
 
+    def filesystem(self):
+        #return self._base_manager.filter(type='filesystem', name=)
+        pass
+
 #   def pre_save(self, **kwargs):
 #   def pre_delete(self, **kwargs):
 
 from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
 
-##
-## Dataset }}}
-##
 
 #class Snapshot_Backup_Log(models.Model):
 #    dataset = models.ForeignKey(Dataset)
@@ -181,9 +175,6 @@ from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
 #    success = models.BooleanField()
 #    description = models.CharField(max_length=255)
 
-##
-## {{{ Cron
-##
 
 ## Schedule backups, snapshots, health status checks, etc
 class Dataset_Cron(models.Model):
@@ -195,9 +186,5 @@ class Dataset_Cron(models.Model):
 
     task = models.CharField(max_length=128)
     schedule = models.CharField(max_length=128)
-
-##
-## Cron }}}
-##
 
 
