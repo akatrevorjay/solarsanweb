@@ -222,6 +222,20 @@ if DEBUG:
 #CELERY_CREATE_MISSING_QUEUES
 #CELERY_DEFAULT_ROUTING_KEY
 
+#CELERY_RESULT_BACKEND = "mongodb"
+#CELERY_MONGODB_BACKEND_SETTINGS = {
+    #"host": "127.0.0.1",
+    #"port": 27017,
+    #"database": "celery",
+    #"taskmeta_collection": "my_taskmeta" # Collection name to use for task output
+#}
+#BROKER_BACKEND = "mongodb"
+#BROKER_HOST = "localhost"
+#BROKER_PORT = 27017
+#BROKER_USER = ""
+#BROKER_PASSWORD = ""
+#BROKER_VHOST = "celery"
+
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error.
@@ -229,19 +243,49 @@ if DEBUG:
 # more details on how to customize your logging configuration.
 LOGGING = {
     'version': 1,
+    #'disable_existing_loggers': True,
     'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s %(levelname)s %(filename)s@%(funcName)s:%(lineno)d %(message)s',
+            #'datefmt': '%d/%b/%Y %H:%M:%S',
+        },
+    },
     'filters': {
         'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
     },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
+        'null': {
+            'level': 'DEBUG',
+            'class': 'django.utils.log.NullHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+        },
     },
     'loggers': {
+        #'django': {
+        #    'handlers':['console'],
+        #    'propagate': True,
+        #    'level':'INFO',
+        #},
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        #'apps': {
+        #    'handlers': ['console',],
+        #    'level': 'DEBUG',
+        #},
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
@@ -251,11 +295,11 @@ LOGGING = {
 }
 
 ## ~trevorj 020712
-import logging
-logging.basicConfig(
-    level = logging.DEBUG,
-    format = '%(asctime)s %(levelname)s %(filename)s@%(funcName)s:%(lineno)d %(message)s',
-    #filename = '/tmp/myapp.log',
-    #filemode = 'w'
-)
+#import logging
+#logging.basicConfig(
+#    level = logging.DEBUG,
+#    format = '%(asctime)s %(levelname)s %(filename)s@%(funcName)s:%(lineno)d %(message)s',
+#    #filename = '/tmp/myapp.log',
+#    #filemode = 'w'
+#)
 
