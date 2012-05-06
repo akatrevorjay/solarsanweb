@@ -66,7 +66,7 @@ class Pool_IOStat_Clean(CachedZFSPeriodicTask):
 
 class Auto_Snapshot(CachedZFSPeriodicTask):
     """ Cron job to periodically take a snapshot of datasets """
-    run_every = timedelta(seconds=60)
+    run_every = timedelta(days=1)
 
     config = {
         'schedules': {
@@ -90,7 +90,7 @@ class Auto_Snapshot(CachedZFSPeriodicTask):
     def run(self, *args, **kwargs):
         logging = self.get_logger(**kwargs)
 
-        ## Get config and schedules
+        # Get config and schedules
         schedules = self.config['schedules']
         for sched_name in schedules.keys():
             sched = schedules[sched_name]
@@ -106,23 +106,22 @@ class Auto_Snapshot(CachedZFSPeriodicTask):
                     logging.error("Was supposed to snapshot dataset %s but it does not exist?", dataset_name)
                     continue
 
-                #TODO Make seperate async task for this so we're not blocked
+                # TODO Make seperate async task for this so we're not blocked
                 logging.debug("Creating snapshot %s on dataset %s", snapshotName, dataset_name)
                 dataset.snapshot(name=snapshotName, recursive=sched['recursive'])
+                # TODO Clean up old snaps
 
-
-class Auto_Snapshot_Filesystem(Task):
+@task
+def Auto_Snapshot_Filesystem(*args, **kwargs):
     """ Cleans up old automatic snapshots """
+    logging = self.get_logger(**kwargs)
+    # TODO
 
-    def run(self, *args, **kwargs):
-        logging = self.get_logger(**kwargs)
-
-
-class Auto_Snapshot_Filesystem_Clean(Task):
+@task
+def Auto_Snapshot_Filesystem_Clean(*args, **kwargs):
     """ Cleans up old automatic snapshots """
-    def run(self, *args, **kwargs):
-        logging = self.get_logger(**kwargs)
-
+    logging = self.get_logger(**kwargs)
+    # TODO
 
 
 class LocSol_Backup_Scheduler(CachedZFSPeriodicTask):
@@ -142,7 +141,7 @@ class LocSol_Backup_Scheduler(CachedZFSPeriodicTask):
 ## TODO This function should only beneeded on initial deploys of solarsanweb and should not be a crutch
 class Import_ZFS_Metadata(CachedZFSPeriodicTask):
     """ Syncs ZFS pools/datasets to DB """
-    run_every = timedelta(days=1)
+    run_every = timedelta(minutes=1)
 
     def run(self, *args, **kwargs):
         logging = self.get_logger(**kwargs)
@@ -169,7 +168,7 @@ class Import_ZFS_Metadata(CachedZFSPeriodicTask):
 
             ## Remove unused args
             for k in ['parent', 'children']:
-                if dataset.has_key(k):
+                if k in dataset:
                     del dataset[k]
             ## Rename exec to avoid pythonisms
             dataset['Exec'] = dataset['exec']

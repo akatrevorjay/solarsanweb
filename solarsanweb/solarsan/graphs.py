@@ -17,7 +17,7 @@ def pool_utilization():
    for p in Pool.objects.all():
        #iostats = p.pool_iostat_set.order_by('timestamp')[:count:offset]
        iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
-       
+
        graph[p.name] = {}
 
        total = int(iostats[0].alloc + iostats[0].free)
@@ -33,7 +33,7 @@ def graph_stats(count=1):
     for p in Pool.objects.all():
         iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
         #iostats = p.pool_iostat_set.order_by('-timestamp')[:count]
-        
+
         graph[p.name] = {}
 
         total = int(iostats[0].alloc + iostats[0].free)

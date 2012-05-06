@@ -1,5 +1,6 @@
 import logging
 from django.db import models
+from zfs import zfs
 
 class Config(models.Model):
     key = models.CharField(max_length=255)
@@ -38,6 +39,11 @@ class Pool(models.Model):
     def dataset(self):
         """ Returns the matching Dataset for Pool """
         return self.dataset_set.get(name=self.name)
+
+    @property
+    def zfs(self):
+        # TODO Swtch to zfs.Pool(lookup=)
+        return zfs.Pools[self.name]
 
 
 class Pool_IOStat(models.Model):
@@ -126,6 +132,10 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
 
+    @property
+    def zfs(self):
+        # TODO Swtch to zfs.Dataset(lookup=)
+        return zfs.Datasets[self.name]
 
 class Filesystem(Dataset):
     class Meta:
@@ -138,16 +148,15 @@ class Filesystem(Dataset):
 
     def snapshot(self, **kwargs):
         """ Snapshot this dataset """
-        logging.info('Snapshot %s %s', self, kwargs)
+        logging.info('Snapshot %s on filesystem %s', kwargs['name'], self.name)
 
         # Make the filesystem-level snapshot
-        #TODO check retval
         try:
-            #zfs_snapshot(self.name, **kwargs)
-            #TODO create database snapshot
-            HACK_Import_ZFS_Metadata.delay()
+            self.zfs.snapshot(**kwargs)
+            #TODO create Snapshot and return it
+            #HACK_Import_ZFS_Metadata.delay()
         except:
-            print "nope"
+            logging.error('Snapshot %s %s failed', self, kwargs)
 
 #   def pre_create(self, **kwargs):
 #   def pre_delete(self, **kwargs):
@@ -166,7 +175,7 @@ class Snapshot(Dataset):
 #   def pre_save(self, **kwargs):
 #   def pre_delete(self, **kwargs):
 
-from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
+#from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
 
 
 #class Snapshot_Backup_Log(models.Model):

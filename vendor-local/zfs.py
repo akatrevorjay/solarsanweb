@@ -4,9 +4,13 @@ import os, sys
 import time, datetime, logging
 from iterpipes import run, cmd, linecmd, check_call, format
 from solarsanweb.utils import FilterableDict
-
+from solarsanweb.solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
 _paths = {'zfs':    "/usr/sbin/zfs",
           'zpool':  "/usr/sbin/zpool", }
+
+#
+# TODO Convert to/from bytes/human here, before handing it off
+#
 
 class Pools(FilterableDict):
     ttl = 60
@@ -172,31 +176,36 @@ class Dataset(FilterableDict):
         dictrepr = dict.__repr__(self)
         return '%s(%s)' % (type(self).__name__, dictrepr)
 
-    def snapshot(self, *datasets, **kwargs):
-        """ Creates snapshot(s) on *datasets
-            zfs.snapshot(*datasets, recursive=[False]), name=[auto-%F_%T]) """
-
-        if not len(datasets) > 0:
-            ##TODO Figure out how to do exceptions
-            return False
-
-        # Default snapshot name
-        kwargs['name'] = kwargs.get('name', datetime.datetime.now().strftime('auto-%F_%T'))
-
-        if kwargs.get('recursive', False) == True:
-            kwargs['recursive'] = '-r'
-        else:
-            kwargs['recursive'] = None
-
-        logging.info('Creating snapshot on %s with %s', datasets, kwargs)
-        for d in datasets:
-            return self.__zfs('{} {} {}', 'snapshot', kwargs['recursive'], d+'@'+kwargs['name'])
-
-
 
 class Filesystem(Dataset):
     """ Filesystem object """
     type='filesystem'
+
+    def _zfs(self, *args):
+        """ Returns a linecmd with format args[0] and strings args[1:] """
+        return linecmd(_paths['zfs']+' '+args[0], *args[1:])
+
+
+    def snapshot(self, **kwargs):
+        """ Creates snapshot(s) on *datasets
+            zfs.snapshot(*datasets, recursive=[False]), name=[auto-%F_%T]) """
+
+        args = ['snapshot']
+
+        if kwargs.get('recursive', False) == True:
+            args.append('-r')
+
+        # Default snapshot name
+        kwargs['name'] = kwargs.get('name', datetime.datetime.now().strftime('auto-%F_%T'))
+
+        args.append( self['name']+'@'+kwargs['name'] )
+
+        cmdf = []
+        for i in args:
+            cmdf.append('{}')
+
+        logging.info('Creating snapshot on %s with %s', self.name, kwargs)
+        return check_call(self._zfs(' '.join(cmdf), *args))
 
 
 class Snapshot(Dataset):
@@ -320,6 +329,8 @@ class _zfs(object):
     """ Wrapper around zfs/zpool commands """
     Pools = Pools()
     Datasets = Datasets()
-
+    # TODO These too..
+    #Filesystems =
+    #Snapshots =
 zfs = _zfs()
 
