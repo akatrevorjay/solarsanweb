@@ -9,7 +9,8 @@ anyjson==0.3.1
 argh==0.15.1
 celery==2.5.3
 celerymon==0.4.0
-distribute==0.6.19
+decorator==3.3.3
+distribute==0.6.26
 django-celery==2.5.5
 django-debug-toolbar==0.9.4
 django-extensions==0.8
@@ -26,6 +27,7 @@ kombu==2.1.7
 meld3==0.6.8
 pathtools==0.1.2
 py-rrdtool==0.2.1
+pyinotify==0.9.3
 python-dateutil==1.5
 python-flot-utils==0.2.1
 pytz==2012c
