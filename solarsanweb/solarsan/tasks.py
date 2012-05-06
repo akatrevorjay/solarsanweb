@@ -11,26 +11,19 @@ import datetime
 from datetime import timedelta
 import time
 import logging
-import zfs
+from zfs import zfs
 
 
 class CachedZFSPeriodicTask(PeriodicTask):
     """ Abstract template class that caches our ZFS object per worker """
     abstract = True
-    _zfs = None
-
-    @property
-    def zfs(self):
-        if self._zfs == None:
-            self._zfs = zfs.zfs()
-        return self._zfs
 
 class Pool_IOStats_Populate(CachedZFSPeriodicTask):
     """ Periodic task to log iostats per pool to db. """
     run_every = timedelta(seconds=30)
 
     def run(self, capture_length=30, *args, **kwargs):
-        iostats = self.zfs.pool.iostat(capture_length)
+        iostats = zfs.Pools.iostat(capture_length=capture_length)
         timestamp_end = datetime.datetime.now()
 
         for i in iostats:
@@ -154,8 +147,8 @@ class Import_ZFS_Metadata(CachedZFSPeriodicTask):
     def run(self, *args, **kwargs):
         logging = self.get_logger(**kwargs)
 
-        datasets = self.zfs.dataset.list(type='all')
-        pools = self.zfs.pool.list().keys()
+        datasets = zfs.Datasets
+        pools = zfs.Pools
 
         # Pools
         for p in pools:
