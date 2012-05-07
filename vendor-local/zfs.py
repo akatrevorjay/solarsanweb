@@ -2,9 +2,11 @@
 
 import os, sys
 import time, datetime, logging
+from django.utils import timezone
 from iterpipes import run, cmd, linecmd, check_call, format
 from solarsanweb.utils import FilterableDict
 from solarsanweb.solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+
 _paths = {'zfs':    "/usr/sbin/zfs",
           'zpool':  "/usr/sbin/zpool", }
 
@@ -13,7 +15,7 @@ _paths = {'zfs':    "/usr/sbin/zfs",
 #
 
 class Pools(FilterableDict):
-    ttl = 60
+    ttl = 5
 
     def __new__(cls, *args, **kwargs):
         self = super(Pools, cls).__new__(cls, *args, **kwargs)
@@ -22,6 +24,7 @@ class Pools(FilterableDict):
 
     def __getitem__(self, arg):
         now = time.time()
+        # FIXME TODO Caching is a problem when deleting because the task just re-adds the datasets...
         if now - self.timestamp > self.ttl:
             self.refresh()
         return super(Pools, self).__getitem__(arg)
@@ -38,7 +41,7 @@ class Pools(FilterableDict):
             data = kwargs
         else:
             data = [ (name, Pool(**obj))
-                for name, obj in self._zpool_list().iteritems() ]
+                for name, obj in self._zpool_list().items() ]
         # {{{ FIXME This is not thread safe without locks
         self.clear()
         self.update(data)
@@ -116,7 +119,8 @@ class Pools(FilterableDict):
             i = ' '.join( str( str(i).rstrip('\\n')).split() )
 
             if i.isdigit():
-                timestamp = datetime.datetime.fromtimestamp(int(i))
+                timestamp = timezone.make_aware(
+                        datetime.datetime.fromtimestamp(int(i)), timezone.get_current_timezone() )
                 continue
             if timestamp == 0:
                 continue
@@ -176,15 +180,34 @@ class Dataset(FilterableDict):
         dictrepr = dict.__repr__(self)
         return '%s(%s)' % (type(self).__name__, dictrepr)
 
+    def delete(self, **kwargs):
+        """ (DANGEROUS) Delete dataset from filesystem """
+        args = ['destroy']
 
-class Filesystem(Dataset):
-    """ Filesystem object """
-    type='filesystem'
+        if kwargs.get('recursive', False) == True:
+            args.append('-r')
+
+        if not 'name' in self:
+            logging.error("Delete was attemped on an empty ZFS object!")
+            # TODO Better exceptions
+            raise Exception
+        args.append(self['name'])
+
+        cmdf = []
+        for i in args:
+            cmdf.append('{}')
+
+        # Should we catch the retval and raise an Exception on failure or is this fine?
+        return check_call(self._zfs(' '.join(cmdf), *args))
 
     def _zfs(self, *args):
         """ Returns a linecmd with format args[0] and strings args[1:] """
         return linecmd(_paths['zfs']+' '+args[0], *args[1:])
 
+
+class Filesystem(Dataset):
+    """ Filesystem object """
+    type='filesystem'
 
     def snapshot(self, **kwargs):
         """ Creates snapshot(s) on *datasets
@@ -196,7 +219,7 @@ class Filesystem(Dataset):
             args.append('-r')
 
         # Default snapshot name
-        kwargs['name'] = kwargs.get('name', datetime.datetime.now().strftime('auto-%F_%T'))
+        kwargs['name'] = kwargs.get('name', timezone.now().strftime('auto-%F_%T'))
 
         args.append( self['name']+'@'+kwargs['name'] )
 
@@ -207,14 +230,14 @@ class Filesystem(Dataset):
         logging.info('Creating snapshot on %s with %s', self.name, kwargs)
         return check_call(self._zfs(' '.join(cmdf), *args))
 
-
 class Snapshot(Dataset):
     """ Snapshot object """
     type='snapshot'
 
 
+
 class Datasets(FilterableDict):
-    ttl = 60
+    ttl = 5
 
     def __new__(cls, *args, **kwargs):
         self = super(Datasets, cls).__new__(cls, *args, **kwargs)
@@ -224,6 +247,7 @@ class Datasets(FilterableDict):
 
     def __getitem__(self, arg):
         now = time.time()
+        # FIXME TODO Caching is a problem when deleting because the task just re-adds the datasets...
         if now - self.timestamp > self.ttl:
             self.refresh()
         return super(Datasets, self).__getitem__(arg)
@@ -240,7 +264,7 @@ class Datasets(FilterableDict):
             data = kwargs
         else:
             data = [ (name, Dataset(**obj))
-                for name, obj in self._zfs_list().iteritems() ]
+                for name, obj in self._zfs_list().items() ]
         # {{{ FIXME This is not thread safe without locks
         self.clear()
         self.update(data)
@@ -250,6 +274,7 @@ class Datasets(FilterableDict):
     def _zfs(self, *args):
         """ Returns a linecmd with format args[0] and strings args[1:] """
         return linecmd(_paths['zfs']+' '+args[0], *args[1:])
+    #_zfs = staticmethod(_zfs)
 
     def _zfs_list(self, *datasets, **kwargs):
         """ Utility to get a list of zfs volumes and associated properties.

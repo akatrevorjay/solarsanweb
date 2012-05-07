@@ -134,17 +134,15 @@ class Dataset(models.Model):
 
     @property
     def zfs(self):
+        """ Returns ZFS object for this dataset """
         # TODO Swtch to zfs.Dataset(lookup=)
         return zfs.Datasets[self.name]
 
-class Filesystem(Dataset):
-    class Meta:
-        proxy = True
-    objects = FilesystemManager()
-
     def snapshots(self, **kwargs):
         """ Lists snapshots of this Filesystem """
-        return self._base_manager.filter(type='snapshot', name__startswith=self.name+'@')
+        if self.type and self.type == 'snapshot':
+            raise AttributeError
+        return Snapshot.objects.filter(type='snapshot', name__startswith=self.name+'@', **kwargs)
 
     def snapshot(self, **kwargs):
         """ Snapshot this dataset """
@@ -158,22 +156,47 @@ class Filesystem(Dataset):
         except:
             logging.error('Snapshot %s %s failed', self, kwargs)
 
-#   def pre_create(self, **kwargs):
-#   def pre_delete(self, **kwargs):
+    def delete(self, *args, **kwargs):
+        """ Overridden delete that deletes the underlying ZFS object before deleting from DB """
+        try:
+            from_db_only = kwargs.pop('from_db_only')
+        except (KeyError):
+            from_db_only = False
 
+        if from_db_only == False:
+            try:
+                self.zfs.delete()
+            except:
+                if self.zfs:
+                    logging.error("Failed to delete ZFS object for %s", self)
+                    # TODO Better exceptions
+                    #raise Exception
+                else:
+                    logging.error("Failed to delete ZFS object for %s because it doesn't exist?", self)
+                    logging.error("CACHING PROBLEM")
+                    #raise Exception
+        super(Dataset, self).delete(*args, **kwargs)
+
+
+class Filesystem(Dataset):
+    class Meta:
+        proxy = True
+    objects = FilesystemManager()
 
 class Snapshot(Dataset):
     class Meta:
         proxy = True
-        ordering = ['creation']
+        ordering = ['-creation']
+        get_latest_by = 'creation'
     objects = SnapshotManager()
 
     def filesystem(self):
+        """ Returns the associated filesystem for this snapshot """
         #return self._base_manager.filter(type='filesystem', name=)
         pass
-
-#   def pre_save(self, **kwargs):
-#   def pre_delete(self, **kwargs):
+#    def pre_save(self, **kwargs):
+    #def pre_delete(self, **kwargs):
+    #    return False
 
 #from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
 
