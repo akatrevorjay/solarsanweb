@@ -1,6 +1,16 @@
 import logging
 from django.db import models
 from zfs import zfs
+import os, sys
+import time, datetime, logging
+from django.utils import timezone
+from iterpipes import run, cmd, linecmd, check_call, format
+from solarsanweb.utils import FilterableDict
+from solarsanweb.solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+
+_paths = {'zfs':    "/usr/sbin/zfs",
+          'zpool':  "/usr/sbin/zpool", }
+
 
 class Config(models.Model):
     key = models.CharField(max_length=255)
@@ -8,6 +18,7 @@ class Config(models.Model):
     def __unicode__(self):
         return self.key
 
+#class PoolManager()
 
 class Pool(models.Model):
     name = models.CharField(max_length=128, unique=True)
@@ -40,11 +51,9 @@ class Pool(models.Model):
         """ Returns the matching Dataset for Pool """
         return self.dataset_set.get(name=self.name)
 
-    @property
-    def zfs(self):
-        # TODO Swtch to zfs.Pool(lookup=)
-        return zfs.Pools[self.name]
-
+# TODO Convert to/from bytes/human here, before handing it off
+# TODO Can this be done with a Manager class instead?
+#class zPools(Pool):
 
 class Pool_IOStat(models.Model):
     pool = models.ForeignKey(Pool)
