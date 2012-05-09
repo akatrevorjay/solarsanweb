@@ -10,6 +10,7 @@ from solarsanweb.solarsan.utils import convert_bytes_to_human, convert_human_to_
 paths = {'zfs':    "/usr/sbin/zfs",
          'zpool':  "/usr/sbin/zpool", }
 
+
 def _zfscmd(cmd, *args):
     """ Returns a linecmd with auto args """
     cmdf = []
@@ -19,13 +20,16 @@ def _zfscmd(cmd, *args):
     logging.debug("_zfscmd: %s %s", cmd, args)
     return linecmd(paths[cmd]+' '+cmdf, *args)
 
+
 def zpool(*args):
     """ Returns linecmd for zfs execution """
     return _zfscmd('zpool', *args)
 
+
 def zfs(*args):
     """ Returns linecmd for zfs execution """
     return _zfscmd('zfs', *args)
+
 
 def zpool_list(*pools, **kwargs):
     """ Utility to get a list of zfs pools and associated properties.
@@ -64,6 +68,7 @@ def zpool_list(*pools, **kwargs):
                     pool[key] = ''
         pool_list[ pool['name'] ] = pool
     return pool_list
+
 
 def zpool_iostat(*pools, **kwargs):
     """ Utility to return zpool iostats on the specified pools """
@@ -114,6 +119,7 @@ def zpool_iostat(*pools, **kwargs):
             raise Exception
     return iostat
 
+
 def zfs_destroy(name, **kwargs):
     """ [DANGEROUS] Delete dataset from filesystem """
     args = ['destroy']
@@ -131,6 +137,7 @@ def zfs_destroy(name, **kwargs):
 
     logging.info('Destroying %s %s', type, name)
     return check_call(zfs(*args))
+
 
 def zfs_snapshot(name, **kwargs):
     """ Create snapshot """
@@ -240,6 +247,7 @@ def zfs_list(*names, **kwargs):
 
     # Send final output
     return dataset_list
+
 
 def tree():
     """ Generate nice dict of parsed ZFS pools/datasets in a tree showing parent/child relationship """
@@ -361,5 +369,13 @@ class tree_obj(FilterableDict):
             raise Exception("Could not do a locked update")
         finally:
             self.locked = False
+
+#def parse_zfs_date(date):
+#    time_format = "%a %b %d %H:%M %Y"
+#    dataset['creation'] = timezone.make_aware(
+#            datetime.datetime.fromtimestamp(
+#                time.mktime(
+#                    time.strptime(dataset['creation'],
+#                    time_format )))
 
 
