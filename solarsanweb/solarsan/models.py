@@ -48,18 +48,9 @@ class Pool(models.Model):
     def __unicode__(self):
         return self.name
 
-    def dataset(self):
-        """ Returns the matching Dataset for Pool """
-        return self.dataset_set.get(name=self.name)
-
-    def filesystem_create(self, name, **kwargs):
-        """ Creates a filesystem in the pool """
-        logging.info('Request to create filesystem (%s) on pool (%s)', name, self.name)
-        # Get DB entry ready (and validate data)
-        filesystem = Filesystem(name=name, pool_id=self.id)
-        filesystem.save()
-        # Return saved filesystem object
-        return filesystem
+    def filesystem(self):
+        """ Returns the matching filesystem for Pool """
+        return Filesystem.objects.get(pool_id=self.id, name=self.name)
 
     @property
     def zfs(self):
@@ -88,10 +79,24 @@ class Pool(models.Model):
         # Delete from DB
         super(Pool, self).delete(*args, **kwargs)
 
+    def filesystems(self, **kwargs):
+        """ Lists filesystems of this pool """
+        return Filesystem.objects.filter(type='filesystem', pool_id=self.id, **kwargs)
+
+    def filesystem_create(self, name, **kwargs):
+        """ Creates a filesystem in the pool """
+        logging.info('Request to create filesystem (%s) on pool (%s)', name, self.name)
+        # Get DB entry ready (and validate data)
+        filesystem = Filesystem(name=name, pool_id=self.id)
+        filesystem.save()
+        # Return saved filesystem object
+        return filesystem
+
     def iostat(self, **kwargs):
         """ Returns newly generated ZFS IOStats """
         zpool_iostat = zfs.zpool_iostat(self.name, **kwargs)
         return zpool_iostat[self.name]
+
 
 class Pool_IOStat(models.Model):
     pool = models.ForeignKey(Pool)
@@ -117,9 +122,11 @@ class FilesystemManager(models.Manager):
     def get_query_set(self):
         return super(FilesystemManager, self).get_query_set().filter(type='filesystem')
 
+
 class SnapshotManager(models.Manager):
     def get_query_set(self):
         return super(SnapshotManager, self).get_query_set().filter(type='snapshot')
+
 
 class Dataset(models.Model):
     class Meta:
@@ -256,8 +263,6 @@ class Filesystem(Dataset):
                 zfs.zfs_destroy(self.name)
             raise Exception("Created ZFS filesystem but it could not be saved to DB. "
                     + "Destroying ZFS filesystem if it was created by this task")
-
-
 
 
 class Snapshot(Dataset):
