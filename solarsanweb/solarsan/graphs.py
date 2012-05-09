@@ -166,7 +166,7 @@ def rrd_update(*args, **kwargs):
                     delta = timedelta(hours=1)
                     startTime = int(endTime - delta.seconds)
                     step = 300
-                    maxSteps = int((endTime - startTime) / step)
+                    #maxSteps = int((endTime - startTime) / step)
 
                     # Now that we've got everything set up, let's make a graph
                     g = Graph(rrd_path + '-last_hour.png',

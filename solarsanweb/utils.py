@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from django.utils import simplejson
-from django.utils.encoding import force_unicode
-from django.db.models.base import ModelBase
-import string, os, sys, logging, datetime
+#from django.utils.encoding import force_unicode
+#from django.db.models.base import ModelBase
+import string, os, sys
+import logging, datetime
 
 class FilterableDict(dict):
     """ Filter dict contents by str(key), list(keys), dict(key=value) """

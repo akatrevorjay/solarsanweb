@@ -12,6 +12,9 @@ paths = {'zfs':    "/usr/sbin/zfs",
 
 def _zfscmd(cmd, *args):
     """ Returns a linecmd with auto args """
+    if args:
+        if str(type(args)) == "<type 'str'>":
+            args = [args]
     cmdf = []
     for i in range(len(args)):
         cmdf.append('{}')
@@ -40,11 +43,11 @@ def zpool_list(*pools, **kwargs):
                                  'readonly','version'] )
     args.extend([ '-o', ','.join(props) ])
     if pools:
-        if len(pools) == 1:
+        if str(type(pools)) == "<type 'str'>":
             pools = [pools]
         args.extend(*pools)
 
-    pool_list = {}
+    pool_list = FilterableDict()
     for line in run(zpool(*args)):
         line = str(line).rstrip("\n").split("\t")
         # Wooooooh
@@ -70,14 +73,14 @@ def zpool_iostat(*pools, **kwargs):
     """ Utility to return zpool iostats on the specified pools """
     args = ['iostat', '-Tu']
     if pools:
-        if len(pools) == 1:
+        if str(type(pools)) == "<type 'str'>":
             pools = [pools]
         args.extend(*pools)
     capture_length = str(kwargs.get('capture_length', '30'))
     how_many = str(int(kwargs.get('how_many', 1)) + 1)
     args.extend([capture_length, how_many])
 
-    iostat = {}
+    iostat = FilterableDict()
     timestamp = False
     skip_past_dashline = False
     for line in run(zpool(*args)):
@@ -159,7 +162,7 @@ def zfs_list(*names, **kwargs):
     args = ['list', '-H', '-t', kwargs.get('type', 'all')]
     if 'depth' in kwargs:
         args.extend([ '-d', kwargs['depth'] ])
-    if kwargs('recursive', False) == True:
+    if kwargs.get('recursive', False) == True:
         args.append('-r')
     props = kwargs.get('props', ['name', 'type', 'used', 'available', 'creation', 'referenced',
                                  'compressratio', 'mounted', 'quota', 'reservation', 'recordsize',
@@ -173,10 +176,12 @@ def zfs_list(*names, **kwargs):
                                  'refcompressratio'] )
     args.extend([ '-o', ','.join(props) ])
     if names:
+        if str(type(names)) == "<type 'str'>":
+            names = [names]
         args.extend(*names)
 
     # Run command and parse output
-    dataset_list = {}
+    dataset_list = FilterableDict()
     for line in run(zfs(*args)):
         line = str(line).rstrip("\n").split("\t")
         # Can't use bareword 'exec' like this, so Case it
@@ -186,13 +191,13 @@ def zfs_list(*names, **kwargs):
         dataset = dict(zip(props, line))
 
         # Make some changes
-        for key in dataset.iteritems():
+        for key, val in dataset.iteritems():
             # Booleanize
             if key in ['mounted', 'defer_destroy', 'atime', 'devices', 'exec', 'nbmand', 'readonly',
                         'setuid', 'shareiscsi', 'vscan', 'xattr', 'zoned', 'utf8only' ]:
-                if dataset[key] == "yes" or dataset[key] == "on":
+                if val in ['yes', 'on']:
                     dataset[key] = True
-                elif dataset[key] == "no" or dataset[key] == "off" or dataset[key] == "-":
+                elif val in ['no', 'off', '-']:
                     dataset[key] = False
             # Nullize
             elif dataset[key] == '-':
@@ -202,20 +207,107 @@ def zfs_list(*names, **kwargs):
                     dataset[key] = ''
         dataset_list[ dataset['name'] ] = dataset
 
-    dataset_tree = {}
-    # Generate parent <> child relationships and some extras like basename
-    for d in dataset_list:
-        d = dataset_list[d]
+    # Send final output
+    return dataset_list
 
-        # Add to dataset_tree
-        path = os.path.split(d['name'])
-        current_level = dataset_tree
+def tree():
+    """ Generate nice dict of parsed ZFS pools/datasets in a tree showing parent/child relationship """
+    pools = zpool_list()
+    datasets = zfs_list()
+    tree = FilterableDict()
+
+    # Add pools
+    tree = dict(( (pk, {'pool': pv}) for pk, pv in pools.iteritems() ))
+
+    # Add datasets
+    for dk,dv in datasets.iteritems():
+        path = dk.split(os.path.sep)
+        if dv['type'] == 'snapshot':
+            (path[len(path) - 1], snapshot_name)  = path[len(path) - 1].rsplit('@', 1)
+
+        current_level = tree
         for part in path:
             if part not in current_level:
                 current_level[part] = {}
             current_level = current_level[part]
 
-    # Send final output
-    return dataset_list
+        if dv['type'] == 'snapshot':
+            if 'snapshots' not in current_level:
+                current_level['snapshots'] = {}
+            current_level['snapshots'][ snapshot_name ] = dv
+            current_level = current_level['snapshots']
+        else:
+            current_level[ '-'+dv['type'] ] = dv
 
+    return tree
+
+class tree_obj(FilterableDict):
+    """ Generate nice dict of parsed ZFS pools/datasets in a tree showing parent/child relationship """
+    lock_timeout = 60
+    locked = False
+    def __init__(self, *args, **kwargs):
+        super(tree_obj, self).__init__(self, *args, **kwargs)
+        self.refresh()
+    def check_if_locked(self):
+        """ Checks if we're locked and if so, waits until self.lock_timeout (default: 60) seconds before giving up """
+        if self.locked == True:
+                count = 0
+                while self.locked == True:
+                    time.sleep(1)
+                    count+=1
+                    if count > self.lock_timeout / 2:
+                        logging.warning("Halfway to timeout while waiting for lock to be released [timeout=%s]",
+                                self.lock_timeout)
+                    if count > self.lock_timeout:
+                        raise Exception('Timed out while waiting for lock to be released [timeout=%s]'
+                                % self.lock_timeout)
+    def __getitem__(self, arg):
+        """ Wrapper to check locks """
+        self.check_if_locked()
+        return super(tree_obj, self).__getitem__(arg)
+    def __setitem__(self, *args, **kwargs):
+        """ Wrapper to check locks """
+        self.check_if_locked()
+        return super(tree_obj, self).__setitem__(self, *args, **kwargs)
+    def refresh(self):
+        """ Generate nice dict of parsed ZFS pools/datasets in a tree showing parent/child relationship """
+        # Get new tree
+        try:
+            pools = zpool_list()
+            datasets = zfs_list()
+        except:
+            raise Exception("zfs.refresh: Could not get new data")
+        seperator = '-'
+        # Start tree, add pools
+        tree = FilterableDict(( (pk, {seperator+'pool': pv}) for pk, pv in pools.iteritems() ))
+        # Add datasets
+        for dk,dv in datasets.iteritems():
+            path = dk.split(os.path.sep)
+            # If this is a snapshot, split the snapshot name from the filesytem name
+            if dv['type'] == 'snapshot':
+                path.extend(path.pop().rsplit('@', 1))
+            # Go to base of tree
+            current_level = tree
+            # Snag name, add type
+            name = path.pop()
+            path.append(seperator+dv['type'])
+            # Move down the ladder
+            for part in path:
+                if part not in current_level:
+                    current_level[part] = FilterableDict()
+                current_level = current_level[part]
+            # Apply dataset contents to it
+            current_level[name] = dv
+        # Do a locked update
+        try:
+            self.check_if_locked()
+            self.locked = True
+            self.clear()
+            self.update(tree)
+            self.locked = False
+        except:
+            raise Exception("Could not do a locked update")
+        finally:
+            self.locked = False
+        return tree
 
