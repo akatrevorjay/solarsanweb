@@ -1,12 +1,13 @@
 import logging
 from django.db import models
-from zfs import zfs
 import os, sys
 import time, datetime, logging
 from django.utils import timezone
 from iterpipes import run, cmd, linecmd, check_call, format
 from solarsanweb.utils import FilterableDict
 from solarsanweb.solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+import zfs
+
 
 _paths = {'zfs':    "/usr/sbin/zfs",
           'zpool':  "/usr/sbin/zpool", }
@@ -51,9 +52,6 @@ class Pool(models.Model):
         """ Returns the matching Dataset for Pool """
         return self.dataset_set.get(name=self.name)
 
-# TODO Convert to/from bytes/human here, before handing it off
-# TODO Can this be done with a Manager class instead?
-#class zPools(Pool):
 
 class Pool_IOStat(models.Model):
     pool = models.ForeignKey(Pool)
@@ -144,26 +142,8 @@ class Dataset(models.Model):
     @property
     def zfs(self):
         """ Returns ZFS object for this dataset """
-        # TODO Swtch to zfs.Dataset(lookup=)
-        return zfs.Datasets[self.name]
-
-    def snapshots(self, **kwargs):
-        """ Lists snapshots of this Filesystem """
-        if self.type and self.type == 'snapshot':
-            raise AttributeError
-        return Snapshot.objects.filter(type='snapshot', name__startswith=self.name+'@', **kwargs)
-
-    def snapshot(self, **kwargs):
-        """ Snapshot this dataset """
-        logging.info('Snapshot %s on filesystem %s', kwargs['name'], self.name)
-
-        # Make the filesystem-level snapshot
-        try:
-            self.zfs.snapshot(**kwargs)
-            #TODO create Snapshot and return it
-            #HACK_Import_ZFS_Metadata.delay()
-        except:
-            logging.error('Snapshot %s %s failed', self, kwargs)
+        zfs_list = zfs.zfs_list(self.name)
+        return zfs_list[self.name]
 
     def delete(self, *args, **kwargs):
         """ Overridden delete that deletes the underlying ZFS object before deleting from DB """
@@ -174,41 +154,89 @@ class Dataset(models.Model):
 
         if from_db_only == False:
             try:
-                self.zfs.delete()
-            except:
+                # Does the object exist in ZFS?
                 if self.zfs:
-                    logging.error("Failed to delete ZFS object for %s", self)
-                    # TODO Better exceptions
-                    #raise Exception
-                else:
-                    logging.error("Failed to delete ZFS object for %s because it doesn't exist?", self)
-                    logging.error("CACHING PROBLEM")
-                    #raise Exception
+                    # Yes? Can we destroy it?
+                    try:
+                        zfs.zfs_destroy(self.name)
+                    except:
+                        raise Exception("Failed to delete existing ZFS dataset '%s', not deleting from DB",
+                                self.name)
+            except(Exception):
+                logging.error("Was asked to delete ZFS dataset '%s', but this dataset does not exist in ZFS. "
+                        + "Deleting from DB as it's not real anyway.", self.name)
+                pass
+        # Delete from DB
         super(Dataset, self).delete(*args, **kwargs)
 
 
 class Filesystem(Dataset):
+    """ Filesystem """
     class Meta:
         proxy = True
     objects = FilesystemManager()
 
+    def snapshots(self, **kwargs):
+        """ Lists snapshots of this Filesystem """
+        # Only filesystems can have snapshots
+        return Snapshot.objects.filter(type='snapshot', name__startswith=self.name+'@', **kwargs)
+
+    def snapshot(self, snapshot_name, **kwargs):
+        """ Snapshot this dataset """
+        logging.info('Snapshot %s on filesystem %s', snapshot_name, self.name)
+        name = self.name+'@'+snapshot_name
+        # Get DB entry ready (and validate data)
+        snapshot = Snapshot(name=name, pool_id=self.pool_id)
+        snapshot.save()
+        # Return saved snapshot object
+        return snapshot
+
+
+
 class Snapshot(Dataset):
+    """ Filesystem snapshot """
     class Meta:
         proxy = True
         ordering = ['-creation']
         get_latest_by = 'creation'
     objects = SnapshotManager()
 
+    @property
+    def snapshot_name(self):
+        """ Returns the snapshot name """
+        return self.basename.rsplit('@', 1)[1]
+
+    @property
+    def filesystem_name(self):
+        """ Returns the associated filesystem name """
+        return self.basename.rsplit('@', 1)[0]
+
+    @property
     def filesystem(self):
         """ Returns the associated filesystem for this snapshot """
-        #return self._base_manager.filter(type='filesystem', name=)
-        pass
-#    def pre_save(self, **kwargs):
-    #def pre_delete(self, **kwargs):
-    #    return False
+        return Filesystem.objects.get(name=self.filesystem_name)
 
-#from solarsan.tasks import Import_ZFS_Metadata as HACK_Import_ZFS_Metadata
-
+    def save(self):
+        """ Creates a filesystem snapshot and saves it to the DB (static) """
+        # Data validation should probably be done in zfs.zfs_snapshot()
+        # TODO Isn't there a transactional commit decorator?
+        # Does snapshot exist already on filesystem?
+        name = self.name
+        try:
+            # If it already exists, allow it through.
+            zfs_ret = zfs.zfs_list(name)
+        except:
+            # Good, it doesn't exist. Create it.
+            zfs_ret = zfs.zfs_snapshot(name)
+        # Normalize data and stuff it into thyself
+        try:
+            for key,val in zfs_ret[name].iteritems():
+                setattr(self, key, val)
+            # Cool, now save to DB and hand it back
+            super(Snapshot, self).save(self)
+        except:
+            zfs.zfs_destroy(self.name)
+            raise Exception("Created ZFS snapshot but it could not be saved to DB; Destroyed snapshot")
 
 #class Snapshot_Backup_Log(models.Model):
 #    dataset = models.ForeignKey(Dataset)

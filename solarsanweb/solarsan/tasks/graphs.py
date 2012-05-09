@@ -1,15 +1,13 @@
-import time
-import os, logging, time
-import os, logging
-import re
-
+from django.conf import settings
 from celery.task import periodic_task
 from datetime import timedelta
+
+import os, logging, time
+
 from kstats import kstats
 from pyrrd.backend import bindings
 from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
 from pyrrd.rrd import DataSource, RRA, RRD
-from django.conf import settings
 
 def pool_utilization():
    graph = {}

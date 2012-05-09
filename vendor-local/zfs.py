@@ -126,9 +126,8 @@ def zfs_destroy(name, **kwargs):
     if kwargs.get('recursive', False) == True:
         args.append('-r')
     if not name:
-        logging.error("zfs_destroy was attemped with an empty name")
-        raise Exception
-    if name.contains('@'):
+        raise Exception("zfs_destroy was attemped with an empty name")
+    if name.index('@'):
         type = 'snapshot'
     else:
         type = 'filesystem'
@@ -136,27 +135,30 @@ def zfs_destroy(name, **kwargs):
     args.append(name)
 
     logging.info('Destroying %s %s', type, name)
-    return check_call(zfs(*args))
+    check_call(zfs(*args))
+    try:
+        zfs_list(name)
+    except:
+        return True
+    raise Exception("ZFS destroy of '%s' was successful, but the destroyed dataset still exists?" % name)
 
 
 def zfs_snapshot(name, **kwargs):
     """ Create snapshot """
     args = ['snapshot']
-    if kwargs('recursive', False) == True:
+    if kwargs.get('recursive', False) == True:
         args.append('-r')
     #if kwargs.get('name_strftime', True) == True:
     #    name = timezone.now().strftime(name)
     if not name:
-        logging.error("zfs_snapshot was attempted with an empty name")
-        raise Exception
-    if not name.contains('@'):
-        logging.error("zfs_snapshot was attempted with an invalid snapshot name (missing @): %s", name)
-        raise Exception
+        raise Exception("zfs_snapshot was attempted with an empty name")
+    if not name.index('@'):
+        raise Exception("zfs_snapshot was attempted with an invalid snapshot name (missing @): %s" % name)
     args.append(name)
 
     logging.info('Creating snapshot %s with %s', name, kwargs)
-    return check_call(zfs(*args))
-
+    check_call(zfs(*args))
+    return zfs_list(name)
 
 ## zfs possible outcomes for datasets
 #volblocksize === blocksize
