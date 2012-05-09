@@ -10,7 +10,7 @@ class Pool_IOStats_Populate(PeriodicTask):
     """ Periodic task to log iostats per pool to db. """
     run_every = timedelta(seconds=30)
     def run(self, capture_length=30, *args, **kwargs):
-        iostats = zfs.Pools.iostat(capture_length=capture_length)
+        iostats = zfs.zpool_iostat(capture_length=capture_length)
         timestamp_end = timezone.now()
 
         for i in iostats:
