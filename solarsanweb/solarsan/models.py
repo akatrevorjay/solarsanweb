@@ -40,7 +40,7 @@ class Pool(models.Model):
     autoexpand = models.BooleanField()
     readonly = models.BooleanField()
     allocated = models.CharField(max_length=32)
-    guid = models.CharField(max_length=32)
+    guid = models.CharField(max_length=32, unique=True)
     altroot = models.CharField(max_length=255)
     size = models.CharField(max_length=32)
 

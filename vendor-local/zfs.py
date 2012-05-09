@@ -150,6 +150,40 @@ def zfs_snapshot(name, **kwargs):
     logging.info('Creating snapshot %s with %s', name, kwargs)
     return check_call(zfs(*args))
 
+
+## zfs possible outcomes for datasets
+#volblocksize === blocksize
+#aclinherit === discard | noallow | restricted | passthrough | passthrough-x
+#aclmode === discard | groupmask | passthrough
+#atime === on | off
+#canmount === on | off | noauto
+#checksum === on | off | fletcher2,| fletcher4 | sha256
+#compression === on | off | lzjb | gzip | gzip-N
+#copies === 1 | 2 | 3
+#devices === on | off
+#exec === on | off
+#mountpoint === path | none | legacy
+#nbmand === on | off
+#primarycache === all | none | metadata
+#quota === size | none
+#readonly === on | off
+#recordsize === size
+#refquota === size | none
+#refreservation === size | none
+#reservation === size | none
+#secondarycache === all | none | metadata
+#setuid === on | off
+#shareiscsi === on | off
+#sharesmb === on | off | opts
+#sharenfs === on | off | opts
+#snapdir === hidden | visible
+#version === 1 | 2 | current
+#volsize === size
+#vscan === on | off
+#xattr === on | off
+#zoned === on | off
+#casesensitivity === sensitive | insensitive | mixed
+
 def zfs_list(*names, **kwargs):
     """ Utility to get a list of zfs volumes and associated properties.
     Also aggregates parent/children information """
