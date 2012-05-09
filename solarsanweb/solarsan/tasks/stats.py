@@ -34,16 +34,16 @@ class Pool_IOStat_Clean(PeriodicTask):
     """ Periodic Task to clean old IOStats per pool in db """
     run_every = timedelta(days=1)
     def run(self, *args, **kwargs):
-        delete_older_than = timedelta(days=180)
+        age_threshold = timedelta(days=180)
         count = Pool_IOStat.objects.all().count()
 
         try:
-            count_to_remove = Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - delete_older_than).count()
+            count_to_remove = Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - age_threshold).count()
         except (KeyError, Pool_IOStat.DoesNotExist):
             raise Exception("Cannot get list of entries to remove")
 
         if count_to_remove > 0:
-            Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - delete_older_than).delete()
+            Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - age_threshold).delete()
 
             logging.debug("Deleted %d/%d entires", count_to_remove, count)
 
