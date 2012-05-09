@@ -17,8 +17,8 @@ class Import_ZFS_Metadata(PeriodicTask):
         logging = self.get_logger(**kwargs)
 
         # TODO Locking is requred here, although the copy offsets it a bit
-        datasets = zfs.Datasets.copy()
-        pools = zfs.Pools.copy()
+        datasets = zfs.zfs_list()
+        pools = zfs.zpool_list()
 
         # Pools
         for p in pools:
@@ -30,34 +30,21 @@ class Import_ZFS_Metadata(PeriodicTask):
                 logging.error('Found previously unknown pool "%s"', p)
                 logging.debug('Pool: %s %s', p, pools[p])
                 pool = Pool(**pools[p])
-
+            # TODO This will need a db_only=True kwarg when it's methods are overwritten
             pool.save()
 
         # Datasets
         for d in datasets:
             dataset = datasets[d]
-
-            ## Remove unused args
-            for k in ['parent', 'children']:
-                if k in dataset:
-                    del dataset[k]
-            ## Rename exec to avoid pythonisms
-            dataset['Exec'] = dataset['exec']
-            del dataset['exec']
-
-            # Dataset
-            if dataset['type'] == 'filesystem' or dataset['type'] == 'snapshot':
-                try:
-                    pool_dataset = Dataset.objects.get(name=d)
-                    for k in dataset.keys():
-                        setattr(pool_dataset, k, dataset[k])
-                except (KeyError, Dataset.DoesNotExist):
-                    logging.info('Found previously unknown %s "%s"', dataset['type'], d)
-                    logging.debug('%s: %s %s', str(dataset['type']).capitalize(), d, dataset)
-
-                    dataset_path = d.split('@')[0].split('/')
-                    dataset_pool = Pool.objects.get(name=dataset_path[0])
-
-                    pool_dataset = dataset_pool.dataset_set.create(**dataset)
-                pool_dataset.save()
+            try:
+                pool_dataset = Dataset.objects.get(name=d)
+                for k in dataset.keys():
+                    setattr(pool_dataset, k, dataset[k])
+            except (KeyError, Dataset.DoesNotExist):
+                logging.info('Found previously unknown %s "%s"', dataset['type'], d)
+                logging.debug('%s: %s %s', str(dataset['type']).capitalize(), d, dataset)
+                dataset_path = d.split('@')[0].split('/')
+                dataset_pool = Pool.objects.get(name=dataset_path[0])
+                pool_dataset = dataset_pool.dataset_set.create(**dataset)
+            pool_dataset.save()
 
