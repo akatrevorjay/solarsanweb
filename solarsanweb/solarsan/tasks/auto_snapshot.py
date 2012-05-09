@@ -79,7 +79,7 @@ class Auto_Snapshot(PeriodicTask):
                 # Create snapshot
                 # TODO Make seperate async task for this so we're not blocked
                 logging.debug("Creating snapshot %s on dataset %s", snapshotName, dataset_name)
-                dataset.snapshot(name=snapshotName, recursive=sched['recursive'])
+                dataset.snapshot(snapshotName, recursive=sched['recursive'])
 
                 # Delete snapshots specified too old to keep
                 # TODO Make seperate async task for this so we're not blocked
