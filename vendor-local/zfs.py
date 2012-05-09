@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys
-import time, datetime, logging
+import time, datetime, logging, dateutil
 from django.utils import timezone
 from iterpipes import run, cmd, linecmd, check_call, format
 from solarsanweb.utils import FilterableDict
@@ -52,6 +52,7 @@ def zpool_list(*pools, **kwargs):
         line = str(line).rstrip("\n").split("\t")
         # Wooooooh
         pool = dict(zip(props, line))
+        pool['type'] = 'pool'
         # Make some changes
         for key in pool.iterkeys():
             # Booleanize
@@ -205,6 +206,11 @@ def zfs_list(*names, **kwargs):
                     dataset[key] = 0
                 else:
                     dataset[key] = ''
+            # Datetimeize
+            if key in ['creation']:
+                # TZify the timestamp
+                dataset[key] = timezone.make_aware(
+                        dateutil.parser.parse(val), timezone.get_current_timezone() )
         dataset_list[ dataset['name'] ] = dataset
 
     # Send final output
@@ -277,37 +283,58 @@ class tree_obj(FilterableDict):
             datasets = zfs_list()
         except:
             raise Exception("zfs.refresh: Could not get new data")
-        seperator = '-'
+
+        def add_objects_to_tree(*args):
+            """ Adds *args to tree; ets reused for any kind of object being added """
+            for arg in args:
+                for key,value in arg.iteritems():
+                    path = key.split(os.path.sep)
+                    # If this is a snapshot, split the snapshot name from the filesytem name
+                    if value['type'] == 'snapshot':
+                        path.extend(path.pop().rsplit('@', 1))
+                    # Go to base of tree
+                    current_level = tree
+                    # Snag name
+                    name = path.pop()
+                    # Move down the ladder
+                    for part in path:
+                        if part not in current_level:
+                            current_level[part] = FilterableDict()
+                        current_level = current_level[part]
+                    # Apply dataset contents to pluralized dataset type, ie .snapshots
+                    try:
+                        typelist = getattr(current_level, value['type']+'s')
+                    except (AttributeError):
+                        typelist = FilterableDict()
+                    typelist[name] = value
+                    setattr(current_level, value['type']+'s', typelist)
+                    # Set .has attribute
+                    try:
+                        has = getattr(current_level, 'has')
+                    except (AttributeError):
+                        has = []
+                    if value['type']+'s' not in has:
+                        has.append(value['type']+'s')
+                        setattr(current_level, 'has', has)
+
         # Start tree, add pools
-        tree = FilterableDict(( (pk, {seperator+'pool': pv}) for pk, pv in pools.iteritems() ))
-        # Add datasets
-        for dk,dv in datasets.iteritems():
-            path = dk.split(os.path.sep)
-            # If this is a snapshot, split the snapshot name from the filesytem name
-            if dv['type'] == 'snapshot':
-                path.extend(path.pop().rsplit('@', 1))
-            # Go to base of tree
-            current_level = tree
-            # Snag name, add type
-            name = path.pop()
-            path.append(seperator+dv['type'])
-            # Move down the ladder
-            for part in path:
-                if part not in current_level:
-                    current_level[part] = FilterableDict()
-                current_level = current_level[part]
-            # Apply dataset contents to it
-            current_level[name] = dv
+        tree = FilterableDict()
+        add_objects_to_tree(pools, datasets)
+
         # Do a locked update
         try:
             self.check_if_locked()
             self.locked = True
             self.clear()
             self.update(tree)
+            # hack
+            setattr(self, 'has', getattr(tree, 'has'))
+            for has in self.has:
+                setattr(self, has, getattr(tree, has))
             self.locked = False
         except:
             raise Exception("Could not do a locked update")
         finally:
             self.locked = False
-        return tree
+
 
