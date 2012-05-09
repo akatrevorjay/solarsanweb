@@ -213,6 +213,8 @@ CELERY_IMPORTS = (
     "solarsan.tasks.auto_snapshot",
     "solarsan.tasks.locsol_backup",
     "solarsan.tasks.import_zfs_metadata",
+    "solarsan.tasks.cluster",
+    "solarsan.tasks",
 )
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
 if DEBUG:
