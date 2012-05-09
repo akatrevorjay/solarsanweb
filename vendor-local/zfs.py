@@ -12,9 +12,6 @@ paths = {'zfs':    "/usr/sbin/zfs",
 
 def _zfscmd(cmd, *args):
     """ Returns a linecmd with auto args """
-    if args:
-        if str(type(args)) == "<type 'str'>":
-            args = [args]
     cmdf = []
     for i in range(len(args)):
         cmdf.append('{}')
@@ -23,12 +20,12 @@ def _zfscmd(cmd, *args):
     return linecmd(paths[cmd]+' '+cmdf, *args)
 
 def zpool(*args):
-    return _zfscmd('zpool', *args)
     """ Returns linecmd for zfs execution """
+    return _zfscmd('zpool', *args)
 
 def zfs(*args):
-    return _zfscmd('zfs', *args)
     """ Returns linecmd for zfs execution """
+    return _zfscmd('zfs', *args)
 
 def zpool_list(*pools, **kwargs):
     """ Utility to get a list of zfs pools and associated properties.
@@ -43,9 +40,7 @@ def zpool_list(*pools, **kwargs):
                                  'readonly','version'] )
     args.extend([ '-o', ','.join(props) ])
     if pools:
-        if str(type(pools)) == "<type 'str'>":
-            pools = [pools]
-        args.extend(*pools)
+        args.extend(pools)
 
     pool_list = FilterableDict()
     for line in run(zpool(*args)):
@@ -74,9 +69,7 @@ def zpool_iostat(*pools, **kwargs):
     """ Utility to return zpool iostats on the specified pools """
     args = ['iostat', '-Tu']
     if pools:
-        if str(type(pools)) == "<type 'str'>":
-            pools = [pools]
-        args.extend(*pools)
+        args.extend(pools)
     capture_length = str(kwargs.get('capture_length', '30'))
     how_many = str(int(kwargs.get('how_many', 1)) + 1)
     args.extend([capture_length, how_many])
@@ -177,9 +170,7 @@ def zfs_list(*names, **kwargs):
                                  'refcompressratio'] )
     args.extend([ '-o', ','.join(props) ])
     if names:
-        if str(type(names)) == "<type 'str'>":
-            names = [names]
-        args.extend(*names)
+        args.extend(names)
 
     # Run command and parse output
     dataset_list = FilterableDict()
