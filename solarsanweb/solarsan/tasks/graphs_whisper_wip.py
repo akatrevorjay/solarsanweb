@@ -1,3 +1,7 @@
+"""
+For playing around with whisper vs rrdtool
+"""
+
 import datetime, time
 import os, logging, time
 import os, sys, logging

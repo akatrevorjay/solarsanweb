@@ -4,8 +4,7 @@ import os, sys
 import time, datetime, logging
 from django.utils import timezone
 from iterpipes import run, cmd, linecmd, check_call, format
-from solarsanweb.utils import FilterableDict
-from solarsanweb.solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 import zfs
 
 

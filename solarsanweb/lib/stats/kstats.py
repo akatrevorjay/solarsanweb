@@ -1,3 +1,8 @@
+"""
+$ kstats.py -- Port of arcstat.pl from perl to python, with a (what I believe) is a better interface.
+~ Trevor Joynson aka trevorj <trevorj@localhostsolutions.com>
+"""
+
 import os, logging
 from solarsan.utils import dict_diff
 

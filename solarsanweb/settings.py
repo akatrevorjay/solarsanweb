@@ -29,10 +29,11 @@ TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir
 PROJECT_DIR = os.path.join(TOP_DIR, PROJECT_NAME)
 DATA_DIR = os.path.join(TOP_DIR, "data")
 
-sys.path.insert(0, PROJECT_DIR)
-
 for i in ['vendor', 'vendor-local']:
     sys.path.insert(0, os.path.join(TOP_DIR, i))
+
+sys.path.insert(0, os.path.join(PROJECT_DIR, 'lib'))
+sys.path.insert(0, PROJECT_DIR)
 
 
 # Local time zone for this installation. Choices can be found here:
