@@ -17,22 +17,19 @@ class Import_ZFS_Metadata(PeriodicTask):
         logging = self.get_logger(**kwargs)
 
         # TODO Locking is requred here, although the copy offsets it a bit
-        datasets = zfs.zfs_list()
-        pools = zfs.zpool_list()
+        datasets = zfs.dataset.list()
+        pools = zfs.pool.list()
 
         # Pools
         for p,pv in pools.iteritems():
-            #try:
-            pool = Pool.objects.get(name=p)
-            for k,v in pv.iteritems():
-                print "p=%s k=%s v=%s" % (p, k, v)
-                setattr(pool, k, v)
-#                pool.save(force_update=True, db_only=True)
-#            except (Pool.DoesNotExist):
-#                logging.error('Found previously unknown pool "%s"', p)
-#                logging.debug('Pool: %s %s', p, pv)
-#                pool = Pool(**pv)
-##                pool.save(force_insert=True, db_only=True)
+            try:
+                pool = Pool.objects.get(name=p)
+                for k,v in pv.iteritems():
+                    setattr(pool, k, v)
+            except (KeyError, Pool.DoesNotExist):
+                logging.error('Found previously unknown pool "%s"', p)
+                logging.debug('Pool: %s %s', p, pv)
+                pool = Pool(**pv)
             pool.save()
 
         # Datasets
@@ -40,21 +37,15 @@ class Import_ZFS_Metadata(PeriodicTask):
             try:
                 dataset = Dataset.objects.get(name=d)
                 for k,v in dv.iteritems():
-                    print "d=%s k=%s v=%s" % (d, k, v)
+                    #print "p=%s k=%s v=%s" % (p, k, v)
                     setattr(dataset, k, v)
-                    print "d=%s k=%s v=%s" % (d, k, v)
-                    print "dataset try"
             except (KeyError, Dataset.DoesNotExist):
-                logging.info('Found previously unknown %s "%s"', dataset['type'], d)
-                logging.debug('%s: %s %s', str(dataset['type']).capitalize(), d, dataset)
+                logging.info('Found previously unknown %s "%s"', dv['type'], d)
                 dataset_path = d.split('@')[0].split('/')
                 dataset_pool = Pool.objects.get(name=dataset_path[0])
-                dataset = dataset_pool.dataset_set.create(**dataset)
-                print "dataset except"
-            print "dataset save"
-            dataset.save(db_only=True)
-
-        print "carp"
+                dataset = dataset_pool.dataset_set.create(**dv)
+            #print "dataset save"
+            dataset.save(db_only=True, force_update=True)
 
         # Delete things which are no longer in existence
         for p in Pool.objects.all():
@@ -64,5 +55,5 @@ class Import_ZFS_Metadata(PeriodicTask):
         for d in Dataset.objects.all():
             if d.name not in datasets.keys():
                 logging.error("Dataset '%s' is MISSING. Removing from DB.")
-                d.delete()
+                #d.delete()
 
