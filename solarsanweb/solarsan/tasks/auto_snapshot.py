@@ -4,10 +4,9 @@ from celery.task.base import PeriodicTask, Task
 from celery.task.sets import subtask
 from solarsan.models import Pool, Pool_IOStat, Dataset, Filesystem, Snapshot
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
-import datetime, time, logging
+import datetime, time
 from datetime import timedelta
 from django.utils import timezone
-import zfs
 
 class Auto_Snapshot(PeriodicTask):
     """ Cron job to periodically take a snapshot of datasets """

@@ -21,30 +21,48 @@ class Import_ZFS_Metadata(PeriodicTask):
         pools = zfs.zpool_list()
 
         # Pools
-        for p in pools:
-            try:
-                pool = Pool.objects.get(name=p)
-                for k in pools[p]:
-                    setattr(pool, k, pools[p][k])
-            except (KeyError, Pool.DoesNotExist):
-                logging.error('Found previously unknown pool "%s"', p)
-                logging.debug('Pool: %s %s', p, pools[p])
-                pool = Pool(**pools[p])
-            # TODO This will need a db_only=True kwarg when it's methods are overwritten
+        for p,pv in pools.iteritems():
+            #try:
+            pool = Pool.objects.get(name=p)
+            for k,v in pv.iteritems():
+                print "p=%s k=%s v=%s" % (p, k, v)
+                setattr(pool, k, v)
+#                pool.save(force_update=True, db_only=True)
+#            except (Pool.DoesNotExist):
+#                logging.error('Found previously unknown pool "%s"', p)
+#                logging.debug('Pool: %s %s', p, pv)
+#                pool = Pool(**pv)
+##                pool.save(force_insert=True, db_only=True)
             pool.save()
 
         # Datasets
-        for d in datasets:
-            dataset = datasets[d]
+        for d,dv in datasets.iteritems():
             try:
-                pool_dataset = Dataset.objects.get(name=d)
-                for k in dataset.keys():
-                    setattr(pool_dataset, k, dataset[k])
+                dataset = Dataset.objects.get(name=d)
+                for k,v in dv.iteritems():
+                    print "d=%s k=%s v=%s" % (d, k, v)
+                    setattr(dataset, k, v)
+                    print "d=%s k=%s v=%s" % (d, k, v)
+                    print "dataset try"
             except (KeyError, Dataset.DoesNotExist):
                 logging.info('Found previously unknown %s "%s"', dataset['type'], d)
                 logging.debug('%s: %s %s', str(dataset['type']).capitalize(), d, dataset)
                 dataset_path = d.split('@')[0].split('/')
                 dataset_pool = Pool.objects.get(name=dataset_path[0])
-                pool_dataset = dataset_pool.dataset_set.create(**dataset)
-            pool_dataset.save()
+                dataset = dataset_pool.dataset_set.create(**dataset)
+                print "dataset except"
+            print "dataset save"
+            dataset.save(db_only=True)
+
+        print "carp"
+
+        # Delete things which are no longer in existence
+        for p in Pool.objects.all():
+            if p.name not in pools.keys():
+                logging.error("Pool '%s' is MISSING. Removing from DB.")
+                #p.delete()
+        for d in Dataset.objects.all():
+            if d.name not in datasets.keys():
+                logging.error("Dataset '%s' is MISSING. Removing from DB.")
+                d.delete()
 
