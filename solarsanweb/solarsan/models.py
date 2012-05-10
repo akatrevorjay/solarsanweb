@@ -269,7 +269,7 @@ class Dataset(models.Model):
         # If we're importing, just save directly
         direct = kwargs.pop('db_only', False)
         if direct == True or self.pk:
-            return super(Dataset, self).save(self, **kwargs)
+            return super(Dataset, self).save()
 
         ## If we do not have a _zfs_type attribute, we may want to push it through to the DB
         zfs_type = self._zfs_type
@@ -307,8 +307,7 @@ class Dataset(models.Model):
             logging.info("Created " + zfs_type + " in ZFS '%s', saving in DB", name)
 
         # Normalize data and stuff it
-        #try:
-        if True:
+        try:
             # Ensure type is correct
             #print zfs_ret
             #if zfs_ret[name].get('type', zfs_type) == zfs_type:
@@ -321,14 +320,14 @@ class Dataset(models.Model):
                 setattr(self, key, val)
 
             # Cool, now save to DB and hand it back
-            super(Dataset, self).save(self, **kwargs)
-        #except:
-        #    if zfs_existing == False:
-        #        # FIXME POOL OR DATASET DIFF CMDS
-        #        #zfs.dataset.destroy(self.name)
-        #        logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", self.name)
-        #    raise Exception("Created " + zfs_type + " in ZFS but it could not be saved to DB. "
-        #            + "Destroying " + zfs_type + " in ZFS if it was created by this task")
+            super(Dataset, self).save()
+        except:
+            if zfs_existing == False:
+                # FIXME POOL OR DATASET DIFF CMDS
+                zfs.dataset.destroy(self.name)
+                logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", self.name)
+            raise Exception("Created " + zfs_type + " in ZFS but it could not be saved to DB. "
+                    + "Destroying " + zfs_type + " in ZFS if it was created by this task")
 
     def delete(self, *args, **kwargs):
         """ Overridden delete that deletes the underlying ZFS object before deleting from DB """
@@ -354,7 +353,7 @@ class Dataset(models.Model):
         # If so, can we destroy it?
         if zfs_existing == True:
             try:
-                #zfs.dataset.destroy(name)
+                zfs.dataset.destroy(name)
                 logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", name)
             except:
                 raise Exception("Failed to delete existing " + zfs_type + " in ZFS '%s', not deleting from DB", name)

@@ -45,15 +45,15 @@ class Import_ZFS_Metadata(PeriodicTask):
                 dataset_pool = Pool.objects.get(name=dataset_path[0])
                 dataset = dataset_pool.dataset_set.create(**dv)
             #print "dataset save"
-            dataset.save(db_only=True, force_update=True)
+            dataset.save(db_only=True)
 
         # Delete things which are no longer in existence
         for p in Pool.objects.all():
             if p.name not in pools.keys():
-                logging.error("Pool '%s' is MISSING. Removing from DB.")
-                #p.delete()
+                logging.error("Pool '%s' is MISSING. Removing from DB." % p.name)
+                p.delete()
         for d in Dataset.objects.all():
             if d.name not in datasets.keys():
-                logging.error("Dataset '%s' is MISSING. Removing from DB.")
-                #d.delete()
+                logging.error("Dataset '%s' is MISSING. Removing from DB." % d.name)
+                d.delete()
 
