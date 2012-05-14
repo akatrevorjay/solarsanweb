@@ -11,22 +11,28 @@ class Config(models.Model):
     def __unicode__(self):
         return self.key
 
+
+class IsEnabledModelManager(models.Manager):
+    def get_query_set(self):
+        return super(IsEnabledModelManager, self).get_query_set().filter(is_enabled=True)
+
+
 class ZFSBackedModel(models.Model):
     class Meta:
         abstract = True
     _zfs_type = None
+    is_enabled = models.BooleanField(default=True)
+    objects = IsEnabledModelManager()
+    objects_unfiltered = models.Manager()
+
     def save(self, **kwargs):
         """ Creates a (self._zfs_type) and saves it to the DB """
         # If we're importing, just save directly
-        direct = kwargs.pop('db_only', False)
-        if direct == True or self.pk:
-            return super(ZFSBackedModel, self).save(self, **kwargs)
+        if kwargs.pop('db_only', False) == True or self.pk:
+            return super(ZFSBackedModel, self).save()
 
-        ## If we do not have a _zfs_type attribute, we may want to push it through to the DB
+        # If we get here, we're not importing.
         zfs_type = self._zfs_type
-
-        # Data validation should probably be done in zfs.dataset.create()
-        # TODO Isn't there a transactional commit decorator?
 
         # Does filesystem exist already on filesystem?
         name = self.name
@@ -37,17 +43,16 @@ class ZFSBackedModel(models.Model):
             elif zfs_type in ['pool']:
                 zfs_ret = zfs.pool.list(name)
             else:
-                raise Exception("Object to be saved has an invalid type '"
-                        + zfs_type+"'" )
+                raise Exception("Object to be saved has an invalid type '%s'" % zfs_type)
             zfs_existing = True
             logging.info("While creating requested " + zfs_type
-                    + " '%s', we've noticed it already exists in ZFS. "
-                    + "Leaving " + zfs_type + " as is in ZFS; Saving '%s' to DB", name, name)
+                    + " '%s', we've noticed it already exists in ZFS. Leaving " + zfs_type
+                    + " as is in ZFS; Saving to DB", name, name)
         except:
             # Good, it doesn't exist. Create it.
             if zfs_type == 'snapshot':
                 zfs_ret = zfs.dataset.snapshot(name)
-            elif zfs_type == 'filesystem':
+            elif zfs_type in ['filesystem', 'dataset']: # Should really just stop using Dataset.
                 zfs_ret = zfs.dataset.create(name)
             elif zfs_type == 'pool':
                 # FIXME NOT IMPLEMENTED YET
@@ -57,33 +62,30 @@ class ZFSBackedModel(models.Model):
             zfs_existing = False
             logging.info("Created " + zfs_type + " in ZFS '%s', saving in DB", name)
 
-        # Normalize data and stuff it
         try:
-            # Ensure type is correct
-            if zfs_ret[name].get('type', zfs_type) != zfs_type:
-                    raise Exception("Object received from ZFS has invalid type '%s'", zfs_ret['type'])
-            # Stuff data into thyself
+            # Normalize data and stuff it
             for key,val in zfs_ret[name].iteritems():
                 # I'm paranoid
-                if key in ['_zfs_type']:
-                    continue
+                if key == '_zfs_type': continue
                 setattr(self, key, val)
 
             # Cool, now save to DB and hand it back
-            super(ZFSBackedModel, self).save(self)
+            super(ZFSBackedModel, self).save()
         except:
+            # Since we're failing out due to something not going right with the DB save,
+            #   If the zfs object was NOT previously existing, ie this function actually created it,
+            #   then destroy it.
             if zfs_existing == False:
                 # FIXME POOL OR DATASET DIFF CMDS
-                #zfs.dataset.destroy(self.name)
-                logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", self.name)
-            raise Exception("Created " + zfs_type + " in ZFS but it could not be saved to DB. "
-                    + "Destroying " + zfs_type + " in ZFS if it was created by this task")
+                zfs.dataset.destroy(self.name)
+                logging.error("Destroyed %s '%s' in ZFS since we're erroring out.", zfs_type, name)
+            raise Exception("Created " + zfs_type + " in ZFS but it could not be saved to DB. ")
 
     def delete(self, *args, **kwargs):
         """ Overridden delete that deletes the underlying ZFS object before deleting from DB """
         # If we're importing, just save directly
-        if kwargs.get('db_only', False) == True:
-            return super(ZFSBackedModel, self).delete(self, *args, **kwargs)
+        if kwargs.pop('db_only', False) == True:
+            return super(ZFSBackedModel, self).delete(*args, **kwargs)
 
         ## If we do not have a _zfs_type attribute, we may want to push it through to the DB
         #try:
@@ -97,21 +99,22 @@ class ZFSBackedModel(models.Model):
             zfs_ret = zfs.dataset.list(name)
             zfs_existing = True
         except(Exception):
-            logging.error("Was requested to delete " + zfs_type + " '%s', but it does not exist in ZFS. "
-                    + "Deleting from DB as it's not real anyway.", name)
             zfs_existing = False
+
         # If so, can we destroy it?
         if zfs_existing == True:
             try:
-                #zfs.dataset.destroy(name)
-                logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", name)
+                logging.info("Destroying %s '%s' [existing=%s]", zfs_type, name, zfs_existing)
+                zfs.dataset.destroy(name)
             except:
                 raise Exception("Failed to delete existing " + zfs_type + " in ZFS '%s', not deleting from DB", name)
         # Delete from DB
         super(ZFSBackedModel, self).delete(*args, **kwargs)
 
 
-class Pool(models.Model):
+
+
+class Pool(ZFSBackedModel):
     _zfs_type = 'pool'
     name = models.CharField(max_length=128, unique=True)
 
@@ -199,7 +202,7 @@ class SnapshotManager(models.Manager):
         return super(SnapshotManager, self).get_query_set().filter(type='snapshot')
 
 
-class Dataset(models.Model):
+class Dataset(ZFSBackedModel):
     class Meta:
         ordering = ['name', 'creation']
     _zfs_type = 'dataset'
@@ -263,102 +266,6 @@ class Dataset(models.Model):
         """ Returns ZFS object for this dataset """
         zfs_list = zfs.dataset.list(self.name)
         return zfs_list[self.name]
-
-    def save(self, **kwargs):
-        """ Creates a (self._zfs_type) and saves it to the DB """
-        # If we're importing, just save directly
-        direct = kwargs.pop('db_only', False)
-        if direct == True or self.pk:
-            return super(Dataset, self).save()
-
-        ## If we do not have a _zfs_type attribute, we may want to push it through to the DB
-        zfs_type = self._zfs_type
-
-        # Data validation should probably be done in zfs.dataset.create()
-        # TODO Isn't there a transactional commit decorator?
-
-        # Does filesystem exist already on filesystem?
-        name = self.name
-        try:
-            # If it already exists, allow it through.
-            if zfs_type in ['filesystem', 'snapshot', 'dataset']:
-                zfs_ret = zfs.dataset.list(name)
-            elif zfs_type in ['pool']:
-                zfs_ret = zfs.pool.list(name)
-            else:
-                raise Exception("Object to be saved has an invalid type '"
-                        + zfs_type+"'" )
-            zfs_existing = True
-            logging.info("While creating requested " + zfs_type
-                    + " '%s', we've noticed it already exists in ZFS. "
-                    + "Leaving " + zfs_type + " as is in ZFS; Saving '%s' to DB", name, name)
-        except:
-            # Good, it doesn't exist. Create it.
-            if zfs_type == 'snapshot':
-                zfs_ret = zfs.dataset.snapshot(name)
-            elif zfs_type in ['filesystem', 'dataset']: # Should really just stop using Dataset.
-                zfs_ret = zfs.dataset.create(name)
-            elif zfs_type == 'pool':
-                # FIXME NOT IMPLEMENTED YET
-                zfs_ret = zfs.pool.create(name)
-            else:
-                raise Exception("This " + zfs_type + " has an incorrect zfs_type, no thanks")
-            zfs_existing = False
-            logging.info("Created " + zfs_type + " in ZFS '%s', saving in DB", name)
-
-        # Normalize data and stuff it
-        try:
-            # Ensure type is correct
-            #print zfs_ret
-            #if zfs_ret[name].get('type', zfs_type) == zfs_type:
-            #        raise Exception("Object received from ZFS has invalid type '%s'" % zfs_ret[name].get('type', 'unknown'))
-            # Stuff data into thyself
-            for key,val in zfs_ret[name].iteritems():
-                # I'm paranoid
-                if key == '_zfs_type':
-                    continue
-                setattr(self, key, val)
-
-            # Cool, now save to DB and hand it back
-            super(Dataset, self).save()
-        except:
-            if zfs_existing == False:
-                # FIXME POOL OR DATASET DIFF CMDS
-                zfs.dataset.destroy(self.name)
-                logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", self.name)
-            raise Exception("Created " + zfs_type + " in ZFS but it could not be saved to DB. "
-                    + "Destroying " + zfs_type + " in ZFS if it was created by this task")
-
-    def delete(self, *args, **kwargs):
-        """ Overridden delete that deletes the underlying ZFS object before deleting from DB """
-        # If we're importing, just save directly
-        if kwargs.get('db_only', False) == True:
-            return super(Dataset, self).delete(self, *args, **kwargs)
-
-        ## If we do not have a _zfs_type attribute, we may want to push it through to the DB
-        #try:
-        zfs_type = self._zfs_type
-        name = self.name
-        #except:
-        #    super(Dataset, self).save(self)
-
-        # Does the object exist in ZFS? 
-        try:
-            zfs_ret = zfs.dataset.list(name)
-            zfs_existing = True
-        except(Exception):
-            logging.error("Was requested to delete " + zfs_type + " '%s', but it does not exist in ZFS. "
-                    + "Deleting from DB as it's not real anyway.", name)
-            zfs_existing = False
-        # If so, can we destroy it?
-        if zfs_existing == True:
-            try:
-                zfs.dataset.destroy(name)
-                logging.error("DEBUG: NOT DELETING " + zfs_type + " '%s' REGARDLESS OF WHAT YOU TELL ME", name)
-            except:
-                raise Exception("Failed to delete existing " + zfs_type + " in ZFS '%s', not deleting from DB", name)
-        # Delete from DB
-        super(Dataset, self).delete(*args, **kwargs)
 
 
 class Filesystem(Dataset):

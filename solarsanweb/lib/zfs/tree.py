@@ -60,7 +60,6 @@ class tree(FilterableDict):
         try:
             datasets = dataset.list()
             pools = pool.list()
-            raise Exception("zfs.refresh: Could not get new data")
         except:
             raise Exception("zfs.dataset.refresh: Could not get new data")
 

@@ -276,7 +276,8 @@ LOGGING = {
         },
         'console': {
             'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
+            #'class': 'logging.StreamHandler',
+            'class': 'ConsoleHandler.ConsoleHandler',
             'formatter': 'standard',
         },
     },

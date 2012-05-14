@@ -167,3 +167,20 @@ def qdct_as_kwargs(qdct):
         kwargs[str(k)]=v
     return kwargs
 
+
+def statelazyproperty(func):
+    """A decorator for state-based lazy evaluation of properties
+    """
+    cache = {}
+    def _get(self):
+        state = self.__getstate__()
+        try:
+            v = cache[state]
+            print "Cache hit %s" % str(state)
+            return v
+        except KeyError:
+            print "Cache miss %s" % str(state)
+            cache[state] = value = func(self)
+            return value
+
+    return property(_get)

@@ -54,8 +54,8 @@ class Auto_Snapshot(PeriodicTask):
 
             now = timezone.now()
             snapshotName = sched['snapshot-prefix']+now.strftime(sched['snapshot-date'])
-            logging.info('Snapshot %s for schedule %s', snapshotName, sched_name)
-            logging.debug('Schedule %s=%s', sched_name, sched)
+            #logging.info('Snapshot %s for schedule %s', snapshotName, sched_name)
+            #logging.debug('Schedule %s=%s', sched_name, sched)
 
             for dataset_name in sched['datasets']:
                 try:

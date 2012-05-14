@@ -123,6 +123,13 @@ def list(*names, **kwargs):
     if names:
         zargs.extend(names)
 
+    # Hide stderr if requested, or merge with stdout, etc
+    stderr = kwargs.get('stderr', None)
+    if stderr == 'stdout':
+        zargs.append('2>&1')
+    elif stderr == None:
+        zargs.append('2>/dev/null')
+
     # Run command and parse output
     dataset_list = FilterableDict()
     for line in iterpipes.run(cmd.zfs(*zargs)):

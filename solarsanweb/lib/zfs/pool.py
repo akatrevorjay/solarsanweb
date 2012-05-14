@@ -57,6 +57,14 @@ def list(*pools, **kwargs):
     if pools:
         zargs.extend(pools)
 
+    # Hide stderr if requested, or merge with stdout, etc
+    stderr = kwargs.get('stderr', None)
+    if stderr == 'stdout':
+        zargs.append('2>&1')
+    elif stderr == None:
+        zargs.append('2>/dev/null')
+
+
     pool_list = FilterableDict()
     for line in iterpipes.run(cmd.zpool(*zargs)):
         line = str(line).rstrip("\n").split("\t")
