@@ -187,7 +187,7 @@ INSTALLED_APPS = (
 
 	# Apps
     'solarsan',
-    'bootstrap_example.root',
+    #'bootstrap_example.root',
 )
 
 # Persistent sessions
