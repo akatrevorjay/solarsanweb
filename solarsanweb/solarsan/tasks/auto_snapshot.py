@@ -19,7 +19,7 @@ class Auto_Snapshot(PeriodicTask):
                 # Schedule
                 'snapshot-every':   timedelta(seconds=30),
                 # Creation
-                'datasets':         ['rpool/tmp'],
+                'datasets':         ['dpool'],
                 'snapshot-prefix':  'auto-testing-',
                 'snapshot-date':    '%F_%T',
                 # TODO Deletion code is not recursive friendly so this can currently NEVER be true
@@ -32,8 +32,8 @@ class Auto_Snapshot(PeriodicTask):
                 # Schedule
                 'snapshot-every':   timedelta(seconds=30),
                 # Creation
-                'datasets':         ['rpool/tmp'],
-                'snapshot-prefix':  'auto-',
+                'datasets':         ['dpool'],
+                'snapshot-prefix':  'auto-testing2-',
                 'snapshot-date':    '%F_%T',
                 # TODO Deletion code is not recursive friendly so this can currently NEVER be true
                 'recursive':        False,
