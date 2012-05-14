@@ -53,9 +53,9 @@ class Import_ZFS_Metadata(PeriodicTask):
                     for k,v in pv.iteritems(): setattr(pool, k, v)
                 except (KeyError, Pool.DoesNotExist):
                     logging.error('Found pool "%s"', p)
-                    pv['db_only']=True
+                    del pv['type']
                     pool = Pool(**pv)
-                pool.save()
+                pool.save(db_only=True)
                 self.data['pools'][p] = True
 
         # Datasets
