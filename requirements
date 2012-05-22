@@ -5,6 +5,7 @@ MySQL-python
 PyRRD
 PyYAML
 -e hg+http://bitbucket.org/andrewgodwin/south/@c8fc82619ac9bb9549484a248cb16e65274da9d3#egg=South-dev
+-e git://github.com/bradjasper/django-jsonfield.git@1306a07e6da629595bd03690e5bdf576a1e70f25#egg=jsonfield-dev
 Unipath
 amqplib
 anyjson
