@@ -1,0 +1,18 @@
+#!/bin/bash -e
+[[ -n "$basedir" ]] || . "${BASH_SOURCE[0]%/*}/env"
+
+## TODO on_error alert
+
+e "Starting SolarSAN Services"
+zfs mount -a
+service glusterd start
+
+. "$basedir/bin/env"
+cd /opt/solarsanweb/data
+/opt/solarsanweb/env/bin/supervisord -c ../supervisord.conf
+
+e "Starting HA IPs"
+killall ucarp || true
+/etc/ucarp/ucarp.sh
+e "OK"
+
