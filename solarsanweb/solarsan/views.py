@@ -23,15 +23,17 @@ import os, sys
 def status(request):
 
     pools = Pool.objects.all()
-    graphs = status_graphs()
 
     return render_to_response('status.html',
         {'title': 'Status',
          'pools': pools,
-         'graphs': graphs, },
+            },
         context_instance=RequestContext(request))
 
-def status_graphs():
+
+def status_graphs(request):
+    pools = Pool.objects.all()
+
     graphs = {}
     for rrd_file in ['cache_result', 'arc_hitmiss', 'cache_size', 'cache_eviction']:
         #graph.add_line([ (x,y), (x,y) ])
@@ -104,7 +106,10 @@ def status_graphs():
             },
         }
 
-    return graphs
+    return render_to_response('graphs.html',
+            {'graphs': graphs, 'pools': pools,
+                }, context_instance=RequestContext(request))
+
 
 
 def scheduler(request, *args, **kwargs):

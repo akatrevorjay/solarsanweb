@@ -13,28 +13,11 @@
 
 {% block content %}
 
+{% block graphs %}
+<div id="graphs"></div>
+{% endblock %}
+
 {% for pool in pools %}
-<div id="graphs" class="hero-unit" style="padding: 0px">
-    <div class="row">
-        {% set row_class = cycler('row', 'boat') %}
-        {% for g in graphs.keys() %}
-
-        <div class="span6" style="text-align: center;">
-            <p>
-                <div id="flot_{{ g }}" style="height: 200px;"></div>
-                <div>{{ graphs[g]|flotjson('flot_'+g) }}</div>
-            </p>
-        </div>
-
-        {% if row_class.next() == 'boat' %}
-    </div>
-    <div class="row">
-        {% endif %}
-
-        {% endfor %}
-    </div>
-</div>
-
 <div class="row">
     <div class="span3">
         <div class="well sidebar-nav">
@@ -81,6 +64,15 @@ $(".dataset-list .dataset")
     });
 // Act as if the first dataset has been clicked
 $(".dataset-list .dataset").first().click();
+
+/*
+ * load graphs via ajax
+ */
+$.ajax({type: "GET",
+        url: "{{ url('solarsan.views.graphs') }}",
+        context: $("#graphs"),
+        }).done(function(data) { $(this).html(data); });
+
 
 });
 
