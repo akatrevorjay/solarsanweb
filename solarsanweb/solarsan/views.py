@@ -9,7 +9,7 @@ from solarsan.models import *
 from solarsan.forms import *
 
 from datetime import datetime, timedelta
-from time import time
+#import time
 from pyrrd.rrd import RRD
 from pyrrd.backend import bindings
 
@@ -23,7 +23,15 @@ import os, sys
 def status(request):
 
     pools = Pool.objects.all()
+    graphs = status_graphs()
 
+    return render_to_response('status.html',
+        {'title': 'Status',
+         'pools': pools,
+         'graphs': graphs, },
+        context_instance=RequestContext(request))
+
+def status_graphs():
     graphs = {}
     for rrd_file in ['cache_result', 'arc_hitmiss', 'cache_size', 'cache_eviction']:
         #graph.add_line([ (x,y), (x,y) ])
@@ -32,7 +40,7 @@ def status(request):
 
         endTime = datetime.now()
         startTime = endTime - timedelta(hours=5)
-        
+
         graphs[rrd_file] = pyflot.Flot()
         rrd = RRD(rrd_path, mode="r")
         rrd_data = rrd.fetch(resolution=300 * 12, cf='AVERAGE',
@@ -96,11 +104,18 @@ def status(request):
             },
         }
 
-    return render_to_response('status.html',
-        {'title': 'Status',
-         'pools': pools,
-         'graphs': graphs, },
-        context_instance=RequestContext(request))
+    return graphs
+
+
+def scheduler(request, *args, **kwargs):
+    """ Scheduler: View/modify scheduled tasks """
+    crons = Cron.objects.all()
+
+    return render_to_response('scheduler.html',
+            {'crons': crons,
+                }, context_instance=RequestContext(request))
+
+
 
 @csrf_exempt
 def status_dataset_info(request, *args, **kwargs):
@@ -122,8 +137,13 @@ def status_dataset_info(request, *args, **kwargs):
         #ctxt['dataset_autosnap_form'] = DatasetAutoSnapForm()
         #ctxt['dataset_online_backup_form'] = DatasetOnlineBackupForm()
 
+        # TODO Either make a seperate scheduler page or filter these out
+        #   Probably easiest to just make a scheduler page.
+        ctxt['crons'] = Cron.objects.all()
+
     ctxt['action'] = action
 
     return render_to_response('status_dataset_info.html',
                               ctxt, context_instance=RequestContext(request))
+
 

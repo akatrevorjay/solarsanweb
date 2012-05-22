@@ -1,4 +1,5 @@
 from django.db import models
+from jsonfield import JSONField
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
@@ -12,17 +13,17 @@ class Config(models.Model):
         return self.key
 
 
-class IsEnabledModelManager(models.Manager):
+class EnabledModelManager(models.Manager):
     def get_query_set(self):
-        return super(IsEnabledModelManager, self).get_query_set().filter(is_enabled=True)
+        return super(EnabledModelManager, self).get_query_set().filter(enabled=True)
 
 
 class ZFSBackedModel(models.Model):
     class Meta:
         abstract = True
     _zfs_type = None
-    is_enabled = models.BooleanField(default=True)
-    objects = IsEnabledModelManager()
+    enabled = models.BooleanField(default=True)
+    objects = EnabledModelManager()
     objects_unfiltered = models.Manager()
 
     def save(self, **kwargs):
@@ -323,14 +324,16 @@ class Snapshot(Dataset):
 
 
 ## Schedule backups, snapshots, health status checks, etc
-class Dataset_Cron(models.Model):
+class Cron(models.Model):
     name = models.CharField(max_length=128, unique=True)
     last_modified = models.DateTimeField(auto_now=True)
-
-    dataset = models.ForeignKey(Dataset)
-    recursive = models.BooleanField()
+    last_ret = models.IntegerField(default=0)
+    enabled = models.BooleanField(default=True)
+    run_every = models.IntegerField(default=0)
+    operate_on = models.CharField(max_length=128, default='')
 
     task = models.CharField(max_length=128)
-    schedule = models.CharField(max_length=128)
+    json = JSONField()
+
 
 

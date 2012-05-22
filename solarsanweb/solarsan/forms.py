@@ -42,3 +42,9 @@ class DatasetCronForm(DatasetServiceForm):
     online_backup_enabled = forms.BooleanField(label="Enable", help_text="Whether you want the service to run globally")
     online_backup_crontab = forms.CharField(label="Schedule")
 
+
+class CronForm(forms.Form):
+    enabled = forms.BooleanField(label="Enable", help_text="Whether you want the schedule to run or not, ie a killswitch")
+    seconds = forms.CharField(label="Seconds", help_text="How often in seconds this schedule should run")
+
+

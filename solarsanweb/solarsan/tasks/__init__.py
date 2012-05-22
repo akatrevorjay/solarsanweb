@@ -29,3 +29,7 @@ class Console_ZeroConf_Control(Task):
             self.service_console.unpublish()
 
 
+#class SolarSan_Scheduler(Scheduler):
+#    
+
+

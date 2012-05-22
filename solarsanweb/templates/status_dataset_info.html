@@ -78,11 +78,11 @@ $(".dataset-info-nav > li").first().click();
 		- Health: {{ dataset.pool.health }}
 
 
-	Dataset:
+    Dataset "{{ dataset.name }}":
        Used: {{ dataset.used }} / {{ dataset.available }}
 		- By children: {{ dataset.usedbychildren }}
 		- By snapshots: {{ dataset.usedbysnapshots }}
-		
+
 </pre>
 {% endif %}
 
@@ -117,7 +117,7 @@ $(".dataset-info-nav > li").first().click();
                     -- Just delete the file from the seconday unit, trigger resync on it (limit if you can)
                 Failures
                     -- If severe enough, take self out of cluster
-            
+
             Need to find a way to see if a file on a mirror volume is in sync between the nodes
             Collect a list of files not in sync, try to force a resync, but we need to be able to limit this somehow, currently gluster does not deal with resyncs and anything else very well, 
 
@@ -153,7 +153,7 @@ $(".dataset-info-nav > li").first().click();
 
 ##### Setup gluster mirror
 1. Ensure glusterfs-server is running
-2. Configure peers
+2. Configure peers (via avahi or netbeacon, one click cluster)
 
 </pre>
 {% endif %}
@@ -175,7 +175,7 @@ $('.cronselect').each(function() {
 
 <form class="form-horizontal">
 <fieldset>
-<legend>Cron</legend>
+<legend>Schedule</legend>
 
 <h3>Automated Snapshots</h3>
 {{ field(dataset_cron_form.auto_snapshot_enabled) }}

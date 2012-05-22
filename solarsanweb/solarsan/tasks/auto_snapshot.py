@@ -10,16 +10,16 @@ from django.utils import timezone
 
 class Auto_Snapshot(PeriodicTask):
     """ Cron job to periodically take a snapshot of datasets """
-    #run_every = timedelta(minutes=1)
-    run_every = timedelta(seconds=30)
+    run_every = timedelta(minutes=5)
 
+    # TODO Get this from Web UI
     config = {
         'schedules': {
             'testing': {
                 # Schedule
-                'snapshot-every':   timedelta(seconds=30),
+                'snapshot-every':   timedelta(hours=1),
                 # Creation
-                'datasets':         ['rpool/tmp'],
+                'datasets':         ['rpool/tmp'],          # TODO Select these from Web UI
                 'snapshot-prefix':  'auto-testing-',
                 'snapshot-date':    '%F_%T',
                 # TODO Deletion code is not recursive friendly so this can currently NEVER be true
@@ -30,7 +30,7 @@ class Auto_Snapshot(PeriodicTask):
             },
            'testing2': {
                 # Schedule
-                'snapshot-every':   timedelta(seconds=30),
+                'snapshot-every':   timedelta(days=1),
                 # Creation
                 'datasets':         ['rpool/tmp'],
                 'snapshot-prefix':  'auto-',
