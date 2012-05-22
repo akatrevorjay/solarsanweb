@@ -190,6 +190,14 @@ INSTALLED_APPS = (
     #'bootstrap_example.root',
 )
 
+# Db-backed cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
 # Persistent sessions
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 #SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
