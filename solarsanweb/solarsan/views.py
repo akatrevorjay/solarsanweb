@@ -3,6 +3,7 @@ from django.template import RequestContext
 from django.views.generic import TemplateView
 
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 
 from solarsan.utils import *
 from solarsan.models import *
@@ -35,7 +36,7 @@ def status(request, *args, **kwargs):
             },
         context_instance=RequestContext(request))
 
-
+@cache_page(5)
 def graphs(request, *args, **kwargs):
     pools = Pool.objects.all()
 
