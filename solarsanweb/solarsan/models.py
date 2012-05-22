@@ -335,5 +335,12 @@ class Cron(models.Model):
     task = models.CharField(max_length=128)
     json = JSONField()
 
+    def __unicode__(self):
+        suffix = []
+        if not self.enabled: suffix.append("disabled")
+
+        if suffix: suffix = ' (' + ','.join(suffix) + ')'
+        else: suffix = ''
+        return '%s:%s%s' % (self.task, self.name, suffix)
 
 
