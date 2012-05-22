@@ -20,18 +20,23 @@ import os, sys
 #class StatusView(TemplateView):
 #        template_name = "status.html"
 
-def status(request):
+def status(request, *args, **kwargs):
 
     pools = Pool.objects.all()
+
+    pool = kwargs.get('pool', request.GET.get('pool'))
+    # TODO 404 instead
+    if not pool in pools: pool = pools[0]
 
     return render_to_response('status.html',
         {'title': 'Status',
          'pools': pools,
+         'pool': pool,
             },
         context_instance=RequestContext(request))
 
 
-def graphs(request):
+def graphs(request, *args, **kwargs):
     pools = Pool.objects.all()
 
     graphs = {}
