@@ -1,6 +1,7 @@
 
 from django.conf.urls.defaults import *
 from django.views.generic import DetailView, ListView
+from django.views.decorators.cache import cache_page
 
 urlpatterns = patterns('solarsan.views',
     # Non-generic views
@@ -10,7 +11,7 @@ urlpatterns = patterns('solarsan.views',
     url(r'^status/dataset_info$', 'status_dataset_info'),
     url(r'^scheduler$', 'scheduler'),
 
-    url(r'^graphs$', 'graphs'),
+    url(r'^graphs$', cache_page(5)('graphs'),
 
 #    url('^', include('contact_list.urls', namespace='contact_list')),
 
