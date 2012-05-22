@@ -10,6 +10,8 @@ urlpatterns = patterns('solarsan.views',
     url(r'^status/dataset_info$', 'status_dataset_info'),
     url(r'^scheduler$', 'scheduler'),
 
+    url(r'^graphs$', 'graphs'),
+
 #    url('^', include('contact_list.urls', namespace='contact_list')),
 
 #    url(r'^graph/utilization.json$', 'graph_utilization'),

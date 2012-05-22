@@ -31,7 +31,7 @@ def status(request):
         context_instance=RequestContext(request))
 
 
-def status_graphs(request):
+def graphs(request):
     pools = Pool.objects.all()
 
     graphs = {}
