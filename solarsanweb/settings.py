@@ -82,7 +82,7 @@ STATIC_URL = '/static/'
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
 # Examples: "http://foo.com/static/admin/", "/static/admin/".
-#ADMIN_MEDIA_PREFIX = '/static/admin/'
+ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -106,7 +106,7 @@ SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
 #    ('django.template.loaders.cached.Loader', (
-       	'jingo.Loader',
+        'jingo.Loader',
         'django.template.loaders.filesystem.Loader',
         'django.template.loaders.app_directories.Loader',
         'django.template.loaders.eggs.Loader',
@@ -125,15 +125,15 @@ MIDDLEWARE_CLASSES = (
 )
 
 DEBUG_TOOLBAR_PANELS = (
-	'debug_toolbar.panels.version.VersionDebugPanel',
-	'debug_toolbar.panels.timer.TimerDebugPanel',
-	'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
-	'debug_toolbar.panels.headers.HeaderDebugPanel',
-	'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
-	'debug_toolbar.panels.template.TemplateDebugPanel',
-	'debug_toolbar.panels.sql.SQLDebugPanel',
-	'debug_toolbar.panels.signals.SignalDebugPanel',
-	'debug_toolbar.panels.logger.LoggingPanel',
+    'debug_toolbar.panels.version.VersionDebugPanel',
+    'debug_toolbar.panels.timer.TimerDebugPanel',
+    'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
+    'debug_toolbar.panels.headers.HeaderDebugPanel',
+    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
+    'debug_toolbar.panels.template.TemplateDebugPanel',
+    'debug_toolbar.panels.sql.SQLDebugPanel',
+    'debug_toolbar.panels.signals.SignalDebugPanel',
+    'debug_toolbar.panels.logger.LoggingPanel',
 )
 
 #def custom_show_toolbar(request):
@@ -142,12 +142,12 @@ DEBUG_TOOLBAR_PANELS = (
 INTERNAL_IPS=['127.0.0.1']
 
 DEBUG_TOOLBAR_CONFIG = {
-	'INTERCEPT_REDIRECTS': False,
-	#'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
-	#'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
-	'HIDE_DJANGO_SQL': False,
-	'TAG': 'div',
-	'ENABLE_STACKTRACES' : True,
+    'INTERCEPT_REDIRECTS': False,
+    #'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
+    #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
+    'HIDE_DJANGO_SQL': False,
+    'TAG': 'div',
+    'ENABLE_STACKTRACES' : True,
 }
 
 
@@ -164,7 +164,7 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-	'bootstrap',
+    'bootstrap',
 
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -173,19 +173,19 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Uncomment the next line to enable the admin:
-    #'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
-    #'django.contrib.admindocs',
+    'django.contrib.admindocs',
 
     # Libs
-	'djcelery',
-	'kombu.transport.django',
+    'djcelery',
+    'kombu.transport.django',
     #'debug_toolbar',
-	'django_extensions',
+    'django_extensions',
     'djsupervisor',
     'south',
 
-	# Apps
+    # Apps
     'solarsan',
     #'bootstrap_example.root',
 )
@@ -257,6 +257,8 @@ if DEBUG:
 #BROKER_USER = ""
 #BROKER_PASSWORD = ""
 #BROKER_VHOST = "celery"
+
+CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
