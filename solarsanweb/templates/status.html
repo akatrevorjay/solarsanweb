@@ -14,7 +14,7 @@
 {% block content %}
 
 {% block graphs %}
-<div id="graphs"></div>
+<div id="graphs-cont"></div>
 {% endblock %}
 
 {% for pool in pools %}
@@ -70,7 +70,7 @@ $(".dataset-list .dataset").first().click();
  */
 $.ajax({type: "GET",
         url: "{{ url('solarsan.views.graphs') }}",
-        context: $("#graphs"),
+        context: $("#graphs-cont"),
         }).done(function(data) { $(this).html(data); });
 
 
