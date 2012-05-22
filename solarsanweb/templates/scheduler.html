@@ -1,0 +1,29 @@
+{% from "bootstrap/macros.html" import alert  %}
+{% from "bootstrap/forms/macros.html" import field, input  %}
+
+<form class="form-horizontal">
+<fieldset>
+<legend>Schedule</legend>
+
+<h3>Automated Snapshots</h3>
+{{ field(dataset_cron_form.auto_snapshot_enabled) }}
+<div class="cronselect" style="display: inline;"></div>
+
+<a href="#" onclick="$(this).next().toggle().prev().toggle();">advanced</a>
+{{ field(dataset_cron_form.auto_snapshot_crontab) }}
+
+<h3>Integrated Online Backup</h3>
+{{ field(dataset_cron_form.online_backup_enabled) }}
+<div class="cronselect" style="display: inline;"></div>
+
+<a href="#" onclick="$(this).next().toggle().prev().toggle();">advanced</a>
+{{ field(dataset_cron_form.online_backup_crontab) }}
+
+<div class="form-actions">
+<button type="submit" class="btn btn-primary">Save</button>
+<a href="#" class="btn">Cancel</a>
+</div>
+
+</form>
+
+
