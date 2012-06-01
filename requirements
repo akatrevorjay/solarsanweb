@@ -1,5 +1,4 @@
-#Django
--e git://github.com/django/django.git#egg=Django
+-e git+git://github.com/django/django.git#egg=Django
 Jinja2
 MySQL-python
 PyRRD
@@ -39,7 +38,6 @@ meld3
 oauthlib
 pathtools
 progressbar
-#py-rrdtool
 pyasn1
 pyinotify
 python-dateutil
