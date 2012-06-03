@@ -11,8 +11,8 @@ import iterpipes
 User vars
 """
 
-paths = {'zfs':    "/usr/sbin/zfs",
-         'zpool':  "/usr/sbin/zpool", }
+paths = {'zfs':    "/sbin/zfs",
+         'zpool':  "/sbin/zpool", }
 
 
 """
