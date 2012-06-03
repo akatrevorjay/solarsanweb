@@ -44,7 +44,7 @@ pyinotify
 python-dateutil
 python-flot-utils
 pytz
-pyzmq
+#pyzmq
 requests
 rsa
 supervisor
