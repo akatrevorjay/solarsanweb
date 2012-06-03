@@ -36,7 +36,7 @@ def status(request, *args, **kwargs):
             },
         context_instance=RequestContext(request))
 
-@cache_page(5)
+@cache_page(15)
 def graphs(request, *args, **kwargs):
     pools = Pool.objects.all()
 
