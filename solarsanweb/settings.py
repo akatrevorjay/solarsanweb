@@ -267,12 +267,19 @@ CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 # more details on how to customize your logging configuration.
 LOGGING = {
     'version': 1,
-    #'disable_existing_loggers': True,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,
+    #'disable_existing_loggers': False,
+    'root': {
+        'level': 'WARNING',
+        'handlers': ['sentry'],
+    },
     'formatters': {
         'standard': {
             'format': '%(asctime)s %(levelname)s %(filename)s@%(funcName)s:%(lineno)d %(message)s',
             #'datefmt': '%d/%b/%Y %H:%M:%S',
+        },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
     },
     'filters': {
@@ -281,6 +288,10 @@ LOGGING = {
         },
     },
     'handlers': {
+        'sentry': {
+            'level': 'DEBUG',
+            'class': 'raven.contrib.django.handlers.SentryHandler',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -316,15 +327,35 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'raven': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'sentry.errors': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
     }
 }
 
-## ~trevorj 020712
-#import logging
-#logging.basicConfig(
-#    level = logging.DEBUG,
-#    format = '%(asctime)s %(levelname)s %(filename)s@%(funcName)s:%(lineno)d %(message)s',
-#    #filename = '/tmp/myapp.log',
-#    #filemode = 'w'
-#)
+
+##
+## Sentry/Raven
+##
+
+# Set your DSN value
+SENTRY_DSN = 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2'
+
+# Add raven to the list of installed apps
+INSTALLED_APPS = INSTALLED_APPS + (
+        'raven.contrib.django',
+        )
+MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+        # Catch 404s
+        'raven.contrib.django.middleware.Sentry404CatchMiddleware',
+        'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
+        )
+
 
