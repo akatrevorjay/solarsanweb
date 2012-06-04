@@ -37,3 +37,6 @@
 [submodule "vendor-local/pkgs/pyrrd"]
 	path = vendor-local/pkgs/pyrrd
 	url = git://github.com/akatrevorjay/pyrrd.git
+[submodule "solarsanweb/static/3rd/bootstrap"]
+	path = solarsanweb/static/3rd/bootstrap
+	url = git://github.com/twitter/bootstrap.git

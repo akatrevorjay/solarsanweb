@@ -1,356 +1,50 @@
-/*
+/* ______
  * Common
  */
 
-body {
-    margin: 1em;
-    /* font defaults */
-    font-family: "Ubuntu"; 
-    font-size: 0.8em;
-}
-
-#container {}
-
-#content {
-    /* width: 910px; */
-    width: auto;
-    min-width: 910px;
-    margin: 1em;
-}
-
 /*
- * Header
+ * Sign-In Modal
  */
 
-#header > h1 {
-    margin: 0;
-    padding: 0;
-    font-size: 1.2em;
-}
-
-#header > h1 > div {
-    padding: 1em;
-    color: #333;
-}
-
-#nav {
-    padding: 0.5em;
-}
-
-#nav > div.btnset, #nav > #pagenav > div.btnset {
-    padding-right: 0.5em;
-}
-
-#nav .rightnav {
-    text-align: right; width: auto;; overflow: none; position: absolute; right: 3.5em; top: 7.5em;
-}
-
-#pageheader {
-    font-size: 1em;
+#sign-in-modal {
+    -moz-border-radius: 6px;
+    background: #eef2f7;
+    -webkit-border-radius: 6px;
+    border: 1px solid #536376;
+    -webkit-box-shadow: rgba(0,0,0,.6) 0px 2px 12px;
+    -moz-box-shadow:  rgba(0,0,0,.6) 0px 2px 12px;;
+    padding: 14px 22px;
+    width: 400px;
     position: relative;
-    left: 0.2em;
-}
-
-#pageheader > div.ui-buttonset > button {
-    font-weight: bold;
-}
-
-#pageheader > div.ui-buttonset > span {
-    font-size: 1.2em;
-    vertical-align: middle;
-    padding-right: 0.5em;
-    font-weight: 500;
-}
-
-#pageheader .dropdown_menu {
     display: none;
 }
 
-/* remove bold from some jquery ui elements */
-.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
-    font-weight: normal;
+#sign-in-modal #sign-in-modal_form {
+    margin-top: 13px;
 }
 
-/*
- * Generics
- */
-
-/* positional classes */
-.left {
-    float: left;
-}
-.right {
-    float: right;
-}
-
-
-/*
- * Status
- */
-
-/* Graphs */
-#main > div.pool > div.graphs {
-    width: auto;
-    height: 200px;
-    padding: 10px;
-}
-#main > div.pool > div.graphs > div {
-    text-align: right;
-}
-#main > div.pool > div.graphs > div.graphs_left {
-    text-align: left;
-    float: left;
-}
-
-/*
- * dataset_list
- */
-
-div.pool > div.dataset_list {
-    width: 25%;
-
-    float: left;
-    margin-right: 10px;
-}
-
-/* dataset */
-div.pool > div.dataset_list > div > div.ui-button {
+#sign-in-modal label {
     display: block;
-    cursor: pointer;
-    color: #555;
-
-    padding: 5px;
-    margin: 5px;
-}
-/* dataset dragging */
-div.pool > div.dataset_list > div > div.ui-button.ui-state-dragging {
-    z-index: auto;
-}
-/* dataset selected */
-div.pool > div.dataset_list > div > div.ui-button.selected {
-    padding-top: 10px;
-    padding-bottom: 10px;
-    color: #333;
-    border: 1px solid #fbcb09; background: #fdf5ce url({{ STATIC_URL }}/css/ui-lightness/images/ui-bg_glass_100_fdf5ce_1x400.png) 50% 50% repeat-x; font-weight: bold;
-}
-div.pool > div.dataset_list > div.ui-button.selected a {
-    color: #c77405;
+    margin-bottom: 10px; 
+    color: #536376;
+    font-size: .9em;
 }
 
-/* dataset header */
-div.pool > div.dataset_list > div > div.ui-button :first-child {
-    /* jquery ui overrides */
-    padding: 0px;
-    margin: 0px;
-    text-decoration: none;
-    font-weight: normal;
-    text-align: left;
+#sign-in-modal label input {
+    display: block;
+    width: 393px;
+    height: 31px;
+    background-position: -201px 0;
+    padding: 2px 8px;
+    font-size: 1.2em;
+    line-height: 31px;
 }
 
-/* dataset additional */
-div.pool > div.dataset_list > div > div.ui-button div {
-    display: none;
-}
-/* dataset additional (selected|hover) */
-div.pool > div.dataset_list > div > div.ui-button.selected div, div.pool > div.dataset_list > div > div.ui-button.ui-state-hover div {
-    display: inline;
+#sign-in-modal_form {
+    position: relative;
+    background: url(divider.png) repeat-x bottom left;
+    padding-bottom: 54px;
+    margin-bottom: 12px;
 }
 
-/*
- * dataset_info
- */
-
-div.pool > div.dataset_info {
-    width: auto;
-    overflow: hidden;
-}
-
-div.pool > div.dataset_info .ui-tabs .ui-tabs-nav {
-    padding: 0.1em 0.1em 0;
-}
-
-div.pool > div.dataset_info .ui-tabs .ui-tabs-nav li a {
-    padding: 0.2em 0.4em;
-}
-
-div.pool > div.dataset_info .ui-tabs .ui-tabs-nav .ui-state-default a, div.pool > div.dataset_info .ui-tabs .ui-tabs-nav .ui-state-default a:link, div.pool > div.dataset_info .ui-tabs .ui-tabs-nav .ui-state-default a:visited {
-    /*color: #EB8F00;*/
-   color: #777;
-}
-
-div.pool > div.dataset_info .ui-tabs .ui-tabs-nav .ui-state-active a, div.pool > div.dataset_info .ui-tabs .ui-tabs-nav .ui-state-active a:link, div.pool > div.dataset_info .ui-tabs .ui-tabs-nav .ui-state-active a:visited {
-    color: #333;
-}
-
-/*
-.ui-widget-header a {
-    color: #FFFFFF;
-}
-*/
-
-
-div.pool > div.dataset_info .ui-tabs-panel {
-    /* jquery ui overrides */
-    padding: 0;
-}
-
-div.pool > div {
-    margin-top: 10px;
-}
-
-/* jquery dropdown list */
-/*
- * 		.ui-autocomplete-input {
-            font-family:Arial, sans-serif;
-            font-size:15px;  
-        }
-        
-        input[type=text],
-        .combowrap {
-            color:#333;
-            width:268px;
-            border-collapse:collapse;
-            border-spacing:0;
-            border:solid 1px #999;
-            -moz-border-radius:3px;
-            -webkit-border-radius: 3px;
-            border-radius:3px;
-            -webkit-box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
-            -moz-box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
-            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
-            background-color: #f2f3f2; 
-        }
-
-        input[type=text]:focus,
-        input.focus {
-            background-color:#fff;
-            outline: none;
-        }
-
-        .ui-autocomplete-input:focus {
-            outline: none;
-        }
-
-       .formrow {
-            position:relative;
-            padding-bottom:15px;
-        }
-*/
-        /* Combobox styles */
-/*
-        .combowrap {
-            background-color: #fff; 
-            overflow:hidden;
-            padding:0;
-            width:125px;
-        }
-
-        .combogrey {
-            background-color: #f2f3f2; 
-        }       
-
-        .combowrap input {
-            border:0px;
-            background:none;
-            -webkit-box-shadow:none;
-            -moz-box-shadow: none;
-            box-shadow: none;
-            -moz-border-radius:0;
-            -webkit-border-radius:0;
-            border-radius:0;
-        }
-
-
-        .combowrap .ui-button {
-            border:none;
-            border-spacing:0;
-            background:transparent url('http://www.onemoretake.com/wp-content/uploads/2011/04/arrow.png') no-repeat center 12px;
-            padding:6px 0;
-            height:30px;
-            width:29px;
-            cursor:pointer;
-            vertical-align: bottom;
-        }
-
-        .combowrap .ui-button:hover {
-            background-position:center -16px;
-        }
-
-        .combowrap input[type=text]:focus,
-        .combowrap input[type=email]:focus,
-        .combowrap input.hasvalue {
-            background:none;
-        }
-
-        .combowrap .ui-autocomplete-input {
-            line-height:18px;
-            margin:0;
-            cursor:default;
-        }
-
-        .ui-autocomplete {
-            cursor: default;    
-            background:#fff; 
-            -moz-border-radius:0 0 3px 3px;
-            -webkit-border-radius:0 0 3px 3px;
-            border-radius:0 0 3px 3px;
-            -webkit-box-shadow:0 3px 5px rgba(0,0,0,0.35);
-            -moz-box-shadow: 0 3px 5px rgba(0,0,0,0.35);
-            box-shadow: 0 3px 5px rgba(0,0,0,0.35); 
-            max-height:200px;
-            min-width:278px;
-            overflow-y:auto;
-            overflow-x:hidden;          
-        }   
-
-        .ui-menu {
-            display: block;
-        }
-
-        .ui-menu .ui-menu {
-            margin-top: -3px;
-        }
-
-        .ui-menu .ui-menu-item {
-            margin:0;
-            padding: 0;
-            width: 100%;
-        }
-
-        .ui-menu .ui-menu-item a {
-            text-decoration:none;
-            display:block;
-            padding:0 20px 0 8px;
-            line-height:24px;
-            font-size:15px;
-            color:#666;
-            white-space:nowrap;
-        }
-        .ui-menu .ui-menu-item a.ui-state-hover,
-        .ui-menu .ui-menu-item a.ui-state-active {
-            background-color:#54bdcc;
-            color:#fff;
-        }
-*/
-/* end jquery drop down */
-
-/* Iphone Style Buttons */
-	/* Used for the Switch effect: */
-	.cb-enable, .cb-disable, .cb-enable span, .cb-disable span { background: url(/static/iphone-style-swiches/switch.gif) repeat-x; display: block; float: left; }
-	.cb-enable span, .cb-disable span { line-height: 30px; display: block; background-repeat: no-repeat; font-weight: bold; }
-	.cb-enable span { background-position: left -90px; padding: 0 10px; }
-	.cb-disable span { background-position: right -180px;padding: 0 10px; }
-	.cb-disable.selected { background-position: 0 -30px; }
-	.cb-disable.selected span { background-position: right -210px; color: #fff; }
-	.cb-enable.selected { background-position: 0 -60px; }
-	.cb-enable.selected span { background-position: left -150px; color: #fff; }
-	.switch label { cursor: pointer; }
-
-/* footer */
-#footer {
-    margin-top: 10px;
-    padding: 10px;
-    overflow: hidden;
-    text-align: right;
-}
 
