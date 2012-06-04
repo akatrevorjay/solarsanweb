@@ -15,6 +15,7 @@ from pyrrd.rrd import RRD
 from pyrrd.backend import bindings
 
 from django.conf import settings
+import zfs
 import pyflot
 import os, sys
 
@@ -36,12 +37,54 @@ def status(request, *args, **kwargs):
             },
         context_instance=RequestContext(request))
 
+
+@csrf_exempt
+def status_dataset(request, *args, **kwargs):
+    """ Status: Gets dataset """
+
+    ## IMPORTANT TODO FUCK clean the dataset argument
+    dataset = kwargs.get('dataset', request.GET.get('dataset'))
+    dataset = Filesystem.objects.get(name=dataset)
+
+    return render_to_response('status/dataset.html',
+            {'dataset': dataset }, context_instance=RequestContext(request))
+
+
+@csrf_exempt
+def status_dataset_action(request, *args, **kwargs):
+    """ Status: Gets dataset action """
+
+    ctxt = {}
+
+    ## IMPORTANT TODO FUCK clean the action argument
+    action = kwargs.get('action', request.GET.get('action', 'health'))
+    dataset = kwargs.get('dataset', request.GET.get('dataset'))
+
+    ctxt['dataset'] = Filesystem.objects.get(name=dataset)
+
+    if action == "cron":
+        ctxt['dataset_service_form'] = DatasetServiceForm()
+        ctxt['dataset_cron_form'] = DatasetCronForm()
+        #ctxt['dataset_autosnap_form'] = DatasetAutoSnapForm()
+        #ctxt['dataset_online_backup_form'] = DatasetOnlineBackupForm()
+
+        # TODO Either make a seperate scheduler page or filter these out
+        #   Probably easiest to just make a scheduler page.
+        ctxt['crons'] = Cron.objects.all()
+
+    ctxt['action'] = action
+
+    return render_to_response('status/dataset/'+action+'.html',
+                              ctxt, context_instance=RequestContext(request))
+
+
+
 @cache_page(15)
 def graphs(request, *args, **kwargs):
     pools = Pool.objects.all()
 
     graphs = {}
-    for rrd_file in ['cache_result', 'arc_hitmiss', 'cache_size', 'cache_eviction']:
+    for rrd_file in ['cache_result', 'arc_hitmiss', 'cache_size', 'dmu_tx']:
         #graph.add_line([ (x,y), (x,y) ])
         rrd_path=os.path.join(settings.DATA_DIR, 'rrd', rrd_file + '.rrd')
         rrd = RRD(rrd_path, mode="r")
@@ -125,36 +168,5 @@ def scheduler(request, *args, **kwargs):
     return render_to_response('scheduler.html',
             {'crons': crons,
                 }, context_instance=RequestContext(request))
-
-
-
-@csrf_exempt
-def status_dataset_info(request, *args, **kwargs):
-    """ Status: Gets dataset info """
-
-    ctxt = {}
-
-    action = kwargs.get('action', request.GET.get('action'))
-    dataset = kwargs.get('dataset', request.GET.get('dataset'))
-
-    if action == "snapshots" or action == "health":
-        ctxt['dataset'] = Dataset.objects.get(name=dataset, type='filesystem')
-    else:
-        ctxt['dataset'] = Dataset.objects.get(name=dataset)
-
-    if action == "cron":
-        ctxt['dataset_service_form'] = DatasetServiceForm()
-        ctxt['dataset_cron_form'] = DatasetCronForm()
-        #ctxt['dataset_autosnap_form'] = DatasetAutoSnapForm()
-        #ctxt['dataset_online_backup_form'] = DatasetOnlineBackupForm()
-
-        # TODO Either make a seperate scheduler page or filter these out
-        #   Probably easiest to just make a scheduler page.
-        ctxt['crons'] = Cron.objects.all()
-
-    ctxt['action'] = action
-
-    return render_to_response('status_dataset_info.html',
-                              ctxt, context_instance=RequestContext(request))
 
 

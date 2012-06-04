@@ -1,0 +1,54 @@
+{% from "bootstrap/macros.html" import alert  %}
+{% from "bootstrap/forms/macros.html" import field, input  %}
+
+<script type="text/javascript">
+
+$(".online_backup").each(function() {
+    // assign default values
+    $("textarea, input", this).DefaultValue();
+
+    // datasets drop
+    $(".datasets", this).droppable({
+            activeClass: "ui-state-hover",
+            hoverClass: "ui-state-active",
+            accept: ":not(.ui-sortable-helper)",
+            drop: function( event, ui ) {
+                $( this ).find( ".placeholder" ).remove();
+                //console.log(ui);
+                
+                $( "<li></li>" ).text( ui.helper.text() ).button().css("padding", "5").appendTo(this);
+                
+                //$( "<div></div>" ).text( ui.draggable.find("a").text() ).button().appendTo( this );
+            },
+    }).sortable({
+        items: "li:not(.placeholder)",
+        tolerance: 'pointer',
+        sort: function() {
+            // gets added unintentionally by droppable interacting with sortable
+            // using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+            $( this ).removeClass( "ui-state-default" );
+        },
+        //placeholder: "ui-state-highlight",
+        //revert: true,
+        //axis: 'x',
+        //containment: 'parent',
+    });
+    //$(".datasets", this).disableSelection();
+});
+
+</script>
+
+<div class="online_backup" style="padding: 10px;">
+    enter in locsol backup key, drag and drop datasets from the left to backup<br />
+    show graph with space available / remaining<br/>
+    show backup status<br />
+    <form>
+        <input type="text" name="username" label="Username" />
+        <textarea name="key" style="width: 100%" label="Online Backup Key"></textarea>
+        <div class="datasets ui-state-default" style="width: 100%; height: 100px; overflow: hidden;" label="Datasets">
+            <ul></ul>
+        </div>
+        <input type="submit" value="Save"/>
+    </form>
+</div>
+

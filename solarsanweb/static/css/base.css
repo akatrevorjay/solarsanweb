@@ -2,49 +2,4 @@
  * Common
  */
 
-/*
- * Sign-In Modal
- */
-
-#sign-in-modal {
-    -moz-border-radius: 6px;
-    background: #eef2f7;
-    -webkit-border-radius: 6px;
-    border: 1px solid #536376;
-    -webkit-box-shadow: rgba(0,0,0,.6) 0px 2px 12px;
-    -moz-box-shadow:  rgba(0,0,0,.6) 0px 2px 12px;;
-    padding: 14px 22px;
-    width: 400px;
-    position: relative;
-    display: none;
-}
-
-#sign-in-modal #sign-in-modal_form {
-    margin-top: 13px;
-}
-
-#sign-in-modal label {
-    display: block;
-    margin-bottom: 10px; 
-    color: #536376;
-    font-size: .9em;
-}
-
-#sign-in-modal label input {
-    display: block;
-    width: 393px;
-    height: 31px;
-    background-position: -201px 0;
-    padding: 2px 8px;
-    font-size: 1.2em;
-    line-height: 31px;
-}
-
-#sign-in-modal_form {
-    position: relative;
-    background: url(divider.png) repeat-x bottom left;
-    padding-bottom: 54px;
-    margin-bottom: 12px;
-}
-
 

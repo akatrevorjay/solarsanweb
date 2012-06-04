@@ -5,9 +5,12 @@ from django.views.generic import DetailView, ListView
 urlpatterns = patterns('solarsan.views',
     # Non-generic views
     url(r'^(?:status)?$', 'status'),
-    #url(r'^graph/utilization.json$', 'graph_stats_json'),
-    url(r'^status/dataset_info/(?P<action>[^/]+)/(?P<dataset>.+)$', 'status_dataset_info'),
-    url(r'^status/dataset_info$', 'status_dataset_info'),
+
+    url(r'^status/pool/(?P<pool>.+)$', 'status_pool'),
+
+    url(r'^status/dataset/(?P<dataset>.+)$', 'status_dataset'),
+    url(r'^status/dataset_(?P<action>[^/]+)/(?P<dataset>.+)/$', 'status_dataset_action'),
+
     url(r'^scheduler$', 'scheduler'),
 
     url(r'^graphs$', 'graphs'),

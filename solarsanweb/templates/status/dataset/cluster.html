@@ -1,0 +1,71 @@
+
+<pre>
+##### Manage mirror
+
+    Show mirror cluster information
+        In cluster? Yes/No
+        IPs of all clustered nodes
+
+    Check health of cluster
+        $ gluster peer status
+        $ crm_mon
+        $ ip addr
+
+        ping solarsan services
+        ping solarsan
+
+        IMPORTANT: Test file replication per mirror volume both both sides. Need to do this on a scheduled task as well, rather often.
+            Each mirror volume will have a .solarsan/repltest folder meant for this.
+            Every minute (or more), write to this folder with a UUID filename (or file contains random data, and filename is sha1sum of data)
+            If write failed, send out event saying so much, email support and configured client alerts email address
+            Send out celery event saying a repltest file x was just created, and to report back with status of being able to read this file
+            If a node does not reply soon (ie, 15-30s), then mark it as down and in need of resync
+
+            Need to monitor gluster logs for:
+                File/Directory Split Brain
+                    -- (later) Before attempting to fix, create snapshot
+                    -- Easy way to know which unit has the correct file is to keep track of when each San was primary.
+                    -- Whoever was primary at the given point in time that split brain occurred is the one who has the winning copy.
+                    -- Just delete the file from the seconday unit, trigger resync on it (limit if you can)
+                Failures
+                    -- If severe enough, take self out of cluster
+
+            Need to find a way to see if a file on a mirror volume is in sync between the nodes
+            Collect a list of files not in sync, try to force a resync, but we need to be able to limit this somehow, currently gluster does not deal with resyncs and anything else very well, 
+
+        (later) check recent load avgs and IO avgs against what is considered "normal"
+        (later) infiniband diagnostics
+
+##### Cluster setup from scratch
+
+    Check if clustering is already active, error if so
+        How should the cluster information be stored?
+            For version 1, the database sounds fine to me.
+                After version 1 if anything relies on the db it needs to check for corrupt tables and repair them (ubu/deb init scripts do something of the like of this already, see if this good enough.
+            Could also be stored as a configuration file.
+
+    Setup clustering stack (originally only for up to two units)
+        What cluster stack should we use 100% from now on?
+            Corosync is nice, but rather costly on time required to configure.
+            I think it may be beneficial to handle our own clustering stack, very small and only containing the basics that we need.
+                Celery for async tasks
+                    Cluster status updates, Cluster ping/pongs, Cluster checks
+                Are there modules available that already manage virtual IPs ala ucarp etc?
+                    If not iterpipe to iproute2 or just run a vip-up script?
+                It would be possible to use Celery for pings, when a certain amount of time elapses without successful pings, then takeover.
+
+        Configure HA IP between both unirs
+
+    Setup rabbitmq cluster for fault tolerance (no SPOF!)
+    Setup solarsan service communication, verify it works
+
+    Write node information in DB
+
+    Mark unit as in cluster
+
+##### Setup gluster mirror
+1. Ensure glusterfs-server is running
+2. Configure peers (via avahi or netbeacon, one click cluster)
+
+</pre>
+

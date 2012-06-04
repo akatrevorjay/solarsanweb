@@ -23,7 +23,7 @@ def destroy(name, **kwargs):
         zargs.append('-r')
     if not name:
         raise Error("destroy was attemped with an empty name")
-    if name.index('@'):
+    if '@' in name:
         type = 'snapshot'
     else:
         type = 'filesystem'
@@ -59,7 +59,7 @@ def snapshot(name, **kwargs):
     #    name = timezone.now().strftime(name)
     if not name:
         raise Error("snapshot was attempted with an empty name")
-    if not name.index('@'):
+    if not '@' in name:
         raise Error("snapshot was attempted with an invalid snapshot name (missing @): %s" % name)
     zargs.append(name)
 
