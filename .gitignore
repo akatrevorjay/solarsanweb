@@ -1,6 +1,18 @@
 *.pyc
-#*.swp
-#*.swo
+
+*.swp
+*.swo
+celeryconfig.py
+solarsanweb/templates/b
+solarsanweb/templates/admin.old
+_crap/
+snippets/
+PYSMELLTAGS
+polls
+3rd/
+env/
+.ropeproject/
+vendor-local/
 
 data/*
 
