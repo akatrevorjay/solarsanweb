@@ -84,7 +84,7 @@ class Import_ZFS_Metadata(PeriodicTask):
                     dataset = Pool(**dv)
                 else:
                     dataset_path = d.split('/')
-                    dataset_pool = Pool.objects_unfiltered.get(name=dataset_path[0])
+                    dataset_pool = Pool.objects_unfiltered.get( name=dataset_path[0].split('@')[0] )
                     dv['pool_id'] = dataset_pool.id
                     if dv['type'] == 'snapshot':
                         dataset = Snapshot(**dv)
