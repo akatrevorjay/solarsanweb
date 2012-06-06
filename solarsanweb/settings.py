@@ -15,7 +15,7 @@ DATABASES = {
         'NAME': 'solarsanweb',                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
         'PASSWORD': 'locsol',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': 'db.solarsan.local',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -184,11 +184,22 @@ INSTALLED_APPS = (
     'django_extensions',
     'djsupervisor',
     'south',
+    'django_logtail',
 
     # Apps
     'solarsan',
     #'bootstrap_example.root',
 )
+
+# django_logtail
+LOGTAIL_FILES = {
+    'nginx_access': '/var/log/nginx/access.log',
+    'nginx_error': '/var/log/nginx/error.log',
+    'solarvisor': '/opt/solarsanweb/data/log/supervisord.log',
+}
+
+# Admin's already got jQuery yo
+LOGTAIL_INCLUDE_JQUERY = False # Default is True
 
 # Cache backends
 CACHES = {
@@ -211,7 +222,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 JINJA_CONFIG = {'auto_reload': True}
 
 # List of apps that do not use Jingo
-JINGO_EXCLUDE_APPS = ('admin', 'debug_toolbar')
+JINGO_EXCLUDE_APPS = ('admin', 'debug_toolbar', 'django_logtail')
 
 ## Celery
 # django-celery
