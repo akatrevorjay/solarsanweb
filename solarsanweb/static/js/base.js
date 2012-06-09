@@ -21,7 +21,7 @@ function graphs_toggle() {
     SolarSan.set({ 'graphs_hidden': graphs.is(':hidden') });
 }
 
-$(function() {
+$(document).ready(function(){
 
 if ('graphs_hidden' in SolarSan.Settings) {
     if (SolarSan.Settings.graphs_hidden)
@@ -31,5 +31,26 @@ if ('graphs_hidden' in SolarSan.Settings) {
 }
 
 });
+
+
+//$(document).ready(function(){
+//// The initial load event will try and pull the cookie to see if the toggle is "open"
+//var openToggle = getCookie("open") || false;
+//if ( openToggle )
+//    $("#Header").show();
+//else
+//    $("#Header").hide();
+
+//// The click handler will decide whether the toggle should "show"/"hide" and set the cookie.
+//$('#btnToggleHeader').click(function() {
+//    var closed = $("#Header").is(":hidden");
+//    if ( closed )
+//       $("#Header").show();
+//    else
+//        $("#Header").hide();
+//    setCookie("open", !closed, 365 );
+//});
+
+//});
 
 
