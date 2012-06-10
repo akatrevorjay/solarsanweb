@@ -207,6 +207,9 @@ CACHES['default'] = CACHES['default_mem']
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 #SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
+# HTTPS only
+SESSION_COOKIE_SECURE = True
+
 # Jinja2 env config
 JINJA_CONFIG = {'auto_reload': True}
 
