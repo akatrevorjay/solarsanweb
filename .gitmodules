@@ -55,3 +55,9 @@
 [submodule "solarsanweb/static/3rd/json-cookie"]
 	path = solarsanweb/static/3rd/json-cookie
 	url = git://github.com/st3v3nhunt/JSON-Cookie.git
+[submodule "solarsanweb/static/3rd/flot.tooltip"]
+	path = solarsanweb/static/3rd/flot.tooltip
+	url = git://github.com/krzysu/flot.tooltip.git
+[submodule "solarsanweb/static/3rd/flot.curvedlines"]
+	path = solarsanweb/static/3rd/flot.curvedlines
+	url = git://github.com/MichaelZinsmaier/CurvedLines.git
