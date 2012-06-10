@@ -21,29 +21,36 @@
                 <a class="brand" href="#">{{ dataset_path[0] }} {{ dataset_detail.path(1)|join('/') }}</a>
 
                 <div class="nav-collapse">
-                    <ul class="nav dataset-info-nav">
-                        {% set tabs = ['snapshots', 'cron', 'cluster', 'backup', 'dataset', 'pool'] %}
-                        {% for t in tabs %}
-                        <li{% if action == t %} class="active"{% endif %}><a href="#">{{ t|capitalize }}</a></li>
-                        {% endfor %}
-                    </ul>
-
-                    <ul class="nav pull-right">
-                        {#<li><a href="#">Link</a></li>#}
-                        {#<li class="divider-vertical"></li>#}
+                    <ul class="nav dataset-detail-nav">
+                        {% if dataset_detail.pool.name == dataset_detail.name %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="/pools/health/{{ dataset_detail.pool.name|urlize }}">Health</a></li>
+                                    <li><a href="/pools/analytics/{{ dataset_detail.pool.name|urlize }}">Analytics</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
 
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dataset <b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="#">Destroy</a> <b class="caret"></b></li>
-                                <li><a href="#">Clone</a></li>
+                                <li><a href="#">Snapshot</a></li>
+                                {#<li><a href="#">Clone</a></li>#}
                                 <li class="divider"></li>
                                 <li><a href="#">Destroy</a></li>
                                 {#<li class="divider"></li>
                                 <li><a href="#">Separated link</a></li>#}
                             </ul>
                         </li>
+
+                        {% set tabs = ['snapshots'] %}
+                        {% for t in tabs %}
+                        <li><a href="#">{{ t|capitalize }}</a></li>
+                        {% endfor %}
                     </ul>
+                    {#<ul class="nav pull-right">
+                    </ul>#}
                 </div><!-- /.nav-collapse -->
             </div>
         </div><!-- /navbar-inner -->
@@ -51,6 +58,6 @@
 </div>
 
 <div class="row">
-    <div id="dataset-info-content" class="hero-unit"></div>
+    <div id="dataset-detail-content" class="hero-unit"></div>
 </div>
 
