@@ -195,12 +195,12 @@ class Pool_IOStat(models.Model):
 
 class FilesystemManager(models.Manager):
     def get_query_set(self):
-        return super(FilesystemManager, self).get_query_set().filter(type='filesystem')
+        return super(FilesystemManager, self).get_query_set().filter(type='filesystem', enabled=True)
 
 
 class SnapshotManager(models.Manager):
     def get_query_set(self):
-        return super(SnapshotManager, self).get_query_set().filter(type='snapshot')
+        return super(SnapshotManager, self).get_query_set().filter(type='snapshot', enabled=True)
 
 
 class Dataset(ZFSBackedModel):

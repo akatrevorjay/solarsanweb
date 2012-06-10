@@ -37,6 +37,17 @@ def status(request, *args, **kwargs):
             },
         context_instance=RequestContext(request))
 
+@csrf_exempt
+def status_pool(request, *args, **kwargs):
+    """ Status: Gets pool """
+
+    ## IMPORTANT TODO FUCK clean the dataset argument
+    pool = kwargs.get('pool', request.GET.get('pool'))
+    pool = Filesystem.objects.get(name=pool)
+
+    return render_to_response('status/pool.html',
+            {'pool': pool }, context_instance=RequestContext(request))
+
 
 @csrf_exempt
 def status_dataset(request, *args, **kwargs):

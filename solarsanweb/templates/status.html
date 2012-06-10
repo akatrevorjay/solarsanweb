@@ -22,13 +22,10 @@
     <div class="span3">
         <div class="well sidebar-nav">
             <ul class="nav nav-list dataset-list">
-                <li class="nav-header">Datasets</li>
+                <li class="nav-header">Pools</li>
 
-                {% for dataset in pool.dataset_set.filter(type='filesystem').order_by('name') %}
-                    <li class="dataset"><a class="dropdown-toggle" href="#">{{ dataset }}</a></li>
-                    <div class="dropdown-menu dataset-info">
-                        {{ dataset.used }}/{{ dataset.available }}
-                    </div>
+                {% for dataset in pool.filesystems().filter(type='filesystem').order_by('name') %}
+                <li class="dataset"><a href="#">{{ dataset }}</a></li>
                 {% endfor %}
 
                 <li><a href="#add-dataset-modal" class="add-dataset" data-toggle="modal">add dataset</a></li>
