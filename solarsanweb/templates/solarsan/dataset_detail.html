@@ -1,0 +1,56 @@
+
+<!-- Breadcrumb update -->
+<div class="pool-breadcrumb-replace hide">
+    <ul>
+        {% include 'solarsan/pool_breadcrumb.html' %}
+    </ul>
+</div>
+
+<!-- Dataset Detail -->
+{% set dataset_path = dataset_detail.path() %}
+<div class="row">
+    <div class="navbar dataset-detail-nav">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto;">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".dataset-detail-nav .nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+
+                <a class="brand" href="#">{{ dataset_path[0] }} {{ dataset_detail.path(1)|join('/') }}</a>
+
+                <div class="nav-collapse">
+                    <ul class="nav dataset-info-nav">
+                        {% set tabs = ['snapshots', 'cron', 'cluster', 'backup', 'dataset', 'pool'] %}
+                        {% for t in tabs %}
+                        <li{% if action == t %} class="active"{% endif %}><a href="#">{{ t|capitalize }}</a></li>
+                        {% endfor %}
+                    </ul>
+
+                    <ul class="nav pull-right">
+                        {#<li><a href="#">Link</a></li>#}
+                        {#<li class="divider-vertical"></li>#}
+
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">Destroy</a> <b class="caret"></b></li>
+                                <li><a href="#">Clone</a></li>
+                                <li class="divider"></li>
+                                <li><a href="#">Destroy</a></li>
+                                {#<li class="divider"></li>
+                                <li><a href="#">Separated link</a></li>#}
+                            </ul>
+                        </li>
+                    </ul>
+                </div><!-- /.nav-collapse -->
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
+</div>
+
+<div class="row">
+    <div id="dataset-info-content" class="hero-unit"></div>
+</div>
+

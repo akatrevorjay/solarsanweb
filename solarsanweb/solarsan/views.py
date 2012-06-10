@@ -1,9 +1,11 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.views.generic import TemplateView
-
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_page
+from django import http
+from django.views import generic
 
 from solarsan.utils import *
 from solarsan.models import *
@@ -19,8 +21,65 @@ import zfs
 import pyflot
 import os, sys
 
-#class StatusView(TemplateView):
-#        template_name = "status.html"
+class LoggedInMixin(object):
+    """ A mixin requiring a user to be logged in. """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            raise http.Http404
+        return super(LoggedInMixin, self).dispatch(request, *args, **kwargs)
+
+#class AboutView(LoggedInMixin, generic.TemplateView):
+#    """ About page view. """
+#    template_name = 'about.html'
+#
+#    def get_context_data(self, **kwargs):
+#        ctx = super(AboutView, self).get_context_data(**kwargs)
+#        ctx['something_else'] = None  # add something to ctx
+#        return ctx
+
+
+#class SomeFormView(TemplateResponseMixin, View):
+#    template_name = ''
+#
+#    def get(self, request):
+#        form = SomeForm()
+#
+#        return self.render_to_response({
+#            'form': form,
+#        })
+#
+#    def post(self, request):
+#        form = SomeForm(request.POST)
+#
+#        if form.is_valid():
+#            form.save()
+#            messages.success(request, 'Your form has been saved!')
+#
+#        return self.render_to_response({
+#            'form': form,
+#        })
+#
+#class AjaxThingView(View): 
+#    # Note that I don't subclass the TemplateResponseMixin here!
+#
+#    def get(self, request):
+#        return HttpResponse(status=404)
+#
+#    def post(self, request):
+#        id = request.POST.get('id')
+#
+#        # Do something with the id
+#        return HttpResponse('some data')
+
+
+#class PoolView(object):
+#    model = Pool
+
+#class PoolListView(PoolView, generic.ListView):
+#    pass
+
+#class PoolDetailView(PoolView, generic.DetailView):
+#    slug_field = Pool.name
 
 def status(request, *args, **kwargs):
 
@@ -132,6 +191,7 @@ def graphs(request, *args, **kwargs):
                         'timeFormat': '%I:%m%p',
                         #'autoscaleMargin': 1,
                         #'reserveSpace': False,
+                        #'localTimezone': True,
                         },
             'yaxis': {  #'autoscaleMargin': 1,
                         #'reserveSpace': False,

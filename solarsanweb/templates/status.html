@@ -12,23 +12,84 @@
 {% endblock %}
 
 {% block content %}
+{% with pool = pools|first %}
 
-{% block graphs %}
-<div id="graphs-cont"></div>
-{% endblock %}
+{#<div class="row">
+    <div class="span12">
+        <div class="navbar">
+        <div class="navbar-inner">
+            <div class="container">
+                <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
 
-{% for pool in pools %}
+                <!-- Be sure to leave the brand out there if you want it shown -->
+                <a class="brand" href="#">pool {{ pool.name }}</a>
+
+                <!-- Everything you want hidden at 940px or less, place within here -->
+                <div class="nav-collapse">
+                    <!-- .nav, .navbar-search, .navbar-form, etc -->
+                </div>
+
+            </div>
+        </div>
+        </div>
+    </div>
+</div>#}
+
+
+<div class="row">
+    <div class="span12">
+        <ul class="breadcrumb">
+            <li>
+                <a href="#">home</a>
+                <span class="divider">&gt;</span>
+            </li>
+
+            <li>
+                <a href="#">pools</a>
+                <span class="divider">&gt;</span>
+            </li>
+
+            <li>
+                <a href="#">{{ pool.name }}</a>
+                <span class="divider">/</span>
+            </li>
+
+            <li>
+                <a href="#">tmp</a>
+                <span class="divider">/</span>
+            </li>
+
+            <li class="active">
+                <a href="#">vol0</a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+{% endwith %}
+
 <div class="row">
     <div class="span3">
         <div class="well sidebar-nav">
             <ul class="nav nav-list dataset-list">
-                <li class="nav-header">Pools</li>
+                {% for pool in pools %}
+                <li class="nav-header">pool {{ pool.name }}</li>
 
-                {% for dataset in pool.filesystems().filter(type='filesystem').order_by('name') %}
-                <li class="dataset"><a href="#">{{ dataset }}</a></li>
+                {% for dataset in pool.filesystems().filter(type='filesystem', enabled=True).order_by('name') %}
+                    {% if pool.name == dataset.name %}
+                        <li class="nav-header dataset"><a href="#">/</a></li>
+                    {% else %}
+                        <li class="dataset"><a href="#">/{{ dataset.path(1)|join('/') }}</a></li>
+                    {% endif %}
                 {% endfor %}
 
                 <li><a href="#add-dataset-modal" class="add-dataset" data-toggle="modal">add dataset</a></li>
+                {% endfor %}
             </ul>
         </div>
     </div>
@@ -36,8 +97,6 @@
         <div id="dataset-info" style="padding-left: 10px"></div>
     </div>
 </div>
-{% endfor %}
-
 
 <div class="modal fade hide" id="add-dataset-modal">
   <div class="modal-header">
@@ -53,6 +112,7 @@
   </div>
 </div>
 
+{% with pool = pools|first %}
 
 <script type="text/javascript">
 /* ______
@@ -81,16 +141,10 @@ $(".dataset-list .dataset")
 // Act as if the first dataset has been clicked
 $(".dataset-list .dataset").first().click();
 
-// Load graphs via ajax
-$.ajax({type: "GET",
-        url: "{{ url('solarsan.views.graphs') }}",
-        context: $("#graphs-cont"),
-        }).done(function(data) { $(this).html(data); });
-
 
 });
 </script>
 
-
+{% endwith %}
 {% endblock %}
 

@@ -16,7 +16,12 @@
 <div class="row">
     <div class="span12">
         <div class="well">
-            Scheduler
+            Storage Pools:<br />
+            <ul>
+                {% for pool in pool_list %}
+                <a href="/pools/detail/{{ pool.name|urlize }}">{{ pool.name }}</a>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>

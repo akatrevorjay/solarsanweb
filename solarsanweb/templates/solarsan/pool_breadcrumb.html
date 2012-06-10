@@ -1,0 +1,32 @@
+{% with %}
+
+{% if dataset_detail %}
+    {% set object = dataset_detail %}
+    {% set object_type = 'dataset' %}
+    {% set object_class = 'dataset-select' %}
+{% elif pool_detail %}
+    {% set object = pool_detail %}
+    {% set object_type = 'pool' %}
+{% endif %}
+
+{% set object_path = object.path() %}
+{% for path in object_path %}
+    {% with %}
+        {% if object_type == 'dataset' %}
+            {% if loop.first %}
+                {% set object_type = 'pool' %}
+                {% set object_class = Null %}
+            {% endif %}
+        {% endif %}
+
+        <li class="{{ object_class|default(object_type) }}{% if loop.last %} active{% endif %}">
+            <a href="/{{ object_type }}s/detail/{{ object_path[0:loop.index]|join('/')|urlize }}">{{ path }}</a>
+            {% if not loop.last %}
+            <span class="divider">{% if object_type == 'dataset' %}/{% else %}&raquo;{% endif %}</span>
+            {% endif %}
+        </li>
+    {% endwith %}
+{% endfor %}
+
+{% endwith %}
+

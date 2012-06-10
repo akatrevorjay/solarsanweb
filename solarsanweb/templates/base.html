@@ -3,9 +3,40 @@
 {% block title %}SolarSan Console{% endblock %}
 
 {% block navbar_links %}
-<a class="brand" href="#">SolarSan Console</a>
-<div class="nav-collapse">
-    <ul class="nav">
+<a class="brand" href="/">SolarSan Console</a>
+<div>
+    <ul class="nav pull-right">
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">help<span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                {#<li><a href="#" onclick="graphs_toggle();">Tooltips Hide / Show</a></li>
+                <li class="divider"></li>#}
+                <li><a href="http://www.localhostsolutions.com">LocSol Support</a></li>
+            </ul>
+        </li>
+
+        {% if user and user.is_authenticated() %}
+            <!-- Signed In -->
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="icon-user"></i> {{ user.username }}
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/user/profile">Profile</a></li>
+                    <li class="divider"></li>
+                    <li><a href="/user/signout">Sign Out</a></li>
+                </ul>
+            </li>
+        {% else %}
+            <!-- Signed Out -->
+            <li><a href="#sign-in-modal" data-toggle="modal">sign in</a></li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="nav-collapse navbar_links">
+    {#<ul class="nav">
         <li class="dropdown">
             {% for pool in pools %}
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">pool: {{ pool.name }}<span class="caret"></span></a>
@@ -14,22 +45,13 @@
                 </ul>
             {% endfor %}
         </li>
-    </ul>
+    </ul>#}
 
     <ul class="nav pull-right">
         <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">debug<span class="caret"></span></a>
             <ul class="dropdown-menu">
                 <li><a href="#">Stuff</a></li>
-            </ul>
-        </li>
-
-        <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">help<span class="caret"></span></a>
-            <ul class="dropdown-menu">
-                <li><a href="#" onclick="graphs_toggle();">Tooltips Hide / Show</a></li>
-                <li class="divider"></li>
-                <li><a href="http://www.localhostsolutions.com">LocSol Support</a></li>
             </ul>
         </li>
 
@@ -41,22 +63,6 @@
                 <li><a href="#" onclick="$('#graphs').toggle();">Hide / Show</a></li>
             </ul>
         </li>
-
-        <!-- Signed In -->
-        <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                <i class="icon-user"></i> admin
-                <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-                <li><a href="#">Profile</a></li>
-                <li class="divider"></li>
-                <li><a href="#">Sign Out</a></li>
-            </ul>
-        </li>
-
-        <!-- Signed Out -->
-        <li><a href="#sign-in-modal" data-toggle="modal">sign in</a></li>
     </ul>
 </div>
 {% endblock %}

@@ -211,7 +211,10 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_COOKIE_SECURE = True
 
 # Jinja2 env config
-JINJA_CONFIG = {'auto_reload': True}
+JINJA_CONFIG = {
+    'auto_reload': True,
+    'extensions': ['jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols'],
+}
 
 # List of apps that do not use Jingo
 JINGO_EXCLUDE_APPS = ('admin', 'debug_toolbar')

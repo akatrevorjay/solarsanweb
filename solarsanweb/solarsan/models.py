@@ -112,7 +112,9 @@ class ZFSBackedModel(models.Model):
         # Delete from DB
         super(ZFSBackedModel, self).delete(*args, **kwargs)
 
-
+    def path(self, start=0, len=None):
+        """ Splits name of object into paths starting at index start """
+        return self.name.split('/')[start:len]
 
 
 class Pool(ZFSBackedModel):

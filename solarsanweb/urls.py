@@ -9,15 +9,25 @@ urlpatterns = patterns('',
     #url(r'^$', 'solarsanweb.views.home', name='home'),
 
     # SolarSAN
-    url(r'^$', include('solarsan.urls')),
+    #url(r'^$', include('dashboard.urls')),
+    url(r'^$', include('dashboard.urls')),
+
     url(r'^solarsan/', include('solarsan.urls')),
-    #url(r'^bootstrap_example/', include('bootstrap_example.root.urls')),
+    url(r'^dashboard/', include('dashboard.urls')),
+    url(r'^cluster/', include('cluster.urls')),
+    url(r'^backup/', include('backup.urls')),
+    url(r'^scheduler/', include('scheduler.urls')),
+    url(r'^pools/', include('pools.urls')),
+    url(r'^datasets/', include('datasets.urls')),
+    url(r'^logs/', include('logs.urls')),
+    url(r'^analytics/', include('analytics.urls')),
+
 
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    url(r'^admin/django_logtail/', include('django_logtail.urls')),
-
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+
+    #url(r'^', include('solarsan.urls')),
 )
+
