@@ -11,6 +11,16 @@
 {% block pre_content %}
 {% endblock %}
 
+{% for cron in crons %}
+{{ cron }}
+{% endfor %}
+
+<form class="form-horizontal">
+<fieldset>
+<legend>Scheduler</legend>
+
+</form>
+
 {% block content %}
 
 <div class="row">
