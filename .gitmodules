@@ -61,3 +61,6 @@
 [submodule "solarsanweb/static/3rd/flot.curvedlines"]
 	path = solarsanweb/static/3rd/flot.curvedlines
 	url = git://github.com/MichaelZinsmaier/CurvedLines.git
+[submodule "vendor-local/pkgs/pyzfs"]
+	path = vendor-local/pkgs/pyzfs
+	url = gitosis@git.localhostsolutions.com:solarsan/pyzfs.git
