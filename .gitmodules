@@ -55,3 +55,6 @@
 [submodule "solarsanweb/static/3rd/json-cookie"]
 	path = solarsanweb/static/3rd/json-cookie
 	url = git://github.com/st3v3nhunt/JSON-Cookie.git
+[submodule "vendor-local/pkgs/pyzfs"]
+	path = vendor-local/pkgs/pyzfs
+	url = gitosis@git.localhostsolutions.com:solarsan/pyzfs.git
