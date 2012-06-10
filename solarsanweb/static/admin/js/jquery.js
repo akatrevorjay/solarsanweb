@@ -1,1 +1,1 @@
-../../../../../../javascript/jquery/jquery.js
+../../js/jquery.js

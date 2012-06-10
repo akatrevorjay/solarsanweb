@@ -46,9 +46,6 @@
 [submodule "solarsanweb/static/3rd/bootbox"]
 	path = solarsanweb/static/3rd/bootbox
 	url = https://github.com/makeusabrew/bootbox.git
-[submodule "solarsanweb/templates/3rd/django-admin-templates-twitter-bootstrap"]
-	path = solarsanweb/templates/3rd/django-admin-templates-twitter-bootstrap
-	url = git://github.com/gkuhn1/django-admin-templates-twitter-bootstrap.git
 [submodule "solarsanweb/static/3rd/jquery-cookie"]
 	path = solarsanweb/static/3rd/jquery-cookie
 	url = git://github.com/carhartl/jquery-cookie.git
@@ -64,3 +61,6 @@
 [submodule "vendor-local/pkgs/pyzfs"]
 	path = vendor-local/pkgs/pyzfs
 	url = gitosis@git.localhostsolutions.com:solarsan/pyzfs.git
+[submodule "solarsanweb/templates/3rd/bootstrap-django-admin"]
+	path = solarsanweb/templates/3rd/bootstrap-django-admin
+	url = git://github.com/aobo711/bootstrap-django-admin.git

@@ -2,10 +2,10 @@
 <div class="inline-group" id="{{ inline_admin_formset.formset.prefix }}-group">
   <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
 {{ inline_admin_formset.formset.management_form }}
-<fieldset class="module" style="padding: 0;">
-   <h4>{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h4>
+<fieldset class="module">
+   <h2>{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
    {{ inline_admin_formset.formset.non_form_errors }}
-   <table style="margin-bottom:0;">
+   <table>
      <thead><tr>
      {% for field in inline_admin_formset.fields %}
        {% if not field.widget.is_hidden %}
@@ -46,12 +46,8 @@
               {% if field.is_readonly %}
                   <p>{{ field.contents }}</p>
               {% else %}
-                <div class="clearfix {% if field.field.errors %}error{%endif%}">
+                  {{ field.field.errors.as_ul }}
                   {{ field.field }}
-                  {% for err in field.field.errors %}
-                    <span class="help-block">{{ err }}</span>
-                      {% endfor %}
-                </div>
               {% endif %}
               </td>
             {% endfor %}

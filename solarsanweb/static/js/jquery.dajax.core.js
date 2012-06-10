@@ -1,1 +1,0 @@
-/usr/share/django-dajax/jquery.dajax.core.js

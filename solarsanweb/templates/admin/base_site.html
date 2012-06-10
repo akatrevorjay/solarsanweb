@@ -4,7 +4,9 @@
 {% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
 
 {% block branding %}
-{% trans 'Django administration' %}
+<div class="page-header">
+    <h1>{% trans 'Django administration' %}</h1>
+</div>
 {% endblock %}
 
-{% block nav-global %}{% endblock %}
+{% block nav-global %}{% endblock %} 

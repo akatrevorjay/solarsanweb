@@ -37,49 +37,41 @@
 
 {% if not is_popup %}
   {% block breadcrumbs %}
-      <ul class="breadcrumb">
-        <li><a href="../../">{% trans 'Home' %}</a>
-            <span class="divider">/</span></li>
-        <li><a href="../">{{ app_label|capfirst }}</a>
-            <span class="divider">/</span></li>
+    <ul class="breadcrumb">
+        <li><a href="../../">{% trans "Home" %}</a> <span class="divider">/</span></li>
+        <li><a href="../">{{ app_label|capfirst }}</a> <span class="divider">/</span></li>
         <li class="active">{{ cl.opts.verbose_name_plural|capfirst }}</li>
-      </ul>
+    </ul>
   {% endblock %}
 {% endif %}
+
+{% block coltype %}flex{% endblock %}
 
 {% block content %}
   <div id="content-main">
     {% block object-tools %}
-      <div class="object-tools">
-      {% if has_add_permission %}
-          {% block object-tools-items %}
-              <a href="add/{% if is_popup %}?_popup=1{% endif %}" class="addlink">
-                <span class="label success">
-                  {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
-                </span>
-              </a>
-          {% endblock %}
-      {% endif %}
-      </div>
+        {% if has_add_permission %}
+        <ul class="nav nav-list">
+            {% block object-tools-items %}
+            <li>
+                <a href="add/{% if is_popup %}?_popup=1{% endif %}" class="addlink">
+                {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+                </a>
+            </li>
+            {% endblock %}
+        </ul>
+        {% endif %}
     {% endblock %}
     {% if cl.formset.errors %}
-        <p class="errornote">
+        <p class="alert alert-error">
         {% blocktrans count cl.formset.errors|length as counter %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
         </p>
         {{ cl.formset.non_form_errors }}
     {% endif %}
-    <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+    <div class="module{% if cl.has_filters %} filter{% endif %}">
       {% block search %}{% search_form cl %}{% endblock %}
       {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
 
-      {% block filters %}
-        {% if cl.has_filters %}
-          <div id="changelist-filter">
-            <h6>{% trans 'Filter' %}</h6>
-            {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
-          </div>
-        {% endif %}
-      {% endblock %}
 
       <form id="changelist-form" action="" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %}>{% csrf_token %}
       {% if cl.formset %}
@@ -93,6 +85,15 @@
       {% endblock %}
       {% block pagination %}{% pagination cl %}{% endblock %}
       </form>
+      
+      {% block filters %}
+        {% if cl.has_filters %}
+          <div class="changelist-filter well" style="padding: 9px 0;">
+            <h3 class="filter-title">{% trans 'Filter' %}</h3>
+            {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+          </div>
+        {% endif %}
+      {% endblock %}
     </div>
   </div>
 {% endblock %}
