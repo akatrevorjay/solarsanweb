@@ -26,7 +26,7 @@ class Import_ZFS_Metadata(PeriodicTask):
                 if not obj.name in list(self.data[key]):
                     logging.error("Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
                             obj._zfs_type, obj.name)
-                    obj.is_enabled = False
+                    obj.enabled = False
                     obj.save()
             self.data[key] = []
 
