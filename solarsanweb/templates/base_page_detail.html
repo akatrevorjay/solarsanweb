@@ -1,0 +1,122 @@
+{% extends "base_site.html" %}
+{% from "bootstrap/macros.html" import alert  %}
+{% from "bootstrap/forms/macros.html" import field, input  %}
+
+<!-- css_extra -->
+{% block css_extra %}
+    <style></style>
+{% endblock %}
+
+{# Navbar is set in the app-specific override "base.html #}
+
+{% block pre_content %}
+{% endblock %}
+
+{% block content %}
+<!-- content -->
+
+{% block page_breadcrumbs_container %}
+<!-- page_breadcrumbs_container -->
+<div class="row">
+    <div class="span12">
+        <ul id="page-breadcrumbs" class="breadcrumb">
+            {% block page_breadcrumbs_pre %}{% endblock %}
+            {% block page_breadcrumbs %}{% endblock %}
+            {% block page_breadcrumbs_post %}{% endblock %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_container_pre %}{% endblock %}
+{% block page_container %}
+<!-- page_container -->
+<div class="row">
+    <div class="span3">
+        <div id="page-content-sidenav" class="well sidebar-nav">
+            <ul class="nav nav-list {% block page_content_sidenav_classes %}{% endblock %}">
+                {% block page_content_sidenav_pre %}{% endblock %}
+                {% block page_content_sidenav %}{% endblock %}
+                {% block page_content_sidenav_post %}{% endblock %}
+            </ul>
+        </div>
+    </div>
+    <div class="span9">
+        <div id="page-content" style="padding-left: 10px">
+            {% block page_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page_container_post %}{% endblock %}
+
+<script type="text/javascript">
+/* ___________
+ * page_detail
+ */
+$(function() {
+
+/*
+ * page-content-sidenav dataset-select
+ */
+
+// TODO Get some spinnas from Wal-Mart
+function page_content_sidenav_select(event) {
+    // Tell browser to not really follow the href after this is complete.
+    event.preventDefault();
+    var obj = event.currentTarget;
+
+    // Colorize and activate only the one clicked
+    $(obj).parent().children(".active").removeClass("active", "fast");
+    $(obj).addClass("active");
+
+    // Grab page_content via xhr, replace existing
+    $.ajax({type: "GET",
+        url: $(obj).find('a:first').attr('href'),
+        context: $(obj),
+        }).done(function(data) { page_content_update_cb(data); });
+}
+
+// Callback from above select with update data
+function page_content_update_cb(data) {
+    // Replace page_content with what's provided.
+    $("#page-content").html(data);
+
+    /*
+     * If new page_content has any breadcrumb updates, apply them
+     */
+
+    // New breadcrumbs are .page-breadcrumbs-replace
+    var new_breadcrumbs_html = $('#page-content .page-breadcrumbs-replace ul').html();
+
+    // We're done for now if there's no new crumbs lyin around.
+    if (!new_breadcrumbs_html)
+        return;
+
+    // Remove old breadcrumbs before replacing. Keep .static || .static-page li's cause they're cool.
+    $('#page-breadcrumbs li').not('.static').not('.static-page').remove();
+
+    // Append new breadcrumbs to left static (if any) page-breadcrumbs
+    $("#page-breadcrumbs").append(new_breadcrumbs_html);
+
+    // Bind click method to those that do not yet understand
+    page_content_sidenav_select_bind()
+}
+
+function page_content_sidenav_select_bind() {
+    $(".page-content-select").not('.page-content-select-clickery')
+        .click(function (event) { page_content_sidenav_select(event); })
+        .addClass('page-content-select-clickery')
+        .children('a').tooltip({placement: 'right'});
+}
+page_content_sidenav_select_bind();
+
+// Act as if the first dataset has been clicked
+$(".dataset-list .dataset-select").first().addClass('active'); //click();
+
+
+});
+</script>
+
+{% endblock %}
+

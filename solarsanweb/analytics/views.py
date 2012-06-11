@@ -24,7 +24,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 def home(request, *args, **kwargs):
-    return render_to_response('analytics.html',
+    return render_to_response('analytics/home.html',
         {'title': 'Analytics',
             },
         context_instance=RequestContext(request))
@@ -107,7 +107,7 @@ def graphs(request, *args, **kwargs):
             },
         }
 
-    return render_to_response('graphs.html',
+    return render_to_response('analytics/graphs.html',
             {'graphs': graphs, 'pools': pools,
                 }, context_instance=RequestContext(request))
 

@@ -1,0 +1,57 @@
+{% extends 'base_page_detail_subpage.html' %}
+
+{% set peer_name = peer.keys()[0] %}
+
+{% block subpage_topnav_brand %}
+<a class="brand peer-detail-select" href="#">{{ peer_name }}</a>
+{% endblock %}
+
+{% block subpage_content %}
+    {% if peer %}
+        {% include 'cluster/peer_health.html' %}
+    {% endif %}
+{% endblock %}
+
+{#{% block subpage_container_post %}
+<script type="text/javascript">
+/* ______________
+ * peer_detail
+ */
+$(function() {
+
+/*
+ * peer-detail-select
+ */
+
+function peer_detail_click_apply() {
+    $(".peer-detail-select").not('.peer-detail-select-clickery').click(function(event) {
+        event.preventDefault();
+
+        $(this).parent().children(".active").removeClass("active", "fast");
+        $(this).addClass("active");
+
+        $.ajax({type: "GET",
+            url: $(this).find('a:first').attr('href'),
+            context: $(this),
+            }).done(function(data) {
+                $("#peer-detail-content").html(data);
+                /*var breadcrumb_html = $('#peer-info .peer-breadcrumb-replace ul').html();
+                $('#peer-detail-content .peer-breadcrumb-replace ul li').not('.static').remove();
+                $("#peer-breadcrumb li").not('.static').remove();
+                $("#peer-breadcrumb").append(breadcrumb_html);
+                delete breadcrumb_html;
+
+                peer_click_apply();*/
+            });
+        }).addClass('peer-detail-select-clickery');
+}
+peer_detail_click_apply();
+
+// Act as if the first peer has been clicked
+$(".peer-detail-list .peer-detail-select").first().addClass('active'); //click();
+
+
+});
+</script>
+{% endblock %}#}
+
