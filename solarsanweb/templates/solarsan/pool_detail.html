@@ -31,21 +31,25 @@
             <ul class="nav nav-list dataset-list">
                 <li class="nav-header">Datasets</li>
 
-                {% for dataset in pool_detail.filesystems().order_by('name') %}
+                {% for dataset in pool.filesystems().order_by('name') %}
                     {% with dataset_path = dataset.path() %}
-                        <li class="dataset-select"><a href="/datasets/detail/{{ dataset.name|urlize }}">
+                    <li class="dataset-select"><a href="/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.available }}">
                             {% for path in dataset_path[1:] %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor %}
                             {{ dataset_path|last }}
                         </a></li>
                     {% endwith %}
                 {% endfor %}
 
-                <li><a href="#add-dataset-modal" data-toggle="modal"><span class="label label-info">add dataset</span></a></li>
+                <li><a href="#add-dataset-modal" data-toggle="modal" rel="tooltip" title="first tooltip"><span class="label label-info">add dataset</span></a></li>
             </ul>
         </div>
     </div>
     <div class="span9">
-        <div id="dataset-info" style="padding-left: 10px"></div>
+        <div id="dataset-info" style="padding-left: 10px">
+            {% with dataset = pool.filesystem %}
+                {% include 'solarsan/dataset_detail.html' %}
+            {% endwith %}
+        </div>
     </div>
 </div>
 
@@ -64,8 +68,8 @@
 </div>
 
 <script type="text/javascript">
-/* ______
- * status
+/* ___________
+ * pool_detail
  */
 $(function() {
 
@@ -73,10 +77,10 @@ $(function() {
  * dataset-select
  */
 
-// Datasets
 function dataset_click_apply() {
-    $(".dataset-select").click(function(event) {
+    $(".dataset-select").not('.dataset-select-clickery').click(function(event) {
         event.preventDefault();
+
         $(this).parent().children(".active").removeClass("active", "fast");
         $(this).addClass("active");
 
@@ -86,16 +90,20 @@ function dataset_click_apply() {
             }).done(function(data) {
                 $("#dataset-info").html(data);
                 var breadcrumb_html = $('#dataset-info .pool-breadcrumb-replace ul').html();
+                $('#dataset-info .pool-breadcrumb-replace ul li').not('.static').remove();
                 $("#pool-breadcrumb li").not('.static').remove();
                 $("#pool-breadcrumb").append(breadcrumb_html);
+                delete breadcrumb_html;
+
                 dataset_click_apply();
             });
-        });
+        }).addClass('dataset-select-clickery')
+          .children('a').tooltip({placement: 'right'});
 }
 dataset_click_apply();
 
 // Act as if the first dataset has been clicked
-$(".dataset-list .dataset-select").first().click();
+$(".dataset-list .dataset-select").first().addClass('active'); //click();
 
 
 });

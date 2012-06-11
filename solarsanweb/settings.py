@@ -103,6 +103,20 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
+#TEMPLATE_CONTEXT_PROCESSORS = (
+#    # default template context processors
+#    'django.core.context_processors.auth',
+#    'django.core.context_processors.debug',
+#    'django.core.context_processors.i18n',
+#    'django.core.context_processors.media',
+#
+#    # django 1.2 only
+#    'django.contrib.messages.context_processors.messages',
+#
+#    # required by django-admin-tools
+#    'django.core.context_processors.request',
+#)
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
 #    ('django.template.loaders.cached.Loader', (
@@ -163,8 +177,15 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, "templates"),
 )
 
+ADMINTOOLS_BOOTSTRAP_SITE_LINK = '/'
+
 INSTALLED_APPS = (
     'bootstrap',
+#    'admin_tools',
+#    'admin_tools.theming',
+#    'admin_tools.menu',
+#    'admin_tools.dashboard',
+#    'admintools_bootstrap',
 
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -217,7 +238,7 @@ JINJA_CONFIG = {
 }
 
 # List of apps that do not use Jingo
-JINGO_EXCLUDE_APPS = ('admin', 'debug_toolbar')
+JINGO_EXCLUDE_APPS = ('admin', 'registration', 'debug_toolbar')
 
 ## Celery
 # django-celery

@@ -6,6 +6,7 @@ from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
 import datetime, time, logging
 from datetime import timedelta
 import zfs
+import pyzfs
 
 # TODO This function should only be needed on initial deploys of solarsanweb and should not be a crutch
 class Import_ZFS_Metadata(PeriodicTask):

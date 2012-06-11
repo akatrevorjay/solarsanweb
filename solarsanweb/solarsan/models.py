@@ -5,13 +5,11 @@ import logging
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 import zfs
 
-
 class Config(models.Model):
     key = models.CharField(max_length=255)
     value = models.CharField(max_length=255)
     def __unicode__(self):
         return self.key
-
 
 class EnabledModelManager(models.Manager):
     def get_query_set(self):

@@ -1,15 +1,20 @@
 {% with %}
 
-{% if dataset_detail %}
-    {% set object = dataset_detail %}
+{% if dataset %}
+    {% set object = dataset %}
     {% set object_type = 'dataset' %}
     {% set object_class = 'dataset-select' %}
-{% elif pool_detail %}
-    {% set object = pool_detail %}
+{% elif pool %}
+    {% set object = pool %}
     {% set object_type = 'pool' %}
 {% endif %}
 
 {% set object_path = object.path() %}
+
+{% for path in object_additional %}
+    {% set object_path = object_path.append(path) %}
+{% endfor %}
+
 {% for path in object_path %}
     {% with %}
         {% if object_type == 'dataset' %}
