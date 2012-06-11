@@ -1,6 +1,3 @@
-[submodule "solarsanweb/vendor"]
-	path = slarsanweb/vendor
-	url = git://github.com/mozilla/playdoh-lib.git
 [submodule "solarsanweb/static/3rd/g.raphael"]
 	path = solarsanweb/static/3rd/g.raphael
 	url = git://github.com/DmitryBaranovskiy/g.raphael.git
@@ -16,18 +13,12 @@
 [submodule "solarsanweb/static/jquery/packages/jquery-gentleSelect"]
 	path = solarsanweb/static/jquery/packages/jquery-gentleSelect
 	url = git://github.com/shawnchin/jquery-gentleSelect.git
-[submodule "solarsanweb/vendor"]
-	path = solarsanweb/vendor
-	url = git://github.com/mozilla/playdoh-lib.git
 [submodule "solarsanweb/static/3rd/flot"]
 	path = solarsanweb/static/3rd/flot
 	url = git://github.com/flot/flot.git
 [submodule "solarsanweb/static/3rd/font-Awesome"]
 	path = solarsanweb/static/3rd/font-Awesome
 	url = git://github.com/FortAwesome/Font-Awesome.git
-[submodule "vendor-local/django-chartit"]
-	path = vendor-local/django-chartit
-	url = git://github.com/akatrevorjay/django-chartit.git
 [submodule "bin/lib/bashism"]
 	path = bin/lib/bashism
 	url = git://github.com/akatrevorjay/bashism.git
@@ -61,6 +52,6 @@
 [submodule "vendor-local/pkgs/pyzfs"]
 	path = vendor-local/pkgs/pyzfs
 	url = gitosis@git.localhostsolutions.com:solarsan/pyzfs.git
-[submodule "solarsanweb/templates/3rd/bootstrap-django-admin"]
-	path = solarsanweb/templates/3rd/bootstrap-django-admin
-	url = git://github.com/aobo711/bootstrap-django-admin.git
+#[submodule "solarsanweb/templates/3rd/bootstrap-django-admin"]
+#	path = solarsanweb/templates/3rd/bootstrap-django-admin
+#	url = git://github.com/aobo711/bootstrap-django-admin.git
