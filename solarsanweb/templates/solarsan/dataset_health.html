@@ -1,0 +1,12 @@
+
+<pre>
+
+    Dataset "{{ dataset.name }}":
+        - Used: {{ dataset.used }} / {{ dataset.available }}
+            By children: {{ dataset.usedbychildren }}
+            By snapshots: {{ dataset.usedbysnapshots }}
+
+{{ dataset.__dict__|pprint }}
+
+</pre>
+
