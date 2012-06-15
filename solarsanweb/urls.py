@@ -14,6 +14,7 @@ urlpatterns = patterns('',
 
     url(r'^solarsan/', include('solarsan.urls')),
     url(r'^dashboard/', include('dashboard.urls')),
+    url(r'^configure/', include('configure.urls')),
     url(r'^cluster/', include('cluster.urls')),
     url(r'^backup/', include('backup.urls')),
     url(r'^scheduler/', include('scheduler.urls')),
