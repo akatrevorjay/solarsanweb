@@ -1,10 +1,10 @@
 
-<div id="graphs" class="hero-unit" style="padding: 0px">
+<div id="graphs" style="padding: 0px">
     <div class="row">
         {% set row_class = cycler('row', 'boat') %}
         {% for g in graphs.keys() %}
 
-        <div class="span6" style="text-align: center;">
+        <div class="span9" style="text-align: center;">
             <p>
                 <div id="flot_{{ g }}" style="height: 200px;"></div>
                 <div>{{ graphs[g]|flotjson('flot_'+g) }}</div>

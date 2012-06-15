@@ -1,22 +1,108 @@
 
 <table class="table table-striped">
+    <caption>
+        <b class="icon-help"></b> <button class="btn btn-primary">Pool: {{ pool.name }}</button>
+        {% if pool.health == 'ONLINE' %}
+            <button class="btn btn-success">{{ pool.health }}</button>
+        {% elif pool.health == 'DEGRADED' %}
+            <button class="btn btn-warning">{{ pool.health }}</button>
+            <div class="alert alert-warning">This pool is in a <strong>DEGRADED</strong> state.</div>
+        {% else %}
+            <button class="btn btn-error">{{ pool.health }}</button>
+            <div class="alert alert-error"><strong>ERROR</strong> This pool is in an errored state.</div>
+        {% endif %}
+        <br /><br />
+    </caption>
     <tr>
-        <td>
-            <b class="icon-help"></b> <button class="btn btn-primary">Pool: {{ pool.name }}</button>
-            {% if pool.health == 'ONLINE' %}
-                <button class="btn btn-success">{{ pool.health }}</button>
-            {% elif pool.health == 'DEGRADED' %}
-                <button class="btn btn-warning">{{ pool.health }}</button>
-                <div class="alert alert-warning">This pool is in a <strong>DEGRADED</strong> state.</div>
-            {% else %}
-                <button class="btn btn-error">{{ pool.health }}</button>
-                <div class="alert alert-error"><strong>ERROR</strong> This pool is in an errored state.</div>
-            {% endif %}
-        </td>
+        <td>Usage: {{ pool.capacity }} ({{ pool.allocated }})</td>
+        <td>Free: {{ pool.free }}</td>
+        <td>Total: {{ pool.size }}</td>
+    </tr>
+    <tr>
+        <td>Dedup Ratio: {{ pool.dedupratio }} ({{ pool.filesystem.dedup }} at pool level)</td>
+        <td>Upon device hardware error routine: {{ pool.failmode }}</td>
+        <td>Replace faulty device automatically? {{ pool.autoreplace }}</td>
+    </tr>
+    <tr>
+        <td>Grow pool with device? {{ pool.autoexpand }}</td>
+        <td>Compression Ratio: {{ pool.filesystem.compressratio }} ({{ pool.filesystem.compression }} at pool level)</td>
+        <td>Record size: {{ pool.filesystem.recordsize }}</td>
     </tr>
 </table>
 
+<table class="table table-striped">
+    <caption>Device summary and status</caption>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Device ID(s)</th>
+            <th>Status</th>
+            <th>Tasks</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2">mirror</td>
+            <td>scsi-SATA_Hitachi_HDS7230_MN1220F33U7TPD</td>
+            <td><button class="btn btn-mini btn-success">Good</button></td>
+            <td>
+                <button class="btn btn-mini">SMART</button>
+                <button class="btn btn-mini btn-danger">Remove</button>
+            </td>
+        </tr>
+        <tr>
+            <td>scsi-SATA_Hitachi_HDS7230_MN1240F33EN0HD</td>
+            <td><button class="btn btn-mini btn-success">Good</button></td>
+            <td>
+                <button class="btn btn-mini">SMART</button>
+                <button class="btn btn-mini btn-danger">Remove</button>
+            </td>
+        </tr>
+
+        <tr>
+            <td rowspan="2">mirror</td>
+            <td>scsi-SATA_Hitachi_HDS7230_MN1240F33EN0HD</td>
+            <td><button class="btn btn-mini btn-success">Good</button></td>
+            <td>
+                <button class="btn btn-mini">SMART</button>
+                <button class="btn btn-mini btn-danger">Remove</button>
+            </td>
+        </tr>
+        <tr>
+            <td>scsi-SATA_Hitachi_HDS7230_MN1240F33EN0HD</td>
+            <td><button class="btn btn-mini btn-success">Good</button></td>
+            <td>
+                <button class="btn btn-mini">SMART</button>
+                <button class="btn btn-mini btn-danger">Remove</button>
+            </td>
+        </tr>
+
+
+        <tr>
+            <td>available</td>
+            <td>scsi-SATA_Hitachi_HDS7230_MN1240F33EN0HD</td>
+            <td><button class="btn btn-mini btn-success">Good</button></td>
+            <td>
+                <button class="btn btn-mini">SMART</button>
+                <button class="btn btn-mini btn-success">Add</button>
+            </td>
+        </tr>
+        <tr>
+            <td>available</td>
+            <td>scsi-SATA_Hitachi_HDS7230_MN1240F33EN0HD</td>
+            <td><button class="btn btn-mini btn-success">Good</button></td>
+            <td>
+                <button class="btn btn-mini">SMART</button>
+                <button class="btn btn-mini btn-success">Add</button>
+            </td>
+        </tr>
+ 
+   </tbody>
+</table>
+
+
+
 <pre>
-{{ pool.__dict__|pprint }}
+Pool: {{ pool.__dict__|pprint }}
 </pre>
 

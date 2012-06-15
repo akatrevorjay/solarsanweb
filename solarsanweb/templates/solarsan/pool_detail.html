@@ -33,7 +33,7 @@
 
                 {% for dataset in pool.filesystems().order_by('name') %}
                     {% with dataset_path = dataset.path() %}
-                    <li class="dataset-select"><a href="/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.available }}">
+                    <li class="dataset-select"><a href="/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.pool.size }}">
                             {% for path in dataset_path[1:] %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor %}
                             {{ dataset_path|last }}
                         </a></li>
@@ -54,13 +54,27 @@
 </div>
 
 <div class="modal fade hide" id="add-dataset-modal">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">×</button>
-    <h3>Add Dataset</h3>
-  </div>
-  <div class="modal-body">
-    <label><strong>Name:</strong> <input class="sprited"/></label>
-  </div>
+  <form class="form-horizontal">
+    <fieldset>
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">×</button>
+        <legend>Add new dataset to pool "{{ pool.name }}"</legend>
+      </div>
+      <div class="modal-body">
+        <div class="control-group">
+          <label class="control-label" for="name">Name</label>
+          <div class="controls">
+            <input type="text" class="input-xlarge" id="name">
+            <p class="help-block">Allowed characters: [A-z0-9_/-]</p>
+          </div>
+          <label class="control-label" for="cluster">Clustered?</label>
+          <div class="controls">
+            <input type="checkbox" class="input-xlarge" id="cluster" checked="checked">
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
   <div class="modal-footer">
     <a href="#" class="btn" data-dismiss="modal">Close</a>
     <a href="#" class="btn btn-primary">Add</a>

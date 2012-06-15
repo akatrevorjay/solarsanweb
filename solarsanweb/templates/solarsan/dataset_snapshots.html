@@ -9,7 +9,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for snapshot in dataset.snapshots()|sort(attribute='name') %}
+        {% for snapshot in dataset.snapshots()|sort(attribute='used')|reverse %}
         <tr>
             <td>{{ snapshot.name }}</td>
             <td>{{ snapshot.creation }}</td>

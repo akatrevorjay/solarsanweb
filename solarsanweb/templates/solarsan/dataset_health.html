@@ -2,9 +2,10 @@
 <pre>
 
     Dataset "{{ dataset.name }}":
-        - Used: {{ dataset.used }} / {{ dataset.available }}
+        - Used: {{ dataset.used }} / {{ dataset.pool.size }}
             By children: {{ dataset.usedbychildren }}
             By snapshots: {{ dataset.usedbysnapshots }}
+            By referenced reservation: {{ dataset.usedbyrefreservation }}
 
 {{ dataset.__dict__|pprint }}
 
