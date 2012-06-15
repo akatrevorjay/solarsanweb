@@ -1,0 +1,42 @@
+## ________
+## SolarSan
+##
+## ---------------------------------------------------------------------------------------------------------------
+## This file is dynamic generated from the web iface. If you make changes don't cry when they are overwritten.
+##
+
+# This file describes the network ifaces available on your system
+# and how to activate them. For more information, see ifaces(5).
+
+# The loopback network iface
+auto lo
+iface lo inet loopback
+
+{% for iface in ifaces.all %}
+
+##
+## Interface: {{ iface.name }}
+## {{ iface.type }}
+##
+auto {{ iface.name }}
+iface {{ iface.name }} inet {{ iface.proto }}
+    {% if iface.proto == 'dhcp' %}
+        {% else %}{# Static #}
+        address {{ iface.ip }}
+        netmask {{ iface.netmask }}
+        {% if iface.gateway %}gateway {{ iface.gateway }}{% endif %}
+        {% if iface.dns.servers %}dns-nameservers {{ iface.dns.servers|join(' ') }}{% endif %}
+        {% if iface.dns.search %}dns-search {{ iface.dns.search|join(' ') }}{% endif %}
+    {% endif %}
+
+    {% if iface.type == 'ethernet' %}
+        {% if iface.mtu %}mtu {{ iface.mtu }}{% endif %}
+    {% elif iface.type == 'infiniband' %}
+        ## Infiniband in connected mode vs datagram supports MTUs of 64k, but disables multicast packets.
+        pre-up echo connected > /sys/class/net/{{ iface.name }}/mode || true
+        mtu 65520
+    {% endif %}
+
+{% endfor %}
+
+
