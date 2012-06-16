@@ -50,7 +50,7 @@ class Import_ZFS_Metadata(PeriodicTask):
                 p = pv['name']
                 try:
                     pool = Pool.objects_unfiltered.get(name=p)
-                    pv['is_enabled'] = True
+                    pv['enabled'] = True
                     for k,v in pv.iteritems(): setattr(pool, k, v)
                 except (KeyError, Pool.DoesNotExist):
                     logging.error('Found pool "%s"', p)
@@ -76,7 +76,7 @@ class Import_ZFS_Metadata(PeriodicTask):
                     logging.error("Found unknown type '%s': '%s'", dv['type'], d)
                     continue
                 # Ensure enabled
-                dv['is_enabled'] = True
+                dv['enabled'] = True
                 # Apply data to existing dataset
                 for k,v in dv.iteritems(): setattr(dataset, k, v)
             except (KeyError, Pool.DoesNotExist, Filesystem.DoesNotExist, Snapshot.DoesNotExist):
