@@ -55,3 +55,9 @@
 #[submodule "solarsanweb/templates/3rd/bootstrap-django-admin"]
 #	path = solarsanweb/templates/3rd/bootstrap-django-admin
 #	url = git://github.com/aobo711/bootstrap-django-admin.git
+[submodule "solarsanweb/static/3rd/cubism"]
+	path = solarsanweb/static/3rd/cubism
+	url = git://github.com/square/cubism.git
+[submodule "solarsanweb/static/3rd/d3"]
+	path = solarsanweb/static/3rd/d3
+	url = git://github.com/mbostock/d3.git
