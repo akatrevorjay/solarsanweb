@@ -6,6 +6,25 @@ from django.utils import simplejson
 import string, os, sys
 import logging, datetime, time
 
+
+"""
+MixIns
+The kool-aid.
+"""
+
+class LoggedInMixin(object):
+    """ A mixin requiring a user to be logged in. """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            raise http.Http404
+        return super(LoggedInMixin, self).dispatch(request, *args, **kwargs)
+
+
+"""
+General Utils
+Safe to run with.
+"""
+
 class FilterableDict(dict):
     """ Filter dict contents by str(key), list(keys), dict(key=value) """
 
@@ -184,3 +203,4 @@ def statelazyproperty(func):
             return value
 
     return property(_get)
+

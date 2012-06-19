@@ -135,7 +135,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
-#    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 DEBUG_TOOLBAR_PANELS = (
@@ -150,10 +150,10 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
-#def custom_show_toolbar(request):
-#    return True # Always show toolbar, for example purposes only.
+def custom_show_toolbar(request):
+    return True # Always show toolbar, for example purposes only.
 
-INTERNAL_IPS=['127.0.0.1']
+INTERNAL_IPS=['127.0.0.1', '10.111.88.*']
 
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
@@ -201,7 +201,7 @@ INSTALLED_APPS = (
     # Libs
     'djcelery',
     'kombu.transport.django',
-    #'debug_toolbar',
+    'debug_toolbar',
     'django_extensions',
     'djsupervisor',
     'south',
@@ -285,7 +285,7 @@ if DEBUG:
 #BROKER_PASSWORD = ""
 #BROKER_VHOST = "celery"
 
-CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+#CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

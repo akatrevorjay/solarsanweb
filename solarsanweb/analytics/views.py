@@ -16,6 +16,12 @@ from datetime import datetime, timedelta
 from pyrrd.rrd import RRD
 from pyrrd.backend import bindings
 
+import logging
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
+import json
+
 from django.conf import settings
 import pyflot
 import os, sys
@@ -28,6 +34,53 @@ def home(request, *args, **kwargs):
         {'title': 'Analytics',
             },
         context_instance=RequestContext(request))
+
+def render(request, *args, **kwargs):
+    # TODO get programmatically
+    #pool = Pool.objects.all()[0]
+    #logger.error('args=%s kwargs=%s post=%s', args, kwargs, request.GET)
+
+    values = {}
+
+    #if not request.GET['name'] in ['iops_read', 'iops_write', 'bandwidth_read', 'bandwidth_write']:
+    #    raise http.Http404
+
+    #count = 50
+    #iostats = pool.pool_iostat_set.order_by('timestamp')[:count]
+
+    ##total = int(iostats[0].alloc + iostats[0].free)
+    ##graph['usage'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
+
+    #values['iops'] = {'read': [], 'write': []}
+    #values['bandwidth'] = {'read': [], 'write': []}
+
+    #for iostat in iostats:
+    #    time = int(iostat.timestamp.strftime('%s')) * 1000
+
+    #    values['iops']['read'].append( (time, int(iostat.iops_read) ) )
+    #    values['iops']['write'].append( (time, int(iostat.iops_write) ) )
+    #    values['bandwidth']['read'].append( (time, int(iostat.bandwidth_read) ) )
+    #    values['bandwidth']['write'].append( (time, int(iostat.bandwidth_write) ) )
+
+    for rrd_file in [request.GET['name']]:
+        rrd_path=os.path.join(settings.DATA_DIR, 'rrd', rrd_file + '.rrd')
+        rrd = RRD(rrd_path, mode="r")
+        rrd_data = rrd.fetch(resolution=int(request.GET['step']), cf='AVERAGE',
+                  start=int(request.GET['start']),
+                  end=int(request.GET['stop']),
+                  returnStyle='ds')
+
+        values[rrd_file] = []
+
+        def fix_nan(x):
+            x = list(x)
+            if x[1] != x[1]: x[1] = 0
+            return [x[0] * 1000, x[1]]
+
+        for ds in rrd_data.iterkeys():
+            values[rrd_file].append( { 'key': ds, 'values': map(fix_nan, rrd_data[ds]) } )
+
+    return http.HttpResponse(json.dumps(values), mimetype="application/json")
 
 
 #@cache_page(15)

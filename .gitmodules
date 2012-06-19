@@ -61,3 +61,6 @@
 [submodule "solarsanweb/static/3rd/d3"]
 	path = solarsanweb/static/3rd/d3
 	url = git://github.com/mbostock/d3.git
+[submodule "solarsanweb/static/3rd/nvd3"]
+	path = solarsanweb/static/3rd/nvd3
+	url = git://github.com/novus/nvd3.git
