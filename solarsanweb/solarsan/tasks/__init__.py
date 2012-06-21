@@ -8,25 +8,10 @@ from celery.task.sets import subtask
 #from datetime import timedelta
 #from django.utils import timezone
 #import zfs
-from ZeroconfService import ZeroconfService
 
 #class CachedZFSPeriodicTask(PeriodicTask):
 #    """ Abstract template class that caches our ZFS object per worker """
 #    abstract = True
-
-
-class Console_ZeroConf_Control(Task):
-    """ Controls console zeroconf services """
-    service_console = ZeroconfService(name="SolarSan Console",
-            port=80, stype="_demo._http")
-    def run(self, action, **kwargs):
-        logger = self.get_logger(**kwargs)
-        logger.info("Performing action (%s) on console zeroconf services", action)
-
-        if action == 'start':
-            self.service_console.publish()
-        if action == 'stop':
-            self.service_console.unpublish()
 
 
 #class SolarSan_Scheduler(Scheduler):
