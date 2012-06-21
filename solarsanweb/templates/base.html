@@ -6,9 +6,17 @@
 <a class="brand" href="/">SolarSan Console</a>
 <div>
     <ul class="nav">
-        <li><a href="/">dash</a></li>
+        <li><a href="/status">status</a></li>
         <li><a href="/configure">configure</a></li>
         <li><a href="/pools">pools</a></li>
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">pools<span class="caret"></span></a>
+            <ul class="dropdown-menu">
+            {% for pool in pools %}
+                <li><a href="#">{{ pool.name }}</a></li>
+            {% endfor %}
+            </ul>
+        </li>
         <li><a href="/analytics">analytics</a></li>
     </ul>
 
@@ -42,37 +50,6 @@
         {% endif %}
     </ul>
 </div>
-
-{#<div class="nav-collapse navbar_links">
-    {#<ul class="nav">
-        <li class="dropdown">
-            {% for pool in pools %}
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">pool: {{ pool.name }}<span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                    <li><a href="#">{{ pool.name }}</a></li>
-                </ul>
-            {% endfor %}
-        </li>
-    </ul>#}
-
-    <ul class="nav pull-right">
-        {#<li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">debug<span class="caret"></span></a>
-            <ul class="dropdown-menu">
-                <li><a href="#">Stuff</a></li>
-            </ul>
-        </li>
-
-        <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">graphs<span class="caret"></span></a>
-            <ul class="dropdown-menu">
-                <li><a href="#">Overall Stats</a></li>
-                <li class="divider"></li>
-                <li><a href="#" onclick="$('#graphs').toggle();">Hide / Show</a></li>
-            </ul>
-        </li>#}
-    </ul>
-</div>#}
 
 {% endblock %}
 
