@@ -9,11 +9,7 @@
         <li><a href="/">dash</a></li>
         <li><a href="/configure">configure</a></li>
         <li><a href="/pools">pools</a></li>
-        <li><a href="/cluster">cluster</a></li>
-        <li><a href="/backup">backup</a></li>
-        <li><a href="/scheduler">scheduler</a></li>
         <li><a href="/analytics">analytics</a></li>
-        <li><a href="/logs">logs</a></li>
     </ul>
 
     <ul class="nav pull-right">
@@ -47,7 +43,7 @@
     </ul>
 </div>
 
-<div class="nav-collapse navbar_links">
+{#<div class="nav-collapse navbar_links">
     {#<ul class="nav">
         <li class="dropdown">
             {% for pool in pools %}
@@ -76,7 +72,8 @@
             </ul>
         </li>#}
     </ul>
-</div>
+</div>#}
+
 {% endblock %}
 
 {% block post_container %}
