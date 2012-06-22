@@ -17,7 +17,7 @@
     <div class="span12">
         <ul id="pool-breadcrumb" class="breadcrumb">
             <li class="static">
-                <a href="/storage/pools">pools</a>
+                <a href="#">pools</a>
                 <span class="divider">&raquo;</span>
             </li>
             {% include 'storage/pool_breadcrumb.html' %}
@@ -29,8 +29,10 @@
     <div class="span3">
         <div class="well sidebar-nav">
             <ul class="nav nav-list dataset-list">
-                <li class="nav-header">Datasets</li>
+                <li class="nav-header">Pool</li>
+                <li class="dataset-select"><a href="/storage/pools/info/{{ pool.name|urlize }}">pool: {{ pool.name }}</a></li>
 
+                <li class="nav-header">Datasets</li>
                 {% for dataset in pool.filesystems().order_by('name') %}
                     {% with dataset_path = dataset.path() %}
                     <li class="dataset-select"><a href="/storage/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.pool.size }}">
