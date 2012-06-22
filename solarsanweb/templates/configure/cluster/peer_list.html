@@ -2,11 +2,11 @@
 
 {% block page_breadcrumbs_pre %}
 <li class="static page-content-select">
-    <a href="/cluster">cluster</a>
+    <a href="/configure/cluster">cluster</a>
     <span class="divider">&raquo;</span>
 </li>
 <li class="static page-content-select">
-    <a href="/cluster/peers">peers</a>
+    <a href="/configure/cluster/peers">peers</a>
     <span class="divider">&raquo;</span>
 </li>
 {% endblock %}
@@ -17,14 +17,14 @@
 
 {% block page_content_sidenav %}
     {% for peer in peers %}
-        <li class="page-content-select"><a href="/cluster/peers/detail/{{ peer|urlize }}" rel="tooltip" title="{{ peers[peer]['state']|urlize }}">
+        <li class="page-content-select"><a href="/configure/cluster/peers/detail/{{ peer|urlize }}" rel="tooltip" title="{{ peers[peer]['state']|urlize }}">
             {{ peer }}
         </a></li>
     {% endfor %}
 {% endblock %}
 
 {% block page_content_sidenav_post %}
-    <li><a href="/cluster/peers/add"><span class="label label-info">add peer</span></a></li>
+    <li><a href="/configure/cluster/peers/add"><span class="label label-info">add peer</span></a></li>
 {% endblock %}
 
 {% block page_content %}
