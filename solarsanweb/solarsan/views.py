@@ -8,15 +8,8 @@ from django import http
 from django.views import generic
 
 from solarsan.utils import *
-from solarsan.models import Pool, Dataset, Filesystem, Snapshot, Cron
-from solarsan.forms import *
-
-class LoggedInMixin(object):
-    """ A mixin requiring a user to be logged in. """
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated():
-            raise http.Http404
-        return super(LoggedInMixin, self).dispatch(request, *args, **kwargs)
+from solarsan.models import Pool, Dataset, Filesystem, Snapshot
+#from solarsan.forms import *
 
 #class AboutView(LoggedInMixin, generic.TemplateView):
 #    """ About page view. """
@@ -72,40 +65,40 @@ class LoggedInMixin(object):
 #    slug_field = Pool.name
 
 
-@csrf_exempt
-def status_dataset_action(request, *args, **kwargs):
-    """ Status: Gets dataset action """
+#@csrf_exempt
+#def status_dataset_action(request, *args, **kwargs):
+#    """ Status: Gets dataset action """
+#
+#    ctxt = {}
+#
+#    ## IMPORTANT TODO FUCK clean the action argument
+#    action = kwargs.get('action', request.GET.get('action', 'health'))
+#    dataset = kwargs.get('dataset', request.GET.get('dataset'))
+#
+#    ctxt['dataset'] = Filesystem.objects.get(name=dataset)
+#
+#    if action == "cron":
+#        ctxt['dataset_service_form'] = DatasetServiceForm()
+#        ctxt['dataset_cron_form'] = DatasetCronForm()
+#        #ctxt['dataset_autosnap_form'] = DatasetAutoSnapForm()
+#        #ctxt['dataset_online_backup_form'] = DatasetOnlineBackupForm()
+#
+#        # TODO Either make a seperate scheduler page or filter these out
+#        #   Probably easiest to just make a scheduler page.
+#        ctxt['crons'] = Cron.objects.all()
+#
+#    ctxt['action'] = action
+#
+#    return render_to_response('status/dataset/'+action+'.html',
+#                              ctxt, context_instance=RequestContext(request))
 
-    ctxt = {}
 
-    ## IMPORTANT TODO FUCK clean the action argument
-    action = kwargs.get('action', request.GET.get('action', 'health'))
-    dataset = kwargs.get('dataset', request.GET.get('dataset'))
-
-    ctxt['dataset'] = Filesystem.objects.get(name=dataset)
-
-    if action == "cron":
-        ctxt['dataset_service_form'] = DatasetServiceForm()
-        ctxt['dataset_cron_form'] = DatasetCronForm()
-        #ctxt['dataset_autosnap_form'] = DatasetAutoSnapForm()
-        #ctxt['dataset_online_backup_form'] = DatasetOnlineBackupForm()
-
-        # TODO Either make a seperate scheduler page or filter these out
-        #   Probably easiest to just make a scheduler page.
-        ctxt['crons'] = Cron.objects.all()
-
-    ctxt['action'] = action
-
-    return render_to_response('status/dataset/'+action+'.html',
-                              ctxt, context_instance=RequestContext(request))
-
-
-def scheduler(request, *args, **kwargs):
-    """ Scheduler: View/modify scheduled tasks """
-    crons = Cron.objects.all()
-
-    return render_to_response('scheduler.html',
-            {'crons': crons,
-                }, context_instance=RequestContext(request))
+#def scheduler(request, *args, **kwargs):
+#    """ Scheduler: View/modify scheduled tasks """
+#    crons = Cron.objects.all()
+#
+#    return render_to_response('scheduler.html',
+#            {'crons': crons,
+#                }, context_instance=RequestContext(request))
 
 

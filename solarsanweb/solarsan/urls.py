@@ -1,13 +1,9 @@
 
-from django.conf.urls import patterns, url, include
-from django.views.generic import DetailView, ListView
+from django.conf.urls.defaults import patterns, url, include
+from django.views import generic
 
-from solarsan.models import Pool
+import solarsan.views
 
 urlpatterns = patterns('solarsan.views',
 )
-
-#urlpatterns += patterns('solarsan.ajax',
-#    (r'^graph/stats.json', 'graph_stats'),
-#)
 

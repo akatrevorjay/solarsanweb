@@ -17,10 +17,10 @@
     <div class="span12">
         <ul id="pool-breadcrumb" class="breadcrumb">
             <li class="static">
-                <a href="/pools">pools</a>
+                <a href="/storage/pools">pools</a>
                 <span class="divider">&raquo;</span>
             </li>
-            {% include 'pools/pool_breadcrumb.html' %}
+            {% include 'storage/pool_breadcrumb.html' %}
         </ul>
     </div>
 </div>
@@ -33,7 +33,7 @@
 
                 {% for dataset in pool.filesystems().order_by('name') %}
                     {% with dataset_path = dataset.path() %}
-                    <li class="dataset-select"><a href="/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.pool.size }}">
+                    <li class="dataset-select"><a href="/storage/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.pool.size }}">
                             {% for path in dataset_path[1:] %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor %}
                             {{ dataset_path|last }}
                         </a></li>
@@ -47,7 +47,7 @@
     <div class="span9">
         <div id="dataset-info" style="padding-left: 10px">
             {% with dataset = pool.filesystem %}
-                {% include 'pools/dataset_detail.html' %}
+                {% include 'storage/dataset_detail.html' %}
             {% endwith %}
         </div>
     </div>

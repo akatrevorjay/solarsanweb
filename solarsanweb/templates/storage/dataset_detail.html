@@ -2,7 +2,7 @@
 <!-- Breadcrumb update -->
 <div class="pool-breadcrumb-replace hide">
     <ul>
-        {% include 'pools/pool_breadcrumb.html' %}
+        {% include 'storage/pool_breadcrumb.html' %}
     </ul>
 </div>
 
@@ -23,31 +23,30 @@
                 <div class="nav-collapse">
                     <ul class="nav dataset-detail-nav">
                         {% if dataset.pool.name == dataset.name %}
-                            <li class="dataset-detail-select"><a href="/pools/health/{{ dataset.pool.name|urlize }}">Pool Health</a></li>
+                            <li class="dataset-detail-select"><a href="/storage/pools/health/{{ dataset.pool.name|urlize }}">Pool Health</a></li>
                             <li class="dataset-detail-select"><a href="/analytics/pool/graphs/{{ dataset.pool.name|urlize }}">Pool Graphs</a></li>
 
                             {#<li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="/pools/health/{{ dataset.pool.name|urlize }}">Health</a></li>
-                                    <li><a href="/pools/analytics/{{ dataset.pool.name|urlize }}">Analytics</a></li>
+                                    <li><a href="/storage/pool/health/{{ dataset.pool.name|urlize }}">Health</a></li>
+                                    <li><a href="/storage/pool/analytics/{{ dataset.pool.name|urlize }}">Analytics</a></li>
                                 </ul>
                             </li>#}
                         {% endif %}
 
-                        <li class="dataset-detail-select"><a href="/datasets/health/{{ dataset.name|urlize }}">Health</a></li>
-                        <li class="dataset-detail-select"><a href="/datasets/snapshots/{{ dataset.name|urlize }}">Snapshots</a></li>
-                        <li class="dataset-detail-select"><a href="/datasets/snapshots/{{ dataset.name|urlize }}">Snapshots</a></li>
+                        <li class="dataset-detail-select"><a href="/storage/datasets/health/{{ dataset.name|urlize }}">Health</a></li>
+                        <li class="dataset-detail-select"><a href="/storage/datasets/snapshots/{{ dataset.name|urlize }}">Snapshots</a></li>
                     </ul>
 
                     <ul class="nav pull-right">
                          <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li class="dataset-detail-select"><a href="/datasets/snapshot/{{ dataset.name|urlize }}">Snapshot</a></li>
+                                <li class="dataset-detail-select"><a href="/storage/datasets/snapshot/{{ dataset.name|urlize }}">Snapshot</a></li>
                                 {#<li><a href="#">Clone</a></li>#}
                                 <li class="divider"></li>
-                                <li class="dataset-detail-select"><a href="/datasets/destroy/{{ dataset.name|urlize }}">Destroy</a></li>
+                                <li class="dataset-detail-select"><a href="/storage/datasets/destroy/{{ dataset.name|urlize }}">Destroy</a></li>
                                 {#<li class="divider"></li>
                                 <li><a href="#">Separated link</a></li>#}
                             </ul>
@@ -63,10 +62,10 @@
     <div id="dataset-detail-content" class="well">
         {% if dataset.name == dataset.pool.name %}
             {% with pool = dataset.pool %}
-            {% include 'pools/pool_health.html' %}
+            {% include 'storage/pool_health.html' %}
             {% endwith %}
         {% else %}
-            {% include 'pools/dataset_health.html' %}
+            {% include 'storage/dataset_health.html' %}
         {% endif %}
     </div>
 </div>

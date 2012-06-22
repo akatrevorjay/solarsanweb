@@ -15,7 +15,7 @@
             <td>{{ snapshot.creation }}</td>
             <td>{{ snapshot.used }} / {{ dataset.available }}</td>
             <td>
-                <a class="btn btn-mini btn-danger" href="/datasets/destroy/{{ snapshot.name|urlize }}">Delete</button>
+                <a class="btn btn-mini btn-danger" href="/storage/datasets/destroy/{{ snapshot.name|urlize }}">Delete</button>
             </td>
         </tr>
         {% endfor %}

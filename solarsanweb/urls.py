@@ -10,7 +10,7 @@ urlpatterns = patterns('',
 
     url(r'^status/', include('status.urls')),
     url(r'^configure/', include('configure.urls')),
-    url(r'^pools/', include('pools.urls')),
+    url(r'^storage/', include('storage.urls')),
     url(r'^analytics/', include('analytics.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

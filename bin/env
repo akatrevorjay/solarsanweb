@@ -1,7 +1,8 @@
 #!/bin/bash
 basedir_raw="${BASH_SOURCE[0]%/*}"
 basedir=$(readlink -f "${basedir_raw%/bin}")
-virtualenv="$basedir/env"
+#virtualenv="$basedir/env"
+virtualenv="$HOME/.virtualenvs/solarsanweb"
 
 if [[ "$0" != "bash" ]]; then
     BASHISM_OUTPUT="output/output"

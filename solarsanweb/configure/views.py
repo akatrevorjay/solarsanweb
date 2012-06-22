@@ -10,7 +10,7 @@ from django.views import generic
 from solarsan.models import Pool, Dataset, Filesystem, Snapshot
 import gluster
 
-class PeerListView(generic.TemplateView):
+class ClusterPeerListView(generic.TemplateView):
     template_name = 'configure/cluster/peer_list.html'
     def get(self, request, *args, **kwargs):
         peers = gluster.peer.status()
@@ -20,7 +20,7 @@ class PeerListView(generic.TemplateView):
                 }
         return self.render_to_response(context)
 
-class PeerDetailView(generic.TemplateView):
+class ClusterPeerDetailView(generic.TemplateView):
     template_name = 'configure/cluster/peer_detail.html'
     def get(self, request, *args, **kwargs):
         peers = gluster.peer.status()

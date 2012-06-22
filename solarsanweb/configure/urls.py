@@ -9,8 +9,8 @@ urlpatterns = patterns('configure.views',
     (r'^$', configure.views.HomeListView.as_view()),
     (r'^network$', configure.views.NetworkDetailView.as_view()),
     #(r'^network/interfaces/detail/(?P<interface>.+)$', configure.views.NetworkDetailView.as_view()),
-    
-    (r'^peers$', configure.views.PeerListView.as_view()),
-    (r'^peers/detail/(?P<peer>.+)$', configure.views.PeerDetailView.as_view()),
+
+    (r'^peers$', configure.views.ClusterPeerListView.as_view()),
+    (r'^peers/detail/(?P<peer>.+)$', configure.views.ClusterPeerDetailView.as_view()),
 )
 
