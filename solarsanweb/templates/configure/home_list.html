@@ -8,15 +8,16 @@
 {% endblock %}
 
 {% block page_content_sidenav_pre %}
-    <li class="nav-header">peers</li>
 {% endblock %}
 
 {% block page_content_sidenav %}
-    {% for opt in ['network'] %}
-    <li class="page-content-select"><a href="/configure/{{ opt|urlize }}" rel="tooltip" title="Null">
-        {{ opt }}
-    </a></li>
-    {% endfor %}
+    <li class="nav-header">Network Interfaces</li>
+    <li class="page-content-select"><a href="/configure/network/interfaces/eth0">eth0</a></li>
+    <li class="page-content-select"><a href="/configure/network/interfaces/eth1">eth1</a></li>
+    <li class="page-content-select"><a href="/configure/network/interfaces/ib0">ib0</a></li>
+    <li class="page-content-select"><a href="/configure/network/interfaces/ib1">ib1</a></li>
+    <li class="nav-header">SolarSan Cluster</li>
+    <li class="page-content-select"><a href="/configure/cluster/peers">Peers</a></li>
 {% endblock %}
 
 {% block page_content %}

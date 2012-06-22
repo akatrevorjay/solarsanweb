@@ -10,6 +10,16 @@ from django.views import generic
 from solarsan.models import Pool, Dataset, Filesystem, Snapshot
 import gluster
 
+class HomeListView(generic.TemplateView):
+    template_name = 'configure/home_list.html'
+    def get(self, request, *args, **kwargs):
+        context = {}
+        return self.render_to_response(context)
+
+"""
+Cluster
+"""
+
 class ClusterPeerListView(generic.TemplateView):
     template_name = 'configure/cluster/peer_list.html'
     def get(self, request, *args, **kwargs):
@@ -38,20 +48,18 @@ class ClusterPeerDetailView(generic.TemplateView):
                }
         return self.render_to_response(context)
 
-class HomeListView(generic.TemplateView):
-    template_name = 'configure/home_list.html'
+"""
+Network
+"""
+
+class NetworkDetailView(generic.TemplateView):
+    template_name = 'configure/network_detail.html'
     def get(self, request, *args, **kwargs):
         context = {}
         return self.render_to_response(context)
 
-#class NetworkListView(generic.TemplateView):
-#    template_name = 'configure/network_list.html'
-#    def get(self, request, *args, **kwargs):
-#        context = {}
-#        return self.render_to_response(context)
-
-class NetworkDetailView(generic.TemplateView):
-    template_name = 'configure/network_detail.html'
+class NetworkInterfaceDetailView(generic.TemplateView):
+    template_name = 'configure/network_interface_detail.html'
     def get(self, request, *args, **kwargs):
         context = {}
         return self.render_to_response(context)

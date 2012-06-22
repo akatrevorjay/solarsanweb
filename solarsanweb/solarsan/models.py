@@ -5,11 +5,11 @@ import logging
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 import zfs
 
-class Config(models.Model):
-    key = models.CharField(max_length=255)
-    value = models.CharField(max_length=255)
-    def __unicode__(self):
-        return self.key
+#class Config(models.Model):
+#    key = models.CharField(max_length=255)
+#    value = models.CharField(max_length=255)
+#    def __unicode__(self):
+#        return self.key
 
 class EnabledModelManager(models.Manager):
     def get_query_set(self):
@@ -324,23 +324,23 @@ class Snapshot(Dataset):
 
 
 ## Schedule backups, snapshots, health status checks, etc
-class Cron(models.Model):
-    name = models.CharField(max_length=128, unique=True)
-    last_modified = models.DateTimeField(auto_now=True)
-    last_ret = models.IntegerField(default=0)
-    enabled = models.BooleanField(default=True)
-    run_every = models.IntegerField(default=0)
-    operate_on = models.CharField(max_length=128, default='')
-
-    task = models.CharField(max_length=128)
-    json = JSONField()
-
-    def __unicode__(self):
-        suffix = []
-        if not self.enabled: suffix.append("disabled")
-
-        if suffix: suffix = ' (' + ','.join(suffix) + ')'
-        else: suffix = ''
-        return '%s:%s%s' % (self.task, self.name, suffix)
+#class Cron(models.Model):
+#    name = models.CharField(max_length=128, unique=True)
+#    last_modified = models.DateTimeField(auto_now=True)
+#    last_ret = models.IntegerField(default=0)
+#    enabled = models.BooleanField(default=True)
+#    run_every = models.IntegerField(default=0)
+#    operate_on = models.CharField(max_length=128, default='')
+#
+#    task = models.CharField(max_length=128)
+#    json = JSONField()
+#
+#    def __unicode__(self):
+#        suffix = []
+#        if not self.enabled: suffix.append("disabled")
+#
+#        if suffix: suffix = ' (' + ','.join(suffix) + ')'
+#        else: suffix = ''
+#        return '%s:%s%s' % (self.task, self.name, suffix)
 
 
