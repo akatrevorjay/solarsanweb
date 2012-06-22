@@ -29,7 +29,7 @@
 
 {% block page_content %}
     {% with peer = {peers.keys()[0]: peers[peers.keys()[0]]} %}
-        {% include 'cluster/peer_detail.html' %}
+        {% include 'configure/cluster/peer_detail.html' %}
     {% endwith %}
 {% endblock %}
 
