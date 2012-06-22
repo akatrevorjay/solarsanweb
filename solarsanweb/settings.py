@@ -240,7 +240,13 @@ JINJA_CONFIG = {
 }
 
 # List of apps that do not use Jingo
-JINGO_EXCLUDE_APPS = ('admin', 'registration', 'debug_toolbar')
+JINGO_EXCLUDE_APPS = ('admin', 'registration', 'debug_toolbar', 'logs')
+
+LOGTAIL_FILES = {
+    'syslog': '/var/log/syslog',
+    'solarvisor': '/opt/solarsanweb/data/log/supervisord.log',
+    # gluster
+}
 
 ## Celery
 # django-celery

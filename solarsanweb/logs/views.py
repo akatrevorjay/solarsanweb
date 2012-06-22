@@ -7,6 +7,7 @@ from django.conf import settings
 
 import logging
 import json
+from os.path import getsize, isfile
 
 def home(request, *args, **kwargs):
     return render_to_response('logs.html',
@@ -15,7 +16,7 @@ def home(request, *args, **kwargs):
         context_instance=RequestContext(request))
 
 class LogListView(ListView):
-    template_name = 'logs/home.html'
+    template_name = 'logs/logtail_list.html'
 
     @property
     def queryset(self):
@@ -50,12 +51,12 @@ class LogTailView(View):
             log_file_id = self.kwargs.get('logfile', '')
             log_file = settings.LOGTAIL_FILES[log_file_id]
         except KeyError:
-            raise Http404('No such log file')
+            raise http.Http404('No such log file')
 
         try:
             file_length = getsize(log_file)
         except OSError:
-            raise Http404('Cannot access file')
+            raise http.Http404('Cannot access file')
 
         if seek_to > file_length:
             seek_to = file_length
@@ -65,7 +66,7 @@ class LogTailView(View):
             context['log'].seek(seek_to)
             context['starts'] = seek_to
         except IOError:
-            raise Http404('Cannot access file')
+            raise http.Http404('Cannot access file')
 
         return context
 
@@ -83,7 +84,7 @@ class LogTailView(View):
                 return
 
     def render_to_response(self, context):
-        return HttpResponse(
+        return http.HttpResponse(
             self.iter_json(context),
             content_type='application/json'
         )

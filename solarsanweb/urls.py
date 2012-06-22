@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     url(r'^configure/', include('configure.urls')),
     url(r'^storage/', include('storage.urls')),
     url(r'^analytics/', include('analytics.urls')),
+    url(r'^logs/', include('logs.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

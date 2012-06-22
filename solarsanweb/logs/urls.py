@@ -7,16 +7,12 @@ urlpatterns = patterns('logs.views',
      LogListView.as_view(),
      name='log_list' ),
 
-    url(r'^nab/(?P<logfile>[-\w\.]+)/$',
+    url(r'^(?P<logfile>[-\w\.]+)/$',
      LogTailView.as_view(),
      name='log_tail' ),
 
-    url(r'^nab/(?P<logfile>[-\w\.]+)/(?P<seek_to>\d+)/$',
+    url(r'^(?P<logfile>[-\w\.]+)/(?P<seek_to>\d+)/$',
      LogTailView.as_view(),
      name='log_seek' ),
 )
-
-#urlpatterns += patterns('solarsan.ajax',
-#    (r'^graph/stats.json', 'graph_stats'),
-#)
 
