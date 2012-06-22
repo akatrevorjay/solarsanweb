@@ -19,11 +19,7 @@ class PoolDetailView(PoolView, generic.DetailView):
     template_name = 'pools/pool_detail.html'
     pass
 
-#class PoolCreateView(PoolView, generic.DetailView):
-#    pass
-
-#class PoolDeleteView(PoolView, generic.DetailView):
-#    pass
+## TODO Create/Destroy
 
 class PoolHealthDetailView(PoolView, generic.DetailView):
     template_name = 'pools/pool_health.html'
