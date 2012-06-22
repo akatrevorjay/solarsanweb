@@ -15,10 +15,8 @@ class PoolView(object):
     slug_field = 'name'
     context_object_name = 'pool'
 
-class PoolListView(PoolView, generic.ListView):
-    context_object_name = 'pools'
-
 class PoolDetailView(PoolView, generic.DetailView):
+    template_name = 'pools/pool_detail.html'
     pass
 
 #class PoolCreateView(PoolView, generic.DetailView):
@@ -28,14 +26,14 @@ class PoolDetailView(PoolView, generic.DetailView):
 #    pass
 
 class PoolHealthDetailView(PoolView, generic.DetailView):
-    template_name = 'solarsan/pool_health.html'
+    template_name = 'pools/pool_health.html'
     def get_context_data(self, **kwargs):
         ctx = super(PoolHealthDetailView, self).get_context_data(**kwargs)
         ctx['dataset'] = ctx['pool'].filesystem
         return ctx
 
 class PoolAnalyticsDetailView(PoolView, generic.DetailView):
-    template_name = 'solarsan/pool_analytics.html'
+    template_name = 'pools/pool_analytics.html'
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
         ctx['something_else'] = None  # add something to ctx

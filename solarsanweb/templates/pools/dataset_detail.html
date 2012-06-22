@@ -2,7 +2,7 @@
 <!-- Breadcrumb update -->
 <div class="pool-breadcrumb-replace hide">
     <ul>
-        {% include 'solarsan/pool_breadcrumb.html' %}
+        {% include 'pools/pool_breadcrumb.html' %}
     </ul>
 </div>
 
@@ -63,10 +63,10 @@
     <div id="dataset-detail-content" class="well">
         {% if dataset.name == dataset.pool.name %}
             {% with pool = dataset.pool %}
-            {% include 'solarsan/pool_health.html' %}
+            {% include 'pools/pool_health.html' %}
             {% endwith %}
         {% else %}
-            {% include 'solarsan/dataset_health.html' %}
+            {% include 'pools/dataset_health.html' %}
         {% endif %}
     </div>
 </div>

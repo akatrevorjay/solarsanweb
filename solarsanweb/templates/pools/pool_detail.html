@@ -20,7 +20,7 @@
                 <a href="/pools">pools</a>
                 <span class="divider">&raquo;</span>
             </li>
-            {% include 'solarsan/pool_breadcrumb.html' %}
+            {% include 'pools/pool_breadcrumb.html' %}
         </ul>
     </div>
 </div>
@@ -47,7 +47,7 @@
     <div class="span9">
         <div id="dataset-info" style="padding-left: 10px">
             {% with dataset = pool.filesystem %}
-                {% include 'solarsan/dataset_detail.html' %}
+                {% include 'pools/dataset_detail.html' %}
             {% endwith %}
         </div>
     </div>
