@@ -1,18 +1,22 @@
 {% extends "base_page_detail.html" %}
 
 {% block page_breadcrumbs_pre %}
-<li class="static page-content-select">
-    <a href="/configure/cluster">cluster</a>
+<li class="static">
+    <a href="/configure">configure</a>
     <span class="divider">&raquo;</span>
 </li>
-<li class="static page-content-select">
-    <a href="/configure/cluster/peers">peers</a>
+<li class="static active">
+    <span>cluster</span>
     <span class="divider">&raquo;</span>
+</li>
+<li class="static page-content-select active">
+    <a href="/configure/cluster/peers">peers</a>
+    <span class="divider hide">&raquo;</span>
 </li>
 {% endblock %}
 
 {% block page_content_sidenav_pre %}
-    <li class="nav-header">peers</li>
+    <li class="nav-header">SolarSan Cluster Peers</li>
 {% endblock %}
 
 {% block page_content_sidenav %}

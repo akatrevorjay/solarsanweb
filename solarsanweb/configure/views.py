@@ -53,13 +53,19 @@ Network
 """
 
 class NetworkDetailView(generic.TemplateView):
-    template_name = 'configure/network_detail.html'
+    template_name = 'configure/network/network_detail.html'
+    def get(self, request, *args, **kwargs):
+        context = {}
+        return self.render_to_response(context)
+
+class NetworkInterfaceListView(generic.TemplateView):
+    template_name = 'configure/network/interface_list.html'
     def get(self, request, *args, **kwargs):
         context = {}
         return self.render_to_response(context)
 
 class NetworkInterfaceDetailView(generic.TemplateView):
-    template_name = 'configure/network_interface_detail.html'
+    template_name = 'configure/network/interface_detail.html'
     def get(self, request, *args, **kwargs):
         context = {}
         return self.render_to_response(context)

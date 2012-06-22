@@ -8,6 +8,7 @@ from solarsan.models import Pool
 urlpatterns = patterns('configure.views',
     (r'^$', configure.views.HomeListView.as_view()),
     (r'^network$', configure.views.NetworkDetailView.as_view()),
+    (r'^network/interfaces$', configure.views.NetworkInterfaceListView.as_view()),
     (r'^network/interfaces/detail/(?P<interface>\w+)$', configure.views.NetworkInterfaceDetailView.as_view()),
 
     (r'^cluster/peers$', configure.views.ClusterPeerListView.as_view()),

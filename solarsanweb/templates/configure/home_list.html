@@ -11,16 +11,13 @@
 {% endblock %}
 
 {% block page_content_sidenav %}
-    <li class="nav-header">Network Interfaces</li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/eth0">eth0</a></li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/eth1">eth1</a></li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/ib0">ib0</a></li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/ib1">ib1</a></li>
+    <li class="nav-header">General</li>
+    <li><a href="/configure/network/interfaces">Network Interfaces</a></li>
     <li class="nav-header">SolarSan Cluster</li>
-    <li class="page-content-select"><a href="/configure/cluster/peers">Peers</a></li>
+    <li><a href="/configure/cluster/peers">Peers</a></li>
 {% endblock %}
 
 {% block page_content %}
-    {% include 'configure/network_detail.html' %}
+    {% include 'configure/home_detail_default.html' %}
 {% endblock %}
 
