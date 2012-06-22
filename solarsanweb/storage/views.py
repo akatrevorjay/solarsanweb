@@ -20,20 +20,20 @@ class PoolView(object):
     context_object_name = 'pool'
 
 class PoolDetailView(PoolView, generic.DetailView):
-    template_name = 'pools/pool_detail.html'
+    template_name = 'storage/pool_detail.html'
     pass
 
 ## TODO Create/Destroy
 
 class PoolHealthDetailView(PoolView, generic.DetailView):
-    template_name = 'pools/pool_health.html'
+    template_name = 'storage/pool_health.html'
     def get_context_data(self, **kwargs):
         ctx = super(PoolHealthDetailView, self).get_context_data(**kwargs)
         ctx['dataset'] = ctx['pool'].filesystem
         return ctx
 
 class PoolAnalyticsDetailView(PoolView, generic.DetailView):
-    template_name = 'pools/pool_analytics.html'
+    template_name = 'storage/pool_analytics.html'
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
         return ctx
@@ -52,7 +52,7 @@ class DatasetView(object):
 #    template_name = 'solarsan/dataset_list.html'
 
 class DatasetDetailView(DatasetView, generic.DetailView):
-    template_name = 'pools/dataset_detail.html'
+    template_name = 'storage/dataset_detail.html'
 
 #class DatasetCreateView(DatasetView, generic.DetailView):
 #    pass
@@ -61,12 +61,12 @@ class DatasetDetailView(DatasetView, generic.DetailView):
 #    pass
 
 class DatasetHealthDetailView(DatasetView, generic.DetailView):
-    template_name = 'pools/dataset_health.html'
+    template_name = 'storage/dataset_health.html'
     def get_context_data(self, **kwargs):
         ctx = super(DatasetHealthDetailView, self).get_context_data(**kwargs)
         ctx['pool'] = ctx['dataset'].pool
         return ctx
 
 class DatasetSnapshotsView(DatasetView, generic.DetailView):
-    template_name = 'pools/dataset_snapshots.html'
+    template_name = 'storage/dataset_snapshots.html'
 
