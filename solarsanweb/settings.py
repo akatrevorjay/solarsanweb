@@ -103,19 +103,18 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
-#TEMPLATE_CONTEXT_PROCESSORS = (
-#    # default template context processors
-#    'django.core.context_processors.auth',
-#    'django.core.context_processors.debug',
-#    'django.core.context_processors.i18n',
-#    'django.core.context_processors.media',
-#
-#    # django 1.2 only
-#    'django.contrib.messages.context_processors.messages',
-#
-#    # required by django-admin-tools
-#    'django.core.context_processors.request',
-#)
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+
+    'django.core.context_processors.request',
+    'solarsanweb.solarsan.context_processors.pools',
+)
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -157,7 +156,7 @@ INTERNAL_IPS=['127.0.0.1', '10.111.88.*']
 
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
-    #'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
+    'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
     #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
     'HIDE_DJANGO_SQL': False,
     'TAG': 'div',
@@ -207,8 +206,11 @@ INSTALLED_APPS = (
     'south',
 
     # Apps
-    'solarsan',
-    #'bootstrap_example.root',
+    'solarsanweb.solarsan',
+    'solarsanweb.status',
+    'solarsanweb.configure',
+    'solarsanweb.storage',
+    'solarsanweb.analytics',
 )
 
 # Cache backends
