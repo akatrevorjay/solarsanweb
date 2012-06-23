@@ -8,89 +8,119 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'Dataset_Cron'
-        db.delete_table('solarsan_dataset_cron')
-
-        # Adding model 'Cron'
-        db.create_table('solarsan_cron', (
+        # Adding model 'Pool'
+        db.create_table(u'storage_pool', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
             ('last_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('run_every', self.gf('django.db.models.fields.IntegerField')(default=0)),
-            ('task', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('json', self.gf('jsonfield.fields.JSONField')()),
+            ('delegation', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('listsnapshots', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('capacity', self.gf('django.db.models.fields.CharField')(max_length=8)),
+            ('cachefile', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('free', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('ashift', self.gf('django.db.models.fields.IntegerField')()),
+            ('autoreplace', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('bootfs', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('dedupditto', self.gf('django.db.models.fields.IntegerField')()),
+            ('dedupratio', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('health', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('failmode', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('version', self.gf('django.db.models.fields.IntegerField')()),
+            ('autoexpand', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('readonly', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('allocated', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('guid', self.gf('django.db.models.fields.CharField')(unique=True, max_length=32)),
+            ('altroot', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('size', self.gf('django.db.models.fields.CharField')(max_length=32)),
         ))
-        db.send_create_signal('solarsan', ['Cron'])
+        db.send_create_signal(u'storage', ['Pool'])
 
-        # Deleting field 'Dataset.is_enabled'
-        db.delete_column('solarsan_dataset', 'is_enabled')
+        # Adding model 'Pool_IOStat'
+        db.create_table(u'storage_pool_iostat', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('pool', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storage.Pool'])),
+            ('timestamp', self.gf('django.db.models.fields.DateTimeField')()),
+            ('timestamp_end', self.gf('django.db.models.fields.DateTimeField')()),
+            ('alloc', self.gf('django.db.models.fields.FloatField')()),
+            ('free', self.gf('django.db.models.fields.FloatField')()),
+            ('bandwidth_read', self.gf('django.db.models.fields.IntegerField')()),
+            ('bandwidth_write', self.gf('django.db.models.fields.IntegerField')()),
+            ('iops_read', self.gf('django.db.models.fields.IntegerField')()),
+            ('iops_write', self.gf('django.db.models.fields.IntegerField')()),
+        ))
+        db.send_create_signal(u'storage', ['Pool_IOStat'])
 
-        # Adding field 'Dataset.enabled'
-        db.add_column('solarsan_dataset', 'enabled',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
-
-        # Deleting field 'Pool.is_enabled'
-        db.delete_column('solarsan_pool', 'is_enabled')
-
-        # Adding field 'Pool.enabled'
-        db.add_column('solarsan_pool', 'enabled',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
+        # Adding model 'Dataset'
+        db.create_table(u'storage_dataset', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('enabled', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
+            ('last_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('basename', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('pool', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storage.Pool'])),
+            ('setuid', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('referenced', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('zoned', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('primarycache', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('logbias', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('creation', self.gf('django.db.models.fields.DateTimeField')()),
+            ('sync', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('dedup', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('sharenfs', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('usedbyrefreservation', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('sharesmb', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('canmount', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('mountpoint', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('casesensitivity', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('utf8only', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('xattr', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('mounted', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('compression', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('usedbysnapshots', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('copies', self.gf('django.db.models.fields.IntegerField')()),
+            ('aclinherit', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('compressratio', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('readonly', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('version', self.gf('django.db.models.fields.IntegerField')()),
+            ('normalization', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('type', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('secondarycache', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('refreservation', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('available', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('used', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('Exec', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('refquota', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('refcompressratio', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('quota', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('vscan', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('reservation', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('atime', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('recordsize', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('usedbychildren', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('usedbydataset', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('mlslabel', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('checksum', self.gf('django.db.models.fields.CharField')(max_length=32)),
+            ('devices', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('nbmand', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('snapdir', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        ))
+        db.send_create_signal(u'storage', ['Dataset'])
 
 
     def backwards(self, orm):
-        # Adding model 'Dataset_Cron'
-        db.create_table('solarsan_dataset_cron', (
-            ('task', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=128, unique=True)),
-            ('last_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('schedule', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('recursive', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('dataset', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['solarsan.Dataset'])),
-        ))
-        db.send_create_signal('solarsan', ['Dataset_Cron'])
+        # Deleting model 'Pool'
+        db.delete_table(u'storage_pool')
 
-        # Deleting model 'Cron'
-        db.delete_table('solarsan_cron')
+        # Deleting model 'Pool_IOStat'
+        db.delete_table(u'storage_pool_iostat')
 
-        # Adding field 'Dataset.is_enabled'
-        db.add_column('solarsan_dataset', 'is_enabled',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
-
-        # Deleting field 'Dataset.enabled'
-        db.delete_column('solarsan_dataset', 'enabled')
-
-        # Adding field 'Pool.is_enabled'
-        db.add_column('solarsan_pool', 'is_enabled',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
-
-        # Deleting field 'Pool.enabled'
-        db.delete_column('solarsan_pool', 'enabled')
+        # Deleting model 'Dataset'
+        db.delete_table(u'storage_dataset')
 
 
     models = {
-        'solarsan.config': {
-            'Meta': {'object_name': 'Config'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'key': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'value': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
-        'solarsan.cron': {
-            'Meta': {'object_name': 'Cron'},
-            'enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'json': ('jsonfield.fields.JSONField', [], {}),
-            'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'}),
-            'run_every': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'task': ('django.db.models.fields.CharField', [], {'max_length': '128'})
-        },
-        'solarsan.dataset': {
+        u'storage.dataset': {
             'Exec': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'Meta': {'ordering': "['name', 'creation']", 'object_name': 'Dataset'},
             'aclinherit': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
@@ -116,7 +146,7 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'}),
             'nbmand': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'normalization': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['solarsan.Pool']"}),
+            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['storage.Pool']"}),
             'primarycache': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'quota': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'readonly': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -144,7 +174,7 @@ class Migration(SchemaMigration):
             'xattr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'zoned': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
-        'solarsan.pool': {
+        u'storage.pool': {
             'Meta': {'object_name': 'Pool'},
             'allocated': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'altroot': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
@@ -170,7 +200,7 @@ class Migration(SchemaMigration):
             'size': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'version': ('django.db.models.fields.IntegerField', [], {})
         },
-        'solarsan.pool_iostat': {
+        u'storage.pool_iostat': {
             'Meta': {'object_name': 'Pool_IOStat'},
             'alloc': ('django.db.models.fields.FloatField', [], {}),
             'bandwidth_read': ('django.db.models.fields.IntegerField', [], {}),
@@ -179,10 +209,10 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iops_read': ('django.db.models.fields.IntegerField', [], {}),
             'iops_write': ('django.db.models.fields.IntegerField', [], {}),
-            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['solarsan.Pool']"}),
+            'pool': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['storage.Pool']"}),
             'timestamp': ('django.db.models.fields.DateTimeField', [], {}),
             'timestamp_end': ('django.db.models.fields.DateTimeField', [], {})
         }
     }
 
-    complete_apps = ['solarsan']
+    complete_apps = ['storage']
