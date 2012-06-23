@@ -12,17 +12,20 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'solarsanweb',                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': 'locsol',                  # Not used with sqlite3.
-        'HOST': 'db.solarsan.local',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'NAME': 'solarsanweb',                # Or path to database file if using sqlite3.
+        'USER': 'root',                       # Not used with sqlite3.
+        'PASSWORD': 'locsol',                 # Not used with sqlite3.
+        'HOST': 'db.solarsan.local',          # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
     }
 }
 
 PROJECT_NAME = "solarsanweb"
 
+##
 ## Paths
+##
+
 import os, sys
 
 TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
@@ -43,7 +46,7 @@ sys.path.insert(0, PROJECT_DIR)
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/New_York'
+#TIME_ZONE = 'America/New_York'
 USE_TZ = True
 
 # Language code for this installation. All choices can be found here:
@@ -104,6 +107,7 @@ STATICFILES_FINDERS = (
 SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
 TEMPLATE_CONTEXT_PROCESSORS = (
+    # Defaults for Django 1.4
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
@@ -112,7 +116,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.tz",
     "django.contrib.messages.context_processors.messages",
 
+    # Puts 'request' in context
     'django.core.context_processors.request',
+    # This always puts 'pools' list in context (for top nav)
     'solarsanweb.solarsan.context_processors.pools',
 )
 
@@ -149,20 +155,21 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
-def custom_show_toolbar(request):
-    return True # Always show toolbar, for example purposes only.
-
-INTERNAL_IPS=['127.0.0.1', '10.111.88.*']
+INTERNAL_IPS=['127.0.0.1']
 
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
-    'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
     #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
     'HIDE_DJANGO_SQL': False,
     'TAG': 'div',
     'ENABLE_STACKTRACES' : True,
 }
 
+## Always show toolbar if debugging
+if DEBUG:
+    def custom_show_toolbar(request):
+        return True # Always show toolbar, for example purposes only.
+    DEBUG_TOOLBAR_CONFIG['SHOW_TOOLBAR_CALLBACK'] = custom_show_toolbar
 
 ROOT_URLCONF = PROJECT_NAME + '.urls'
 
@@ -213,7 +220,7 @@ INSTALLED_APPS = (
     'solarsanweb.analytics',
 )
 
-# Cache backends
+## Cache backends
 CACHES = {
     'default_mem': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -224,11 +231,14 @@ CACHES = {
         'LOCATION': PROJECT_NAME+'_django_db_cache',
     }
 }
-CACHES['default'] = CACHES['default_mem']
 
-# Persistent sessions
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+## Mem for debug, db otherwise
+if DEBUG:   CACHES['default'] = CACHES['default_mem']
+else:       CACHES['default'] = CACHES['default_db']
+
+## Persistent sessions
+if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # HTTPS only
 SESSION_COOKIE_SECURE = True
@@ -242,34 +252,48 @@ JINJA_CONFIG = {
 # List of apps that do not use Jingo
 JINGO_EXCLUDE_APPS = ('admin', 'registration', 'debug_toolbar', 'logs')
 
+# Logs to tail
 LOGTAIL_FILES = {
     'syslog': '/var/log/syslog',
     'solarvisor': '/opt/solarsanweb/data/log/supervisord.log',
     # gluster
 }
 
-## Celery
-# django-celery
+##
+## Celery (async tasks)
+##
+
+## django-celery
 import djcelery
 djcelery.setup_loader()
-# celery
+#CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+
+## Celery broker
 BROKER_URL = "amqp://guest:guest@localhost:5672//"
 #BROKER_USE_SSL = True
-CELERY_RESULT_BACKEND = "amqp"
-CELERY_IMPORTS = (
-    "solarsan.tasks.graphs",
-    "solarsan.tasks.stats",
-    "solarsan.tasks.auto_snapshot",
-    "solarsan.tasks.locsol_backup",
-    "solarsan.tasks.import_zfs_metadata",
-    "solarsan.tasks.cluster",
-    "solarsan.tasks",
-)
+
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
-if DEBUG:
-    CELERY_SEND_EVENTS = True
-    CELERY_SEND_TASK_SENT_EVENT = True
-## queues=[cluster, default]
+
+## Celery results AMQP
+CELERY_RESULT_BACKEND = "amqp"
+
+### Celery results MongoDB
+#CELERY_RESULT_BACKEND = "mongodb"
+#CELERY_MONGODB_BACKEND_SETTINGS = {
+#    "host": "127.0.0.1",
+#    "port": 27017,
+#    "database": "celery",
+#    "taskmeta_collection": "my_taskmeta" # Collection name to use for task output
+#}
+#BROKER_BACKEND = "mongodb"
+#BROKER_HOST = "localhost"
+#BROKER_PORT = 27017
+#BROKER_USER = ""
+#BROKER_PASSWORD = ""
+#BROKER_VHOST = "celery"
+
+## Celery extra opts
+# queues=[cluster, default]
 #CELERY_QUEUES
 #CELERY_ROUTES = ({"myapp.tasks.compress_video": {
 #                        "queue": "video",
@@ -279,21 +303,23 @@ if DEBUG:
 #CELERY_CREATE_MISSING_QUEUES
 #CELERY_DEFAULT_ROUTING_KEY
 
-#CELERY_RESULT_BACKEND = "mongodb"
-#CELERY_MONGODB_BACKEND_SETTINGS = {
-    #"host": "127.0.0.1",
-    #"port": 27017,
-    #"database": "celery",
-    #"taskmeta_collection": "my_taskmeta" # Collection name to use for task output
-#}
-#BROKER_BACKEND = "mongodb"
-#BROKER_HOST = "localhost"
-#BROKER_PORT = 27017
-#BROKER_USER = ""
-#BROKER_PASSWORD = ""
-#BROKER_VHOST = "celery"
+if DEBUG:
+    CELERY_SEND_EVENTS = True
+    CELERY_SEND_TASK_SENT_EVENT = True
 
-#CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+## Extra task modules (def = [INSTALLED_APPS].tasks)
+CELERY_IMPORTS = (
+    "solarsan.tasks.graphs",
+    "solarsan.tasks.stats",
+    "solarsan.tasks.auto_snapshot",
+    "solarsan.tasks.locsol_backup",
+    "solarsan.tasks.cluster",
+    "solarsan.tasks",
+)
+
+##
+## Logging
+##
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -385,12 +411,12 @@ SENTRY_DSN = 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04ab
 
 # Add raven to the list of installed apps
 INSTALLED_APPS = INSTALLED_APPS + (
-        'raven.contrib.django',
-        )
+    'raven.contrib.django',
+)
 MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
-        # Catch 404s
-        'raven.contrib.django.middleware.Sentry404CatchMiddleware',
-        'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
-        )
+    # Catch 404s
+    'raven.contrib.django.middleware.Sentry404CatchMiddleware',
+    'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
+)
 
 

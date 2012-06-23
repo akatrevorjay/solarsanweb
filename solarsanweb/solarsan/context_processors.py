@@ -1,5 +1,5 @@
 
-from solarsan.models import Pool
+from storage.models import Pool
 
 def pools(request):
     try:

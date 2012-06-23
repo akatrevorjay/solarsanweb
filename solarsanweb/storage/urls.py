@@ -3,7 +3,7 @@ from django.conf.urls.defaults import patterns, url, include
 from django.views import generic
 
 import storage.views
-#from solarsan.models import Pool, Dataset, Snapshot
+#from storage.models import Pool, Dataset, Snapshot
 
 urlpatterns = patterns('storage.views',
     (r'^pools/health/(?P<slug>[A-z0-9_\-]+)$', storage.views.PoolHealthDetailView.as_view()),

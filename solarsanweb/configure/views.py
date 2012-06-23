@@ -7,7 +7,7 @@ from django.views.decorators.cache import cache_page
 from django import http
 from django.views import generic
 
-from solarsan.models import Pool, Dataset, Filesystem, Snapshot
+from storage.models import Pool, Dataset, Filesystem, Snapshot
 import gluster
 
 class HomeListView(generic.TemplateView):

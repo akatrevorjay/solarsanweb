@@ -8,7 +8,7 @@ from django import http
 from django.views import generic
 
 from solarsan.utils import *
-from solarsan.models import Pool, Dataset, Filesystem, Snapshot
+from storage.models import Pool, Dataset, Filesystem, Snapshot
 #from solarsan.forms import *
 
 #class AboutView(LoggedInMixin, generic.TemplateView):
