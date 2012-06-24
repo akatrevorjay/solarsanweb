@@ -30,8 +30,8 @@ class Import_ZFS_Metadata( PeriodicTask ):
         for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
             if ztype_obj._zfs_type + 's' not in self.data.keys(): continue
             ztype = ztype_obj._zfs_type
-            objs = ztype_obj.objects_unfiltered.exclude( name__in=self.data[ztype+'s'].keys() ).select_for_update()
-            logging.info( "Cannot find %s(s) %s on storage; disabling in DB.", ztype, objs.values_list( 'name' ) )
+            objs = ztype_obj.objects.exclude( name__in=self.data[ztype + 's'].keys() )
+            logging.info( "Cannot find %s %ss on storage; disabling in DB: %s", objs.count(), ztype, objs.values_list( 'name' ) )
             objs.update( enabled=False )
         # Destroy old data array
         self.data = None
