@@ -63,7 +63,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     # If we're a kind of dataset, we'll need a pool_id parameter
                     print "val=%s ztype=%s" % ( val, ztype )
                     if ztype in ['filesystem', 'snapshot', 'volume']:
-                        val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( ' / ' )[0].split( '@' )[0] ).id
+                        val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( '/' )[0].split( '@' )[0] ).id
                     obj = ztype_obj( **val )
                 obj.save( db_only=True )
                 self.data[ztype + 's'][val['name']] = True
