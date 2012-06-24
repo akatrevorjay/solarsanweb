@@ -38,7 +38,6 @@ for i in ['vendor', 'vendor-local']:
 sys.path.insert(0, os.path.join(PROJECT_DIR, 'lib'))
 sys.path.insert(0, PROJECT_DIR)
 
-
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -415,4 +414,14 @@ MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
     'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
 )
 
+
+##
+## SolarSan Cluster
+##
+## TODO Make key configurable, put it in the DB and in the UI.
+SOLARSAN_CLUSTER = {
+    'port':         1787,               # Port = 1337 * 1.337
+    'key':          'solarsan-key0',    # Key
+    'discovery':    30                  # Scan for other nodes this many seconds
+}
 
