@@ -14,7 +14,7 @@ class Config( models.Model ):
 
 class ClusterNode( models.Model ):
     """ Recently seen peers """
-    ip = models.IPAddressField()
+    ip = models.IPAddressField( unique=True )
     #enabled = models.BooleanField( default=False )
     last_seen = models.DateTimeField( auto_now=True )
     #first_seen = models.DateTimeField()
