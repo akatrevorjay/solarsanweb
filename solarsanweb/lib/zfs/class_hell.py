@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+""""
+$ zfs/class_hell.py -- Interface to zfs command line utilities (class based)
+~ Trevor Joynson (aka trevorj) <trevorj@localhostsolutions.com>
+"""
 
 import os, sys
 import time, datetime, logging
@@ -6,8 +9,238 @@ from django.utils import timezone
 from iterpipes import run, cmd, linecmd, check_call, format
 from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 
-_paths = {'zfs':    "/usr/sbin/zfs",
-          'zpool':  "/usr/sbin/zpool", }
+from .common import Error, NotImplemented
+import pool, dataset, cmd, common
+
+"""
+Base
+"""
+
+class _ZBase( object ):
+    """ Base class """
+    _zfs_type = 'base'
+    
+    def __init__(self, name, *args, **kwargs):
+        self.name = name
+        #self.check()
+
+    def __new__(cls, *args, **kwargs):
+        return super(_ZBase, cls).__new__(cls, *args, **kwargs)
+
+    def __repr__(self):
+        #dictrepr = dict.__repr__(self)
+        #return '%s(%s)' % (type(self).__name__, dictrepr)
+        return '%s(%s)' % (type(self).__name__, 'changeme')
+
+    idumps  = lambda self: `self`
+    __str__ = lambda self: self.dumps()
+
+    def path( self, start=0, len=None ):
+        """ Splits name of object into paths starting at index start """
+        return self.name.split( '/' )[start:len]
+
+
+"""
+Pool Handling
+"""
+
+
+class ZPool( _ZBase ):
+    """ Pool class """
+    _props = ['name','allocated','capacity','dedupratio','free','guid','health',
+                  'size','altroot','ashift','autoexpand','autoreplace','bootfs',
+                  'cachefile','dedupditto','delegation','failmode','listsnapshots',
+                  'readonly','version']
+    #_props_auto = ['last_modified']
+
+    def __init__(self, name, *args, **kwargs):
+        """ Initialize """
+        zpool_list = zfs.pool.list( self.name )
+        return zpool_list[self.name]
+
+    # [-fn] pool vdev ...
+    def add(self, *args, **kwargs):
+        raise NotImplemented
+
+    # [-f] pool device new_device
+    def attach(self, *args, **kwargs):
+        raise NotImplemented
+
+    # pool [device]
+    def clear(self, name, *args, **kwargs):
+        raise NotImplemented
+
+    def create(self, name, *args, **kwargs):
+        raise NotImplemented
+
+    @property
+    def destroy(self):
+        raise NotImplemented
+
+
+    def remove(self, *args, **kwargs):
+        raise NotImplemented
+        
+
+    @property
+    def filesystem( self ):
+        """ Returns the matching Filesystem for this Pool """
+        zfs_list = zfs.dataset.list( self.name )
+        return zfs_list[self.name]
+
+    @property
+    def filesystems( self, **kwargs ):
+        """ Lists filesystems of this pool """
+        #return Filesystem.objects.filter( type='filesystem', pool_id=self.id, **kwargs )
+        raise Exception('Not Implemented')
+    
+    def create( self, name, **kwargs ):
+        """ Creates a Pool """
+        raise Exception('Not Implemented')
+
+    class IOStat( object ):
+        """ IOStat Class """
+        pool = None
+    
+        timestamp = None
+        timestamp_end = None
+    
+        alloc = None
+        free = None
+        bandwidth_read = None
+        bandwidth_write = None
+        iops_read = None
+        iops_write = None
+
+        def __init__( self, *args, **kwargs ):
+            """ Returns newly generated IOStats """
+            zpool_iostat = zfs.pool.iostat( self.name, **kwargs )
+            return zpool_iostat[self.name]
+    
+        def __unicode__( self ):
+            return self.pool.name + '_' + self.timestamp.strftime( '%F_%T' )
+    
+        def timestamp_epoch( self ):
+            return self.timestamp.strftime( '%s' )
+
+
+
+class ZDataset(_ZBase):
+    """ Dataset """
+    _zfs_type = 'dataset'
+    ## ZFS props
+    name = None
+    setuid = None
+    referenced = None
+    zoned = None
+    primarycache = None
+    logbias = None
+    creation = None
+    sync = None
+    dedup = None
+    sharenfs = None
+    usedbyrefreservation = None
+    sharesmb = None
+    canmount = None
+    mountpoint = None
+    casesensitivity = None
+    utf8only = None
+    xattr = None
+    mounted = None
+    compression = None
+    usedbysnapshots = None
+    copies = None
+    aclinherit = None
+    compressratio = None
+    readonly = None
+    version = None
+    normalization = None
+    type = None
+    secondarycache = None
+    refreservation = None
+    available = None
+    used = None
+    exec_ = None
+    refquota = None
+    refcompressratio = None
+    quota = None
+    vscan = None
+    reservation = None
+    atime = None
+    recordsize = None
+    usedbychildren = None
+    usedbydataset = None
+    mlslabel = None
+    checksum = None
+    devices = None
+    nbmand = None
+    snapdir = None
+
+    ## Auto props
+    last_modified = None
+    basename = None
+    pool = None
+
+    def __new__(cls, *args, **kwargs):
+        for subclass in ZDataset.__subclasses__():
+            if subclass.type == kwargs['type']:
+                return super(ZDataset, cls).__new__(subclass, *args, **kwargs)
+        raise Exception, 'ZDataset type not supported'
+
+    @property
+    def snapshots( self, **kwargs ):
+        """ Lists snapshots of this dataset """
+        raise Exception('Not Implemented')
+
+    def snapshot( self, snapshot_name, **kwargs ):
+        """ Snapshot this dataset """
+        raise Exception('Not Implemented')
+
+    def create( self, name, **kwargs ):
+        """ Creates this dataset """
+        raise Exception('Not Implemented')
+
+
+class ZFilesystem( ZDataset ):
+    """ Filesystem """
+    _zfs_type = 'filesystem'
+
+
+class ZVolume( ZFilesystem ):
+    """ Volume """
+    _zfs_type = 'volume'
+
+
+class ZSnapshot( ZDataset ):
+    """ Filesystem snapshot """
+    _zfs_type = 'snapshot'
+    
+    ## Override parent class's snapshot methods, since we are a snapshot.
+    snapshots = None
+    snapshot = None
+
+    @property
+    def snapshot_name( self ):
+        """ Returns the snapshot name """
+        return self.basename.rsplit( '@', 1 )[1]
+
+    @property
+    def filesystem_name( self ):
+        """ Returns the associated filesystem/volume name """
+        return self.basename.rsplit( '@', 1 )[0]
+
+    @property
+    def filesystem( self ):
+        """ Returns the associated filesystem for this snapshot """
+        raise Exception('Not Implemented')
+
+
+
+
+
+"""
+OLD STUFF FOLLOWS
+"""
 
 #
 # TODO Convert to/from bytes/human here, before handing it off
@@ -155,7 +388,7 @@ class Pool(FilterableDict):
         self.update(kwargs)
     def __new__(cls, *args, **kwargs):
         return super(Pool, cls).__new__(cls, *args, **kwargs)
-    idumps   = lambda self: `self`
+    idumps  = lambda self: `self`
     __str__ = lambda self: self.dumps()
     def __repr__(self):
         dictrepr = dict.__repr__(self)
