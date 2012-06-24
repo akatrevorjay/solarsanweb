@@ -2,7 +2,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task, chord
 from celery.task.base import PeriodicTask, Task
 from celery.task.sets import subtask
-from storage.models import Pool, Pool_IOStat, Dataset, Filesystem, Snapshot
+from storage.models import Pool, Pool_IOStat, Dataset, Filesystem, Volume, Snapshot
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
 import datetime, time, logging
 from datetime import timedelta
@@ -27,11 +27,11 @@ class Import_ZFS_Metadata( PeriodicTask ):
         self.do_level( zfs.tree.tree() )
 
         # Disable objects which are no longer seen as in existence
-        for ztype_obj in [Pool, Filesystem, Snapshot]:
+        for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
             if ztype_obj._zfs_type + 's' not in self.data.keys(): continue
-            ztype = ztype_obj._zfs_type + 's'
-            objs = ztype_obj.objects.exclude( name__in=self.data[ztype].keys() )
-            logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", ztype_obj._zfs_type, objs.values( 'name' ) )
+            ztype = ztype_obj._zfs_type
+            objs = ztype_obj.objects.exclude( name__in=self.data[ztype].keys() ).select_for_update()
+            logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", ztype, objs.values( 'name' ) )
             objs.update( {'enabled': False} )
 
         # Destroy old data array
@@ -47,10 +47,10 @@ class Import_ZFS_Metadata( PeriodicTask ):
     def do_level_items( self, cur ):
         """ This gets called for each level of the tree to handle the level's items """
         has = getattr( cur, 'has', [] )
-        for ztype_obj in [Pool, Filesystem, Snapshot]:
+        for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
             if ztype_obj._zfs_type + 's' not in has: continue
-            ztype = ztype_obj._zfs_type + 's'
-            for val in getattr( cur, ztype ).values():
+            ztype = ztype_obj._zfs_type
+            for val in getattr( cur, ztype + 's' ).values():
                 try:
                     # The 'name' key of an object is always the full path name; ie, not relative to the tree.
                     obj = ztype_obj.objects_unfiltered.get( name=val['name'] )
@@ -58,10 +58,11 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     val['enabled'] = True
                     obj.__dict__.update( val )
                 except ( ztype_obj.DoesNotExist ):
-                    logging.error( 'Found % s "%s".', ztype, val['name'] )
+                    logging.error( 'Found %s "%s".', ztype, val['name'] )
                     del val['type']
                     # If we're a kind of dataset, we'll need a pool_id parameter
-                    if ztype in ['filesystems', 'snapshots']:
+                    print "val=%s ztype=%s" % (val, ztype)
+                    if ztype in ['filesystem', 'snapshot', 'volume']:
                         val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( ' / ' )[0].split( '@' )[0] ).id
                     obj = ztype_obj( **val )
                 obj.save( db_only=True )
