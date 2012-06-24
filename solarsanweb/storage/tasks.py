@@ -28,7 +28,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
 
         # Disable objects which are no longer seen as in existence
         for type_obj in [Pool, Filesystem, Snapshot]:
-            if type_obj._zfs_type not in self.data.keys(): continue
+            if type_obj._zfs_type + 's' not in self.data.keys(): continue
             type = type_obj._zfs_type + 's'
             objs = type_obj.objects.exclude( name__in=self.data[type].keys() )
             logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", type_obj._zfs_type, objs.values( 'name' ) )
@@ -48,7 +48,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
         """ This gets called for each level of the tree to handle the level's items """
         has = getattr( cur, 'has', [] )
         for type_obj in [Pool, Filesystem, Snapshot]:
-            if type_obj._zfs_type not in has: continue
+            if type_obj._zfs_type + 's' not in has: continue
             type = type_obj._zfs_type + 's'
             for val in getattr( cur, type ).values():
                 try:
