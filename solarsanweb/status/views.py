@@ -5,7 +5,7 @@ from storage.models import Pool
 
 def home(request, *args, **kwargs):
     pools = Pool.objects.all()
-    return render_to_response('status.html',
+    return render_to_response('status/home.html',
         {'title': 'Status',
          'pools': pools,
             },
