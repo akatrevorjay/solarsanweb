@@ -48,55 +48,26 @@ class Import_ZFS_Metadata( PeriodicTask ):
     def do_level_items( self, cur ):
         """ This gets called for each level of the tree to handle the level's items """
         has = getattr( cur, 'has', [] )
-
-        # Pools
-        if 'pools' in has:
-            pools = cur.pools
-            for pv in pools.itervalues():
-                # The 'name' key of an object is always the full path name; ie, not relative to the tree.
-                p = pv['name']
+        for type_obj in [Pool, Filesystem, Snapshot]:
+            if type_obj._zfs_type not in has: continue
+            type = type_obj._zfs_type + 's'
+            for val in getattr( cur, type ).values():
                 try:
-                    pool = Pool.objects_unfiltered.get( name=p )
-                    pv['enabled'] = True
-                    pool.__dict__.update( pv )
-                except ( KeyError, Pool.DoesNotExist ):
-                    logging.error( 'Found pool "%s"', p )
-                    del pv['type']
-                    pool = Pool( **pv )
-                pool.save( db_only=True )
-                self.data['pools'][p] = True
+                    # The 'name' key of an object is always the full path name; ie, not relative to the tree.
+                    obj = type_obj.objects_unfiltered.get( name=val['name'] )
+                    # Ensure enabled
+                    val['enabled'] = True
+                    obj.__dict__.update( val )
+                except ( type_obj.DoesNotExist ):
+                    logging.error( 'Found %s "%s".', type, val['name'] )
+                    del val['type']
+                    # If we're a kind of dataset, we'll need a pool_id parameter
+                    if type in ['filesystems', 'snapshots']:
+                        val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( '/' )[0].split( '@' )[0] ).id
+                    obj = type_obj( **val )
+                obj.save( db_only=True )
+                self.data[type][val['name']] = True
 
-        # Datasets
-        datasets = []
-        if 'filesystems' in has: datasets.extend( cur.filesystems.items() )
-        if 'snapshots' in has:   datasets.extend( cur.snapshots.items() )
-        datasets = dict( datasets )
-        for dv in datasets.values():
-            # The 'name' key of an object is always the full path name; ie, not relative to the tree.
-            d = dv['name']
-            try:
-                # Get existing dataset, if it doesn't exist the except below will catch it
-                if dv['type'] == 'snapshot':        dataset = Snapshot.objects_unfiltered.get( name=d )
-                elif dv['type'] == 'filesystem':    dataset = Filesystem.objects_unfiltered.get( name=d )
-                else:
-                    logging.error( "Found unknown type '%s': '%s'", dv['type'], d )
-                    continue
-                # Ensure enabled
-                dv['enabled'] = True
-                dataset.__dict__.update( dv )
-            except ( KeyError, Pool.DoesNotExist, Filesystem.DoesNotExist, Snapshot.DoesNotExist ):
-                logging.info( 'Found %s "%s"', dv['type'], d )
-                if dv['type'] == 'pool':
-                    dataset = Pool( **dv )
-                else:
-                    dataset_path = d.split( '/' )
-                    dataset_pool = Pool.objects_unfiltered.get( name=dataset_path[0].split( '@' )[0] )
-                    dv['pool_id'] = dataset_pool.id
-                    if dv['type'] == 'snapshot':        dataset = Snapshot( **dv )
-                    elif dv['type'] == 'filesystem':    dataset = Filesystem( **dv )
-            # Save dataset
-            dataset.save( db_only=True )
-            self.data['datasets'][d] = True
 
 
 class Cleanup_Disabled_Storage_Items( PeriodicTask ):
