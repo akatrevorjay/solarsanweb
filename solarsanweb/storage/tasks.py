@@ -23,17 +23,16 @@ class Import_ZFS_Metadata( PeriodicTask ):
 
     def run( self, *args, **kwargs ):
         logging = self.get_logger()
-        self.data = {'pools': {}, 'filesystems': {}, 'snapshots': {}}
+        self.data = {'pools': {}, 'filesystems': {}, 'volumes': {}, 'snapshots': {}}
         self.do_level( zfs.tree.tree() )
 
         # Disable objects which are no longer seen as in existence
         for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
             if ztype_obj._zfs_type + 's' not in self.data.keys(): continue
             ztype = ztype_obj._zfs_type
-            objs = ztype_obj.objects.exclude( name__in=self.data[ztype].keys() ).select_for_update()
-            logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", ztype, objs.values( 'name' ) )
-            objs.update( {'enabled': False} )
-
+            objs = ztype_obj.objects_unfiltered.exclude( name__in=self.data[ztype+'s'].keys() ).select_for_update()
+            logging.info( "Cannot find %s(s) %s on storage; disabling in DB.", ztype, objs.values_list( 'name' ) )
+            objs.update( enabled=False )
         # Destroy old data array
         self.data = None
 
@@ -61,7 +60,6 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     logging.error( 'Found %s "%s".', ztype, val['name'] )
                     del val['type']
                     # If we're a kind of dataset, we'll need a pool_id parameter
-                    print "val=%s ztype=%s" % ( val, ztype )
                     if ztype in ['filesystem', 'snapshot', 'volume']:
                         val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( '/' )[0].split( '@' )[0] ).id
                     obj = ztype_obj( **val )
