@@ -16,56 +16,56 @@ import cmd
 Dataset Handling
 """
 
-def destroy(name, **kwargs):
+def destroy( name, **kwargs ):
     """ [DANGEROUS] Delete dataset from filesystem """
     zargs = ['destroy']
-    if kwargs.get('recursive', False) == True:
-        zargs.append('-r')
+    if kwargs.get( 'recursive', False ) == True:
+        zargs.append( '-r' )
     if not name:
-        raise Error("destroy was attemped with an empty name")
+        raise Error( "destroy was attemped with an empty name" )
     if '@' in name:
         type = 'snapshot'
     else:
         type = 'filesystem'
         #type = 'dataset'
-    zargs.append(name)
+    zargs.append( name )
 
-    logging.info('Destroying %s %s', type, name)
-    iterpipes.check_call(cmd.zfs(*zargs))
+    logging.info( 'Destroying %s %s', type, name )
+    iterpipes.check_call( cmd.zfs( *zargs ) )
     try:
-        list(name)
+        list( name )
     except:
         return True
-    raise Error("ZFS destroy of '%s' was successful, but the destroyed dataset still exists?" % name)
+    raise Error( "ZFS destroy of '%s' was successful, but the destroyed dataset still exists?" % name )
 
-def create(name, **kwargs):
+def create( name, **kwargs ):
     """ Create filesystem """
     zargs = ['create']
     # TODO -o opts
     if not name:
-        raise Error("filesystem was attempted with an empty name")
-    zargs.append(name)
+        raise Error( "filesystem was attempted with an empty name" )
+    zargs.append( name )
 
-    logging.info('Creating snapshot %s with %s', name, kwargs)
-    iterpipes.check_call(cmd.zfs(*zargs))
-    return list(name)
+    logging.info( 'Creating snapshot %s with %s', name, kwargs )
+    iterpipes.check_call( cmd.zfs( *zargs ) )
+    return list( name )
 
-def snapshot(name, **kwargs):
+def snapshot( name, **kwargs ):
     """ Create snapshot """
     zargs = ['snapshot']
-    if kwargs.get('recursive', False) == True:
-        zargs.append('-r')
+    if kwargs.get( 'recursive', False ) == True:
+        zargs.append( '-r' )
     #if kwargs.get('name_strftime', True) == True:
     #    name = timezone.now().strftime(name)
     if not name:
-        raise Error("snapshot was attempted with an empty name")
+        raise Error( "snapshot was attempted with an empty name" )
     if not '@' in name:
-        raise Error("snapshot was attempted with an invalid snapshot name (missing @): %s" % name)
-    zargs.append(name)
+        raise Error( "snapshot was attempted with an invalid snapshot name (missing @): %s" % name )
+    zargs.append( name )
 
-    logging.info('Creating snapshot %s with %s', name, kwargs)
-    iterpipes.check_call(cmd.zfs(*zargs))
-    return list(name)
+    logging.info( 'Creating snapshot %s with %s', name, kwargs )
+    iterpipes.check_call( cmd.zfs( *zargs ) )
+    return list( name )
 
 """ zfs possible outcomes for datasets
  volblocksize === blocksize
@@ -101,15 +101,15 @@ def snapshot(name, **kwargs):
  casesensitivity === sensitive | insensitive | mixed
 """
 
-def list(*names, **kwargs):
+def list( *names, **kwargs ):
     """ Utility to get a list of zfs volumes and associated properties.
     Also aggregates parent/children information """
-    zargs = ['list', '-H', '-t', kwargs.get('type', 'all')]
+    zargs = ['list', '-H', '-t', kwargs.get( 'type', 'all' )]
     if 'depth' in kwargs:
-        zargs.extend([ '-d', kwargs['depth'] ])
-    if kwargs.get('recursive', False) == True:
-        zargs.append('-r')
-    props = kwargs.get('props', ['name', 'type', 'used', 'available', 'creation', 'referenced',
+        zargs.extend( [ '-d', kwargs['depth'] ] )
+    if kwargs.get( 'recursive', False ) == True:
+        zargs.append( '-r' )
+    props = kwargs.get( 'props', ['name', 'type', 'used', 'available', 'creation', 'referenced',
                                  'compressratio', 'mounted', 'quota', 'reservation', 'recordsize',
                                  'mountpoint', 'sharenfs', 'checksum', 'compression', 'atime',
                                  'devices', 'exec', 'setuid', 'readonly', 'zoned', 'snapdir',
@@ -119,49 +119,45 @@ def list(*names, **kwargs):
                                  'usedbysnapshots', 'usedbydataset', 'usedbychildren',
                                  'usedbyrefreservation', 'logbias', 'dedup', 'mlslabel', 'sync',
                                  'refcompressratio'] )
-    zargs.extend([ '-o', ','.join(props) ])
-    if names:
-        zargs.extend(names)
+    zargs.extend( [ '-o', ','.join( props ) ] )
+    if names:   zargs.extend( names )
 
     # Hide stderr if requested, or merge with stdout, etc
-    stderr = kwargs.get('stderr', None)
-    if stderr == 'stdout':
-        zargs.append('2>&1')
-    elif stderr == None:
-        zargs.append('2>/dev/null')
+    if kwargs.get( 'stderr', None ) == 'stdout':  zargs.append( '2>&1' )
+    else:                                       zargs.append( '2>/dev/null' )
+
+    # Can't use bareword 'exec' like this, so Case it
+    if 'exec' in props:
+        props[ props.index( 'exec' ) ] = "Exec"
 
     # Run command and parse output
-    dataset_list = FilterableDict()
-    for line in iterpipes.run(cmd.zfs(*zargs)):
-        line = str(line).rstrip("\n").split("\t")
-        # Can't use bareword 'exec' like this, so Case it
-        if 'exec' in props:
-            props[ props.index('exec') ] = "Exec"
-        # Wooooooh
-        dataset = dict(zip(props, line))
+    dataset_list = {}
+    for line in iterpipes.run( cmd.zfs( *zargs ) ):
+        line = dict( zip( props, str( line ).split( "\t" ) ) )
 
         # Make some changes
-        for key, val in dataset.iteritems():
+        # WTF Did I do this and not just keep em as varchars?
+        for key, val in line.items():
             # Booleanize
             if key in ['mounted', 'defer_destroy', 'atime', 'devices', 'exec', 'nbmand', 'readonly',
-                        'setuid', 'shareiscsi', 'vscan', 'xattr', 'zoned', 'utf8only' ]:
+                        'setuid', 'shareiscsi', 'vscan', 'xattr', 'zoned', 'utf8only', 'dedup' ]:
                 if val in ['yes', 'on']:
-                    dataset[key] = True
+                    line[key] = True
                 elif val in ['no', 'off', '-']:
-                    dataset[key] = False
+                    line[key] = False
             # Nullize
-            elif dataset[key] == '-':
+            elif line[key] == '-':
                 if key in ['copies', 'version']:
-                    dataset[key] = 0
+                    line[key] = 0
                 else:
-                    dataset[key] = ''
+                    line[key] = ''
             # Datetimeize
-            if key in ['creation']:
+            elif key in ['creation']:
                 # TZify the timestamp
-                dataset[key] = timezone.make_aware(
-                        dateutil.parser.parse(val), timezone.get_current_timezone() )
-        dataset_list[ dataset['name'] ] = dataset
+                line[key] = timezone.make_aware( 
+                        dateutil.parser.parse( val ), timezone.get_current_timezone() )
 
+        dataset_list[ line['name'] ] = line
     # Send final output
     return dataset_list
 
@@ -169,45 +165,45 @@ def list(*names, **kwargs):
 Dataset Properties
 """
 
-def get(dataset, *args, **kwargs):
+def get( dataset, *args, **kwargs ):
     """ Gets properties on *datasets """
     zargs = ['get', '-Hp']
     if not dataset:
-        raise Error("set was attempted with an empty name")
+        raise Error( "set was attempted with an empty name" )
 
     # Opts
     if 'depth' in kwargs:
-        zargs.extend([ '-d', kwargs['depth'] ])
-    if kwargs.get('recursive', False) == True:
-        zargs.append('-r')
+        zargs.extend( [ '-d', kwargs['depth'] ] )
+    if kwargs.get( 'recursive', False ) == True:
+        zargs.append( '-r' )
     if 'source' in kwargs:
-        zargs.extend([ '-d', kwargs['source'] ])
+        zargs.extend( [ '-d', kwargs['source'] ] )
 
-    if not len(kwargs.keys()) > 0:
-        raise Error("set was attempted with an empty prop list")
+    if not len( kwargs.keys() ) > 0:
+        raise Error( "set was attempted with an empty prop list" )
     # Append each property
-    zargs.extend([ (dataset) for dataset in args ])
+    zargs.extend( [ ( dataset ) for dataset in args ] )
 
-    logging.info("Setting properties on dataset '%s': with %s", dataset, kwargs)
-    iterpipes.check_call(cmd.zfs(*zargs))
-    return list(dataset)
+    logging.info( "Setting properties on dataset '%s': with %s", dataset, kwargs )
+    iterpipes.check_call( cmd.zfs( *zargs ) )
+    return list( dataset )
 
 
-def set(dataset, **kwargs):
+def set( dataset, **kwargs ):
     """ Sets properties on dataset """
     zargs = ['set']
     if not dataset:
-        raise Error("set was attempted with an empty name")
-    if not len(kwargs.keys()) > 0:
-        raise Error("set was attempted with an empty prop list")
+        raise Error( "set was attempted with an empty name" )
+    if not len( kwargs.keys() ) > 0:
+        raise Error( "set was attempted with an empty prop list" )
     # Append each property
-    for k,v in kwargs.iteritems():
-        zargs.append(k+'='+v)
-    zargs.append(dataset)
+    for k, v in kwargs.iteritems():
+        zargs.append( k + '=' + v )
+    zargs.append( dataset )
 
-    logging.info("Setting properties on dataset '%s': with %s", dataset, kwargs)
-    iterpipes.check_call(cmd.zfs(*zargs))
-    return list(dataset)
+    logging.info( "Setting properties on dataset '%s': with %s", dataset, kwargs )
+    iterpipes.check_call( cmd.zfs( *zargs ) )
+    return list( dataset )
 
 
 
