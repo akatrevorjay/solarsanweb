@@ -26,12 +26,12 @@ class Import_ZFS_Metadata( PeriodicTask ):
         self.data = {'pools': {}, 'datasets': {}}
         self.do_level( zfs.tree.tree() )
 
-        # Delete things which are no longer in existence
+        # Disable objects which are no longer seen as in existence
         for key, val in {'pools': Pool, 'datasets': Dataset}.items():
             # Do filter disabled ones from here!
             for obj in val.objects.all():
                 if not obj.name in list( self.data[key] ):
-                    logging.error( "Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
+                    logging.error( "Cannot find %s '%s' on storage. Disabling in DB.",
                             obj._zfs_type, obj.name )
                     obj.enabled = False
                     obj.save()
@@ -58,7 +58,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
                 try:
                     pool = Pool.objects_unfiltered.get( name=p )
                     pv['enabled'] = True
-                    for k, v in pv.iteritems(): setattr( pool, k, v )
+                    pool.__dict__.update( pv )
                 except ( KeyError, Pool.DoesNotExist ):
                     logging.error( 'Found pool "%s"', p )
                     del pv['type']
@@ -78,14 +78,12 @@ class Import_ZFS_Metadata( PeriodicTask ):
                 # Get existing dataset, if it doesn't exist the except below will catch it
                 if dv['type'] == 'snapshot':        dataset = Snapshot.objects_unfiltered.get( name=d )
                 elif dv['type'] == 'filesystem':    dataset = Filesystem.objects_unfiltered.get( name=d )
-                elif dv['type'] == 'pool':          dataset = Pool.objects_unfiltered.get( name=d )
                 else:
                     logging.error( "Found unknown type '%s': '%s'", dv['type'], d )
                     continue
                 # Ensure enabled
                 dv['enabled'] = True
-                # Apply data to existing dataset
-                for k, v in dv.iteritems(): setattr( dataset, k, v )
+                dataset.__dict__.update( dv )
             except ( KeyError, Pool.DoesNotExist, Filesystem.DoesNotExist, Snapshot.DoesNotExist ):
                 logging.info( 'Found %s "%s"', dv['type'], d )
                 if dv['type'] == 'pool':
@@ -94,10 +92,8 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     dataset_path = d.split( '/' )
                     dataset_pool = Pool.objects_unfiltered.get( name=dataset_path[0].split( '@' )[0] )
                     dv['pool_id'] = dataset_pool.id
-                    if dv['type'] == 'snapshot':
-                        dataset = Snapshot( **dv )
-                    elif dv['type'] == 'filesystem':
-                        dataset = Filesystem( **dv )
+                    if dv['type'] == 'snapshot':        dataset = Snapshot( **dv )
+                    elif dv['type'] == 'filesystem':    dataset = Filesystem( **dv )
             # Save dataset
             dataset.save( db_only=True )
             self.data['datasets'][d] = True
@@ -110,7 +106,9 @@ class Cleanup_Disabled_Storage_Items( PeriodicTask ):
         logging = self.get_logger()
         # Delete disabled items that are too old to care about.
         for key, val in {'pools': Pool, 'datasets': Dataset}.items():
-            val.objects_unfiltered.filter( enabled=False, last_modified__gt=timezone.now() - timedelta( days=7 ) ).delete()
+            objs = val.objects_unfiltered.filter( enabled=False, last_modified__gt=timezone.now() - timedelta( days=7 ) )
+            logging.debug( 'Found %s disabled %s to clean.', objs.count(), key )
+            objs.delete()
 
 
 """
