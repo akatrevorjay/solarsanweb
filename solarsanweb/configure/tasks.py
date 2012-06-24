@@ -26,7 +26,7 @@ import json
 ## TODO RESTful service perhaps ysing piston to get information from one SAN to the other after discovery is completed.
 ##
 
-class ClusterNode_Discovery( PeriodicTask ):
+class Cluster_Node_Discovery( PeriodicTask ):
     """ Probes for new cluster nodes """
     run_every = timedelta( seconds=settings.SOLARSAN_CLUSTER['discovery'] )
     def run( self, *args, **kwargs ):
@@ -45,7 +45,7 @@ class ClusterNode_Discovery( PeriodicTask ):
 
 
 ## FUCK Make this start on startup, spawns it's own thread, no need to pay attention to it after it's started
-class ClusterNode_Beacon( Task ):
+class Cluster_Node_Beacon( Task ):
     """ Controls cluster beacon service """
     b = beacon.Beacon( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
     def run( self, *args, **kwargs ):
