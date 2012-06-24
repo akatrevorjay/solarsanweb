@@ -188,6 +188,9 @@ class FilesystemManager(models.Manager):
     def get_query_set(self):
         return super(FilesystemManager, self).get_query_set().filter(type='filesystem', enabled=True)
 
+class VolumeManager(models.Manager):
+    def get_query_set(self):
+        return super(VolumeManager, self).get_query_set().filter(type='volume', enabled=True)
 
 class SnapshotManager(models.Manager):
     def get_query_set(self):
@@ -266,6 +269,29 @@ class Filesystem(Dataset):
         proxy = True
     _zfs_type='filesystem'
     objects = FilesystemManager()
+
+    def snapshots(self, **kwargs):
+        """ Lists snapshots of this filesystem """
+        # Only filesystems can have snapshots
+        return Snapshot.objects.filter(type='snapshot', name__startswith=self.name + '@', **kwargs)
+
+    def snapshot(self, snapshot_name, **kwargs):
+        """ Snapshot this filesystem """
+        logging.info('Snapshot %s on filesystem %s', snapshot_name, self.name)
+        name = self.name + '@' + snapshot_name
+        # Get DB entry ready (and validate data)
+        snapshot = Snapshot(name=name, pool_id=self.pool_id)
+        snapshot.save()
+        # Return saved snapshot object
+        return snapshot
+
+
+class Volume(Dataset):
+    """ Filesystem """
+    class Meta:
+        proxy = True
+    _zfs_type='volume'
+    objects = VolumeManager()
 
     def snapshots(self, **kwargs):
         """ Lists snapshots of this filesystem """
