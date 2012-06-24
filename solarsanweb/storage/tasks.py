@@ -23,27 +23,26 @@ class Import_ZFS_Metadata( PeriodicTask ):
 
     def run( self, *args, **kwargs ):
         logging = self.get_logger()
-        self.data = {'pools': {}, 'datasets': {}}
+        self.data = {'pools': {}, 'filesystems': {}, 'snapshots': {}}
         self.do_level( zfs.tree.tree() )
 
         # Disable objects which are no longer seen as in existence
-        for key, val in {'pools': Pool, 'datasets': Dataset}.items():
-            # Do filter disabled ones from here!
-            for obj in val.objects.all():
-                if not obj.name in list( self.data[key] ):
-                    logging.error( "Cannot find %s '%s' on storage. Disabling in DB.",
-                            obj._zfs_type, obj.name )
-                    obj.enabled = False
-                    obj.save()
-            self.data[key] = []
+        for type_obj in [Pool, Filesystem, Snapshot]:
+            if type_obj._zfs_type not in self.data.keys(): continue
+            type = type_obj._zfs_type + 's'
+            objs = type_obj.objects.exclude( name__in=self.data[type].keys() )
+            logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", type_obj._zfs_type, objs.values( 'name' ) )
+            objs.update( {'enabled': False} )
+
+        # Destroy old data array
+        self.data = None
 
     def do_level( self, cur ):
         """ This gets called for each level of the tree to loop through it, then it's children """
         # First, take care of any objects
-        if getattr( cur, 'has', None ):       self.do_level_items( cur )
-
+        if getattr( cur, 'has', None ):     self.do_level_items( cur )
         # Call this function recursively for each cur[key]
-        for child_key in cur.keys():    self.do_level( cur[child_key] )
+        for child_key in cur.keys():        self.do_level( cur[child_key] )
 
     def do_level_items( self, cur ):
         """ This gets called for each level of the tree to handle the level's items """
@@ -59,11 +58,11 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     val['enabled'] = True
                     obj.__dict__.update( val )
                 except ( type_obj.DoesNotExist ):
-                    logging.error( 'Found %s "%s".', type, val['name'] )
+                    logging.error( 'Found % s "%s".', type, val['name'] )
                     del val['type']
                     # If we're a kind of dataset, we'll need a pool_id parameter
                     if type in ['filesystems', 'snapshots']:
-                        val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( '/' )[0].split( '@' )[0] ).id
+                        val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( ' / ' )[0].split( '@' )[0] ).id
                     obj = type_obj( **val )
                 obj.save( db_only=True )
                 self.data[type][val['name']] = True
@@ -78,7 +77,7 @@ class Cleanup_Disabled_Storage_Items( PeriodicTask ):
         # Delete disabled items that are too old to care about.
         for key, val in {'pools': Pool, 'datasets': Dataset}.items():
             objs = val.objects_unfiltered.filter( enabled=False, last_modified__gt=timezone.now() - timedelta( days=7 ) )
-            logging.debug( 'Found %s disabled %s to clean.', objs.count(), key )
+            logging.debug( 'Found % s disabled % s to clean.', objs.count(), key )
             objs.delete()
 
 
@@ -91,29 +90,29 @@ config = {
     'schedules': {
         'testing': {
             # Schedule
-            'snapshot-every':   timedelta( hours=1 ),
+            'snapshot - every':   timedelta( hours=1 ),
             # Creation
             'datasets':         ['dpool'], # TODO Select these from Web UI
-            'snapshot-prefix':  'auto-testing-',
-            'snapshot-date':    '%F_%T',
+            'snapshot - prefix':  'auto - testing - ',
+            'snapshot - date':    ' % F_ % T',
             # TODO Deletion code is not recursive friendly so this can currently NEVER be true
             'recursive':        False,
             # Removal
-            'max-age': timedelta( days=7 ),
-            'keep-at-most': 30,
+            'max - age': timedelta( days=7 ),
+            'keep - at - most': 30,
         },
        'testing2': {
             # Schedule
-            'snapshot-every':   timedelta( days=1 ),
+            'snapshot - every':   timedelta( days=1 ),
             # Creation
             'datasets':         ['dpool'],
-            'snapshot-prefix':  'auto-testing2-',
-            'snapshot-date':    '%F_%T',
+            'snapshot - prefix':  'auto - testing2 - ',
+            'snapshot - date':    ' % F_ % T',
             # TODO Deletion code is not recursive friendly so this can currently NEVER be true
             'recursive':        False,
             # Removal
-            'max-age': timedelta( days=7 ),
-            'keep-at-most': 30,
+            'max - age': timedelta( days=7 ),
+            'keep - at - most': 30,
         },
     },
 }
