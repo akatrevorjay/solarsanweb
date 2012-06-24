@@ -34,14 +34,11 @@ class Cluster_Node_Discovery( PeriodicTask ):
         logger.info( "Cluster discovery: Probing for new cluster nodes (port=%s,key=%s)",
                      settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
 
-        servers = beacon.find_all_servers( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
-        if len(servers) > 0:
-            logger.debug( "Cluster discovery: Found: %s", servers )
-            cache.set('RecentlyDiscoveredClusterNodes', servers, 60)
-#            for server_ip in servers:
-#                obj, created = ClusterNode.get_or_create(ip=sDiscoveryerver_ip)
-#                if created: count++
-#            return servers
+        DiscoveredClusterNodes = {'nodes': beacon.find_all_servers( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] ),
+                                  'ts': timezone.now(), }
+
+        cache.set('RecentlyDiscoveredClusterNodes', servers, 60)
+        if len(servers) > 0:     logger.debug( "Cluster discovery: Found: %s", servers )
 
 
 ## FUCK Make this start on startup, spawns it's own thread, no need to pay attention to it after it's started
