@@ -228,12 +228,18 @@ CACHES = {
     'default_db': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': PROJECT_NAME+'_django_db_cache',
+    },
+    'default_file': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(DATA_DIR, 'cache'),
     }
 }
 
 ## Mem for debug, db otherwise
-if DEBUG:   CACHES['default'] = CACHES['default_mem']
-else:       CACHES['default'] = CACHES['default_db']
+#if DEBUG:   CACHES['default'] = CACHES['default_mem']
+#else:       CACHES['default'] = CACHES['default_db']
+#else:       CACHES['default'] = CACHES['default_file']
+CACHES['default'] = CACHES['default_db']
 
 ## Persistent sessions
 if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
