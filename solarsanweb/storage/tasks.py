@@ -27,11 +27,11 @@ class Import_ZFS_Metadata( PeriodicTask ):
         self.do_level( zfs.tree.tree() )
 
         # Disable objects which are no longer seen as in existence
-        for type_obj in [Pool, Filesystem, Snapshot]:
-            if type_obj._zfs_type + 's' not in self.data.keys(): continue
-            type = type_obj._zfs_type + 's'
-            objs = type_obj.objects.exclude( name__in=self.data[type].keys() )
-            logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", type_obj._zfs_type, objs.values( 'name' ) )
+        for ztype_obj in [Pool, Filesystem, Snapshot]:
+            if ztype_obj._zfs_type + 's' not in self.data.keys(): continue
+            ztype = ztype_obj._zfs_type + 's'
+            objs = ztype_obj.objects.exclude( name__in=self.data[ztype].keys() )
+            logging.error( "Cannot find %s(s) %s on storage; disabling in DB.", ztype_obj._zfs_type, objs.values( 'name' ) )
             objs.update( {'enabled': False} )
 
         # Destroy old data array
@@ -47,25 +47,25 @@ class Import_ZFS_Metadata( PeriodicTask ):
     def do_level_items( self, cur ):
         """ This gets called for each level of the tree to handle the level's items """
         has = getattr( cur, 'has', [] )
-        for type_obj in [Pool, Filesystem, Snapshot]:
-            if type_obj._zfs_type + 's' not in has: continue
-            type = type_obj._zfs_type + 's'
-            for val in getattr( cur, type ).values():
+        for ztype_obj in [Pool, Filesystem, Snapshot]:
+            if ztype_obj._zfs_type + 's' not in has: continue
+            ztype = ztype_obj._zfs_type + 's'
+            for val in getattr( cur, ztype ).values():
                 try:
                     # The 'name' key of an object is always the full path name; ie, not relative to the tree.
-                    obj = type_obj.objects_unfiltered.get( name=val['name'] )
+                    obj = ztype_obj.objects_unfiltered.get( name=val['name'] )
                     # Ensure enabled
                     val['enabled'] = True
                     obj.__dict__.update( val )
-                except ( type_obj.DoesNotExist ):
-                    logging.error( 'Found % s "%s".', type, val['name'] )
+                except ( ztype_obj.DoesNotExist ):
+                    logging.error( 'Found % s "%s".', ztype, val['name'] )
                     del val['type']
                     # If we're a kind of dataset, we'll need a pool_id parameter
-                    if type in ['filesystems', 'snapshots']:
+                    if ztype in ['filesystems', 'snapshots']:
                         val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( ' / ' )[0].split( '@' )[0] ).id
-                    obj = type_obj( **val )
+                    obj = ztype_obj( **val )
                 obj.save( db_only=True )
-                self.data[type][val['name']] = True
+                self.data[ztype][val['name']] = True
 
 
 
