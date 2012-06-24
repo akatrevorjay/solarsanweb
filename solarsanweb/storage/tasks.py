@@ -8,6 +8,9 @@ import datetime, time, logging
 from datetime import timedelta
 from django.utils import timezone
 #from django.core.files.storage import Storage
+from django.core.exceptions import ObjectDoesNotExist
+#from django import db
+#from django.db import import autocommit, commit, commit_manually, commit_on_success, is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
 
 """
 Import pool/dataset info from system into DB
@@ -19,12 +22,10 @@ import zfs
 class Import_ZFS_Metadata( PeriodicTask ):
     """ Syncs ZFS pools/datasets to DB """
     run_every = timedelta( minutes=5 )
-    data = {}
-
     def run( self, *args, **kwargs ):
         logging = self.get_logger()
         self.data = {'pools': {}, 'filesystems': {}, 'volumes': {}, 'snapshots': {}}
-        self.do_level( zfs.tree.tree() )
+        self.do_level( zfs.tree() )
 
         # Disable objects which are no longer seen as in existence
         for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
@@ -33,6 +34,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
             objs = ztype_obj.objects.exclude( name__in=self.data[ztype + 's'].keys() )
             logging.info( "Cannot find %s %ss on storage; disabling in DB: %s", objs.count(), ztype, objs.values_list( 'name' ) )
             objs.update( enabled=False )
+
         # Destroy old data array
         self.data = None
 
@@ -52,18 +54,16 @@ class Import_ZFS_Metadata( PeriodicTask ):
             for val in getattr( cur, ztype + 's' ).values():
                 try:
                     # The 'name' key of an object is always the full path name; ie, not relative to the tree.
-                    obj = ztype_obj.objects_unfiltered.get( name=val['name'] )
-                    # Ensure enabled
                     val['enabled'] = True
-                    obj.__dict__.update( **val )
-                except ( ztype_obj.DoesNotExist ):
+                    obj = ztype_obj.objects_unfiltered.filter( name=val['name'] ).update( **val )
+                except ( ObjectDoesNotExist ):
                     logging.error( 'Found %s "%s".', ztype, val['name'] )
-                    del val['type']
+                    val['enabled', 'type'] = None
                     # If we're a kind of dataset, we'll need a pool_id parameter
                     if ztype in ['filesystem', 'snapshot', 'volume']:
                         val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( '/' )[0].split( '@' )[0] ).id
                     obj = ztype_obj( **val )
-                obj.save( db_only=True )
+                    obj.save( db_only=True )
                 self.data[ztype + 's'][val['name']] = True
 
 

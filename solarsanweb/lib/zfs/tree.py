@@ -26,11 +26,9 @@ import dataset
 Tree
 """
 
-
-
-class tree( dict ):
+class tree( FilterableDict ):
     """ Generate nice dict of parsed ZFS pools/datasets in a tree showing parent/child relationship """
-    _lock_timeout = 60
+    _lock_timeout = 10
     _locked = False
     def __init__( self, *args, **kwargs ):
         super( tree, self ).__init__( self, *args, **kwargs )
@@ -43,56 +41,48 @@ class tree( dict ):
                     time.sleep( 1 )
                     count += 1
                     if count > self._lock_timeout / 2:
-                        logging.warning( "Halfway to timeout while waiting for lock to be released [timeout=%s]",
-                                self._lock_timeout )
-                    if count > self._lock_timeout:
-                        raise Exception( 'Timed out while waiting for lock to be released [timeout=%s]'
-                                % self._lock_timeout )
-    def __getitem__( self, arg ):
-        """ Wrapper to check locks """
-        self._check_if_locked()
-        return super( tree, self ).__getitem__( arg )
-    def __setitem__( self, *args, **kwargs ):
-        """ Wrapper to check locks """
-        self._check_if_locked()
-        return super( tree, self ).__setitem__( self, *args, **kwargs )
+                        logging.warning( "Halfway to timeout while waiting for lock to be released [timeout=%s]", self._lock_timeout )
+                    elif count > self._lock_timeout:
+                        raise Exception( 'Timed out while waiting for lock to be released [timeout=%s]' % self._lock_timeout )
+#    def __getitem__( self, arg ):
+#        """ Wrapper to check locks """
+#        self._check_if_locked()
+#        return super( tree, self ).__getitem__( arg )
+#    def __setitem__( self, *args, **kwargs ):
+#        """ Wrapper to check locks """
+#        self._check_if_locked()
+#        return super( tree, self ).__setitem__( self, *args, **kwargs )
     def refresh( self ):
         """ Generate nice dict of parsed ZFS pools/datasets in a tree showing parent/child relationship """
-        # Get new tree
-        try:
-            pools = pool.list()
-            datasets = dataset.list()
-        except:
-            raise Exception( "zfs.tree.tree.refresh: Could not get new data" )
+        self._check_if_locked()
 
         def add_objects_to_tree( *args ):
             """ Adds *args to tree; ets reused for any kind of object being added """
             for arg in args:
-                for key, value in arg.iteritems():
+                for key, value in arg.items():
                     path = key.split( os.path.sep )
                     # If this is a snapshot, split the snapshot name from the filesytem name
                     if value['type'] == 'snapshot':     path.extend( path.pop().rsplit( '@', 1 ) )
                     # Go to base of tree
                     current_level = tree
-                    # Snag name
+                    # Snag relative name
                     name = path.pop()
                     # Move down the ladder
                     for part in path:
-                        if part not in current_level:   current_level[part] = FilterableDict()
+                        if not part in current_level:   current_level[part] = FilterableDict()
                         current_level = current_level[part]
                     # Apply dataset contents to pluralized dataset type, ie .snapshots
-                    typelist = getattr( current_level, value['type'] + 's', {} )
+                    typelist = getattr( current_level, value['type'] + 's', FilterableDict() )
                     typelist[name] = value
                     setattr( current_level, value['type'] + 's', typelist )
                     # Set .has attribute
                     has = getattr( current_level, 'has', [] )
-                    if value['type'] + 's' not in has:
-                        has.append( value['type'] + 's' )
-                        setattr( current_level, 'has', has )
+                    if not value['type'] + 's' in has:  has.append( value['type'] + 's' )
+                    setattr( current_level, 'has', has )
 
         # Start tree, add pools
         tree = FilterableDict()
-        add_objects_to_tree( pools, datasets )
+        add_objects_to_tree( pool.list(), dataset.list() )
 
         # Do a locked update
         try:
@@ -105,7 +95,6 @@ class tree( dict ):
             for has in self.has: setattr( self, has, getattr( tree, has ) )
             self._locked = False
         except:
-            self._locked = False
             raise Exception( "Could not do a locked update" )
         finally:
             self._locked = False

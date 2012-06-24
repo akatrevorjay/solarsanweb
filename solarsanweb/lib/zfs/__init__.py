@@ -5,5 +5,5 @@ $ zfs.py -- Interface to zfs command line utilities
 
 import pool
 import dataset
-import tree
+from tree import tree
 
