@@ -1,6 +1,6 @@
-""""
-$ zfs/cmd.py -- Interface to zfs command line utilities
-~ Trevor Joynson aka trevorj <trevorj@localhostsolutions.com>
+"""
+$ zfs/dataset.py -- Interface to zfs command line utilities
+~ Trevor Joynson (trevorj) <trevorj@localhostsolutions.com>
 """
 
 import logging, dateutil
@@ -8,7 +8,6 @@ from django.utils import timezone
 import iterpipes
 from solarsan.utils import FilterableDict
 from .common import Error, NotImplemented
-
 import cmd
 
 
@@ -103,7 +102,7 @@ def snapshot( name, **kwargs ):
 
 def list( *names, **kwargs ):
     """ Utility to get a list of zfs volumes and associated properties.
-    Also aggregates parent/children information """
+        Also aggregates parent/children information """
     zargs = ['list', '-H', '-t', kwargs.get( 'type', 'all' )]
     if 'depth' in kwargs:
         zargs.extend( [ '-d', kwargs['depth'] ] )
@@ -165,26 +164,23 @@ def list( *names, **kwargs ):
 Dataset Properties
 """
 
-def get( dataset, *args, **kwargs ):
+def get( datasets, *args, **kwargs ):
     """ Gets properties on *datasets """
     zargs = ['get', '-Hp']
-    if not dataset:
-        raise Error( "set was attempted with an empty name" )
-
-    # Opts
-    if 'depth' in kwargs:
-        zargs.extend( [ '-d', kwargs['depth'] ] )
+    if not datasets:            raise Error( "Get: No datasets were given?" )
+    if not args:                raise Error( "Get: No props were given?" )
+    
+    if 'depth' in kwargs:       zargs.extend( [ '-d', kwargs['depth'] ] )
+    if 'source' in kwargs:      zargs.extend( [ '-s', kwargs['source'] ] )
     if kwargs.get( 'recursive', False ) == True:
         zargs.append( '-r' )
-    if 'source' in kwargs:
-        zargs.extend( [ '-d', kwargs['source'] ] )
 
-    if not len( kwargs.keys() ) > 0:
-        raise Error( "set was attempted with an empty prop list" )
-    # Append each property
-    zargs.extend( [ ( dataset ) for dataset in args ] )
+    # Append each property.
+    zargs.extend( [ (','.join(args)) ] )
+    # Datasets get tacked on last.
+    zargs.extend( [ ( dataset ) for dataset in datasets ] )
 
-    logging.info( "Setting properties on dataset '%s': with %s", dataset, kwargs )
+    logging.info( "Getting properties '%s' on dataset '%s': with %s", ', '.join(args), dataset, kwargs )
     iterpipes.check_call( cmd.zfs( *zargs ) )
     return list( dataset )
 
@@ -192,6 +188,7 @@ def get( dataset, *args, **kwargs ):
 def set( dataset, **kwargs ):
     """ Sets properties on dataset """
     zargs = ['set']
+
     if not dataset:
         raise Error( "set was attempted with an empty name" )
     if not len( kwargs.keys() ) > 0:
