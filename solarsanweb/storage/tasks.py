@@ -30,10 +30,10 @@ class Import_ZFS_Metadata( PeriodicTask ):
         # Disable objects which are no longer seen as in existence
         for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
             if ztype_obj._zfs_type + 's' not in self.data.keys(): continue
-            ztype = ztype_obj._zfs_type
-            objs = ztype_obj.objects.exclude( name__in=self.data[ztype + 's'].keys() )
-            logging.info( "Cannot find %s %ss on storage; disabling in DB: %s", objs.count(), ztype, objs.values_list( 'name' ) )
-            objs.update( enabled=False )
+            objs = ztype_obj.objects.exclude( name__in=self.data[ztype_obj._zfs_type + 's'].keys() )
+            if objs.count() > 0:
+                logging.info( "Cannot find %s %s on storage; marking disabled: %s", objs.count(), ztype_obj._zfs_type + 's', objs.values_list( 'name' ) )
+                objs.update( enabled=False )
 
         # Destroy old data array
         self.data = None
@@ -52,13 +52,13 @@ class Import_ZFS_Metadata( PeriodicTask ):
             if not ztype_obj._zfs_type + 's' in has: continue
             ztype = ztype_obj._zfs_type
             for val in getattr( cur, ztype + 's' ).values():
+                if ztype in ['pool']:   del val['type']
                 try:
                     # The 'name' key of an object is always the full path name; ie, not relative to the tree.
                     val['enabled'] = True
                     obj = ztype_obj.objects_unfiltered.filter( name=val['name'] ).update( **val )
                 except ( ObjectDoesNotExist ):
                     logging.error( 'Found %s "%s".', ztype, val['name'] )
-                    val['enabled', 'type'] = None
                     # If we're a kind of dataset, we'll need a pool_id parameter
                     if ztype in ['filesystem', 'snapshot', 'volume']:
                         val['pool_id'] = Pool.objects_unfiltered.get( name=val['name'].split( '/' )[0].split( '@' )[0] ).id
