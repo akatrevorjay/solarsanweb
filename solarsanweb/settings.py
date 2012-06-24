@@ -309,12 +309,8 @@ if DEBUG:
 
 ## Extra task modules (def = [INSTALLED_APPS].tasks)
 CELERY_IMPORTS = (
-    "solarsan.tasks.graphs",
-    "solarsan.tasks.stats",
-    "solarsan.tasks.auto_snapshot",
-    "solarsan.tasks.locsol_backup",
-    "solarsan.tasks.cluster",
-    "solarsan.tasks",
+    #"solarsan.tasks.locsol_backup",
+    #"solarsan.tasks.cluster",
 )
 
 ##
