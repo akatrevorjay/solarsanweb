@@ -140,6 +140,8 @@ MIDDLEWARE_CLASSES = (
 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',
 )
 
 DEBUG_TOOLBAR_PANELS = (
