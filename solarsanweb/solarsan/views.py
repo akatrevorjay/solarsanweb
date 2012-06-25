@@ -3,7 +3,14 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, never_cache, patch_cache_control, patch_vary_headers, cache_control
+from django.views.decorators.vary import vary_on_cookie, vary_on_headers
+
+### memcached keys must be < 120 bytes/chars, this silences the warning
+#import warnings
+#from django.core.cache import CacheKeyWarning
+#warnings.simplefilter("ignore", CacheKeyWarning)
+
 from django import http
 from django.views import generic
 

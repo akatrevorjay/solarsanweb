@@ -430,6 +430,6 @@ MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
 SOLARSAN_CLUSTER = {
     'port':         1787,               # Port = 1337 * 1.337
     'key':          'solarsan-key0',    # Key
-    'discovery':    30,                 # Scan for other nodes this many seconds
+    'discovery':    25,                 # Scan for other nodes this many seconds
 }
 

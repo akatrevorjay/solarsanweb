@@ -37,7 +37,7 @@ class Cluster_Node_Discovery( PeriodicTask ):
         DiscoveredClusterNodes = {'nodes': beacon.find_all_servers( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] ),
                                   'ts': timezone.now(), }
 
-        cache.set( 'RecentlyDiscoveredClusterNodes', DiscoveredClusterNodes, 60 )
+        cache.set( 'RecentlyDiscoveredClusterNodes', DiscoveredClusterNodes, settings.SOLARSAN_CLUSTER['discovery'] )
         if len( DiscoveredClusterNodes['nodes'] ) > 0:
             logger.debug( "Cluster discovery: Found: %s", DiscoveredClusterNodes )
 
