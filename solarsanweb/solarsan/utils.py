@@ -19,6 +19,24 @@ class LoggedInMixin(object):
             raise http.Http404
         return super(LoggedInMixin, self).dispatch(request, *args, **kwargs)
 
+"""
+Celery scheduler that runs tasks at startup immediately then continues with their
+original plan.
+## python manage.py celerybeat -S myapp.schedulers.Mysched --loglevel=debug
+"""
+from djcelery import schedulers
+
+class ImmediateFirstEntry(schedulers.ModelEntry):
+    def is_due(self):
+        if self.last_run_at is None:
+            return True, 0
+        return super(ImmediateFirstEntry, self).is_due()
+    def _default_now(self):
+        return None
+
+class ImmediateEntryDatabaseScheduler(schedulers.DatabaseScheduler):
+    Entry = ImmediateFirstEntry
+
 
 """
 General Utils
