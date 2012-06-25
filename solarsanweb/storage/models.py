@@ -42,7 +42,8 @@ class ZFSBackedModel( models.Model ):
             # Good, it doesn't exist. Create it.
             if zfs_type == 'snapshot':      zfs_ret = zfs.dataset.snapshot( name )
             # FUCK Volume creation NOT IMPLEMENTED YET
-            elif zfs_type == 'volume':      zfs_ret = zfs.volume.create( name, kwargs.get( 'size', '1G' ) )
+            #elif zfs_type == 'volume':      zfs_ret = zfs.volume.create( name, kwargs.get( 'size', '1G' ) )
+            elif zfs_type == 'volume':      pass
             elif zfs_type in ['filesystem', 'dataset']:
                                             zfs_ret = zfs.dataset.create( name )
             # FUCK Pool creation NOT IMPLEMENTED YET

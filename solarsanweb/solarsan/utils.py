@@ -5,7 +5,7 @@ from django.utils import simplejson
 #from django.db.models.base import ModelBase
 import string, os, sys
 import logging, datetime, time
-
+from django import http
 
 """
 MixIns

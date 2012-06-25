@@ -64,3 +64,6 @@
 [submodule "solarsanweb/static/3rd/nvd3"]
 	path = solarsanweb/static/3rd/nvd3
 	url = git://github.com/novus/nvd3.git
+[submodule "vendor-local/pkgs/gluster"]
+	path = vendor-local/pkgs/gluster
+	url = git://github.com/joejulian/python-gluster.git
