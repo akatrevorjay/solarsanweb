@@ -49,6 +49,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
         """ This gets called for each level of the tree to handle the level's items """
         has = getattr( cur, 'has', [] )
         for ztype_obj in [Pool, Filesystem, Volume, Snapshot]:
+            logging.debug('has=%s cur=%s ztype=%s', has, cur, ztype_obj._zfs_type)
             if not ztype_obj._zfs_type + 's' in has: continue
             ztype = ztype_obj._zfs_type
             for val in getattr( cur, ztype + 's' ).values():
