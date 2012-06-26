@@ -63,35 +63,29 @@ class NetworkDetailView( generic.TemplateView ):
         context = {}
         return self.render_to_response( context )
 
+def get_ifaces( iface=None ):
+    """ Helper to get a list of interfaces and it's properties """
+    ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
+    ## TODO Grab DNS
+    af_types = netifaces.address_families
+    interfaces = {}
+    for iface in netifaces.interfaces( iface ):
+        interface = interfaces[iface] = {'name': iface,
+                                         'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) )
+                                         }
+
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
-        ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
-        interfaces = {}
-        af_types = netifaces.address_families
-
-        for iface in netifaces.interfaces():
-            interface = interfaces[iface] = {'name': iface,
-                                             'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) )
-                                             }
-
-        ## FUCK Only show interfaces that match /^(eth|ib)\d+$/
-        # Don't show lo interface
-        del interfaces['lo']
-
+        interfaces = get_ifaces()
+        del interfaces['lo']    # Don't show lo interface
         context = {'interfaces': interfaces, }
         return self.render_to_response( context )
 
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
-        iface = kwargs['interface']
-        interface = {'name': iface,
-                     'addrs': {},
-                     }
-        for af, addr in netifaces.ifaddresses( iface ).items()
-            interface['addrs'][af_types[int( af )]] = addr
-        context = {'interface': interface, }
+        context = {'interface': get_ifaces( kwargs['interface'] ), }
         return self.render_to_response( context )
 
 
