@@ -63,7 +63,7 @@ class NetworkDetailView( generic.TemplateView ):
         context = {}
         return self.render_to_response( context )
 
-class NetworkInterfaceListView( object ):
+class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
         ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
