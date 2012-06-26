@@ -1,0 +1,23 @@
+{% extends "base_page_detail.html" %}
+
+{% block page_breadcrumbs_pre %}
+<li class="static">
+    <a href="/configure">configure</a>
+    <span class="divider">&raquo;</span>
+</li>
+{% endblock %}
+
+{% block page_content_sidenav_pre %}
+{% endblock %}
+
+{% block page_content_sidenav %}
+    <li class="nav-header">General</li>
+    <li><a href="/configure/network/interfaces">Network Interfaces</a></li>
+    <li class="nav-header">SolarSan Cluster</li>
+    <li><a href="/configure/cluster/peers">Peers</a></li>
+{% endblock %}
+
+{% block page_content %}
+    {% include 'configure/home_detail_default.html' %}
+{% endblock %}
+

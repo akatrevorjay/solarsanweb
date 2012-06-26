@@ -1,0 +1,57 @@
+{% extends "base_page_detail.html" %}
+
+{% block page_breadcrumbs_pre %}
+<li class="static">
+    <a href="/configure">configure</a>
+    <span class="divider">&raquo;</span>
+</li>
+<li class="static active">
+    <span>cluster</span>
+    <span class="divider">&raquo;</span>
+</li>
+<li class="static page-content-select active">
+    <a href="/configure/cluster/peers">peers</a>
+    <span class="divider hide">&raquo;</span>
+</li>
+{% endblock %}
+
+{% block page_content_sidenav_pre %}
+    <li class="nav-header">SolarSan Cluster Peers</li>
+{% endblock %}
+
+{% block page_content_sidenav %}
+    {% for peer in peers %}
+        <li class="page-content-select"><a href="/configure/cluster/peers/detail/{{ peer|urlize }}" rel="tooltip" title="{{ peers[peer]['state']|urlize }}">
+            {{ peer }}
+        </a></li>
+    {% endfor %}
+{% endblock %}
+
+{% block page_content_sidenav_post %}
+    <li><a href="/configure/cluster/peers/add"><span class="label label-info">add peer</span></a></li>
+{% endblock %}
+
+{% block page_content %}
+    {% with peer = {peers.keys()[0]: peers[peers.keys()[0]]} %}
+        {% include 'configure/cluster/peer_detail.html' %}
+    {% endwith %}
+{% endblock %}
+
+{% block page_container_post %}
+    <div class="modal fade hide" id="add-peer-modal">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">×</button>
+        <h3>Add Peer</h3>
+      </div>
+      <div class="modal-body">
+          TODO List of neatbeacon servers
+          <label><strong>IP:</strong> <input class="sprited"/></label>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+        <a href="#" class="btn btn-primary">Add</a>
+      </div>
+    </div>
+{% endblock %}
+
+

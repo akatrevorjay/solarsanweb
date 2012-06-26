@@ -1,5 +1,5 @@
 from celery.task.base import PeriodicTask
-from solarsan.models import Pool, Pool_IOStat
+from storage.models import Pool, Pool_IOStat
 from solarsan.utils import convert_human_to_bytes
 import logging
 from datetime import timedelta

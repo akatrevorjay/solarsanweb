@@ -6,94 +6,98 @@
 <a class="brand" href="/">SolarSan Console</a>
 <div>
     <ul class="nav">
-        <li><a href="/">dash</a></li>
-        <li><a href="/configure">configure</a></li>
-        <li><a href="/pools">pools</a></li>
-        <li><a href="/analytics">analytics</a></li>
+        <li>
+            <a href="/status">status</a>
+        </li>
+        <li>
+            <a href="/configure">configure</a>
+        </li>
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">pools<span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                {% for pool in pools %}
+                <li>
+                    <a href="/storage/pools/detail/{{ pool.name|urlize }}">{{ pool.name }}</a>
+                </li>
+                
+                
+                {% endfor %}
+            </ul>
+        </li>
+        <li>
+            <a href="/analytics">analytics</a>
+        </li>
     </ul>
 
     <ul class="nav pull-right">
         <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">help<span class="caret"></span></a>
             <ul class="dropdown-menu">
-                {#<li><a href="#" onclick="graphs_toggle();">Tooltips Hide / Show</a></li>
-                <li class="divider"></li>#}
-                <li><a href="http://www.localhostsolutions.com">Support</a></li>
+                {#
+                <li>
+                    <a href="#" onclick="graphs_toggle();">Tooltips Hide / Show</a>
+                </li>
+                <li class="divider"></li>
+                #}
+                <li>
+                    <a href="http://www.localhostsolutions.com">Support</a>
+                </li>
             </ul>
         </li>
 
         {% if user and user.is_authenticated() %}
-            <!-- Signed In -->
-            <li class="dropdown">
-                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                    <i class="icon-user"></i> {{ user.username }}
-                    <span class="caret"></span>
-                </a>
-                <ul class="dropdown-menu">
-                    {#<li><a href="/user/profile">Profile</a></li>#}
-                    <li><a href="/user/changepassword">Change Password</a></li>
-                    <li class="divider"></li>
-                    <li><a href="/user/signout">Sign Out</a></li>
-                </ul>
-            </li>
+        <!-- Signed In -->
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#"> <i class="icon-user"></i> {{ user.username }} <span class="caret"></span> </a>
+            <ul class="dropdown-menu">
+                {#
+                <li>
+                    <a href="/user/profile">Profile</a>
+                </li>
+                #}
+                <li>
+                    <a href="/user/changepassword">Change Password</a>
+                </li>
+                <li class="divider"></li>
+                <li>
+                    <a href="/user/signout">Sign Out</a>
+                </li>
+            </ul>
+        </li>
         {% else %}
-            <!-- Signed Out -->
-            <li><a href="#sign-in-modal" data-toggle="modal">sign in</a></li>
+        <!-- Signed Out -->
+        <li>
+            <a href="#sign-in-modal" data-toggle="modal">sign in</a>
+        </li>
         {% endif %}
     </ul>
 </div>
-
-{#<div class="nav-collapse navbar_links">
-    {#<ul class="nav">
-        <li class="dropdown">
-            {% for pool in pools %}
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">pool: {{ pool.name }}<span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                    <li><a href="#">{{ pool.name }}</a></li>
-                </ul>
-            {% endfor %}
-        </li>
-    </ul>#}
-
-    <ul class="nav pull-right">
-        {#<li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">debug<span class="caret"></span></a>
-            <ul class="dropdown-menu">
-                <li><a href="#">Stuff</a></li>
-            </ul>
-        </li>
-
-        <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">graphs<span class="caret"></span></a>
-            <ul class="dropdown-menu">
-                <li><a href="#">Overall Stats</a></li>
-                <li class="divider"></li>
-                <li><a href="#" onclick="$('#graphs').toggle();">Hide / Show</a></li>
-            </ul>
-        </li>#}
-    </ul>
-</div>#}
 
 {% endblock %}
 
 {% block post_container %}
 
 <div class="modal fade hide" id="sign-in-modal">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">×</button>
-    <h3>Can I see some ID?</h3>
-    <span>Please sign in using the form below</span>
-  </div>
-  <div class="modal-body">
-    <label><strong>Username:</strong> <input class="sprited"/></label>
-    <label><strong>Password:</strong> <input class="sprited"/></label>
-  </div>
-  <div class="modal-footer">
-    <a href="#" class="btn" data-dismiss="modal">Close</a>
-    <a href="#" class="btn btn-primary">Log In</a>
-  </div>
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+            ×
+        </button>
+        <h3>Can I see some ID?</h3>
+        <span>Please sign in using the form below</span>
+    </div>
+    <div class="modal-body">
+        <label><strong>Username:</strong>
+            <input class="sprited"/>
+        </label>
+        <label><strong>Password:</strong>
+            <input class="sprited"/>
+        </label>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+        <a href="#" class="btn btn-primary">Log In</a>
+    </div>
 </div>
 
 {% endblock %}
-
 

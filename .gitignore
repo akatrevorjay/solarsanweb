@@ -13,6 +13,7 @@ polls
 env/
 .ropeproject/
 vendor-local/
+.pydevproject
 
 data/*
 

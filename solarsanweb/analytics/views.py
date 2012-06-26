@@ -7,9 +7,9 @@ from django.views.decorators.cache import cache_page
 from django import http
 from django.views import generic
 
-from solarsan.utils import *
-from solarsan.models import *
-from solarsan.forms import *
+#from solarsan.utils import *
+from storage.models import Pool, Dataset, Filesystem, Snapshot, Pool_IOStat
+#from solarsan.forms import *
 
 from datetime import datetime, timedelta
 #import time
