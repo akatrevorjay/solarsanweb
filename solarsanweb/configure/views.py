@@ -19,7 +19,7 @@ class HomeListView( generic.TemplateView ):
 Cluster
 """
 from django.core.cache import cache
-#import gluster
+import gluster
 
 class ClusterPeerListView( generic.TemplateView ):
     template_name = 'configure/cluster/peer_list.html'
