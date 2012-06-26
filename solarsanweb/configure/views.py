@@ -69,7 +69,7 @@ class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
         ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
-        interfaces = dict( map( lambda x: ( x, ( ( 'name' ), ( x ) ), ( ( 'addrs' ), netifaces.ifaddresses( x ) ) ), netifaces.interfaces() ) )
+        interfaces = dict( map( lambda x: ( x, ( ( 'name', x ), ( 'addrs', netifaces.ifaddresses( x ) ) ) ), netifaces.interfaces() ) )
 
         ## FUCK Only show interfaces that match /^(eth|ib)\d+$/
         # Don't show lo interface
