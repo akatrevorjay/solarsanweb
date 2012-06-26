@@ -26,7 +26,10 @@ class ClusterPeerListView( generic.TemplateView ):
     def get( self, request, *args, **kwargs ):
         peers = gluster.peer.status()
         discovered_peers = cache.get( 'RecentlyDiscoveredClusterNodes' )
-        discovered_peers.pop( '127.0.0.1' )  # Remove localhost
+        if discovered_peers:
+            discovered_peers = discovered_peers['nodes']
+            if '127.0.0.1' in discovered_peers:
+                discovered_peers.pop( '127.0.0.1' )  # Remove localhost
 
         context = {
                 'peers': peers['host'],
@@ -73,8 +76,8 @@ def get_ifaces( *args ):
 
     for iface in get_ifaces:
         iftype = None
-        if   iface.startswith('eth'):   iftype = 'ethernet'
-        elif iface.startswith('ib'):    iftype = 'infiniband'
+        if   iface.startswith( 'eth' ):   iftype = 'ethernet'
+        elif iface.startswith( 'ib' ):    iftype = 'infiniband'
 
         interfaces[iface] = {'name': iface,
                              'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
