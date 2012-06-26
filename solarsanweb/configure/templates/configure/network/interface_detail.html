@@ -7,7 +7,7 @@
 {% block subpage_content %}
 {% if interface %}
 
-<pre>{{ interfaces|pprint }}</pre>
+<pre>{{ interfaces[interface]|pprint }}</pre>
 <br />
 Debug /etc/network/interfaces:<br />
 <pre>{% include 'configure/network/interfaces' %}</pre>
