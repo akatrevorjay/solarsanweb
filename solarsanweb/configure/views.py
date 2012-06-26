@@ -82,7 +82,7 @@ def get_ifaces( *args ):
                              'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
                                      'search': 'solarsan.local',
                                      },
-                             'iftype': iftype,
+                             'type': iftype,
                              ## TODO Get real network IP info from DB
                              'config': {'proto': 'static',
                                         'ipaddr': '10.0.0.1',
