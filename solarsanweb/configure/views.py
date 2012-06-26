@@ -68,6 +68,7 @@ class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
         interfaces = dict( map( lambda x: ( x, netifaces.ifaddresses( x ) ), netifaces.interfaces() ) )
+        del interfaces['lo']
         context = {'interfaces': interfaces,
                    }
         return self.render_to_response( context )
