@@ -67,6 +67,7 @@ class NetworkDetailView( generic.TemplateView ):
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
+        ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
         interfaces = dict( map( lambda x: ( x, netifaces.ifaddresses( x ) ), netifaces.interfaces() ) )
         del interfaces['lo']
         context = {'interfaces': interfaces,
