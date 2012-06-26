@@ -68,12 +68,12 @@ def get_ifaces( *args ):
     interfaces = {}
     af_types = netifaces.address_families
 
-    if args: get_ifaces = args
-    else:    get_ifaces = netifaces.interfaces()
+    if args: ifaces = args
+    else:    ifaces = netifaces.interfaces()
 
-    for iface in get_ifaces:
-        if   iface.startswith('eth'):   iftype = 'ethernet'
-        elif iface.startswith('ib'):    iftype = 'infiniband'
+    for iface in ifaces:
+        if   str(iface).startswith('eth'):   iftype = 'ethernet'
+        elif str(iface).startswith('ib'):    iftype = 'infiniband'
 
         interfaces[iface] = {'name': iface,
                              'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
