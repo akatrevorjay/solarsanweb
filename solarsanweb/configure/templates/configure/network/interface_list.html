@@ -16,7 +16,7 @@
 </li>
 {% for iface_name, iface in interfaces.items() %}
 <li class="page-content-select">
-    <a href="/configure/network/interfaces/{{ iface_name|urlize }}" rel="tooltip" title="{% for addrset in iface[2] %}{{ addrset.addr }} / {{ addrset.netmask }}{% endfor $}">{{ iface_name }}</a>
+    <a href="/configure/network/interfaces/{{ iface_name|urlize }}" rel="tooltip" title="{% for addrset in iface[2] %}{{ addrset.addr }} / {{ addrset.netmask }}{% endfor %}">{{ iface_name }}</a>
 </li>
 {% endfor %}
 {% endblock %}
