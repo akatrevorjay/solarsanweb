@@ -26,7 +26,7 @@ class ClusterPeerListView( generic.TemplateView ):
     def get( self, request, *args, **kwargs ):
         peers = gluster.peer.status()
         discovered_peers = cache.get( 'RecentlyDiscoveredClusterNodes' )
-        discovered_peers.pop( '127.0.0.1' )
+        discovered_peers.remove( '127.0.0.1' )  # Remove localhost
 
         context = {
                 'peers': peers['host'],
