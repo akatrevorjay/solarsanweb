@@ -13,7 +13,7 @@ auto lo
 iface lo inet loopback
 
 {% for iface in interfaces %}
-{% with config = iface.config %}
+{% with config = iface['config'] %}
 
 ##
 ## Interface: {{ iface.name }}
