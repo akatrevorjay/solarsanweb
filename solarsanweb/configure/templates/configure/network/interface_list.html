@@ -11,14 +11,17 @@
 {% endblock %}
 
 {% block page_content_sidenav %}
-    <li class="nav-header">Network Interfaces</li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/eth0">eth0</a></li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/eth1">eth1</a></li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/ib0">ib0</a></li>
-    <li class="page-content-select"><a href="/configure/network/interfaces/ib1">ib1</a></li>
+<li class="nav-header">
+    Network Interfaces
+</li>
+{% for iface_name, iface in interfaces.items() %}
+<li class="page-content-select">
+    <a href="/configure/network/interfaces/{{ iface_name|urlize }}" rel="tooltip" title="{% for addrset in iface[2] %}{{ addrset.addr }} / {{ addrset.netmask }}{% endfor $}">{{ iface_name }}</a>
+</li>
+{% endfor %}
 {% endblock %}
 
 {% block page_content %}
-    {% include 'configure/network/interface_detail.html' %}
+{% include 'configure/network/interface_detail.html' %}
 {% endblock %}
 

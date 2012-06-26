@@ -18,9 +18,9 @@ Cluster Discovery / Beacon
 
 from django.core.cache import cache
 from django.conf import settings
-from configure.models import ClusterNode
+#from configure.models import ClusterNode
 import beacon
-import json
+#import json
 
 ##
 ## TODO RESTful service perhaps ysing piston to get information from one SAN to the other after discovery is completed.

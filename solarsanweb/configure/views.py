@@ -8,34 +8,39 @@ from django import http
 from django.views import generic
 
 from storage.models import Pool, Dataset, Filesystem, Snapshot
-import gluster
 
-class HomeListView(generic.TemplateView):
+class HomeListView( generic.TemplateView ):
     template_name = 'configure/home_list.html'
-    def get(self, request, *args, **kwargs):
+    def get( self, request, *args, **kwargs ):
         context = {}
-        return self.render_to_response(context)
+        return self.render_to_response( context )
 
 """
 Cluster
 """
+from django.core.cache import cache
+import gluster
 
-class ClusterPeerListView(generic.TemplateView):
+class ClusterPeerListView( generic.TemplateView ):
     template_name = 'configure/cluster/peer_list.html'
-    def get(self, request, *args, **kwargs):
+    def get( self, request, *args, **kwargs ):
         peers = gluster.peer.status()
+        discovered_peers = cache.get( 'RecentlyDiscoveredClusterNodes' )
+        discovered_peers.pop( '127.0.0.1' )
+
         context = {
                 'peers': peers['host'],
+                'discovered_peers': discovered_peers,
                 'peer_count': peers['peers'],
                 }
-        return self.render_to_response(context)
+        return self.render_to_response( context )
 
-class ClusterPeerDetailView(generic.TemplateView):
+class ClusterPeerDetailView( generic.TemplateView ):
     template_name = 'configure/cluster/peer_detail.html'
-    def get(self, request, *args, **kwargs):
+    def get( self, request, *args, **kwargs ):
         peers = gluster.peer.status()
 
-        peer_host = kwargs.get('peer')
+        peer_host = kwargs.get( 'peer' )
         if not peer_host in peers['host'].keys():
             raise http.Http404
 
@@ -46,29 +51,32 @@ class ClusterPeerDetailView(generic.TemplateView):
                 'peer': peer,
                 'peer_count': peers['peers'],
                }
-        return self.render_to_response(context)
+        return self.render_to_response( context )
 
 """
 Network
 """
+import netifaces
 
-class NetworkDetailView(generic.TemplateView):
+class NetworkDetailView( generic.TemplateView ):
     template_name = 'configure/network/network_detail.html'
-    def get(self, request, *args, **kwargs):
+    def get( self, request, *args, **kwargs ):
         context = {}
-        return self.render_to_response(context)
+        return self.render_to_response( context )
 
-class NetworkInterfaceListView(generic.TemplateView):
+class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
-    def get(self, request, *args, **kwargs):
-        context = {}
-        return self.render_to_response(context)
+    def get( self, request, *args, **kwargs ):
+        interfaces = dict( map( lambda x: ( x, netifaces.ifaddresses( x ) ), netifaces.interfaces() ) )
+        context = {'interfaces': interfaces,
+                   }
+        return self.render_to_response( context )
 
-class NetworkInterfaceDetailView(generic.TemplateView):
+class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
-    def get(self, request, *args, **kwargs):
+    def get( self, request, *args, **kwargs ):
         context = {}
-        return self.render_to_response(context)
+        return self.render_to_response( context )
 
 
 
