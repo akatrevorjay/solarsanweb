@@ -14,7 +14,7 @@
 <li class="nav-header">
     Network Interfaces
 </li>
-{% for iface in interfaces.items() %}
+{% for iface in interfaces.values() %}
 <li class="page-content-select">
     <a href="/configure/network/interfaces/detail/{{ iface.name|urlize }}" rel="tooltip" title="{% for iface_addr in iface.addrs[2] %}{{ iface_addr.addr }} / {{ iface_addr.netmask }};{% endfor %}">{{ iface.name }}</a>
 </li>
