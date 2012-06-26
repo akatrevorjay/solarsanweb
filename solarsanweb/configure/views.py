@@ -41,8 +41,7 @@ class ClusterPeerDetailView( generic.TemplateView ):
         peers = gluster.peer.status()
 
         peer_host = kwargs.get( 'peer' )
-        if not peer_host in peers['host'].keys():
-            raise http.Http404
+        if not peer_host in peers['host'].keys(): raise http.Http404
 
         peer = {peer_host: peers['host'][peer_host]}
 
@@ -61,17 +60,22 @@ import netifaces
 class NetworkDetailView( generic.TemplateView ):
     template_name = 'configure/network/network_detail.html'
     def get( self, request, *args, **kwargs ):
-        context = {}
+        interface = {'name': kwargs['interface'],
+                     'addrs': netifaces.ifaddresses( kwargs['interface'] ), }
+        context = {'interface': interface, }
         return self.render_to_response( context )
 
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
         ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
-        interfaces = dict( map( lambda x: ( x, netifaces.ifaddresses( x ) ), netifaces.interfaces() ) )
+        interfaces = dict( map( lambda x: ( x, {'name': x, 'addrs': netifaces.ifaddresses( x )} ), netifaces.interfaces() ) )
+
+        ## FUCK Only show interfaces that match /^(eth|ib)\d+$/
+        # Don't show lo interface
         del interfaces['lo']
-        context = {'interfaces': interfaces,
-                   }
+
+        context = {'interfaces': interfaces, }
         return self.render_to_response( context )
 
 class NetworkInterfaceDetailView( generic.TemplateView ):

@@ -5,6 +5,12 @@
 {% endblock %}
 
 {% block subpage_content %}
+    {% if interface %}
+    <pre>
+        {{ interface }}
+    </pre>
+    {% else %}
     List and configure interfaces, apply templated interfaces file
+    {% endif %}
 {% endblock %}
 
