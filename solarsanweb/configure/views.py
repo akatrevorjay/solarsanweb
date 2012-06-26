@@ -72,11 +72,8 @@ class NetworkInterfaceListView( generic.TemplateView ):
 
         for iface in netifaces.interfaces():
             interface = interfaces[iface] = {'name': iface,
-                                             'addrs': {},
+                                             'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) )
                                              }
-            iface_addrs = netifaces.ifaddresses( iface )
-            for af in iface_addrs.keys():
-                interface['addrs'][af_types[int( af )]] = iface_addrs[af]
 
         ## FUCK Only show interfaces that match /^(eth|ib)\d+$/
         # Don't show lo interface
@@ -88,8 +85,12 @@ class NetworkInterfaceListView( generic.TemplateView ):
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
-        interface = {'name': kwargs['interface'],
-                     'addrs': netifaces.ifaddresses( kwargs['interface'] ), }
+        iface = kwargs['interface']
+        interface = {'name': iface,
+                     'addrs': {},
+                     }
+        for af, addr in netifaces.ifaddresses( iface ).items()
+            interface['addrs'][af_types[int( af )]] = addr
         context = {'interface': interface, }
         return self.render_to_response( context )
 
