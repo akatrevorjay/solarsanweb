@@ -1,18 +1,14 @@
 {% extends 'base_page_detail_subpage.html' %}
 
 {% block subpage_topnav_brand %}
-{% if interface %}
-<a class="brand configure-detail-select" href="#">Network Interface: {{ interface.name }}</a>
-{% else %}
-<a class="brand configure-detail-select" href="#">Network</a>
-{% endif %}
+<a class="brand configure-detail-select" href="#">Network Interface{% if interface %}: {{ interface }}{% else %}s{% endif %}</a>
 {% endblock %}
 
 {% block subpage_content %}
 {% if interface %}
-<pre>{{ interface|pprint }}</pre>
+<pre>{{ interfaces|pprint }}</pre>
 {% else %}
-List and configure interfaces, apply templated interfaces file
+List and configure interfaces, apply templated interfaces file on save, etc
 {% endif %}
 {% endblock %}
 

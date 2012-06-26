@@ -63,16 +63,22 @@ class NetworkDetailView( generic.TemplateView ):
         context = {}
         return self.render_to_response( context )
 
-def get_ifaces( iface=None ):
+def get_ifaces( *args ):
     """ Helper to get a list of interfaces and it's properties """
-    ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
-    ## TODO Grab DNS
-    af_types = netifaces.address_families
     interfaces = {}
-    for iface in netifaces.interfaces( iface ):
+    af_types = netifaces.address_families
+
+    if args: get_ifaces = args
+    else:    get_ifaces = netifaces.interfaces()
+
+    for iface in get_ifaces:
         interface = interfaces[iface] = {'name': iface,
-                                         'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) )
+                                         'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
+                                         ## TODO Grab DNS
+                                         'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
+                                                 'search': 'solarsan.local', },
                                          }
+    return interfaces
 
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
@@ -85,7 +91,8 @@ class NetworkInterfaceListView( generic.TemplateView ):
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
-        context = {'interface': get_ifaces( kwargs['interface'] ), }
+        context = {'interface': kwargs['interface'],
+                   'interfaces': get_ifaces( kwargs['interface'] ), }
         return self.render_to_response( context )
 
 
