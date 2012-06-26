@@ -76,7 +76,7 @@ class NetworkInterfaceListView( generic.TemplateView ):
                                              },
             iface_addrs = netifaces.ifaddresses( iface )
             for af in iface_addrs.keys():
-                interface['addrs'][af_types[af]] = iface_addrs[af]
+                interface['addrs'][af_types[int( af )]] = iface_addrs[af]
 
         ## FUCK Only show interfaces that match /^(eth|ib)\d+$/
         # Don't show lo interface
