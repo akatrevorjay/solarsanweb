@@ -68,12 +68,13 @@ def get_ifaces( *args ):
     interfaces = {}
     af_types = netifaces.address_families
 
-    if args: ifaces = args
-    else:    ifaces = netifaces.interfaces()
+    if args: get_ifaces = args
+    else:    get_ifaces = netifaces.interfaces()
 
-    for iface in ifaces:
-        if   str(iface).startswith('eth'):   iftype = 'ethernet'
-        elif str(iface).startswith('ib'):    iftype = 'infiniband'
+    for iface in get_ifaces:
+        iftype = None
+        if   iface.startswith('eth'):   iftype = 'ethernet'
+        elif iface.startswith('ib'):    iftype = 'infiniband'
 
         interfaces[iface] = {'name': iface,
                              'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
@@ -81,6 +82,7 @@ def get_ifaces( *args ):
                              'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
                                      'search': 'solarsan.local',
                                      },
+                             'iftype': iftype,
                              ## TODO Get real network IP info from DB
                              'config': {'proto': 'static',
                                         'ipaddr': '10.0.0.1',
