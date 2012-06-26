@@ -6,9 +6,16 @@
 
 {% block subpage_content %}
 {% if interface %}
+
 <pre>{{ interfaces|pprint }}</pre>
+<br />
+Debug /etc/network/interfaces:<br />
+<pre>{% include 'configure/network/interfaces' %}</pre>
+
 {% else %}
+
 List and configure interfaces, apply templated interfaces file on save, etc
+
 {% endif %}
 {% endblock %}
 

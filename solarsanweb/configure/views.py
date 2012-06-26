@@ -72,12 +72,22 @@ def get_ifaces( *args ):
     else:    get_ifaces = netifaces.interfaces()
 
     for iface in get_ifaces:
-        interface = interfaces[iface] = {'name': iface,
-                                         'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
-                                         ## TODO Grab DNS
-                                         'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
-                                                 'search': 'solarsan.local', },
-                                         }
+        interfaces[iface] = {'name': iface,
+                             'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
+                             ## TODO Grab DNS
+                             'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
+                                     'search': 'solarsan.local',
+                                     },
+                             ## TODO Get real network IP info from DB
+                             'config': {'proto': 'static',
+                                        'ip': '10.0.0.1',
+                                        'netmask': '255.255.255.0',
+                                        'gateway': '10.0.0.254',
+                                        'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
+                                                'search': 'solarsan.local',
+                                                },
+                                        },
+                             }
     return interfaces
 
 class NetworkInterfaceListView( generic.TemplateView ):
