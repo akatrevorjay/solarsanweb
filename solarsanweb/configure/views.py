@@ -29,7 +29,7 @@ class ClusterPeerListView( generic.TemplateView ):
         if discovered_peers:
             discovered_peers = discovered_peers['nodes']
             if '127.0.0.1' in discovered_peers:
-                discovered_peers.pop( '127.0.0.1' )  # Remove localhost
+                discovered_peers.remove( '127.0.0.1' )  # Remove localhost
 
         context = {
                 'peers': peers['host'],
