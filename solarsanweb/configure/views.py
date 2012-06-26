@@ -74,7 +74,7 @@ class NetworkInterfaceListView( generic.TemplateView ):
             interface = interfaces[iface] = {'name': iface,
                                              'addrs': {}
                                              },
-            iface_addrs = netifaces.ifaddresses()
+            iface_addrs = netifaces.ifaddresses(iface)
             for af_type, addr in iface_addrs.items():
                 interface['addrs'][af_types[af_type]] = addr
 
