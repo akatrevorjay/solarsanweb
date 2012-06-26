@@ -18,6 +18,7 @@ iface lo inet loopback
 ## Interface: {{ iface.name }}
 ## {{ iface.type }}
 ##
+{% if not iface.config.proto == 'none' %}
 auto {{ iface.name }}
 iface {{ iface.name }} inet {{ iface.config.proto }}
     {% if not iface.config.proto == 'dhcp' -%}
@@ -45,6 +46,7 @@ iface {{ iface.name }} inet {{ iface.config.proto }}
     pre-up echo connected > /sys/class/net/{{ iface.name }}/mode || true
     mtu 65520
     {% endif %}
+{% endif %}
 
 {% endfor %}
 
