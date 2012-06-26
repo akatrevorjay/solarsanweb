@@ -12,12 +12,13 @@ MixIns
 The kool-aid.
 """
 
-class LoggedInMixin(object):
+class LoggedInMixin( object ):
     """ A mixin requiring a user to be logged in. """
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch( self, request, *args, **kwargs ):
         if not request.user.is_authenticated():
             raise http.Http404
-        return super(LoggedInMixin, self).dispatch(request, *args, **kwargs)
+        return super( LoggedInMixin, self ).dispatch( request, *args, **kwargs )
+
 
 """
 Celery scheduler that runs tasks at startup immediately then continues with their
@@ -26,15 +27,17 @@ original plan.
 """
 from djcelery import schedulers
 
-class ImmediateFirstEntry(schedulers.ModelEntry):
-    def is_due(self):
+
+class ImmediateFirstEntry( schedulers.ModelEntry ):
+    def is_due( self ):
         if self.last_run_at is None:
             return True, 0
-        return super(ImmediateFirstEntry, self).is_due()
-    def _default_now(self):
+        return super( ImmediateFirstEntry, self ).is_due()
+    def _default_now( self ):
         return None
 
-class ImmediateEntryDatabaseScheduler(schedulers.DatabaseScheduler):
+
+class ImmediateEntryDatabaseScheduler( schedulers.DatabaseScheduler ):
     Entry = ImmediateFirstEntry
 
 
@@ -43,107 +46,124 @@ General Utils
 Safe to run with.
 """
 
-class FilterableDict(dict):
+class LazyDict( dict ):
+    def __getattr__( self, attr ):
+        if attr in self:
+            return self[attr]
+        else:
+            #return super(LazyDict,self).__getattr__(attr)
+            raise AttributeError, "'%s' object has no attribute '%s'" \
+                % ( self.__class__.__name__, attr )
+
+    def __setattr__( self, attr, value ):
+        if hasattr( super( LazyDict, self ), attr ):
+            raise AttributeError, "'%s' object already has attribute '%s'" \
+                % ( self.__class__.__name__, attr )
+        self[attr] = value
+
+
+class FilterableDict( dict ):
     """ Filter dict contents by str(key), list(keys), dict(key=value) """
 
-    def filter(self, *args, **kwargs):
+    def filter( self, *args, **kwargs ):
         """ Filter dict object contents by str(key), list(keys), dict(key=value) where contents are an object and dict(key=value) are matched on obj.data """
         items = self.iteritems()
-        for filter in list( list(*args) + [dict(**kwargs)] ):
-            if not len(filter) > 0:
+        for filter in list( list( *args ) + [dict( **kwargs )] ):
+            if not len( filter ) > 0:
                 continue
-            filter_type = str(type(filter))
-            if filter_type=="<type 'str'>":
-                items = [(k,v) for (k,v) in items if k == filter]
-            elif filter_type=="<type 'list'>":
-                items = [(k,v) for (k,v) in items if k in filter]
-            elif filter_type=="<type 'dict'>":
-                items = [ (k,v) for (k,v) in items
-                            for (kwk, kwv) in kwargs.items()
-                              if v.get(kwk) == kwv ]
-        new = self.__new__(self.__class__, *list(items))
+            filter_type = str( type( filter ) )
+            if filter_type == "<type 'str'>":
+                items = [( k, v ) for ( k, v ) in items if k == filter]
+            elif filter_type == "<type 'list'>":
+                items = [( k, v ) for ( k, v ) in items if k in filter]
+            elif filter_type == "<type 'dict'>":
+                items = [ ( k, v ) for ( k, v ) in items
+                            for ( kwk, kwv ) in kwargs.items()
+                              if v.get( kwk ) == kwv ]
+        new = self.__new__( self.__class__, *list( items ) )
         return new
 
-class CachedFunc(object):
+class CachedFunc( object ):
     __name__ = "<unknown>"
     """ Cached function or property """
-    def __init__(self, func=None, ttl=300):
+    def __init__( self, func=None, ttl=300 ):
         self.ttl = ttl
-        self.__set_func(func)
-    def __set_func(self, func=None, doc=None):
+        self.__set_func( func )
+    def __set_func( self, func=None, doc=None ):
         if not func:
             return False
         self.func = func
         self.__doc__ = doc or self.func.__doc__
         self.__name__ = self.func.__name__
         self.__module__ = self.func.__module__
-    def __call__(self, func=None, doc=None, *args, **kwargs):
+    def __call__( self, func=None, doc=None, *args, **kwargs ):
         if func:
-            self.__set_func(func, doc)
+            self.__set_func( func, doc )
             return self
         now = time.time()
         try:
             value, last_update = self._cache
             if self.ttl > 0 and now - last_update > self.ttl:
                 raise AttributeError
-        except (KeyError, AttributeError):
-            value = self.func(*args, **kwargs)
-            self._cache = (value, now)
+        except ( KeyError, AttributeError ):
+            value = self.func( *args, **kwargs )
+            self._cache = ( value, now )
         return value
-    def __get__(self, inst, owner):
+    def __get__( self, inst, owner ):
         now = time.time()
         try:
             value, last_update = inst._cache[self.__name__]
             if self.ttl > 0 and now - last_update > self.ttl:
                 raise AttributeError
-        except (KeyError, AttributeError):
-            value = self.func(inst)
+        except ( KeyError, AttributeError ):
+            value = self.func( inst )
             try:
                 cache = inst._cache
             except AttributeError:
                 cache = inst._cache = {}
-            cache[self.__name__] = (value, now)
+            cache[self.__name__] = ( value, now )
         return value
-    def __repr__(self):
+    def __repr__( self ):
         return "<@CachedFunc: '%s'>" % self.__name__
 
+
 import random
-@CachedFunc(ttl=3)
-def cachefunc_tester(*args, **kwargs):
-    return random.randint(0,100)
+@CachedFunc( ttl=3 )
+def cachefunc_tester( *args, **kwargs ):
+    return random.randint( 0, 100 )
 
 
-def convert_bytes_to_human(n):
+def convert_bytes_to_human( n ):
     """ Utility to convert bytes to human readable (K/M/G/etc) """
-    SYMBOLS = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    SYMBOLS = ( 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y' )
     PREFIX = {}
-    for i, j in enumerate(SYMBOLS):
-        PREFIX[j] = 1 << (i+1)*10
+    for i, j in enumerate( SYMBOLS ):
+        PREFIX[j] = 1 << ( i + 1 ) * 10
 
-    for i in reversed(SYMBOLS):
+    for i in reversed( SYMBOLS ):
         if n >= PREFIX[i]:
-            value = float(n) / PREFIX[i]
-            return '%.1f%s' % (value, i)
+            value = float( n ) / PREFIX[i]
+            return '%.1f%s' % ( value, i )
 
-def convert_human_to_bytes(s):
+def convert_human_to_bytes( s ):
     """ Utility to convert human readable (K/M/G/etc) to bytes """
-    SYMBOLS = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    SYMBOLS = ( 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y' )
     PREFIX = {}
-    for i, j in enumerate(SYMBOLS):
-        PREFIX[j] = 1 << (i+1)*10
+    for i, j in enumerate( SYMBOLS ):
+        PREFIX[j] = 1 << ( i + 1 ) * 10
 
-    s = str(s).upper()
+    s = str( s ).upper()
     for i in SYMBOLS:
-        if s.endswith(i):
-            return '%.0f' % (float(s[:-1]) * PREFIX[i])
+        if s.endswith( i ):
+            return '%.0f' % ( float( s[:-1] ) * PREFIX[i] )
 
     # Must be bytes or invalid data
     #TODO What if it's invalid data? How should that be handled?
-    return '%.0f' % float(s)
+    return '%.0f' % float( s )
 
 KEYNOTFOUND = '<KEYNOTFOUND>'       # KeyNotFound for dictDiff
 
-def dict_diff(first, second):
+def dict_diff( first, second ):
     """ Return a dict of keys that differ with another config object.  If a value is
         not found in one fo the configs, it will be represented by KEYNOTFOUND.
         @param first:   Fist dictionary to diff.
@@ -153,14 +173,14 @@ def dict_diff(first, second):
     diff = {}
     # Check all keys in first dict
     for key in first.keys():
-        if (not second.has_key(key)):
-            diff[key] = (first[key], KEYNOTFOUND)
-        elif (first[key] != second[key]):
-            diff[key] = (first[key], second[key])
+        if ( not second.has_key( key ) ):
+            diff[key] = ( first[key], KEYNOTFOUND )
+        elif ( first[key] != second[key] ):
+            diff[key] = ( first[key], second[key] )
     # Check all keys in second dict to find missing
     for key in second.keys():
-        if (not first.has_key(key)):
-            diff[key] = (KEYNOTFOUND, second[key])
+        if ( not first.has_key( key ) ):
+            diff[key] = ( KEYNOTFOUND, second[key] )
     return diff
 
 #class LazyJSONEncoder(simplejson.JSONEncoder):
@@ -198,27 +218,27 @@ def dict_diff(first, second):
 #
 #    return simplejson.dumps(obj,*args,**kwargs)
 
-def qdct_as_kwargs(qdct):
-    kwargs={}
-    for k,v in qdct.items():
-        kwargs[str(k)]=v
+def qdct_as_kwargs( qdct ):
+    kwargs = {}
+    for k, v in qdct.items():
+        kwargs[str( k )] = v
     return kwargs
 
 
-def statelazyproperty(func):
+def statelazyproperty( func ):
     """A decorator for state-based lazy evaluation of properties
     """
     cache = {}
-    def _get(self):
+    def _get( self ):
         state = self.__getstate__()
         try:
             v = cache[state]
-            print "Cache hit %s" % str(state)
+            print "Cache hit %s" % str( state )
             return v
         except KeyError:
-            print "Cache miss %s" % str(state)
-            cache[state] = value = func(self)
+            print "Cache miss %s" % str( state )
+            cache[state] = value = func( self )
             return value
 
-    return property(_get)
+    return property( _get )
 

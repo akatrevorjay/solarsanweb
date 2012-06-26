@@ -82,11 +82,11 @@ def get_ifaces( *args ):
                              'type': 'ethernet',
                              ## TODO Get real network IP info from DB
                              'config': {'proto': 'static',
-                                        'ip': '10.0.0.1',
+                                        'ipaddr': '10.0.0.1',
                                         'netmask': '255.255.255.0',
                                         'gateway': '10.0.0.254',
-                                        'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
-                                                'search': 'solarsan.local',
+                                        'dns': {'servers': ['8.8.8.8', '8.8.4.4'],
+                                                'search': ['solarsan.local'],
                                                 },
                                         },
                              }
@@ -103,8 +103,12 @@ class NetworkInterfaceListView( generic.TemplateView ):
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
+        interfaces = get_ifaces()
+        del interfaces['lo']    # Don't show lo interface
         context = {'interface': kwargs['interface'],
-                   'interfaces': get_ifaces( kwargs['interface'] ), }
+                   #'interfaces': get_ifaces( kwargs['interface'] ),
+                   'interfaces': interfaces,
+                   }
         return self.render_to_response( context )
 
 
