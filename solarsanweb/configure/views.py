@@ -60,31 +60,55 @@ import netifaces
 class NetworkDetailView( generic.TemplateView ):
     template_name = 'configure/network/network_detail.html'
     def get( self, request, *args, **kwargs ):
-        interface = {'name': kwargs['interface'],
-                     'addrs': netifaces.ifaddresses( kwargs['interface'] ), }
-        context = {'interface': interface, }
+        context = {}
         return self.render_to_response( context )
+
+def get_ifaces( *args ):
+    """ Helper to get a list of interfaces and it's properties """
+    interfaces = {}
+    af_types = netifaces.address_families
+
+    if args: get_ifaces = args
+    else:    get_ifaces = netifaces.interfaces()
+
+    for iface in get_ifaces:
+        interfaces[iface] = {'name': iface,
+                             'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
+                             ## TODO Grab DNS
+                             'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
+                                     'search': 'solarsan.local',
+                                     },
+                             ## TODO Grab type (or just parse name, w/e)
+                             'type': 'ethernet',
+                             ## TODO Get real network IP info from DB
+                             'config': {'proto': 'static',
+                                        'ipaddr': '10.0.0.1',
+                                        'netmask': '255.255.255.0',
+                                        'gateway': '10.0.0.254',
+                                        'dns': {'servers': ['8.8.8.8', '8.8.4.4'],
+                                                'search': ['solarsan.local'],
+                                                },
+                                        },
+                             }
+    return interfaces
 
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
-        ## FUCK This is a quick hack, and this data structure should IMO be more like what's in the interfaces generator template
-        interfaces = dict( map( 
-                               lambda x: ( x, dict( ( ( 'name', x ), ( 'addrs', netifaces.ifaddresses( x ) ) ) ) ),
-                               netifaces.interfaces()
-                               ) )
-
-        ## FUCK Only show interfaces that match /^(eth|ib)\d+$/
-        # Don't show lo interface
-        del interfaces['lo']
-
+        interfaces = get_ifaces()
+        del interfaces['lo']    # Don't show lo interface
         context = {'interfaces': interfaces, }
         return self.render_to_response( context )
 
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
-        context = {}
+        interfaces = get_ifaces()
+        del interfaces['lo']    # Don't show lo interface
+        context = {'interface': kwargs['interface'],
+                   #'interfaces': get_ifaces( kwargs['interface'] ),
+                   'interfaces': interfaces,
+                   }
         return self.render_to_response( context )
 
 
