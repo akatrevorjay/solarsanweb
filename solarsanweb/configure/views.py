@@ -60,9 +60,7 @@ import netifaces
 class NetworkDetailView( generic.TemplateView ):
     template_name = 'configure/network/network_detail.html'
     def get( self, request, *args, **kwargs ):
-        interface = {'name': kwargs['interface'],
-                     'addrs': netifaces.ifaddresses( kwargs['interface'] ), }
-        context = {'interface': interface, }
+        context = {}
         return self.render_to_response( context )
 
 class NetworkInterfaceListView( generic.TemplateView ):
@@ -84,7 +82,9 @@ class NetworkInterfaceListView( generic.TemplateView ):
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
-        context = {}
+        interface = {'name': kwargs['interface'],
+                     'addrs': netifaces.ifaddresses( kwargs['interface'] ), }
+        context = {'interface': interface, }
         return self.render_to_response( context )
 
 
