@@ -33,7 +33,7 @@ Network
 """
 
 ## TODO Fixtures for default network config
-class NetworkInterfaceConfig(model.Models):
+class NetworkInterfaceConfig(models.Model):
     name = models.CharField(max_length=32)
     ipaddr = models.IPAddressField()
     netmask = models.CharField()
@@ -43,3 +43,6 @@ class NetworkInterfaceConfig(model.Models):
     mtu = models.IntegerField(null=True)
     ## TODO Is JSONField best for DNS information? Easy I suppose..
     dns = JSONField()
+
+#class NetworkInterfaceConfigDNSServers(models.Model):
+#    server = models.IPAddressField()
