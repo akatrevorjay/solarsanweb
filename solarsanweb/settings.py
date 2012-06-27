@@ -273,7 +273,7 @@ LOGTAIL_FILES = {
 ## django-celery
 import djcelery
 djcelery.setup_loader()
-#CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+#CELERYBEAT_SCHEDULER = "solarsanweb.solarsan.utils.CeleryBeatScheduler"
 
 ## Celery broker
 BROKER_URL = "amqp://guest:guest@localhost:5672//"

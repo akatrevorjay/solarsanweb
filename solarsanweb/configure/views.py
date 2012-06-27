@@ -26,7 +26,10 @@ class ClusterPeerListView( generic.TemplateView ):
     def get( self, request, *args, **kwargs ):
         peers = gluster.peer.status()
         discovered_peers = cache.get( 'RecentlyDiscoveredClusterNodes' )
-        discovered_peers.pop( '127.0.0.1' )
+        if discovered_peers:
+            discovered_peers = discovered_peers['nodes']
+            if '127.0.0.1' in discovered_peers:
+                discovered_peers.remove( '127.0.0.1' )  # Remove localhost
 
         context = {
                 'peers': peers['host'],
@@ -72,14 +75,17 @@ def get_ifaces( *args ):
     else:    get_ifaces = netifaces.interfaces()
 
     for iface in get_ifaces:
+        iftype = None
+        if   iface.startswith( 'eth' ):   iftype = 'ethernet'
+        elif iface.startswith( 'ib' ):    iftype = 'infiniband'
+
         interfaces[iface] = {'name': iface,
                              'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
                              ## TODO Grab DNS
                              'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
                                      'search': 'solarsan.local',
                                      },
-                             ## TODO Grab type (or just parse name, w/e)
-                             'type': 'ethernet',
+                             'type': iftype,
                              ## TODO Get real network IP info from DB
                              'config': {'proto': 'static',
                                         'ipaddr': '10.0.0.1',

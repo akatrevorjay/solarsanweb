@@ -18,6 +18,7 @@ iface lo inet loopback
 ## Interface: {{ iface.name }}
 ## {{ iface.type }}
 ##
+{% if not iface.config.proto == 'none' %}
 auto {{ iface.name }}
 iface {{ iface.name }} inet {{ iface.config.proto }}
     {% if not iface.config.proto == 'dhcp' -%}
@@ -34,17 +35,18 @@ iface {{ iface.name }} inet {{ iface.config.proto }}
     dns-search {{ iface.config.dns.search|join(' ') }}
     {% endif -%}
 
-    {% endif %}
+    {% endif -%}
 
-    {% if iface.type == 'ethernet' %}
-    {% if iface.config.mtu %}
+    {% if iface.type == 'ethernet' -%}
+    {% if iface.config.mtu -%}
     mtu {{ iface.config.mtu }}
-    {% endif %}
-    {% elif iface.type == 'infiniband' %}
+    {% endif -%}
+    {% elif iface.type == 'infiniband' -%}
     ## Infiniband in connected mode vs datagram supports MTUs of 64k, but disables multicast packets.
     pre-up echo connected > /sys/class/net/{{ iface.name }}/mode || true
     mtu 65520
     {% endif %}
+{% endif %}
 
 {% endfor %}
 

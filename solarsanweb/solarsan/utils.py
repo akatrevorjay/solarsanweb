@@ -23,7 +23,6 @@ class LoggedInMixin( object ):
 """
 Celery scheduler that runs tasks at startup immediately then continues with their
 original plan.
-## python manage.py celerybeat -S myapp.schedulers.Mysched --loglevel=debug
 """
 from djcelery import schedulers
 
@@ -37,7 +36,7 @@ class ImmediateFirstEntry( schedulers.ModelEntry ):
         return None
 
 
-class ImmediateEntryDatabaseScheduler( schedulers.DatabaseScheduler ):
+class CeleryBeatScheduler( schedulers.DatabaseScheduler ):
     Entry = ImmediateFirstEntry
 
 

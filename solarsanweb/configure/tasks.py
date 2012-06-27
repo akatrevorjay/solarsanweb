@@ -36,6 +36,14 @@ class Cluster_Node_Discovery( PeriodicTask ):
 
         DiscoveredClusterNodes = {'nodes': beacon.find_all_servers( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] ),
                                   'ts': timezone.now(), }
+        
+        if '127.0.0.1' not in DiscoveredClusterNodes['nodes']:
+            if cache.get('ClusterBeaconStartedTS'):
+                logger.error( "Cluster discovery: Didn't find 127.0.0.1 in discovery; Not starting Cluster Beacon since I already attempted to start it recently.")
+            else:
+                logger.warning( "Cluster discovery: Didn't find 127.0.0.1 in discovery; Starting Cluster Beacon..")
+                Cluster_Node_Beacon.delay()
+                cache.set('ClusterBeaconStartedTS', timezone.now(), 3600)
 
         cache.set( 'RecentlyDiscoveredClusterNodes', DiscoveredClusterNodes, settings.SOLARSAN_CLUSTER['discovery'] )
         if len( DiscoveredClusterNodes['nodes'] ) > 0:
