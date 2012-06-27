@@ -36,7 +36,7 @@ Network
 class NetworkInterfaceConfig(models.Model):
     name = models.CharField(max_length=32)
     ipaddr = models.IPAddressField()
-    netmask = models.CharField()
+    netmask = models.CharField(max_length=32)
     gateway = models.IPAddressField()
     proto = models.CharField(max_length=32)
     #type = models.CharField(max_length=32)
