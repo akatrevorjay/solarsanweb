@@ -57,7 +57,7 @@ class NetworkInterfaceConfig( models.Model ):
     @property
     def dns( self ):
         return {'nameservers': ['8.8.8.8', '8.8.4.4'],
-                'search': 'solarsan.local', }
+                'search': ['solarsan.local'], }
 
     def __unicode__( self ):
         if self.ipaddr and self.cidr: return '%s (%s/%s)' % ( self.name, self.ipaddr, self.cidr )
