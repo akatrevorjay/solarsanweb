@@ -7,7 +7,13 @@
 {% block subpage_content %}
 {% if interface %}
 
-<pre>{{ interfaces[interface]|pprint }}</pre>
+<pre>
+{{ interfaces[interface] }} =
+{{ interfaces[interface].__dict__|pprint }}
+
+config = 
+{{ interfaces[interface].config.__dict__|pprint }}
+</pre>
 <br />
 Debug /etc/network/interfaces:<br />
 <pre>{% include 'configure/network/interfaces' %}</pre>

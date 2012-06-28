@@ -9,17 +9,20 @@ from django.views import generic
 
 from storage.models import Pool, Dataset, Filesystem, Snapshot
 
+
 class HomeListView( generic.TemplateView ):
     template_name = 'configure/home_list.html'
     def get( self, request, *args, **kwargs ):
         context = {}
         return self.render_to_response( context )
 
+
 """
 Cluster
 """
 from django.core.cache import cache
 import gluster
+
 
 class ClusterPeerListView( generic.TemplateView ):
     template_name = 'configure/cluster/peer_list.html'
@@ -37,6 +40,7 @@ class ClusterPeerListView( generic.TemplateView ):
                 'peer_count': peers['peers'],
                 }
         return self.render_to_response( context )
+
 
 class ClusterPeerDetailView( generic.TemplateView ):
     template_name = 'configure/cluster/peer_detail.html'
@@ -58,7 +62,8 @@ class ClusterPeerDetailView( generic.TemplateView ):
 """
 Network
 """
-import netifaces
+from configure.models import NetworkInterface, NetworkInterfaceList
+
 
 class NetworkDetailView( generic.TemplateView ):
     template_name = 'configure/network/network_detail.html'
@@ -66,50 +71,20 @@ class NetworkDetailView( generic.TemplateView ):
         context = {}
         return self.render_to_response( context )
 
-def get_ifaces( *args ):
-    """ Helper to get a list of interfaces and it's properties """
-    interfaces = {}
-    af_types = netifaces.address_families
-
-    if args: get_ifaces = args
-    else:    get_ifaces = netifaces.interfaces()
-
-    for iface in get_ifaces:
-        iftype = None
-        if   iface.startswith( 'eth' ):   iftype = 'ethernet'
-        elif iface.startswith( 'ib' ):    iftype = 'infiniband'
-
-        interfaces[iface] = {'name': iface,
-                             'addrs': dict( map( lambda x: ( af_types[ x[0] ], x[1] ), netifaces.ifaddresses( iface ).items() ) ),
-                             ## TODO Grab DNS
-                             'dns': {'nameservers': ['8.8.8.8', '8.8.4.4'],
-                                     'search': 'solarsan.local',
-                                     },
-                             'type': iftype,
-                             ## TODO Get real network IP info from DB
-                             'config': {'proto': 'static',
-                                        'ipaddr': '10.0.0.1',
-                                        'netmask': '255.255.255.0',
-                                        'gateway': '10.0.0.254',
-                                        'dns': {'servers': ['8.8.8.8', '8.8.4.4'],
-                                                'search': ['solarsan.local'],
-                                                },
-                                        },
-                             }
-    return interfaces
 
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interface_list.html'
     def get( self, request, *args, **kwargs ):
-        interfaces = get_ifaces()
+        interfaces = NetworkInterfaceList()
         del interfaces['lo']    # Don't show lo interface
         context = {'interfaces': interfaces, }
         return self.render_to_response( context )
 
+
 class NetworkInterfaceDetailView( generic.TemplateView ):
     template_name = 'configure/network/interface_detail.html'
     def get( self, request, *args, **kwargs ):
-        interfaces = get_ifaces()
+        interfaces = NetworkInterfaceList()
         del interfaces['lo']    # Don't show lo interface
         context = {'interface': kwargs['interface'],
                    #'interfaces': get_ifaces( kwargs['interface'] ),

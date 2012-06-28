@@ -27,3 +27,18 @@ application = get_wsgi_application()
 # from helloworld.wsgi import HelloWorldApplication
 # application = HelloWorldApplication(application)
 
+##
+## Allow autoreload to work properly with uwsgi
+##
+
+import uwsgi
+from uwsgidecorators import timer
+from django.utils import autoreload
+from django.conf import settings
+
+if settings.DEBUG:
+    @timer(3)
+    def change_code_gracefull_reload(sig):
+        if autoreload.code_changed():
+            uwsgi.reload()
+

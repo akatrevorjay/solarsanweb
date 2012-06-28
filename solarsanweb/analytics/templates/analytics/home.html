@@ -441,46 +441,180 @@ svg .title {
 
 </style>
 
+
+<select data-placeholder="Change graph" id="graph-select" class="chosen-select">
+    <option value="{{ graph }}">{{ graph }}</option>
+    {% for opt in graph_list %}
+    {% if not opt == graph %}
+    <option value="{{ opt }}">{{ opt }}</option>
+    {% endif %}
+    {% endfor %}
+</select>
+
+<select data-placeholder="Time window" id="time-window-select" class="chosen-select">
+    <option value="{{ time_window }}">{{ time_window_list[time_window] }}</option>
+    {% for k,v in time_window_list.items() %}
+    {% if not k == time_window %}
+    <option value="{{ k }}">{{ v }}</option>
+    {% endif %}
+    {% endfor %}
+</select>
+
 <br />
 <br />
 <div id="chart" style="width:100%; height:500px">
   <svg />
 </div>
 
-
 <script>
 
+$('.chosen-select').chosen().change(chart_select);;
 
+//$('#graph-select').change(function() {
+//    draw_graph(this.value);
+//    window.location.href = '/analytics/detail/' + this.value;
+//});
+
+
+function chart_select(chart_name, time_window) {
+    var chart_name = $('#graph-select').val(),
+        time_window = $('#time-window-select').val();
+    url = '/analytics/detail/' + chart_name;
+    if (time_window) url += '/' + time_window;
+    window.location.href = url;
+}
+
+draw_graph('{{ graph }}');
+
+//var chart = nv.models.stackedAreaChart().clipEdge(true);
+
+function draw_graph(chart_name) {
+// Wrapping in nv.addGraph allows for '0 timeout render', stors rendered charts in nv.graphs, and may do more in the future... it's NOT required
 nv.addGraph(function() {
-  var chart = nv.models.stackedAreaChart()
-                .clipEdge(true);
+  
+  //if (nv.graphs.length)
+    //nv.graphs[0] = chart;
+    //var chart = nv.graphs[0];
+  //else
+    //var chart = nv.models.stackedAreaChart().clipEdge(true);
+    var chart = nv.models.lineChart();
 
+    // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the partent chart, so need to chain separately
   chart.xAxis
-      .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+    .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+//    .tickFormat(function(d) { return d3.time.format('%m/%e %I:%M%p')(new Date(d)) });
 
   chart.yAxis
-      .tickFormat(d3.format(',.2f'));
+    .tickFormat(d3.format(',.3s'));
 
-
-  d3.select('#chart svg')
-    .datum(test_data())
-      .transition().duration(500).call(chart);
+  var start = Math.round(new Date() / 1000);
+  start = start - {{ time_window }};
 
   d3.json("/analytics/render"
-      + "?name=" + encodeURIComponent(expression)
-      + "&start=" + cubism_cubeFormatDate(start)
-      + "&stop=" + cubism_cubeFormatDate(stop)
-      + "&step=" + step, function(data) {
+      + "?name=" + encodeURIComponent(chart_name)
+      + "&start=" +  start // need to use the last one...
+      + "&step=60", function(data) {
     if (!data) return false;
-    callback(null, data.map(function(d) { return d.value; }));
+
+    data = data.map(function(series) {
+      series.values = series.values.map(function(d) {
+        return { x: d[0], y: d[1] }
+      });
+      return series;
+    });
+
+    d3.select('#chart svg')
+      .datum(data)
+      .transition().duration(1000).call(chart);
+
   });
 
 
+  //TODO: Figure out a good way to do this automatically
   nv.utils.windowResize(chart.update);
+  //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
 
-  return chart;
+//  return chart;
 });
+}
 
+/*
+    //window.data.shift();
+    //window.data.push(next());
+    //redraw();
+    //callback(null, data.map(function(d) { return d.value; }));
+
+    $.each(data, function (data_index) {
+        if (!window.data.hasOwnProperty(data_index)) {
+            window.data[data_index] = this;
+        } else {
+            $.each(this.values, function () {
+                if (window.data[data_index].values.length)
+                    window.data[data_index].values.shift();
+                window.data[data_index].values.push(this);
+            });
+
+
+            //console.log(this, key);
+        });
+    });
+
+    var data = window.data.map(function(series) {
+      series.values = series.values.map(function(d) {
+        return { x: d[0], y: d[1] }
+      });
+      return series;
+    });
+
+    d3.select('#chart svg')
+      .datum(window.data)
+      .transition().duration(1000).call(chart);
+*/
+
+/*
+
+var n = 4, // number of layers
+    m = 120; // number of samples per layer
+    //color = d3.interpolateRgb("#aad", "#556");
+
+//format data to our liking, add keys
+var data = stream_layers(n,m).map(function(data, i) {
+  return { 
+    key: 'Stream' + i,
+    values: data
+  };
+});
+*/
+
+
+/*
+var t = 1297110663, // start time (seconds since epoch)
+    v = 0, // start value
+    data = d3.range(33).map(next); // starting dataset
+
+
+function next() {
+  return {
+    time: ++t,
+    value: v = ~~Math.max(10, Math.min(90, v + 10 * (Math.random() - .5)))
+  };
+}
+
+setInterval(function() {
+  d3.json("/analytics/render"
+      + "?name=" + encodeURIComponent('dmu_tx')
+      + "&start=1297110663" // need to use the last one...
+      + "&step=" + step, function(data) {
+    if (!data) return false;
+    data.shift();
+    data.push(next());
+    redraw();
+    callback(null, data.map(function(d) { return d.value; }));
+  });
+}, 10000);
+*/
+
+/*
 function test_data() {
   .map(function(series) {
     series.values = series.values.map(function(d) {
@@ -489,6 +623,18 @@ function test_data() {
     return series;
   });
 };
+*/
+
+
+
+
+
+
+
+
+
+
+
 
 </script>
 

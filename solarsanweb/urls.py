@@ -6,7 +6,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     #url(r'^$', 'solarsanweb.views.home', name='home'),
-    url(r'^$', include('status.urls')),
+    url(r'^$', include('analytics.urls')),
 
     url(r'^status/', include('status.urls')),
     url(r'^configure/', include('configure.urls')),
