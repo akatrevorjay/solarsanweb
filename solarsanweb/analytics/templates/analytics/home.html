@@ -452,9 +452,9 @@ svg .title {
 var data2 = {};
 
 nv.addGraph(function() {
-  //var chart = nv.models.stackedAreaChart()
-  //              .clipEdge(true);
-  var chart = nv.models.lineChart();
+  var chart = nv.models.stackedAreaChart()
+                .clipEdge(true);
+  //var chart = nv.models.lineChart();
 
   chart.xAxis
       .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });

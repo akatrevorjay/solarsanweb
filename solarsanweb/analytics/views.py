@@ -33,7 +33,7 @@ from django.template import RequestContext
 def home( request, *args, **kwargs ):
     return render_to_response( 'analytics/home.html',
         {'title': 'Analytics',
-         'graph': request.GET.get('name', 'dmu_tx'),
+         'graph': request.GET.get( 'name', 'dmu_tx' ),
             },
         context_instance=RequestContext( request ) )
 
@@ -44,7 +44,7 @@ def render2( request, *args, **kwargs ):
 
     values = {}
 
-    #if not request.GET['name'] in ['iops_read', 'iops_write', 'bandwidth_read', 'bandwidth_write']:
+    #if not rrd_file in ['iops_read', 'iops_write', 'bandwidth_read', 'bandwidth_write']:
     #    raise http.Http404
 
     #count = 50
@@ -63,59 +63,73 @@ def render2( request, *args, **kwargs ):
     #    values['iops']['write'].append( (time, int(iostat.iops_write) ) )
     #    values['bandwidth']['read'].append( (time, int(iostat.bandwidth_read) ) )
     #    values['bandwidth']['write'].append( (time, int(iostat.bandwidth_write) ) )
-    values = {}
-    for rrd_file in [request.GET['name']]:
-        rrd_path = os.path.join( settings.DATA_DIR, 'rrd', rrd_file + '.rrd' )
-        rrd = RRD( rrd_path, mode="r" )
-        rrd_data = rrd.fetch( resolution=int( request.GET['step'] ), cf='AVERAGE',
-                  start=int( request.GET['start'] ),
-                  end=int( request.GET['stop'] ),
-                  returnStyle='ds' )
-
-        values[rrd_file] = []
-
-        def fix_nan( x ):
-            x = list( x )
-            if x[1] != x[1]: x[1] = 0
-            return [x[0] * 1000, x[1]]
-
-        for ds in rrd_data.iterkeys():
-            values[rrd_file].append( { 'key': ds, 'values': map( fix_nan, rrd_data[ds] ) } )
 
     return http.HttpResponse( json.dumps( values ), mimetype="application/json" )
+
+
 
 def render( request, *args, **kwargs ):
-    rrd_file = request.GET['name']
-    start = int(request.GET['start'])
-    stop = 'stop' in request.GET and request.get['stop'] or timezone.now().strftime('%s')
-    step = int(request.GET['step'])
+    name = request.GET['name']
+    start = int( request.GET['start'] )
+    stop = request.GET.get( 'stop', timezone.now().strftime( '%s' ) )
+    step = int( request.GET['step'] )
 
-    rrd_path = os.path.join( settings.DATA_DIR, 'rrd', rrd_file + '.rrd' )
-    rrd = RRD( rrd_path, mode="r" )
-    rrd_data = rrd.fetch( resolution=int( step ), cf='AVERAGE',
-              start=start,
-              end=stop,
-              returnStyle='ds' )
+    ret = []
+    values = {}
 
-    values = []
+    ## Pool_IOStat Graph
+    if name in ['iops', 'bandwidth']:
+        if name == 'usage':
+            #total = int(iostats[0].alloc + iostats[0].free)
+            #ret = {'ret': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
+            raise http.Http404
+        elif name in ['iops', 'bandwidth']:
+            keys = ['read', 'write']
+            for key in keys:
+                values[key] = []
 
-#    def fix_nan( x ):
-#        x = list( x )
-#        if x[1] != x[1]: x[1] = 0
-#        return {'time': x[0] * 1000, 'value': x[1]}
-#
-#    for ds in rrd_data.iterkeys():
-#        values[rrd_file].append( { 'key': ds, 'values': map( fix_nan, rrd_data[ds] ) } )
+        ## TODO This needs an offset, calculated by result count
+        iostat_psuedo_limit = 50
+        pool = Pool.objects.all()[0]
+        iostats = pool.pool_iostat_set.filter( timestamp__gt=datetime.fromtimestamp( float( start ) ),
+                                               timestamp__lt=datetime.fromtimestamp( float( stop ) ),
+                                               ).order_by( 'timestamp' )
+        iostat_offset = iostats.count() / iostat_psuedo_limit
+        iostats = iostats.only( *['%s_%s' % ( name, key ) for key in keys] )[::iostat_offset]
 
-    def fix_nan( x ):
-        x = list( x )
-        if x[1] != x[1]: x[1] = 0
-        return [x[0] * 1000, int(x[1]) / 1024 / 1024]
+        for iostat in iostats:
+            time = int( iostat.timestamp_epoch() ) * 1000
 
-    for ds in rrd_data.iterkeys():
-        values.append( { 'key': ds, 'values': map( fix_nan, rrd_data[ds] ) } )
+            if name == 'iops':
+                values['read'].append( ( time, int( iostat.iops_read ) ) )
+                values['write'].append( ( time, int( iostat.iops_write ) ) )
+            if name == 'bandwidth':
+                values['read'].append( ( time, int( iostat.bandwidth_read ) ) )
+                values['write'].append( ( time, int( iostat.bandwidth_write ) ) )
 
-    return http.HttpResponse( json.dumps( values ), mimetype="application/json" )
+        for key in keys:
+            ret.append( {'key': '%s %s' % ( name, key ), 'values': values[key] } )
+
+    ## RRD Graph
+    else:
+        ## An RRD graph was requested
+        rrd_path = os.path.join( settings.DATA_DIR, 'rrd', name + '.rrd' )
+        rrd = RRD( rrd_path, mode="r" )
+        rrd_data = rrd.fetch( resolution=int( step ), cf='AVERAGE',
+                  start=start,
+                  end=stop,
+                  returnStyle='ds' )
+
+        def filter_nan( x ):
+            if x[1] != x[1]: return False
+            return [x[0] * 1000, x[1] / 1024 / 1024]
+
+        for ds in rrd_data.iterkeys():
+            ret.append( { 'key': ds, 'values': filter( filter_nan, rrd_data[ds] ) } )
+
+    return http.HttpResponse( json.dumps( ret ), mimetype="application/json" )
+
+
 
 
 #@cache_page(15)
