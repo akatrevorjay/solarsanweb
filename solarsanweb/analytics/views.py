@@ -7,8 +7,9 @@ from django.views.decorators.cache import cache_page
 from django import http
 from django.views import generic
 from django.utils import timezone
+from django.conf import settings
 
-#from solarsan.utils import *
+from solarsan.utils import conditional_decorator
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Pool_IOStat
 #from solarsan.forms import *
 
@@ -37,37 +38,7 @@ def home( request, *args, **kwargs ):
             },
         context_instance=RequestContext( request ) )
 
-def render2( request, *args, **kwargs ):
-    # TODO get programmatically
-    #pool = Pool.objects.all()[0]
-    #logger.error('args=%s kwargs=%s post=%s', args, kwargs, request.GET)
-
-    values = {}
-
-    #if not rrd_file in ['iops_read', 'iops_write', 'bandwidth_read', 'bandwidth_write']:
-    #    raise http.Http404
-
-    #count = 50
-    #iostats = pool.pool_iostat_set.order_by('timestamp')[:count]
-
-    ##total = int(iostats[0].alloc + iostats[0].free)
-    ##graph['usage'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
-
-    #values['iops'] = {'read': [], 'write': []}
-    #values['bandwidth'] = {'read': [], 'write': []}
-
-    #for iostat in iostats:
-    #    time = int(iostat.timestamp.strftime('%s')) * 1000
-
-    #    values['iops']['read'].append( (time, int(iostat.iops_read) ) )
-    #    values['iops']['write'].append( (time, int(iostat.iops_write) ) )
-    #    values['bandwidth']['read'].append( (time, int(iostat.bandwidth_read) ) )
-    #    values['bandwidth']['write'].append( (time, int(iostat.bandwidth_write) ) )
-
-    return http.HttpResponse( json.dumps( values ), mimetype="application/json" )
-
-
-
+@conditional_decorator(not settings.DEBUG, cache_page, 15)
 def render( request, *args, **kwargs ):
     name = request.GET['name']
     start = int( request.GET['start'] )
@@ -108,6 +79,7 @@ def render( request, *args, **kwargs ):
                 values['write'].append( ( time, float( iostat.bandwidth_write ) ) )
             elif name == 'usage':
                 #total = float( iostat.alloc + iostat.free )
+
                 ## Percentage
                 #values['alloc'].append( ( time, float( iostat.alloc / float( total ) * 100 ) ) )
                 #values['free'].append( ( time, float( iostat.free / float( total ) * 100 ) ) )
@@ -145,7 +117,7 @@ def render( request, *args, **kwargs ):
 
 
 
-#@cache_page(15)
+@cache_page(15)
 def graphs( request, *args, **kwargs ):
     pool = Pool.objects.all()[0]
     graphs = {}
