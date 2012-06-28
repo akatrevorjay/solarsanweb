@@ -2,7 +2,7 @@
 ## SolarSan
 ##
 ## ---------------------------------------------------------------------------------------------------------------
-## This file is dynamic generated from the web iface. If you make changes don't cry when they are overwritten.
+## This file is dynamically generated. If you make changes don't cry when they are overwritten.
 ##
 
 # This file describes the network ifaces available on your system
@@ -14,11 +14,10 @@ iface lo inet loopback
 
 {% for iface in interfaces.values() %}
 
-##
-## Interface: {{ iface.name }}
-## {{ iface.type }}
-##
 {% if not iface.config.proto == 'none' %}
+##
+## {{ iface.name }} / {{ iface.type }}
+##
 auto {{ iface.name }}
 iface {{ iface.name }} inet {{ iface.config.proto }}
     {% if not iface.config.proto == 'dhcp' -%}
@@ -46,6 +45,10 @@ iface {{ iface.name }} inet {{ iface.config.proto }}
     pre-up echo connected > /sys/class/net/{{ iface.name }}/mode || true
     mtu 65520
     {% endif %}
+{% else %}
+##
+## {{ iface.name }} / {{ iface.type }} / disabled(proto=none)
+##
 {% endif %}
 
 {% endfor %}
