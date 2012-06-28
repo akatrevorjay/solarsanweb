@@ -3,6 +3,7 @@ from django.conf.urls import url, patterns, include
 
 urlpatterns = patterns('analytics.views',
     (r'^(?:home)?$', 'home'),
+    (r'^detail/(?P<name>[A-z0-9_\-]+)$', 'home'),
     (r'^pool/graphs/(?P<pool>[A-z0-9_\-/]+)$', 'graphs'),
     (r'^render$', 'render'),
 )

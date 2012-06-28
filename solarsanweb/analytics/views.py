@@ -31,16 +31,26 @@ import os, sys
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+charts = ['iops', 'bandwidth', 'usage',                                                                 # IOStats
+          'arc_hitmiss', 'cache_eviction', 'cache_result', 'cache_size', 'dmu_tx_memory', 'dmu_tx',     # RRD
+          'hash_collisions', 'l2_hitmiss', 'mutex_operation']
+
 def home( request, *args, **kwargs ):
+    name = kwargs.get('name', 'iops')
+    if name not in charts: raise http.Http404
     return render_to_response( 'analytics/home.html',
         {'title': 'Analytics',
-         'graph': request.GET.get( 'name', 'dmu_tx' ),
+         'graph': name,
+         'graph_list': charts,
             },
         context_instance=RequestContext( request ) )
 
 #@conditional_decorator(not settings.DEBUG, cache_page, 15)
 def render( request, *args, **kwargs ):
+    """ Generates graph data in d3/nvd3 data format """
     name = request.GET['name']
+    if name not in charts: raise http.Http404
+
     start = int( request.GET['start'] )
     stop = request.GET.get( 'stop', timezone.now().strftime( '%s' ) )
     step = int( request.GET['step'] )
@@ -105,21 +115,19 @@ def render( request, *args, **kwargs ):
                   end=stop,
                   returnStyle='ds' )
 
-        def filter_nan( x ):
-            if x[1] != x[1]: return False
-            return [x[0] * 1000, x[1] / 1024 / 1024]
-
-        for ds in rrd_data.iterkeys():
-            ret.append( { 'key': ds, 'values': filter( filter_nan, rrd_data[ds] ) } )
+        ret = [ { 'key': ds,
+                  'values': map( lambda x: ( x[0] * 1000, x[1] ),
+                                 filter( lambda x: x[1] == x[1], rrd_data[ds] )
+                                 )
+                 } for ds in rrd_data.keys() ]
 
     return http.HttpResponse( json.dumps( ret ), mimetype="application/json" )
 
 
-
-
-@cache_page(15)
+#@cache_page( 15 )
 def graphs( request, *args, **kwargs ):
-    pool = Pool.objects.all()[0]
+    """ Generates graphs in Flot format """
+    pool = Pool.objects.all()[0]        ## TODO Get this through request, this needs to not be hard coded!
     graphs = {}
 
     for iostat_graph in ['bandwidth', 'iops']: #usage
