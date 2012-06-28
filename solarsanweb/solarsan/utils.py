@@ -39,6 +39,23 @@ class ImmediateFirstEntry( schedulers.ModelEntry ):
 class CeleryBeatScheduler( schedulers.DatabaseScheduler ):
     Entry = ImmediateFirstEntry
 
+"""
+Decorators
+"""
+
+class conditional_decorator(object):
+    """ Applies decorator dec if conditional condition is met """
+    def __init__(self, condition, dec, *args, **kwargs):
+        self.decorator = dec
+        self.decorator_args = (args, kwargs)
+        self.condition = condition
+
+    def __call__(self, func):
+       if not self.condition:
+           # Return the function unchanged, not decorated.
+           return func
+       return self.decorator(func, *self.decorator_args[0], **self.decorator_args[1])
+
 
 """
 General Utils
