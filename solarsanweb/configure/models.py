@@ -67,10 +67,6 @@ class NetworkInterface( object ):
     def __init__( self, name ):
         self.name = name
 
-        ## Populate current addresses
-        self.addrs = dict( [( netifaces.address_families[x[0]], x[1] )
-                             for x in netifaces.ifaddresses( name ).items() ] )
-
         ## Get config for NIC if it exists, otherwise new instance; don't save it to DB at this point.
         try:
             self.config = NetworkInterfaceConfig.objects.get( name=name )
@@ -79,6 +75,11 @@ class NetworkInterface( object ):
 
         ## TODO Populate DNS information
         self.dns = self.config.dns
+
+    @property
+    def addrs( self ):
+        return dict( [( netifaces.address_families[x[0]], x[1] )
+                      for x in netifaces.ifaddresses( self.name ).items() ] )
 
     @property
     def type( self ):
