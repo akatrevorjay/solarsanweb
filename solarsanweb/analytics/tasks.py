@@ -176,31 +176,34 @@ def rrd_update(*args, **kwargs):
                     #ca.font = '#FFFFFF'
                     #ca.arrow = '#FFFFFF'
 
-                    endTime = int(round(time.time()))
-                    delta = timedelta(hours=1)
-                    startTime = int(endTime - delta.seconds)
-                    step = 300
-                    #maxSteps = int((endTime - startTime) / step)
-
-                    # Now that we've got everything set up, let's make a graph
-                    g = Graph(rrd_path + '-last_hour.png',
-                              start=int(startTime), end=int(endTime),
-                              vertical_label='%s' % filename.replace('_', ' ').capitalize(),
-                              backend=bindings)
-                    #color=ca, backend=bindings)
-
-#    VDEF:ds0max=ds0,MAXIMUM
-    #VDEF:ds0avg=ds0,AVERAGE
-    #VDEF:ds0min=ds0,MINIMUM
-    #VDEF:ds0pct=ds0,95,PERCENT
-    #VDEF:ds1max=ds1,MAXIMUM
-    #VDEF:ds1avg=ds1,AVERAGE
-    #VDEF:ds1min=ds1,MINIMUM
-    #VDEF:ds1pct=ds1,95,PERCENT
-
-                    g.data.extend(GItems)
-
-                    g.write()
+##
+## Image creation code
+##
+#                    endTime = int(round(time.time()))
+#                    delta = timedelta(hours=1)
+#                    startTime = int(endTime - delta.seconds)
+#                    step = 300
+#                    #maxSteps = int((endTime - startTime) / step)
+#
+#                    # Now that we've got everything set up, let's make a graph
+#                    g = Graph(rrd_path + '-last_hour.png',
+#                              start=int(startTime), end=int(endTime),
+#                              vertical_label='%s' % filename.replace('_', ' ').capitalize(),
+#                              backend=bindings)
+#                    #color=ca, backend=bindings)
+#
+#                    #VDEF:ds0max=ds0,MAXIMUM
+#                    #VDEF:ds0avg=ds0,AVERAGE
+#                    #VDEF:ds0min=ds0,MINIMUM
+#                    #VDEF:ds0pct=ds0,95,PERCENT
+#                    #VDEF:ds1max=ds1,MAXIMUM
+#                    #VDEF:ds1avg=ds1,AVERAGE
+#                    #VDEF:ds1min=ds1,MINIMUM
+#                    #VDEF:ds1pct=ds1,95,PERCENT
+#
+#                    g.data.extend(GItems)
+#
+#                    g.write()
 
                     #g.filename = graphfileLg
                     #g.width = 800
