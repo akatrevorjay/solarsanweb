@@ -38,7 +38,7 @@ def home( request, *args, **kwargs ):
             },
         context_instance=RequestContext( request ) )
 
-@conditional_decorator(not settings.DEBUG, cache_page, 15)
+#@conditional_decorator(not settings.DEBUG, cache_page, 15)
 def render( request, *args, **kwargs ):
     name = request.GET['name']
     start = int( request.GET['start'] )
