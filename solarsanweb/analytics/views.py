@@ -78,15 +78,15 @@ def render( request, *args, **kwargs ):
     values = {}
 
     ## Pool_IOStat Graph
-    if name in ['iops', 'bandwidth']:
+    if name in ['iops', 'bandwidth', 'usage']:
         if name == 'usage':
-            #total = int(iostats[0].alloc + iostats[0].free)
-            #ret = {'ret': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
-            raise http.Http404
+            fields = keys = ['alloc', 'free']
         elif name in ['iops', 'bandwidth']:
             keys = ['read', 'write']
-            for key in keys:
-                values[key] = []
+            fields = ['%s_%s' % ( name, key ) for key in keys ]
+
+        for key in keys:
+            values[key] = []
 
         ## TODO This needs an offset, calculated by result count
         iostat_psuedo_limit = 50
@@ -95,7 +95,7 @@ def render( request, *args, **kwargs ):
                                                timestamp__lt=datetime.fromtimestamp( float( stop ) ),
                                                ).order_by( 'timestamp' )
         iostat_offset = iostats.count() / iostat_psuedo_limit
-        iostats = iostats.only( *['%s_%s' % ( name, key ) for key in keys ] + ['timestamp'] )[::iostat_offset]
+        iostats = iostats.only( *fields + ['timestamp'] )[::iostat_offset]
 
         for iostat in iostats:
             time = int( iostat.timestamp_epoch() ) * 1000
@@ -103,9 +103,19 @@ def render( request, *args, **kwargs ):
             if name == 'iops':
                 values['read'].append( ( time, int( iostat.iops_read ) ) )
                 values['write'].append( ( time, int( iostat.iops_write ) ) )
-            if name == 'bandwidth':
-                values['read'].append( ( time, int( iostat.bandwidth_read ) ) )
-                values['write'].append( ( time, int( iostat.bandwidth_write ) ) )
+            elif name == 'bandwidth':
+                values['read'].append( ( time, float( iostat.bandwidth_read ) ) )
+                values['write'].append( ( time, float( iostat.bandwidth_write ) ) )
+            elif name == 'usage':
+                #total = float( iostat.alloc + iostat.free )
+                ## Percentage
+                #values['alloc'].append( ( time, float( iostat.alloc / float( total ) * 100 ) ) )
+                #values['free'].append( ( time, float( iostat.free / float( total ) * 100 ) ) )
+
+                ## Raw values
+                values['alloc'].append( ( time, float( iostat.alloc ) ) )
+                values['free'].append( ( time, float( iostat.free ) ) )
+                #values['total'].append( ( time, total ) )
 
         if name == 'iops':  name = 'IOPs'
         else:               name = name.title()
