@@ -447,32 +447,45 @@ svg .title {
   <svg />
 </div>
 
-
 <script>
 
+var data2 = {};
 
 nv.addGraph(function() {
-  var chart = nv.models.stackedAreaChart()
-                .clipEdge(true);
+  //var chart = nv.models.stackedAreaChart()
+  //              .clipEdge(true);
+  var chart = nv.models.lineChart();
 
   chart.xAxis
       .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
 
   chart.yAxis
-      .tickFormat(d3.format(',.2f'));
+      .tickFormat(d3.format(',.f'));
 
-
-  d3.select('#chart svg')
-    .datum(test_data())
-      .transition().duration(500).call(chart);
+  var start = Math.round(new Date() / 1000);
+  start = start - 360000;
 
   d3.json("/analytics/render"
-      + "?name=" + encodeURIComponent(expression)
-      + "&start=" + cubism_cubeFormatDate(start)
-      + "&stop=" + cubism_cubeFormatDate(stop)
-      + "&step=" + step, function(data) {
+      + "?name=" + encodeURIComponent('{{ graph }}')
+      + "&start=" +  start // need to use the last one...
+      + "&step=60", function(data) {
     if (!data) return false;
-    callback(null, data.map(function(d) { return d.value; }));
+    //window.data.shift();
+    //window.data.push(next());
+    //redraw();
+    //callback(null, data.map(function(d) { return d.value; }));
+
+    var data2 = data.map(function(series) {
+      series.values = series.values.map(function(d) {
+        return { x: d[0], y: d[1] }
+      });
+      return series;
+    });
+
+    d3.select('#chart svg')
+      .datum(data2)
+      .transition().duration(1000).call(chart);
+
   });
 
 
@@ -481,6 +494,49 @@ nv.addGraph(function() {
   return chart;
 });
 
+/*
+var n = 4, // number of layers
+    m = 120; // number of samples per layer
+    //color = d3.interpolateRgb("#aad", "#556");
+
+//format data to our liking, add keys
+var data = stream_layers(n,m).map(function(data, i) {
+  return { 
+    key: 'Stream' + i,
+    values: data
+  };
+});
+*/
+
+
+/*
+var t = 1297110663, // start time (seconds since epoch)
+    v = 0, // start value
+    data = d3.range(33).map(next); // starting dataset
+
+
+function next() {
+  return {
+    time: ++t,
+    value: v = ~~Math.max(10, Math.min(90, v + 10 * (Math.random() - .5)))
+  };
+}
+
+setInterval(function() {
+  d3.json("/analytics/render"
+      + "?name=" + encodeURIComponent('dmu_tx')
+      + "&start=1297110663" // need to use the last one...
+      + "&step=" + step, function(data) {
+    if (!data) return false;
+    data.shift();
+    data.push(next());
+    redraw();
+    callback(null, data.map(function(d) { return d.value; }));
+  });
+}, 10000);
+*/
+
+/*
 function test_data() {
   .map(function(series) {
     series.values = series.values.map(function(d) {
@@ -489,6 +545,18 @@ function test_data() {
     return series;
   });
 };
+*/
+
+
+
+
+
+
+
+
+
+
+
 
 </script>
 
