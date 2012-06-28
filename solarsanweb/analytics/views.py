@@ -95,7 +95,7 @@ def render( request, *args, **kwargs ):
                                                timestamp__lt=datetime.fromtimestamp( float( stop ) ),
                                                ).order_by( 'timestamp' )
         iostat_offset = iostats.count() / iostat_psuedo_limit
-        iostats = iostats.only( *['%s_%s' % ( name, key ) for key in keys] )[::iostat_offset]
+        iostats = iostats.only( *['%s_%s' % ( name, key ) for key in keys ] + ['timestamp'] )[::iostat_offset]
 
         for iostat in iostats:
             time = int( iostat.timestamp_epoch() ) * 1000
@@ -107,8 +107,11 @@ def render( request, *args, **kwargs ):
                 values['read'].append( ( time, int( iostat.bandwidth_read ) ) )
                 values['write'].append( ( time, int( iostat.bandwidth_write ) ) )
 
-        for key in keys:
-            ret.append( {'key': '%s %s' % ( name, key ), 'values': values[key] } )
+        if name == 'iops':  name = 'IOPs'
+        else:               name = name.title()
+
+        ret = [ {'key': name + ' ' + key.title(),
+                 'values': values[key] } for key in keys ]
 
     ## RRD Graph
     else:
