@@ -31,17 +31,30 @@ import os, sys
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-charts = ['iops', 'bandwidth', 'usage',                                                                 # IOStats
-          'arc_hitmiss', 'cache_eviction', 'cache_result', 'cache_size', 'dmu_tx_memory', 'dmu_tx',     # RRD
+charts = ['iops', 'bandwidth', 'usage', # IOStats
+          'arc_hitmiss', 'cache_eviction', 'cache_result', 'cache_size', 'dmu_tx_memory', 'dmu_tx', # RRD
           'hash_collisions', 'l2_hitmiss', 'mutex_operation']
 
+time_window_list = {int( timedelta( hours=1 ).total_seconds() ):     'Last hour',
+                    int( timedelta( hours=2 ).total_seconds() ):     'Last two hours',
+                    int( timedelta( hours=12 ).total_seconds() ):    'Last twelve hours',
+                    int( timedelta( days=1 ).total_seconds() ):      'Last day',
+                    int( timedelta( days=7 ).total_seconds() ):      'Last week',
+                    int( timedelta( days=30 ).total_seconds() ):     'Last month',
+                    int( timedelta( days=365 ).total_seconds() ):    'Last year',
+                    }
+
 def home( request, *args, **kwargs ):
-    name = kwargs.get('name', 'iops')
-    if name not in charts: raise http.Http404
+    time_window = int( kwargs.get( 'time_window', 86400 ) );
+    if not time_window in time_window_list: raise http.Http404
+    name = kwargs.get( 'name', 'iops' )
+    if not name in charts: raise http.Http404
     return render_to_response( 'analytics/home.html',
         {'title': 'Analytics',
          'graph': name,
          'graph_list': charts,
+         'time_window': time_window,
+         'time_window_list': time_window_list,
             },
         context_instance=RequestContext( request ) )
 
@@ -70,7 +83,7 @@ def render( request, *args, **kwargs ):
             values[key] = []
 
         ## TODO This needs an offset, calculated by result count
-        iostat_psuedo_limit = 50
+        iostat_psuedo_limit = 100
         pool = Pool.objects.all()[0]
         iostats = pool.pool_iostat_set.filter( timestamp__gt=datetime.fromtimestamp( float( start ) ),
                                                timestamp__lt=datetime.fromtimestamp( float( stop ) ),

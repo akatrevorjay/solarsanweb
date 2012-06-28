@@ -442,11 +442,20 @@ svg .title {
 </style>
 
 
-<select data-placeholder="Change graph" class="graph-select">
+<select data-placeholder="Change graph" id="graph-select" class="chosen-select">
     <option value="{{ graph }}">{{ graph }}</option>
     {% for opt in graph_list %}
     {% if not opt == graph %}
     <option value="{{ opt }}">{{ opt }}</option>
+    {% endif %}
+    {% endfor %}
+</select>
+
+<select data-placeholder="Time window" id="time-window-select" class="chosen-select">
+    <option value="{{ time_window }}">{{ time_window_list[time_window] }}</option>
+    {% for k,v in time_window_list.items() %}
+    {% if not k == time_window %}
+    <option value="{{ k }}">{{ v }}</option>
     {% endif %}
     {% endfor %}
 </select>
@@ -459,10 +468,21 @@ svg .title {
 
 <script>
 
-$('.graph-select').chosen().change(function() {
+$('.chosen-select').chosen().change(chart_select);;
+
+//$('#graph-select').change(function() {
 //    draw_graph(this.value);
-    window.location.href = '/analytics/detail/' + this.value;
-});
+//    window.location.href = '/analytics/detail/' + this.value;
+//});
+
+
+function chart_select(chart_name, time_window) {
+    var chart_name = $('#graph-select').val(),
+        time_window = $('#time-window-select').val();
+    url = '/analytics/detail/' + chart_name;
+    if (time_window) url += '/' + time_window;
+    window.location.href = url;
+}
 
 draw_graph('{{ graph }}');
 
@@ -488,7 +508,7 @@ nv.addGraph(function() {
     .tickFormat(d3.format(',.3s'));
 
   var start = Math.round(new Date() / 1000);
-  start = start - 360000;
+  start = start - {{ time_window }};
 
   d3.json("/analytics/render"
       + "?name=" + encodeURIComponent(chart_name)
