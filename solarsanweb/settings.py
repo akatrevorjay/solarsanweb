@@ -165,6 +165,7 @@ INSTALLED_APPS = (
     #'crispy_forms',
     'django_assets',
     'coffin',
+    'kitsune',
 )
 
 PROJECT_APPS = (
@@ -176,7 +177,7 @@ PROJECT_APPS = (
     #'formtest',
 )
 
-PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
+#PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
 INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
 
 ## List of callables that know how to import templates from various sources.
@@ -198,7 +199,7 @@ JINJA2_TEMPLATE_LOADERS = (
 JINJA2_DISABLED_TEMPLATES = (
   'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel',
   'admin', 'registration',
-  'logs',
+  'logs', 'kitsune',
   #r'[^/]+\.html',                           # All generic templates
   #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
   #r'auth/',                                 # All auth templates
