@@ -50,7 +50,6 @@ class Cluster_Node_Discovery( PeriodicTask ):
             logger.debug( "Cluster discovery: Found: %s", DiscoveredClusterNodes )
 
 
-## FUCK Make this start on startup, spawns it's own thread, no need to pay attention to it after it's started
 class Cluster_Node_Beacon( Task ):
     """ Controls cluster beacon service """
     b = beacon.Beacon( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
