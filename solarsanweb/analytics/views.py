@@ -78,6 +78,7 @@ def render( request, *args, **kwargs ):
         elif name in ['iops', 'bandwidth']:
             keys = ['read', 'write']
             fields = ['%s_%s' % ( name, key ) for key in keys ]
+            keys.append('total')
 
         for key in keys:
             values[key] = []
@@ -97,9 +98,11 @@ def render( request, *args, **kwargs ):
             if name == 'iops':
                 values['read'].append( ( time, int( iostat.iops_read ) ) )
                 values['write'].append( ( time, int( iostat.iops_write ) ) )
+                values['total'].append( ( time, int( iostat.iops_read ) + int( iostat.iops_write ) ) )
             elif name == 'bandwidth':
                 values['read'].append( ( time, float( iostat.bandwidth_read ) ) )
                 values['write'].append( ( time, float( iostat.bandwidth_write ) ) )
+                values['total'].append( ( time, float( iostat.bandwidth_read ) + float( iostat.bandwidth_write ) ) )
             elif name == 'usage':
                 #total = float( iostat.alloc + iostat.free )
 
