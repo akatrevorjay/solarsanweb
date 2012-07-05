@@ -7,6 +7,13 @@ import string, os, sys
 import logging, datetime, time
 from django import http
 
+##
+## django-braces -- Nice reusable MixIns
+## http://django-braces.readthedocs.org/en/latest/index.html
+##
+from braces.views import LoginRequiredMixin, PermissionRequiredMixin, SuperuserRequiredMixin #, UserFormKwargsMixin, UserKwargModelFormMixIn
+from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAndRedirectToEditView, SelectRelatedMixin
+
 """
 MixIns
 The kool-aid.

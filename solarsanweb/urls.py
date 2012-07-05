@@ -1,5 +1,8 @@
 from django.conf.urls.defaults import patterns, include, url
 
+# Jinja2 404/500s
+#from coffin.conf.urls.defaults import *
+
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
@@ -20,5 +23,9 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
 
     #url(r'^', include('solarsan.urls')),
+    #url(r'^formtest/', include('formtest.urls')),
+    
+    url(r'^api/', include('api.urls')),
 )
+
 
