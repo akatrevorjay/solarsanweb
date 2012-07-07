@@ -106,8 +106,7 @@ function page_content_update_cb(data) {
 function page_content_sidenav_select_bind() {
     $(".page-content-select").not('.page-content-select-clickery')
         .click(function (event) { page_content_sidenav_select(event); })
-        .addClass('page-content-select-clickery')
-        .children('a').tooltip({placement: 'right'});
+        .addClass('page-content-select-clickery');
 }
 page_content_sidenav_select_bind();
 

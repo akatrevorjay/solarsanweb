@@ -2,7 +2,7 @@
 /* _______
  * base.js
  */
-
+$(function() {
 
 //
 // Include Django CSRF token in ajax requests
@@ -59,3 +59,11 @@ function readableFileSize(size) {
     return size.toFixed(1) + ' ' + units[i];
 }
 
+
+//
+// Bootstrap tooltips
+//
+/* We'll probably have to add more options here, perhaps with .tooltip-left etc */
+$("a[rel='tooltip']").tooltip({placement: 'right'});
+
+});
