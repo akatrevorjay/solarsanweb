@@ -1,0 +1,117 @@
+{% extends "base_site.html" %}
+{% from "bootstrap/macros.html" import alert  %}
+{% from "bootstrap/forms/macros.html" import field, input  %}
+
+<!-- css_extra -->
+{% block css_extra %}
+    <style></style>
+{% endblock %}
+
+{# Navbar is set in the app-specific override "base.html #}
+
+{% block pre_content %}
+{% endblock %}
+
+{% block content %}
+<!-- content -->
+
+{% block page_breadcrumbs_container %}
+<!-- page_breadcrumbs_container -->
+<div class="row">
+    <div class="span12">
+        <ul id="page-breadcrumbs" class="breadcrumb">
+            {% block page_breadcrumbs_pre %}{% endblock %}
+            {% block page_breadcrumbs %}{% endblock %}
+            {% block page_breadcrumbs_post %}{% endblock %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_container_pre %}{% endblock %}
+{% block page_container %}
+<!-- page_container -->
+<div class="row">
+    <div class="span3">
+        <div id="page-content-sidenav" class="well sidebar-nav">
+            <ul class="nav nav-list {% block page_content_sidenav_classes %}{% endblock %}">
+                {% block page_content_sidenav_pre %}{% endblock %}
+                {% block page_content_sidenav %}{% endblock %}
+                {% block page_content_sidenav_post %}{% endblock %}
+            </ul>
+        </div>
+    </div>
+    <div class="span9">
+        <div id="page-content" style="padding-left: 10px">
+            {% block page_content %}
+
+<!-- subpage -->
+{% block subpage_topnav_container %}
+<!-- subpage_topnav_container -->
+<div class="row">
+    <div class="navbar subpage-topnav">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto;">
+                {% block subpage_topnav_collapsebtn %}
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".subpage-topnav .nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+                {% endblock %}
+
+                {% block subpage_topnav_brand %}{% endblock %}
+
+                {% block subpage_topnav_pre_nocollapse %}{% endblock %}
+                {% block subpage_topnav_nocollapse %}{% endblock %}
+                {% block subpage_topnav_post_nocollapse %}{% endblock %}
+
+                <div class="nav-collapse">
+                    <ul class="nav">
+                        {% block subpage_topnav_pre %}{% endblock %}
+                        {% block subpage_topnav %}{% endblock %}
+                        {% block subpage_topnav_post %}{% endblock %}
+                    </ul>
+                    <ul class="nav pull-right">
+                        {% block subpage_topnav_right_pre %}{% endblock %}
+                        {% block subpage_topnav_right %}{% endblock %}
+                        {% block subpage_topnav_right_post %}{% endblock %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- end subpage -->
+
+{% block subpage_container_pre %}{% endblock %}
+{% block subpage_container %}
+<!-- subpage_container -->
+<div class="row">
+    <div id="subpage-content" class="well">
+        {% block subpage_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
+{% block subpage_container_post %}
+<script type="text/javascript">
+/* _________________________________
+ * base_page__subpage_container_post
+ */
+$(function() {
+
+});
+</script>
+{{ subpage_container_post }}
+{% endblock %}
+
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page_container_post %}{% endblock %}
+
+{% endblock %}
+
