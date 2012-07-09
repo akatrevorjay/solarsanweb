@@ -328,44 +328,38 @@ if not hasattr(safestring, '__html__'):
 ##
 
 ## django-celery
-import djcelery
-djcelery.setup_loader()
+#import djcelery
+#djcelery.setup_loader()
 #CELERYBEAT_SCHEDULER = "solarsanweb.solarsan.utils.CeleryBeatScheduler"
 
 ## Celery broker
-BROKER_URL = "amqp://guest:guest@localhost:5672//"
+BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
+CELERY_RESULT_BACKEND = "amqp"
 
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
 
-## Celery results AMQP
-CELERY_RESULT_BACKEND = "amqp"
-
-### Celery results MongoDB
-#CELERY_RESULT_BACKEND = "mongodb"
-#CELERY_MONGODB_BACKEND_SETTINGS = {
-#    "host": "127.0.0.1",
-#    "port": 27017,
-#    "database": "celery",
-#    "taskmeta_collection": "my_taskmeta" # Collection name to use for task output
-#}
-#BROKER_BACKEND = "mongodb"
-#BROKER_HOST = "localhost"
-#BROKER_PORT = 27017
-#BROKER_USER = ""
-#BROKER_PASSWORD = ""
-#BROKER_VHOST = "celery"
-
 ## Celery extra opts
 # queues=[cluster, default]
-#CELERY_QUEUES
+import socket
+SERVER_NAME = socket.gethostname()
+
+CELERY_QUEUES = {
+    'box_%s' % SERVER_NAME: {'binding_key': 'box_%s' % SERVER_NAME},
+    'shared':               {'binding_key': 'shared'},
+}
+
+#CELERY_DEFAULT_EXCHANGE = "celery"
+CELERY_DEFAULT_EXCHANGE = "tasks"
+CELERY_DEFAULT_EXCHANGE_TYPE = "direct"
+CELERY_DEFAULT_QUEUE = "box_" + SERVER_NAME
+CELERY_DEFAULT_ROUTING_KEY = 'box_%s' % SERVER_NAME
+
 #CELERY_ROUTES = ({"myapp.tasks.compress_video": {
 #                        "queue": "video",
 #                        "routing_key": "video.compress"
 #                 }}, )
-#CELERY_DEFAULT_QUEUE
 #CELERY_CREATE_MISSING_QUEUES
-#CELERY_DEFAULT_ROUTING_KEY
 
 if DEBUG:
     CELERY_SEND_EVENTS = True
