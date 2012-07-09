@@ -1,15 +1,18 @@
-from django.forms import ModelForm
+# forms.py
+from django import forms
+#from models import NetworkInterfaceConfig, Config
+import models
 
-from models import NetworkInterfaceConfig
 
-class NetworkInterfaceConfigForm(ModelForm):
+class NetworkInterfaceConfigForm(forms.ModelForm):
     class Meta:
-        model = NetworkInterfaceConfig
-        exclude = ('last_modified', 'created',)
+        model = models.NetworkInterfaceConfig
+        exclude = ('name', 'last_modified', 'created',)
 
-class Config(ModelForm):
+
+class Config(forms.ModelForm):
     class Meta:
-        model = Config
+        model = models.Config
         exclude = ('last_modified', 'created',)
 
 

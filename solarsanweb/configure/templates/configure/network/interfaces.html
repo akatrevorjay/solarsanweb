@@ -1,0 +1,62 @@
+{% extends "base_page.html" %}
+
+{% block page_breadcrumbs_pre %}
+<li class="static">
+    <a href="/configure">configure</a>
+    <span class="divider">&raquo;</span>
+    <a href="/configure/network/interfaces">network interfaces</a>
+</li>
+{% endblock %}
+
+{% block page_content_sidenav_pre %}
+{% endblock %}
+
+{% block page_content_sidenav %}
+<li class="nav-header">
+    Network Interfaces
+</li>
+{% for iface in interfaces.values() %}
+{% if not iface.type == 'local' %}
+<li class="{% if interface and iface.name == interface %}active{% endif %}">
+    <a href="/configure/network/interfaces/{{ iface.name|urlize }}" rel="tooltip" title="{% for addr in iface.addrs.AF_INET %}{{ addr.addr }} / {{ addr.netmask }};{% endfor %}">{{ iface.name }}</a>
+</li>
+{% endif %}
+{% endfor %}
+{% endblock %}
+
+
+{% block subpage_topnav_brand %}
+<a class="brand configure-detail-select" href="#">Network Interface{% if interface %}: {{ interface }}{% else %}s{% endif %}</a>
+{% endblock %}
+
+
+{% block subpage_content %}
+
+{% if form %}
+<!-- Debug Form -->
+<p>
+    <form method="post" class="form-horizontal">{% csrf_token %}
+        {{ form.as_p() }}
+        <input type="submit" value="Save" />
+    </form>
+</p>
+{% endif %}
+
+{% if interface %}
+<!-- Debug Interface Info -->
+<pre>
+{{ interfaces[interface] }} =
+{{ interfaces[interface].__dict__|pprint }}
+
+config = 
+{{ interfaces[interface].config.__dict__|pprint }}
+</pre>
+<br />
+Debug /etc/network/interfaces:<br />
+<pre>{% include 'configure/network/interfaces' %}</pre>
+{% endif %}
+
+<p>List and configure interfaces, apply templated interfaces file on save,</p>
+
+{% endblock %}
+ 
