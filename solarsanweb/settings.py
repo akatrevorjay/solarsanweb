@@ -248,7 +248,7 @@ def custom_show_toolbar(request):
     if DEBUG: return True # Always show toolbar, default is this and if your IP is in INTERNAL_IPS
 
 DEBUG_TOOLBAR_CONFIG = {
-    #'INTERCEPT_REDIRECTS': False,
+    'INTERCEPT_REDIRECTS': False,
     #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
     'HIDE_DJANGO_SQL': False,
     'TAG': 'div',
@@ -375,6 +375,9 @@ if DEBUG:
 CELERY_IMPORTS = (
     #"solarsan.tasks.locsol_backup",
     #"solarsan.tasks.cluster",
+
+    ## Enable HTTP dispatch task (http://celery.github.com/celery/userguide/remote-tasks.html)
+    'celery.task.http',
 )
 
 ##
