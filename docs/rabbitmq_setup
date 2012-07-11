@@ -1,0 +1,59 @@
+
+##
+## Great into at: http://timbull.com/build-a-processing-queue-with-multi-threading
+##
+
+## Make the erlang cookie in /var/lib/rabbitmq/.erlang.cookie is a secret key that is shared among all that will be clustered.
+
+## Setup user
+rabbitmqctl add_user solarsan Thahnaifee1ichiu8hohv5boosaengai
+
+## Setup vhost
+rabbitmqctl add_vhost solarsan
+
+## Give user perms on vhost
+#                              <vhost>             <user>   <conf> <read> <write>
+rabbitmqctl set_permissions -p solarsan solarsan '.*' '.*' '.*'
+##
+## Cluster servers
+##
+
+rabbitmqctl stop_app
+# Stopping node rabbit@Stor3 ...
+# ...done.
+
+rabbitmqctl reset
+# Resetting node rabbit@Stor3 ...
+# ...done.
+
+rabbitmqctl cluster rabbit@Stor3 rabbit@Stor4
+# Clustering node rabbit@Stor3 with [rabbit@Stor4] ...
+# ...done.
+
+rabbitmqctl start_app
+# Starting node rabbit@Stor3 ...
+# ...done.
+
+###
+### OTHER INFO
+###
+
+## To change a server to be a disk node:
+# This is neat, but if I read the documentation correctly what we have here is a RAM / RAM cluster.  If one of the servers goes down, we will be fine because the message state is replicated across clusters, but if the whole lot went out (because the data centre lost power, or more likely in my situation that I just turned both PCs off over night) we might really want a persistent DISK node.
+# To convert Server to being a disk node, simply execute the following on Server (while the cluster is running).
+rabbitmqctl stop_app
+rabbitmqctl cluster rabbit@laptop rabbit@server
+# Or (FYI) to turn it back into a RAM node.  Note it doesn't matter for our purposes in this doco how they are configured, read up and decide what you need.
+rabbitmqctl cluster rabbit@laptop
+# Finally, start it up again
+rabbitmqctl start_app
+
+#To remove a server from a cluster at any time, simply do this (this is not a required step, it's just "FYI").
+rabbitmqctl stop_app
+rabbitmqctl reset
+rabbitmqctl start_app
+
+#NB - You'll need to use force_reset for the LAST node in the cluster to be removed (if you're separating them all out again).  REMEMBER if you do a full cluster reset (like I did in testing this), you'll need to redo the security section from the first section again :-)  This is because you've reset both nodes so they no longer hold the security information.  If you ever get into problems with the configuration, I've resolved them consistently by de-clustering, forcing a node reset on both nodes and then clustering and redoing the security.
+
+
+
