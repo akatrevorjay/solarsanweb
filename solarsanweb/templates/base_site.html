@@ -16,17 +16,19 @@
 {# <link type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700" rel="stylesheet" /> #}
 
 {% for j in 'js/jquery.js',
-    '3rd/flot/jquery.flot.js',
-    '3rd/flot/jquery.flot.time.js',
-    '3rd/flot/jquery.flot.crosshair.js',
-    'js/jquery.animate-colors-min.js',
-    '3rd/d3/d3.v2.js',
-    '3rd/nvd3/nv.d3.js',
+    '3rd/d3/d3.v2.min.js',
+    '3rd/nvd3/nv.d3.min.js',
     '3rd/chosen/chosen/chosen.jquery.min.js',
     'js/base.js',
     %}
     <script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>
 {% endfor %}
+{#
+    '3rd/flot/jquery.flot.js',
+    '3rd/flot/jquery.flot.time.js',
+    '3rd/flot/jquery.flot.crosshair.js',
+    'js/jquery.animate-colors-min.js',
+#}
 
 {% endblock %}
 
