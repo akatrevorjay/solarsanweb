@@ -31,14 +31,23 @@ application = get_wsgi_application()
 ## Allow autoreload to work properly with uwsgi
 ##
 
-import uwsgi
-from uwsgidecorators import timer
-from django.utils import autoreload
-from django.conf import settings
+try:
+    import uwsgi
+    from uwsgidecorators import timer
 
-if settings.DEBUG:
-    @timer(3)
-    def change_code_gracefull_reload(sig):
-        if autoreload.code_changed():
-            uwsgi.reload()
+    #from uwsgidecorators import *
+    #@timer(30, target='spooler')
+    #def hello_world(signum):
+    #        print("30 seconds elapsed")
+
+    from django.utils import autoreload
+    from django.conf import settings
+
+    if settings.DEBUG:
+        @timer(3)
+        def change_code_gracefull_reload(sig):
+            if autoreload.code_changed():
+                uwsgi.reload()
+except:
+    pass
 
