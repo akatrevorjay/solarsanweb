@@ -1,5 +1,27 @@
 # Django settings for solarsanweb project.
 
+PROJECT_NAME = "solarsanweb"
+
+##
+## Paths
+##
+
+import os, sys
+
+TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+PROJECT_DIR = os.path.join(TOP_DIR, PROJECT_NAME)
+DATA_DIR = os.path.join(TOP_DIR, "data")
+
+for i in ['vendor', 'vendor-local']:
+    sys.path.insert(0, os.path.join(TOP_DIR, i))
+
+sys.path.insert(0, os.path.join(PROJECT_DIR, 'lib'))
+sys.path.insert(0, PROJECT_DIR)
+
+##
+## Common
+##
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -20,26 +42,33 @@ DATABASES = {
         'PASSWORD': 'locsol',                 # Not used with sqlite3.
         'HOST': 'localhost',                  # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
-    }
+    },
+
+    ## MongoDB -- django_mongodb_engine w/nonrel
+    'mongodb': {
+        'ENGINE': 'django_mongodb_engine',
+        'NAME': PROJECT_NAME,
+        #'USER': '',
+        #'PASSWORD': '',
+        #'HOST': 'localhost',
+        #'PORT': 27017,
+    },
+
+    ## MongoDB -- django_mongokit
+    #'mongokit': {
+    #    'ENGINE': 'django_mongokit.mongodb',
+    #    'NAME': PROJECT_NAME,
+    #},
 }
 
-PROJECT_NAME = "solarsanweb"
+## MongoDB -- mongoengine
+from mongoengine import connect
+connect(PROJECT_NAME)
 
-##
-## Paths
-##
-
-import os, sys
-
-TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-PROJECT_DIR = os.path.join(TOP_DIR, PROJECT_NAME)
-DATA_DIR = os.path.join(TOP_DIR, "data")
-
-for i in ['vendor', 'vendor-local']:
-    sys.path.insert(0, os.path.join(TOP_DIR, i))
-
-sys.path.insert(0, os.path.join(PROJECT_DIR, 'lib'))
-sys.path.insert(0, PROJECT_DIR)
+## Use MongoDB for Auth
+#AUTHENTICATION_BACKENDS = (
+#    'mongoengine.django.auth.MongoEngineBackend',
+#)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -129,6 +158,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
 )
 
+
 ## Root URL routes
 ROOT_URLCONF = PROJECT_NAME + '.urls'
 
@@ -140,7 +170,10 @@ WSGI_APPLICATION = PROJECT_NAME + '.wsgi.application'
 ##
 
 INSTALLED_APPS = (
+    # This has to be first, as I had to comment out it's nasty prepending.
+    'django_mongodb_engine',
     'bootstrap',
+    'coffin',
 
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -156,17 +189,19 @@ INSTALLED_APPS = (
     # Libs
     'djcelery',
     'kombu.transport.django',
-    'debug_toolbar',
-    'debug_toolbar_user_panel',
-    'debug_toolbar_mongo',
-    #'cache_panel'
     'django_extensions',
     'djsupervisor',
     'south',
-    #'crispy_forms',
+    'crispy_forms',
     'django_assets',
-    'coffin',
     'kitsune',
+
+    'debug_toolbar',
+    'debug_toolbar_user_panel',
+    'cache_panel',
+    'debug_toolbar_mongo',
+
+    'mongonaut',
 )
 
 PROJECT_APPS = (
@@ -198,13 +233,14 @@ JINJA2_TEMPLATE_LOADERS = (
 )
 
 JINJA2_DISABLED_TEMPLATES = (
-  'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', 'mongo-[^/]+\.html',
-  'admin', 'registration',
-  'logs', 'kitsune',
-  #r'[^/]+\.html',                           # All generic templates
-  #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
-  #r'auth/',                                 # All auth templates
-  #r'(cms|menu|admin|admin_doc)/',           # The templates of these 4 apps
+    'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', r'mongo-[^/]+\.html',
+    'admin', 'registration',
+    'logs', 'kitsune',
+    'crispy_forms/',
+    #r'[^/]+\.html',                           # All generic templates
+    #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
+    #r'auth/',                                 # All auth templates
+    #r'(cms|menu|admin|admin_doc)/',           # The templates of these 4 apps
 )
 
 
@@ -246,7 +282,7 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar_mongo.panel.MongoDebugPanel',
 )
 
-DEBUG_TOOLBAR_MONGO_STACKTRACES = False
+#DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
 def custom_show_toolbar(request):
     if DEBUG: return True # Always show toolbar, default is this and if your IP is in INTERNAL_IPS
@@ -288,9 +324,11 @@ CACHES = {
 CACHES['default'] = CACHES['default_db']
 
 ## Persistent sessions
-if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-
+#if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+#else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+#else:       SESSION_ENGINE = 'mongoengine.django.sessions'
+#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_ENGINE = 'mongoengine.django.sessions'
 
 # HTTPS only
 SESSION_COOKIE_SECURE = True
@@ -300,25 +338,25 @@ CSRF_COOKIE_SECURE = True
 ## Jinja2/Coffin Templates
 ##
 
-JINJA2_FILTERS = (
-    #'path.to.myfilter',
-)
+#JINJA2_FILTERS = (
+#    #'path.to.myfilter',
+#)
 
-JINJA2_TESTS = {
-    #'test_name': 'path.to.mytest',
-}
+#JINJA2_TESTS = {
+#    #'test_name': 'path.to.mytest',
+#}
 
 JINJA2_EXTENSIONS = (
     'jinja2.ext.do', 'jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols',
     #'compressor.contrib.jinja2ext.CompressorExtension',
 )
 
-from jinja2 import StrictUndefined
-JINJA2_ENVIRONMENT_OPTIONS = {
-    #'autoescape': False,
-    #'undefined': StrictUndefined,
-    #'autoreload': True,                # Is this needed with coffin or just jingo?
-}
+#from jinja2 import StrictUndefined
+#JINJA2_ENVIRONMENT_OPTIONS = {
+#    #'autoescape': False,
+#    #'undefined': StrictUndefined,
+#    #'autoreload': True,                # Is this needed with coffin or just jingo?
+#}
 
 # Monkeypatch Django to mimic Jinja2 behaviour (related to autoescaped strings)
 from django.utils import safestring
@@ -326,14 +364,13 @@ if not hasattr(safestring, '__html__'):
     safestring.SafeString.__html__ = lambda self: str(self)
     safestring.SafeUnicode.__html__ = lambda self: unicode(self)
 
-
 ##
 ## Celery (async tasks)
 ##
 
 ## django-celery
-#import djcelery
-#djcelery.setup_loader()
+import djcelery
+djcelery.setup_loader()
 #CELERYBEAT_SCHEDULER = "solarsanweb.solarsan.utils.CeleryBeatScheduler"
 
 ## Celery broker
@@ -344,7 +381,6 @@ CELERY_RESULT_BACKEND = "amqp"
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
 
 ## Celery extra opts
-# queues=[cluster, default]
 import socket
 SERVER_NAME = socket.gethostname()
 
