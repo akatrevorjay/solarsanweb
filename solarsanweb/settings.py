@@ -158,6 +158,7 @@ INSTALLED_APPS = (
     'kombu.transport.django',
     'debug_toolbar',
     'debug_toolbar_user_panel',
+    'debug_toolbar_mongo',
     #'cache_panel'
     'django_extensions',
     'djsupervisor',
@@ -197,7 +198,7 @@ JINJA2_TEMPLATE_LOADERS = (
 )
 
 JINJA2_DISABLED_TEMPLATES = (
-  'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel',
+  'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', 'mongo-[^/]+\.html',
   'admin', 'registration',
   'logs', 'kitsune',
   #r'[^/]+\.html',                           # All generic templates
@@ -242,7 +243,10 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
     'debug_toolbar_user_panel.panels.UserPanel',
     'cache_panel.CachePanel',
+    'debug_toolbar_mongo.panel.MongoDebugPanel',
 )
+
+DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
 def custom_show_toolbar(request):
     if DEBUG: return True # Always show toolbar, default is this and if your IP is in INTERNAL_IPS
