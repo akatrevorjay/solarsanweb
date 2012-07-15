@@ -2,6 +2,9 @@
 
 PROJECT_NAME = "solarsanweb"
 
+import socket
+SERVER_NAME = socket.gethostname()
+
 ##
 ## Paths
 ##
@@ -19,28 +22,27 @@ sys.path.insert(0, os.path.join(PROJECT_DIR, 'lib'))
 sys.path.insert(0, PROJECT_DIR)
 
 ##
-## Common
+## Project Common
 ##
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (
-    ('Trevor Joynson', 'trevorj@localhostsolutions.com'),
-)
-
+ADMINS = ( ('Trevor Joynson', 'trevorj@localhostsolutions.com'), )
 MANAGERS = ADMINS
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
 DATABASES = {
+    ## TODO If MongoDB is the method moving forward, then this may want to be changed to sqlite for non-compat apps, then use a DatabaseRouter to selectively
+    ##   route queries to the proper db.
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'solarsanweb',                # Or path to database file if using sqlite3.
+        'NAME': PROJECT_NAME,                 # Or path to database file if using sqlite3.
         'USER': 'root',                       # Not used with sqlite3.
         'PASSWORD': 'locsol',                 # Not used with sqlite3.
-        'HOST': 'localhost',                  # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
     },
 
@@ -48,27 +50,28 @@ DATABASES = {
     'mongodb': {
         'ENGINE': 'django_mongodb_engine',
         'NAME': PROJECT_NAME,
-        #'USER': '',
-        #'PASSWORD': '',
-        #'HOST': 'localhost',
-        #'PORT': 27017,
     },
 
-    ## MongoDB -- django_mongokit
+    ### MongoDB -- django_mongokit
     #'mongokit': {
     #    'ENGINE': 'django_mongokit.mongodb',
     #    'NAME': PROJECT_NAME,
     #},
 }
 
+##
 ## MongoDB -- mongoengine
+##
+
 from mongoengine import connect
 connect(PROJECT_NAME)
 
-## Use MongoDB for Auth
-#AUTHENTICATION_BACKENDS = (
-#    'mongoengine.django.auth.MongoEngineBackend',
-#)
+# Use MongoDB for Auth
+#AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
+
+##
+## Django Common
+##
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -205,6 +208,7 @@ INSTALLED_APPS = (
     'debug_toolbar_htmltidy',
 
     #'mongonaut',
+    #'speedtracer',
 )
 
 PROJECT_APPS = (
@@ -240,7 +244,9 @@ JINJA2_DISABLED_TEMPLATES = (
     'admin', 'registration',
     'logs', 'kitsune',
     'crispy_forms',
-    'mongonaut',
+    #'mongonaut',
+    #'speedtracer',
+
     #r'[^/]+\.html',                           # All generic templates
     #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
     #r'auth/',                                 # All auth templates
@@ -255,6 +261,9 @@ JINJA2_DISABLED_TEMPLATES = (
 ##
 
 MIDDLEWARE_CLASSES = (
+    # TODO This should probably only be enabled if DEBUG
+    #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
+
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -319,14 +328,18 @@ CACHES = {
     'default_file': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
         'LOCATION': os.path.join(DATA_DIR, 'cache'),
-    }
+    },
+    'default_mongodb': {
+        'BACKEND': 'django_mongodb_cache.MongoDBCache',
+        'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
+    },
 }
 
 ## Mem for debug, db otherwise
 #if DEBUG:   CACHES['default'] = CACHES['default_mem']
 #else:       CACHES['default'] = CACHES['default_db']
 #else:       CACHES['default'] = CACHES['default_file']
-CACHES['default'] = CACHES['default_db']
+CACHES['default'] = CACHES['default_mongodb']
 
 ## Persistent sessions
 #if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -386,9 +399,6 @@ CELERY_RESULT_BACKEND = "amqp"
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
 
 ## Celery extra opts
-import socket
-SERVER_NAME = socket.gethostname()
-
 CELERY_QUEUES = {
     'box_%s' % SERVER_NAME: {'binding_key': 'box_%s' % SERVER_NAME},
     'shared':               {'binding_key': 'shared'},
