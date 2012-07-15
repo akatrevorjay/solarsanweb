@@ -17,14 +17,14 @@ urlpatterns = patterns('',
     url(r'^analytics/', include('analytics.urls')),
     url(r'^logs/', include('logs.urls')),
 
-    # Uncomment the admin/doc line below to enable admin documentation:
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),          # Admin docs
+    url(r'^admin/', include(admin.site.urls)),                              # Admin
+
+    url(r'^', include('debug_toolbar_htmltidy.urls')),                      # DJDT HtmlTidy
 
     #url(r'^', include('solarsan.urls')),
     #url(r'^formtest/', include('formtest.urls')),
-    
+
     url(r'^api/', include('api.urls')),
 )
 

@@ -27,6 +27,11 @@ application = get_wsgi_application()
 # from helloworld.wsgi import HelloWorldApplication
 # application = HelloWorldApplication(application)
 
+## Apparently this is needed here?
+## http://celery.github.com/celery/django/first-steps-with-django.html#configuring-your-django-project-to-use-celery
+import djcelery
+djcelery.setup_loader()
+
 ##
 ## Allow autoreload to work properly with uwsgi
 ##
