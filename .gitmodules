@@ -67,3 +67,54 @@
 [submodule "vendor-local/pkgs/gluster"]
 	path = vendor-local/pkgs/gluster
 	url = git://github.com/joejulian/python-gluster.git
+[submodule "vendor-local/pkgs/django-mongokit"]
+	path = vendor-local/pkgs/django-mongokit
+	url = git://github.com/dgladkov/django-mongokit.git
+[submodule "vendor-local/pkgs/djblets"]
+	path = vendor-local/pkgs/djblets
+	url = git://github.com/djblets/djblets.git
+[submodule "vendor-local/pkgs/django-pickling"]
+	path = vendor-local/pkgs/django-pickling
+	url = git://github.com/Suor/django-pickling.git
+[submodule "vendor-local/pkgs/django-sitetree"]
+	path = vendor-local/pkgs/django-sitetree
+	url = git://github.com/idlesign/django-sitetree.git
+[submodule "vendor-local/pkgs/django-actuary"]
+	path = vendor-local/pkgs/django-actuary
+	url = git://github.com/bmelton/Django-Actuary.git
+[submodule "vendor-local/pkgs/overseer"]
+	path = vendor-local/pkgs/overseer
+	url = git://github.com/disqus/overseer.git
+[submodule "vendor-local/pkgs/djando-dockit"]
+	path = vendor-local/pkgs/djando-dockit
+	url = git://github.com/zbyte64/django-dockit.git
+[submodule "vendor-local/pkgs/django-dockit"]
+	path = vendor-local/pkgs/django-dockit
+	url = git://github.com/zbyte64/django-dockit.git
+[submodule "vendor-local/pkgs/mongoengine"]
+	path = vendor-local/pkgs/mongoengine
+	url = https://github.com/MongoEngine/mongoengine.git
+[submodule "vendor-local/pkgs/mongodb-engine"]
+	path = vendor-local/pkgs/mongodb-engine
+	url = git://github.com/django-nonrel/mongodb-engine.git
+[submodule "vendor-local/pkgs/django-nonrel__mongodb-engine"]
+	path = vendor-local/pkgs/django-nonrel__mongodb-engine
+	url = git://github.com/django-nonrel/mongodb-engine.git
+[submodule "vendor-local/pkgs/django-nonrel__django-1.4"]
+	path = vendor-local/pkgs/django-nonrel__django-1.4
+	url = git://github.com/django-nonrel/django-1.4.git
+[submodule "vendor-local/pkgs/django-permission-backend-nonrel"]
+	path = vendor-local/pkgs/django-permission-backend-nonrel
+	url = git://github.com/django-nonrel/django-permission-backend-nonrel.git
+[submodule "vendor-local/pkgs/django-dbindexer"]
+	path = vendor-local/pkgs/django-dbindexer
+	url = git://github.com/django-nonrel/django-dbindexer.git
+[submodule "vendor-local/pkgs/django-debug-toolbar"]
+	path = vendor-local/pkgs/django-debug-toolbar
+	url = git://github.com/django-debug-toolbar/django-debug-toolbar.git
+#[submodule "vendor-local/pkgs/mongodb-cache"]
+#	path = vendor-local/pkgs/mongodb-cache
+#	url = git://github.com/django-nonrel/mongodb-cache.git
+[submodule "vendor-local/pkgs/mongodb-cache"]
+	path = vendor-local/pkgs/mongodb-cache
+	url = git://github.com/akatrevorjay/mongodb-cache.git
