@@ -186,6 +186,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
 
+    'djangotoolbox',
+
     # Libs
     'djcelery',
     'kombu.transport.django',
@@ -200,8 +202,9 @@ INSTALLED_APPS = (
     'debug_toolbar_user_panel',
     'cache_panel',
     'debug_toolbar_mongo',
+    'debug_toolbar_htmltidy',
 
-    'mongonaut',
+    #'mongonaut',
 )
 
 PROJECT_APPS = (
@@ -233,10 +236,11 @@ JINJA2_TEMPLATE_LOADERS = (
 )
 
 JINJA2_DISABLED_TEMPLATES = (
-    'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', r'mongo-[^/]+\.html',
+    'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
     'admin', 'registration',
     'logs', 'kitsune',
-    'crispy_forms/',
+    'crispy_forms',
+    'mongonaut',
     #r'[^/]+\.html',                           # All generic templates
     #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
     #r'auth/',                                 # All auth templates
@@ -280,6 +284,7 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar_user_panel.panels.UserPanel',
     'cache_panel.CachePanel',
     'debug_toolbar_mongo.panel.MongoDebugPanel',
+    'debug_toolbar_htmltidy.panels.HTMLTidyDebugPanel',
 )
 
 #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
