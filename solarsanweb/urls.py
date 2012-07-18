@@ -6,10 +6,12 @@ from django.conf.urls.defaults import patterns, include, url
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+#from mongoadmin import site
 
 urlpatterns = patterns('',
     #url(r'^$', 'solarsanweb.views.home', name='home'),
     url(r'^$', include('analytics.urls')),
+    url(r'^accounts/', include('django.contrib.auth.urls')),
 
     url(r'^status/', include('status.urls')),
     url(r'^configure/', include('configure.urls')),
@@ -17,7 +19,10 @@ urlpatterns = patterns('',
     url(r'^analytics/', include('analytics.urls')),
     url(r'^logs/', include('logs.urls')),
 
+    (r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
+
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),          # Admin docs
+    #url(r'^admin/', include(site.urls)),                                    # Admin (mongoadmin)
     url(r'^admin/', include(admin.site.urls)),                              # Admin
 
     url(r'^', include('debug_toolbar_htmltidy.urls')),                      # DJDT HtmlTidy

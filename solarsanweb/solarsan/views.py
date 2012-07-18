@@ -18,6 +18,26 @@ from solarsan.utils import *
 from storage.models import Pool, Dataset, Filesystem, Snapshot
 #from solarsan.forms import *
 
+
+###
+### Authenticate a user with given creds
+###
+from django.contrib.auth import authenticate, login
+
+def login_view(request):
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            # Redirect to a success page.
+        else:
+            # Return a 'disabled account' error message
+    else:
+        # Return an 'invalid login' error message.
+
+
 #class AboutView(LoggedInMixin, generic.TemplateView):
 #    """ About page view. """
 #    template_name = 'about.html'
