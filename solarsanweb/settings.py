@@ -46,18 +46,15 @@ DATABASES = {
         'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
     },
 
-    ## MongoDB -- django_mongodb_engine w/nonrel
+    ## MongoDB
     'mongodb': {
         'ENGINE': 'django_mongodb_engine',
+        #'ENGINE': 'django_mongokit.mongodb',
         'NAME': PROJECT_NAME,
     },
-
-    ### MongoDB -- django_mongokit
-    #'mongokit': {
-    #    'ENGINE': 'django_mongokit.mongodb',
-    #    'NAME': PROJECT_NAME,
-    #},
 }
+
+DATABASE_ROUTERS = ['django_mongodb_engine.router.MongoDBRouter',]
 
 ##
 ## MongoDB -- mongoengine
@@ -66,8 +63,9 @@ DATABASES = {
 from mongoengine import connect
 connect(PROJECT_NAME)
 
-# Use MongoDB for Auth
+## Use MongoDB for Auth
 #AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
+#AUTHENTICATION_BACKENDS = ( 'permission_backend_nonrel.backends.NonrelPermissionBackend', )
 
 ##
 ## Django Common
@@ -157,7 +155,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
 
     # Not default
-    'django.core.context_processors.request',               # Puts 'request' in context
+    'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
     'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
 )
 
@@ -184,22 +182,29 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
+    # Uncomment the next lines to enable the admin:
+    #'mongoadmin',
+    #'mongonaut',
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
 
     'djangotoolbox',
+    #'permission_backend_nonrel',
 
     # Libs
     'djcelery',
-    'kombu.transport.django',
+    #'djkombu.transport',
+    #'djcelery.transport',
     'django_extensions',
     'djsupervisor',
     'south',
     'crispy_forms',
-    'django_assets',
-    'kitsune',
+    #'django_assets',
+    #'kitsune',
+    'waffle',
+    'smuggler',         # DB fixture manager
+    #'devserver',
 
     'debug_toolbar',
     'debug_toolbar_user_panel',
@@ -207,7 +212,6 @@ INSTALLED_APPS = (
     'debug_toolbar_mongo',
     'debug_toolbar_htmltidy',
 
-    #'mongonaut',
     #'speedtracer',
 )
 
@@ -222,6 +226,37 @@ PROJECT_APPS = (
 
 #PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
 INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
+
+## List of apps/models that should use mongo.
+MONGODB_MANAGED_APPS = (
+    'solarsan',
+    'status',
+    #'configure',
+    #'storage',         # TODO remove requirement on .id in Import_ZFS_Metadata
+    'analytics',       # TODO convert data to fixture
+
+    #'debug_toolbar',
+    #'debug_toolbar_user_panel',
+    #'cache_panel',
+    'debug_toolbar_mongo',
+
+    'djangotoolbox',
+    #'django_mongodb_engine',
+    #'django.contrib.auth',
+    #'djcelery',
+    #'smuggler',
+
+    'permission_backend_nonrel',
+    #'mongonaut',
+
+    #'raven.contrib.django',
+)
+
+MONGODB_MANAGED_MODELS = (
+)
+
+## Use this if mongoadmin should override django.contrib.admin.site with mongoadmin.site
+#MONGOADMIN_OVERRIDE_ADMIN = True
 
 ## List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -244,7 +279,7 @@ JINJA2_DISABLED_TEMPLATES = (
     'admin', 'registration',
     'logs', 'kitsune',
     'crispy_forms',
-    #'mongonaut',
+    'mongonaut',
     #'speedtracer',
 
     #r'[^/]+\.html',                           # All generic templates
@@ -263,6 +298,7 @@ JINJA2_DISABLED_TEMPLATES = (
 MIDDLEWARE_CLASSES = (
     # TODO This should probably only be enabled if DEBUG
     #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
+    'waffle.middleware.WaffleMiddleware',                       # waffle
 
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -273,8 +309,35 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',     # Enable Session support
     'django.middleware.gzip.GZipMiddleware',                    # Compress output
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
+    #'devserver.middleware.DevServerMiddleware',                 # devserver (werkzeug)
     'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
+
+    'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
 )
+
+
+## MongoNaut
+#MONGONAUT_JQUERY = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
+#MONGONAUT_TWITTER_BOOTSTRAP = "http://twitter.github.com/bootstrap/assets/css/bootstrap.css"
+#MONGONAUT_TWITTER_BOOTSTRAP_ALERT = http://twitter.github.com/bootstrap/assets/js/bootstrap-alert.js"
+
+
+##
+## devserver
+##
+
+DEVSERVER_MODULES = (
+    #'devserver.modules.sql.SQLRealTimeModule',
+    #'devserver.modules.sql.SQLSummaryModule',
+    #'devserver.modules.profile.ProfileSummaryModule',
+
+    # Modules not enabled by default
+    'devserver.modules.ajax.AjaxDumpModule',
+    'devserver.modules.profile.MemoryUseModule',
+    'devserver.modules.cache.CacheSummaryModule',
+    'devserver.modules.profile.LineProfilerModule',
+)
+
 
 ##
 ## django-debug-toolbar
@@ -311,6 +374,19 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 INTERNAL_IPS=['127.0.0.1']
+
+## Password Hash Priority (and what's allowed)
+PASSWORD_HASHERS = (
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+    'django.contrib.auth.hashers.CryptPasswordHasher',
+)
+
+## User Profile Class
+#AUTH_PROFILE_MODULE = 'solarsan.models.UserProfile'
 
 ##
 ## Cache backend
@@ -518,13 +594,18 @@ LOGGING = {
 ## Sentry/Raven
 ##
 
-# Set your DSN value
-SENTRY_DSN = 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2'
+RAVEN_CONFIG = {
+    'dsn': 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2',
+    'register_signals': True,
+}
 
 # Add raven to the list of installed apps
 INSTALLED_APPS = INSTALLED_APPS + (
-    'raven.contrib.django',
+    #'raven.contrib.django',
 )
+
+from raven.contrib.django.models import client
+client.captureException()
 
 MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
     'raven.contrib.django.middleware.Sentry404CatchMiddleware',         # Catch 404s
