@@ -136,3 +136,6 @@
 [submodule "vendor-local/pkgs/coffin"]
 	path = vendor-local/pkgs/coffin
 	url = git://github.com/GaretJax/coffin.git
+[submodule "vendor-local/pkgs/debug-toolbar-mongo"]
+	path = vendor-local/pkgs/debug-toolbar-mongo
+	url = git://github.com/brianz/django-debug-toolbar-mongo.git
