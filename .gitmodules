@@ -94,9 +94,6 @@
 [submodule "vendor-local/pkgs/mongoengine"]
 	path = vendor-local/pkgs/mongoengine
 	url = https://github.com/MongoEngine/mongoengine.git
-[submodule "vendor-local/pkgs/mongodb-engine"]
-	path = vendor-local/pkgs/mongodb-engine
-	url = git://github.com/django-nonrel/mongodb-engine.git
 [submodule "vendor-local/pkgs/django-nonrel__mongodb-engine"]
 	path = vendor-local/pkgs/django-nonrel__mongodb-engine
 	url = git://github.com/django-nonrel/mongodb-engine.git
@@ -118,3 +115,21 @@
 [submodule "vendor-local/pkgs/mongodb-cache"]
 	path = vendor-local/pkgs/mongodb-cache
 	url = git://github.com/akatrevorjay/mongodb-cache.git
+[submodule "vendor-local/pkgs/django-waffle"]
+	path = vendor-local/pkgs/django-waffle
+	url = git://github.com/jsocol/django-waffle.git
+[submodule "vendor-local/pkgs/django-smuggler"]
+	path = vendor-local/pkgs/django-smuggler
+	url = git://github.com/semente/django-smuggler.git
+[submodule "vendor-local/pkgs/djangotoolbox"]
+	path = vendor-local/pkgs/djangotoolbox
+	url = git://github.com/django-nonrel/djangotoolbox.git
+[submodule "vendor-local/pkgs/django-devserver"]
+	path = vendor-local/pkgs/django-devserver
+	url = git://github.com/dcramer/django-devserver
+[submodule "vendor-local/pkgs/django-mongonaut"]
+	path = vendor-local/pkgs/django-mongonaut
+	url = git://github.com/pydanny/django-mongonaut.git
+[submodule "vendor-local/pkgs/mongokit"]
+	path = vendor-local/pkgs/mongokit
+	url = git://github.com/namlook/mongokit.git
