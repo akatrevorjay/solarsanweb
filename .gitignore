@@ -12,7 +12,6 @@ polls
 3rd/
 env/
 .ropeproject/
-vendor-local/
 .pydevproject
 .project
 .settings
