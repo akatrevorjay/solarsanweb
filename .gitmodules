@@ -133,3 +133,6 @@
 [submodule "vendor-local/pkgs/mongokit"]
 	path = vendor-local/pkgs/mongokit
 	url = git://github.com/namlook/mongokit.git
+[submodule "vendor-local/pkgs/coffin"]
+	path = vendor-local/pkgs/coffin
+	url = git://github.com/GaretJax/coffin.git
