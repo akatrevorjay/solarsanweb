@@ -535,7 +535,8 @@ LOGGING = {
         #},
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'ERROR',
+            #'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
         #'apps': {
@@ -548,7 +549,7 @@ LOGGING = {
             'propagate': True,
         },
         'raven': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'handlers': ['console'],
             'propagate': False,
         },
