@@ -25,10 +25,9 @@ sys.path.insert(0, PROJECT_DIR)
 ## Project Common
 ##
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+DEBUG = TEMPLATE_DEBUG = True
 
-ADMINS = ( ('Trevor Joynson', 'trevorj@localhostsolutions.com'), )
+ADMINS = ( ('LocSol', 'info@localhostsolutions.com'), )
 MANAGERS = ADMINS
 
 # Make this unique, and don't share it with anybody.
@@ -60,12 +59,12 @@ DATABASE_ROUTERS = ['django_mongodb_engine.router.MongoDBRouter',]
 ## MongoDB -- mongoengine
 ##
 
+## Use MongoDB for Auth
+AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
+#AUTHENTICATION_BACKENDS = ( 'permission_backend_nonrel.backends.NonrelPermissionBackend', )
+
 from mongoengine import connect
 connect(PROJECT_NAME)
-
-## Use MongoDB for Auth
-#AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
-#AUTHENTICATION_BACKENDS = ( 'permission_backend_nonrel.backends.NonrelPermissionBackend', )
 
 ##
 ## Django Common
@@ -142,7 +141,6 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, "templates"),
 )
 
-
 TEMPLATE_CONTEXT_PROCESSORS = (
     # Defaults for Django 1.4
     "django.contrib.auth.context_processors.auth",
@@ -152,13 +150,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.static",
     "django.core.context_processors.tz",
 
-    "django.contrib.messages.context_processors.messages",  # Is this default or not?
-
     # Not default
+    "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
     'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
 )
-
 
 ## Root URL routes
 ROOT_URLCONF = PROJECT_NAME + '.urls'
@@ -172,7 +168,7 @@ WSGI_APPLICATION = PROJECT_NAME + '.wsgi.application'
 
 INSTALLED_APPS = (
     # This has to be first, as I had to comment out it's nasty prepending.
-    'django_mongodb_engine',
+    #'django_mongodb_engine',
     'bootstrap',
     'coffin',
 
@@ -189,30 +185,30 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
 
+    # Nonrel related
     'djangotoolbox',
     #'permission_backend_nonrel',
 
-    # Libs
+    # Third party libs
     'djcelery',
     #'djkombu.transport',
     #'djcelery.transport',
     'django_extensions',
-    'djsupervisor',
     'south',
+
+    # For future use
+    'djsupervisor',
     'crispy_forms',
     #'django_assets',
     #'kitsune',
     'waffle',
-    'smuggler',         # DB fixture manager
-    #'devserver',
 
+    # Debug toolbar
     'debug_toolbar',
     'debug_toolbar_user_panel',
     'cache_panel',
     'debug_toolbar_mongo',
     'debug_toolbar_htmltidy',
-
-    #'speedtracer',
 )
 
 PROJECT_APPS = (
@@ -226,6 +222,12 @@ PROJECT_APPS = (
 
 #PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
 INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
+
+## Enable some apps when debugging
+if DEBUG: INSTALLED_APPS = INSTALLED_APPS + (
+        'smuggler',         # DB fixture manager
+        #'speedtracer',
+    )
 
 ## List of apps/models that should use mongo.
 MONGODB_MANAGED_APPS = (
@@ -260,12 +262,6 @@ MONGODB_MANAGED_MODELS = (
 
 ## List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-#    #('django.template.loaders.cached.Loader', (
-#        'django.template.loaders.filesystem.Loader',
-#        'django.template.loaders.app_directories.Loader',
-#        'django.template.loaders.eggs.Loader',
-#    #)),
-
     'coffin.template.loaders.Loader',
 )
 
@@ -277,10 +273,11 @@ JINJA2_TEMPLATE_LOADERS = (
 JINJA2_DISABLED_TEMPLATES = (
     'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
     'admin', 'registration',
-    'logs', 'kitsune',
+    'logs',
+    'kitsune',
     'crispy_forms',
     'mongonaut',
-    #'speedtracer',
+    'speedtracer',
 
     #r'[^/]+\.html',                           # All generic templates
     #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
@@ -288,56 +285,34 @@ JINJA2_DISABLED_TEMPLATES = (
     #r'(cms|menu|admin|admin_doc)/',           # The templates of these 4 apps
 )
 
-
-
-
 ##
 ## Middleware
 ##
 
 MIDDLEWARE_CLASSES = (
-    # TODO This should probably only be enabled if DEBUG
-    #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
     'waffle.middleware.WaffleMiddleware',                       # waffle
 
     'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',     # Enable Session support
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
-    'django.contrib.sessions.middleware.SessionMiddleware',     # Enable Session support
     'django.middleware.gzip.GZipMiddleware',                    # Compress output
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
-    #'devserver.middleware.DevServerMiddleware',                 # devserver (werkzeug)
     'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
 
     'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
 )
 
+if DEBUG: MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+        #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
+    )
 
 ## MongoNaut
 #MONGONAUT_JQUERY = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
 #MONGONAUT_TWITTER_BOOTSTRAP = "http://twitter.github.com/bootstrap/assets/css/bootstrap.css"
 #MONGONAUT_TWITTER_BOOTSTRAP_ALERT = http://twitter.github.com/bootstrap/assets/js/bootstrap-alert.js"
-
-
-##
-## devserver
-##
-
-DEVSERVER_MODULES = (
-    #'devserver.modules.sql.SQLRealTimeModule',
-    #'devserver.modules.sql.SQLSummaryModule',
-    #'devserver.modules.profile.ProfileSummaryModule',
-
-    # Modules not enabled by default
-    'devserver.modules.ajax.AjaxDumpModule',
-    'devserver.modules.profile.MemoryUseModule',
-    'devserver.modules.cache.CacheSummaryModule',
-    'devserver.modules.profile.LineProfilerModule',
-)
-
 
 ##
 ## django-debug-toolbar
@@ -362,7 +337,8 @@ DEBUG_TOOLBAR_PANELS = (
 #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
 def custom_show_toolbar(request):
-    if DEBUG: return True # Always show toolbar, default is this and if your IP is in INTERNAL_IPS
+    #if DEBUG: return True              # Show if DEBUG; default == DEBUG and if source ip in INTERNAL_IPS
+    return request.user.is_superuser    # Show if logged in as a superuser
 
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
@@ -393,25 +369,24 @@ PASSWORD_HASHERS = (
 ##
 
 CACHES = {
-    'default_mem': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': PROJECT_NAME,
-    },
-    'default_db': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': PROJECT_NAME+'_django_db_cache',
-    },
-    'default_file': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(DATA_DIR, 'cache'),
-    },
+    #'default_mem': {
+    #    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    #    'LOCATION': PROJECT_NAME,
+    #},
+    #'default_db': {
+    #    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+    #    'LOCATION': PROJECT_NAME+'_django_db_cache',
+    #},
+    #'default_file': {
+    #    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
+    #},
     'default_mongodb': {
         'BACKEND': 'django_mongodb_cache.MongoDBCache',
         'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
     },
 }
 
-## Mem for debug, db otherwise
 #if DEBUG:   CACHES['default'] = CACHES['default_mem']
 #else:       CACHES['default'] = CACHES['default_db']
 #else:       CACHES['default'] = CACHES['default_file']
@@ -423,10 +398,6 @@ CACHES['default'] = CACHES['default_mongodb']
 #else:       SESSION_ENGINE = 'mongoengine.django.sessions'
 #SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_ENGINE = 'mongoengine.django.sessions'
-
-# HTTPS only
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 
 ##
 ## Jinja2/Coffin Templates
@@ -471,7 +442,6 @@ djcelery.setup_loader()
 BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
 CELERY_RESULT_BACKEND = "amqp"
-
 #CELERY_DEFAULT_RATE_LIMIT = "100/s"
 
 ## Celery extra opts
@@ -492,6 +462,7 @@ CELERY_DEFAULT_ROUTING_KEY = 'box_%s' % SERVER_NAME
 #                 }}, )
 #CELERY_CREATE_MISSING_QUEUES
 
+## Send events when debugging
 if DEBUG:
     CELERY_SEND_EVENTS = True
     CELERY_SEND_TASK_SENT_EVENT = True
@@ -642,7 +613,7 @@ SOLARSAN_CLUSTER = {
 
 try:
     #pylint: disable-msg=W0401
-    from local_settings import * #IGNORE:W0614
+    from settings_local import * #IGNORE:W0614
 except ImportError:
     pass
 

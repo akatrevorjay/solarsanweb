@@ -3,6 +3,7 @@
 *.swp
 *.swo
 celeryconfig.py
+solarsanweb/settings_local.py
 solarsanweb/templates/b
 solarsanweb/templates/admin.old
 _crap/
