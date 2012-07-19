@@ -571,11 +571,6 @@ RAVEN_CONFIG = {
     'register_signals': True,
 }
 
-# Add raven to the list of installed apps
-INSTALLED_APPS = INSTALLED_APPS + (
-    #'raven.contrib.django',
-)
-
 from raven.contrib.django.models import client
 client.captureException()
 
