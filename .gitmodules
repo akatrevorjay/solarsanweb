@@ -139,3 +139,12 @@
 [submodule "vendor-local/pkgs/debug-toolbar-mongo"]
 	path = vendor-local/pkgs/debug-toolbar-mongo
 	url = git://github.com/brianz/django-debug-toolbar-mongo.git
+[submodule "vendor-local/pkgs/django"]
+	path = vendor-local/pkgs/django
+	url = git://github.com/django/django.git
+[submodule "vendor-local/pkgs/django-debug-toolbar-mongo"]
+	path = vendor-local/pkgs/django-debug-toolbar-mongo
+	url = git://github.com/brianz/django-debug-toolbar-mongo.git
+[submodule "vendor-local/pkgs/pyinotify"]
+	path = vendor-local/pkgs/pyinotify
+	url = git://github.com/seb-m/pyinotify.git
