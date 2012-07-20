@@ -12,9 +12,15 @@ class RequireLoginMiddleware(object):
     """
     def __init__(self):
         self.require_login_path = getattr(settings, 'REQUIRE_LOGIN_PATH', '/accounts/login/')
+        ## TODO Make this better
+        #self.exception_urls = getattr(settings, 'REQUIRE_LOGIN_EXCEPTION_URLS', [])
 
     def process_request(self, request):
-        if request.path != self.require_login_path and request.user.is_anonymous():
+        ## TODO Make this better
+        #for x in self.exception_urls:
+        #    if x.startswith(request.path):
+        #        return None
+        if not request.path.startswith('/api/') and request.path != self.require_login_path and request.user.is_anonymous():
             if request.POST:
                 return login(request)
             else:

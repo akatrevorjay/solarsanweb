@@ -4,39 +4,149 @@ from django.db import models
 from django.utils import timezone
 import logging, datetime
 
+from django_mongokit import connection
+from django_mongokit.document import DjangoDocument
+
+
 """
 Config
 """
 
-class Config( models.Model ):
-    """ Simple Key<=>JSON store for config entries """
-    key = models.CharField( max_length=255, unique=True )
-    value = JSONField()
-    last_modified = models.DateTimeField( auto_now=True )
-    created = models.DateTimeField( auto_now_add=True )
-    def __unicode__( self ):
-        return self.key + '=' + self.value
+@connection.register
+class ConfigEntry(DjangoDocument):
+    class Meta:
+        verbose_name_plural = 'Configuration Entries'
+    collection_name = 'config'
+    use_got_notation = True
+
+    structure = {
+        'key': unicode,
+        'val': None,
+        'last_modified': datetime.datetime,
+        'created': datetime.datetime,
+    }
+
+    required_fields = ['key']
+
+    default_values = {
+        'last_modified': timezone.now,
+        'created': timezone.now,
+    }
+
+    indexes = [
+        {'fields': ['key'], 'unique': True},
+    ]
+
 
 """
 Cluster
 """
 
-#class ClusterNode( models.Model ):
-#    """ Recently seen peers """
-#    ip = models.IPAddressField( unique=True )
-#    #enabled = models.BooleanField( default=False )
-#    last_seen = models.DateTimeField( auto_now=True )
-#    #first_seen = models.DateTimeField()
-#    #objects = EnabledModelManager()
-#    #objects_all = models.Manager()
+import re
+
+class MinLengthValidator(object):
+    def __init__(self, min_length):
+        self.min_length = min_length
+    def __call__(self, value):
+        if not len(value) >= self.min_length:
+            raise Exception('%s must be at least ' + str(self.min_length) + ' characters long.')
+
+import ipcalc, IPy
+
+class IPAddressValidator(object):
+    def __init__(self, *args, **kwargs):
+        self.req = kwargs.get('require', kwargs.get('req', []))
+        self.req.extend(args)
+    def __call__(value):
+        try:
+            #ip = IPy.IP(value)
+            ip = ipcalc.Network(value)
+        except (ValueError):
+            raise Exception('%s must be a valid IP address')
+        for x in ['IPv4', 'IPv6']:
+            #if x.lower in self.req and ip.version != int(x[-1]):
+            if x.lower in self.req and ip.version() != int(x[-1]):
+                raise Exception('%%s must be a valid %s address' % x)
+
+class RegexValidator(object):
+    def __init__(self, pattern, opts=None, name='match'):
+        if not hasattr(self, 'regex'):
+            self.regex = re.compile(pattern, opts)
+        if not hasattr(self, 'name'):
+            self.name = name
+    def __call__(self, value):
+        if not bool(self.regex.match(value)):
+            raise Exception('%s' + 'is not a valid %s (%s)' % (self.name, self.regex.pattern))
+
+class EmailValidator(RegexValidator):
+    name = 'email'
+    regex = re.compile(r'(?:^|\s)[-a-z0-9_.]+@(?:[-a-z0-9]+\.)+[a-z]{2,6}(?:\s|$)', re.IGNORECASE)
+
+
+@connection.register
+class ClusterNode(DjangoDocument):
+    class Meta:
+        verbose_name_plural = 'ClusterNodes'
+    collection_name = 'cluster_nodes'
+    use_dot_notation = True
+
+    structure = {
+        'hostname': unicode,
+        #'uuid': unicode, #uuid.UUID
+        'interfaces': {
+            unicode: {                                  # name
+                unicode: [ (unicode, unicode), ],        # af [ (addr,netmask), ]
+            },
+        },
+        'last_seen': datetime.datetime,
+        'first_seen': datetime.datetime,
+    }
+
+    required_fields = ['hostname',]
+
+    default_values = {
+        'last_seen': timezone.now,
+        'first_seen': timezone.now,
+    }
+
+    validators = {
+        #'hostname': RegexValidator(r'^[a-z0-9]+$', re.IGNORECASE),
+    }
+
+    def validate(self, *args, **kwargs):
+        v_iface_name = re.compile(r'^((eth|ib)\d{1,2}|lo)$', re.IGNORECASE)
+        v_afs = netifaces.address_families.values()
+        for iface_name,iface in self['interfaces'].iteritems():
+            assert bool(v_iface_name.match(iface_name))
+            for af, addrs in iface.iteritems():
+                assert af in v_afs
+                for ip,mask in addrs:
+                    #try:
+                    ip = ipcalc.Network( "%s/%s" % (ip, mask) )
+                    #except:
+                    #    addrs.remove([ip,mask])
+                    #    #assert False
+        super(ClusterNode, self).validate(*args, **kwargs)
+
+    indexes = [
+        {'fields': ['hostname'], 'unique': True},
+        #{'fields': ['uuid'], 'unique': True},
+    ]
+
+#connection.register([ClusterNode])
+
 
 """
 Network
 """
 import netifaces
-import ipcalc
 from django.core.urlresolvers import reverse
 
+def convert_cidr_to_netmask(arg):
+    return str( IPy.IP('0/%s' % arg, make_net=True).netmask() )
+
+def convert_netmask_to_cidr(arg):
+    return int( IPy.IP('0/%s' % arg, make_net=True).prefixlen() )
 
 ## TODO Fixtures for default network config
 class NetworkInterfaceConfig( models.Model ):
@@ -117,14 +227,15 @@ class NetworkInterfaceConfig( models.Model ):
 
 class NetworkInterface( object ):
     def __init__( self, name ):
-        if not name in netifaces.interfaces():
-            raise Exception( 'No interface found with name %s' % name )
+        #if not name in netifaces.interfaces():
+            #raise Exception( 'No interface found with name %s' % name )
         self.name = name
 
         ## Get config for NIC if it exists, otherwise new instance; don't save it to DB at this point.
         try:
             self.config = NetworkInterfaceConfig.objects.get( name=name )
-        except ( NetworkInterfaceConfig.DoesNotExist ):
+        #except ( NetworkInterfaceConfig.DoesNotExist ):
+        except:
             ## Get starting config from the first AF_INET address on the device (if it exists)
             config = {'name': name}
             addrs = self.addrs
@@ -142,8 +253,17 @@ class NetworkInterface( object ):
 
     @property
     def addrs( self ):
-        return dict( [( netifaces.address_families[x[0]], x[1] )
-                      for x in netifaces.ifaddresses( self.name ).items() ] )
+        ret = dict( [( netifaces.address_families[x[0]], x[1] )
+                       for x in netifaces.ifaddresses( self.name ).items() ] )
+        if 'AF_INET6' in ret:
+            ## TODO Fix bug in the real issue here, netifaces, where it puts your damn iface name after your IPv6 addr
+            inet6_addrs = []
+            for addr in ret['AF_INET6']:
+                if '%' in addr['addr']:
+                    addr['addr'] = addr['addr'][:addr['addr'].index('%')]
+                inet6_addrs.append(addr)
+            ret['AF_INET6'] = inet6_addrs
+        return ret
 
     @property
     def type( self ):
@@ -157,5 +277,12 @@ class NetworkInterface( object ):
 
 
 def NetworkInterfaceList():
-    return dict( [( x, NetworkInterface( x ) ) for x in netifaces.interfaces()] )
+    ret = {}
+    for x in netifaces.interfaces():
+        try:
+            ret[x] = NetworkInterface(x)
+        except:
+            pass
+    #return dict( [( x, lambda NetworkInterface( x ) except: None) for x in netifaces.interfaces()] )
+    return ret
 

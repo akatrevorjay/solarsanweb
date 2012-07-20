@@ -47,3 +47,6 @@ uWSGI
 virtualenv
 virtualenvwrapper
 
+-e git://github.com/seb-m/pyinotify.git#egg=pyinotify
+IPy
+

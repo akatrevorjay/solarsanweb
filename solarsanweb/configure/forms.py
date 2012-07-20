@@ -1,6 +1,6 @@
 # forms.py
 from django import forms
-#from models import NetworkInterfaceConfig, Config
+#from models import NetworkInterfaceConfig, ConfigEntry
 import models
 
 
@@ -10,10 +10,10 @@ class NetworkInterfaceConfigForm(forms.ModelForm):
         exclude = ('name', 'last_modified', 'created',)
 
 
-class Config(forms.ModelForm):
-    class Meta:
-        model = models.Config
-        exclude = ('last_modified', 'created',)
+#class ConfigEntry(forms.ModelForm):
+#    class Meta:
+#        model = models.Config
+#        exclude = ('last_modified', 'created',)
 
 
 #class ContactForm(forms.Form):

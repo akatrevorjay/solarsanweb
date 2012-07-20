@@ -30,7 +30,7 @@ urlpatterns = patterns('',
     #url(r'^', include('solarsan.urls')),
     #url(r'^formtest/', include('formtest.urls')),
 
-    url(r'^api/', include('api.urls')),
+    url(r'^api/v1/', include('api.urls')),
 )
 
 
