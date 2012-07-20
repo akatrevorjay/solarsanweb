@@ -44,16 +44,15 @@ DATABASES = {
         'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
     },
-
-    ## MongoDB
     'mongodb': {
-        'ENGINE': 'django_mongodb_engine',
-        #'ENGINE': 'django_mongokit.mongodb',
+        #'ENGINE': 'django_mongodb_engine',
+        'ENGINE': 'django_mongokit.mongodb',
         'NAME': PROJECT_NAME,
     },
 }
 
-DATABASE_ROUTERS = ['django_mongodb_engine.router.MongoDBRouter',]
+#DATABASE_ROUTERS = ['django_mongodb_engine.router.MongoDBRouter',]
+DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter',]
 
 ##
 ## MongoDB -- mongoengine
@@ -62,6 +61,13 @@ DATABASE_ROUTERS = ['django_mongodb_engine.router.MongoDBRouter',]
 ## Use MongoDB for Auth
 AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
 #AUTHENTICATION_BACKENDS = ( 'permission_backend_nonrel.backends.NonrelPermissionBackend', )
+
+## Persistent sessions
+#if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+#else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+#else:       SESSION_ENGINE = 'mongoengine.django.sessions'
+#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_ENGINE = 'mongoengine.django.sessions'
 
 from mongoengine import connect
 connect(PROJECT_NAME)
@@ -167,8 +173,6 @@ WSGI_APPLICATION = PROJECT_NAME + '.wsgi.application'
 ##
 
 INSTALLED_APPS = (
-    # This has to be first, as I had to comment out it's nasty prepending.
-    #'django_mongodb_engine',
     'bootstrap',
     'coffin',
 
@@ -186,7 +190,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
 
     # Nonrel related
-    'djangotoolbox',
+    #'djangotoolbox',
     #'permission_backend_nonrel',
 
     # Third party libs
@@ -205,8 +209,8 @@ INSTALLED_APPS = (
 
     # Debug toolbar
     'debug_toolbar',
-    'debug_toolbar_user_panel',
-    'cache_panel',
+    #'debug_toolbar_user_panel',
+    #'cache_panel',
     'debug_toolbar_mongo',
     'debug_toolbar_htmltidy',
 )
@@ -240,15 +244,17 @@ MONGODB_MANAGED_APPS = (
     #'debug_toolbar',
     #'debug_toolbar_user_panel',
     #'cache_panel',
-    'debug_toolbar_mongo',
+    #'debug_toolbar_mongo',
 
-    'djangotoolbox',
+    #'django_mongodb_cache',
+
+    #'djangotoolbox',
     #'django_mongodb_engine',
     #'django.contrib.auth',
     #'djcelery',
     #'smuggler',
 
-    'permission_backend_nonrel',
+    #'permission_backend_nonrel',
     #'mongonaut',
 
     #'raven.contrib.django',
@@ -271,7 +277,9 @@ JINJA2_TEMPLATE_LOADERS = (
 )
 
 JINJA2_DISABLED_TEMPLATES = (
-    'debug_toolbar', 'debug_toolbar_user_panel', 'cache_panel', 'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
+    'debug_toolbar', 'debug_toolbar_user_panel',
+    #'cache_panel',
+    'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
     'admin', 'registration',
     'logs',
     'kitsune',
@@ -328,8 +336,9 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.sql.SQLDebugPanel',
     'debug_toolbar.panels.signals.SignalDebugPanel',
     'debug_toolbar.panels.logger.LoggingPanel',
-    'debug_toolbar_user_panel.panels.UserPanel',
-    'cache_panel.CachePanel',
+    'debug_toolbar.panels.cache.CacheDebugPanel',
+    #'debug_toolbar_user_panel.panels.UserPanel',
+    #'cache_panel.CachePanel',
     'debug_toolbar_mongo.panel.MongoDebugPanel',
     'debug_toolbar_htmltidy.panels.HTMLTidyDebugPanel',
 )
@@ -391,13 +400,6 @@ CACHES = {
 #else:       CACHES['default'] = CACHES['default_db']
 #else:       CACHES['default'] = CACHES['default_file']
 CACHES['default'] = CACHES['default_mongodb']
-
-## Persistent sessions
-#if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-#else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-#else:       SESSION_ENGINE = 'mongoengine.django.sessions'
-#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-SESSION_ENGINE = 'mongoengine.django.sessions'
 
 ##
 ## Jinja2/Coffin Templates
@@ -539,6 +541,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'werkzeug': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propogate': False,
+        },
         #'apps': {
         #    'handlers': ['console',],
         #    'level': 'DEBUG',
@@ -600,7 +607,6 @@ SOLARSAN_CLUSTER = {
     'key':          'solarsan-key0',    # Key
     'discovery':    25,                 # Scan for other nodes this many seconds
 }
-
 
 ##
 ## local_settings.py can be used to override environment-specific settings
