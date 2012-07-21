@@ -30,9 +30,9 @@
 {% block page_content_sidenav_post %}
     <li class="nav-header">SolarSan Discovered Peers</li>
     {% for peer in discovered_peers %}
-        {% if not peer in peers %}
-        <li class="page-content-select"><a href="/configure/cluster/peers/add/{{ peer|urlize }}" rel="tooltip" title="Not in cluster.">
-            {{ peer }}
+        {% if not 'CHANGEME_BACK_TO_peer' in peers %}
+        <li class="page-content-select"><a href="/configure/cluster/peers/add/{{ peer['hostname']|urlize }}" rel="tooltip" title="Not in cluster. {{ peer['interfaces']|urlize }}">
+            {{ peer['hostname'] }}
         </a></li>
         {% endif %}
     {% endfor %}
