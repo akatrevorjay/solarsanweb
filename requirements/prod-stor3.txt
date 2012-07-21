@@ -47,7 +47,9 @@ uWSGI
 virtualenv
 virtualenvwrapper
 
--e git://github.com/seb-m/pyinotify.git#egg=pyinotify
+-e git://github.com/seb-m/pyinotify.git#egg=pyinotify-dev
 IPy
+-e git://github.com/joymax/django-dtpanel-htmltidy.git#egg=django_dtpanel_htmltidy-dev
+
 
 -e git://github.com/joymax/django-dtpanel-htmltidy.git@0dccb63c3a19c3cbaa5fd8719532334b44acc9ff#egg=django_dtpanel_htmltidy-dev
