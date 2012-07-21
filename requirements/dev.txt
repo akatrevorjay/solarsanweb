@@ -1,0 +1,11 @@
+#-r compiled.txt
+#-r prod.txt
+
+rope
+ropemode
+ropevim
+pysmell
+pyflakes
+pylint
+pep8
+
