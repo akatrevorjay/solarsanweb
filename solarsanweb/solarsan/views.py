@@ -34,9 +34,10 @@ def login_view(request):
             # Redirect to a success page.
         else:
             # Return a 'disabled account' error message
+            pass
     else:
         # Return an 'invalid login' error message.
-
+        pass
 
 #class AboutView(LoggedInMixin, generic.TemplateView):
 #    """ About page view. """

@@ -1,12 +1,12 @@
-from solarsan.models import EnabledModelManager
-from jsonfield import JSONField
+#from solarsan.models import EnabledModelManager
+#from jsonfield import JSONField
 from django.db import models
 from django.utils import timezone
-import logging, datetime
+import datetime
+#import logging
 
 from django_mongokit import connection
 from django_mongokit.document import DjangoDocument
-
 
 """
 Config
@@ -17,7 +17,7 @@ class ConfigEntry(DjangoDocument):
     class Meta:
         verbose_name_plural = 'Configuration Entries'
     collection_name = 'config'
-    use_got_notation = True
+    use_dot_notation = True
 
     structure = {
         'key': unicode,
@@ -57,7 +57,7 @@ class IPAddressValidator(object):
     def __init__(self, *args, **kwargs):
         self.req = kwargs.get('require', kwargs.get('req', []))
         self.req.extend(args)
-    def __call__(value):
+    def __call__(self, value):
         try:
             #ip = IPy.IP(value)
             ip = ipcalc.Network(value)
@@ -140,7 +140,7 @@ class ClusterNode(DjangoDocument):
 Network
 """
 import netifaces
-from django.core.urlresolvers import reverse
+#from django.core.urlresolvers import reverse
 
 def convert_cidr_to_netmask(arg):
     return str( IPy.IP('0/%s' % arg, make_net=True).netmask() )
