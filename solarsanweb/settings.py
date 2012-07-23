@@ -225,10 +225,10 @@ PROJECT_APPS = (
 )
 
 #PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
-INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
+INSTALLED_APPS += PROJECT_APPS
 
 ## Enable some apps when debugging
-if DEBUG: INSTALLED_APPS = INSTALLED_APPS + (
+if DEBUG: INSTALLED_APPS += (
         'smuggler',         # DB fixture manager
         #'speedtracer',
     )
@@ -313,7 +313,7 @@ MIDDLEWARE_CLASSES = (
     'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
 )
 
-if DEBUG: MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+if DEBUG: MIDDLEWARE_CLASSES += (
         #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
     )
 
@@ -581,7 +581,7 @@ RAVEN_CONFIG = {
 from raven.contrib.django.models import client
 client.captureException()
 
-MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+MIDDLEWARE_CLASSES += (
     'raven.contrib.django.middleware.Sentry404CatchMiddleware',         # Catch 404s
     'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',  # Catch Errors
 )
@@ -593,7 +593,7 @@ MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
 # Logs to tail
 LOGTAIL_FILES = {
     'syslog': '/var/log/syslog',
-    'solarvisor': '/opt/solarsanweb/data/log/supervisord.log',
+    'solarvisor': DATA_DIR + '/log/supervisord.log',
     # gluster
 }
 
@@ -601,11 +601,12 @@ LOGTAIL_FILES = {
 ##
 ## SolarSan Cluster
 ##
-## TODO Make key configurable, put it in the DB and in the UI.
+
+# TODO Make key configurable, put it in the DB and in the UI.
 SOLARSAN_CLUSTER = {
     'port':         1787,               # Port = 1337 * 1.337
     'key':          'solarsan-key0',    # Key
-    'discovery':    25,                 # Scan for other nodes this many seconds
+    'discovery':    25,                 # Scan for other nodes each this many seconds
 }
 
 ##
