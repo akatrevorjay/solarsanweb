@@ -3,9 +3,12 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task, chord
 from celery.task.base import PeriodicTask, Task
 from celery.task.sets import subtask, TaskSet
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
+
 from storage.models import Pool, Pool_IOStat, Dataset, Filesystem, Volume, Snapshot
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
-import datetime, time, logging
+import datetime, time
 from datetime import timedelta
 from django.utils import timezone
 #from django.core.files.storage import Storage
@@ -50,8 +53,6 @@ class Cluster_Node_Discovery( PeriodicTask ):
     """ Probes for new cluster nodes """
     run_every = timedelta( seconds=settings.SOLARSAN_CLUSTER['discovery'] )
     def run( self, *args, **kwargs ):
-        logger = self.get_logger( **kwargs )
-
         # Setup DB
         if not hasattr(self, 'col'):
             self.col = get_database()[ClusterNode.collection_name]
@@ -111,7 +112,6 @@ class Cluster_Node_Beacon( Task ):
     """ Controls cluster beacon service """
     b = beacon.Beacon( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
     def run( self, *args, **kwargs ):
-        logger = self.get_logger( **kwargs )
         logger.debug( "Starting Cluster Beacon.." )
 
         self.b.daemon = True

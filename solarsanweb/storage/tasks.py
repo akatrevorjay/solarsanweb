@@ -1,10 +1,13 @@
 from celery.schedules import crontab
 from celery.task import periodic_task, task, chord
 from celery.task.base import PeriodicTask, Task
+from celery.utils.log import get_task_logger
 from celery.task.sets import subtask
+logger = get_task_logger(__name__)
+
 from storage.models import Pool, Pool_IOStat, Dataset, Filesystem, Snapshot
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
-import datetime, time, logging
+import datetime, time
 from datetime import timedelta
 from django.utils import timezone
 #from django.core.files.storage import Storage
@@ -22,7 +25,6 @@ class Import_ZFS_Metadata( PeriodicTask ):
     data = {}
 
     def run( self, *args, **kwargs ):
-        logging = self.get_logger()
         self.data = {'pools': {}, 'datasets': {}}
         self.do_level( zfs.tree() )
 
@@ -31,7 +33,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
             # Do filter disabled ones from here!
             for obj in val.objects.all():
                 if not obj.name in list( self.data[key] ):
-                    logging.error( "Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
+                    logger.error( "Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
                             obj._zfs_type, obj.name )
                     obj.enabled = False
                     obj.save()
@@ -60,7 +62,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     pv['enabled'] = True
                     for k, v in pv.iteritems(): setattr( pool, k, v )
                 except ( KeyError, Pool.DoesNotExist ):
-                    logging.error( 'Found pool "%s"', p )
+                    logger.error( 'Found pool "%s"', p )
                     del pv['type']
                     pool = Pool( **pv )
                 pool.save( db_only=True )
@@ -80,14 +82,14 @@ class Import_ZFS_Metadata( PeriodicTask ):
                 elif dv['type'] == 'filesystem':    dataset = Filesystem.objects_unfiltered.get( name=d )
                 elif dv['type'] == 'pool':          dataset = Pool.objects_unfiltered.get( name=d )
                 else:
-                    logging.error( "Found unknown type '%s': '%s'", dv['type'], d )
+                    logger.error( "Found unknown type '%s': '%s'", dv['type'], d )
                     continue
                 # Ensure enabled
                 dv['enabled'] = True
                 # Apply data to existing dataset
                 for k, v in dv.iteritems(): setattr( dataset, k, v )
             except ( KeyError, Pool.DoesNotExist, Filesystem.DoesNotExist, Snapshot.DoesNotExist ):
-                logging.info( 'Found %s "%s"', dv['type'], d )
+                logger.info( 'Found %s "%s"', dv['type'], d )
                 if dv['type'] == 'pool':
                     dataset = Pool( **dv )
                 else:
@@ -107,7 +109,6 @@ class Cleanup_Disabled_Storage_Items( PeriodicTask ):
     """ Cleans up disabled storage items from DB """
     run_every = timedelta( days=1 )
     def run( self, *args, **kwargs ):
-        logging = self.get_logger()
         # Delete disabled items that are too old to care about.
         for key, val in {'pools': Pool, 'datasets': Dataset}.items():
             val.objects_unfiltered.filter( enabled=False, last_modified__gt=timezone.now() - timedelta( days=7 ) ).delete()
@@ -156,8 +157,6 @@ class Auto_Snapshot( PeriodicTask ):
     abstract = True
 
     def run( self, *args, **kwargs ):
-        logging = self.get_logger( **kwargs )
-
         # Get config and schedules
         schedules = config['schedules']
         for sched_name in schedules.keys():
@@ -165,14 +164,14 @@ class Auto_Snapshot( PeriodicTask ):
 
             now = timezone.now()
             snapshotName = sched['snapshot-prefix'] + now.strftime( sched['snapshot-date'] )
-            #logging.info('Snapshot %s for schedule %s', snapshotName, sched_name)
-            #logging.debug('Schedule %s=%s', sched_name, sched)
+            #logger.info('Snapshot %s for schedule %s', snapshotName, sched_name)
+            #logger.debug('Schedule %s=%s', sched_name, sched)
 
             for dataset_name in sched['datasets']:
                 try:
                     dataset = Filesystem.objects.get( name=dataset_name )
                 except ( Filesystem.DoesNotExist ):
-                    logging.error( "Was supposed to check if a snapshot was scheduled for dataset %s but it does not exist?", dataset_name )
+                    logger.error( "Was supposed to check if a snapshot was scheduled for dataset %s but it does not exist?", dataset_name )
                     continue
 
                 try:
@@ -180,15 +179,15 @@ class Auto_Snapshot( PeriodicTask ):
                         name__startswith=dataset_name + '@' + sched['snapshot-prefix'] ).latest().creation
                     age_threshold = now - sched['snapshot-every']
                     if not latest_snapshot_creation < age_threshold:
-                        logging.info( "Latest snapshot for schedule %s dataset %s was taken at %s, no snapshot needed",
+                        logger.info( "Latest snapshot for schedule %s dataset %s was taken at %s, no snapshot needed",
                                 sched_name, dataset_name, latest_snapshot_creation )
                         continue
                 except ( Snapshot.DoesNotExist ):
-                    logging.info( "No latest snapshot found for %s, appears this will be our first", dataset )
+                    logger.info( "No latest snapshot found for %s, appears this will be our first", dataset )
 
                 # Create snapshot
                 # TODO Make seperate async task for this so we're not blocked
-                logging.debug( "Creating snapshot %s on dataset %s", snapshotName, dataset_name )
+                logger.debug( "Creating snapshot %s on dataset %s", snapshotName, dataset_name )
                 dataset.snapshot( snapshotName, recursive=sched['recursive'] )
 
                 # Delete snapshots specified too old to keep
@@ -203,10 +202,10 @@ class Auto_Snapshot( PeriodicTask ):
                             name__startswith=dataset_name + '@' + sched['snapshot-prefix'],
                             creation__lt=age_threshold )
                     except ( Snapshot.DoesNotExist ):
-                        logging.info( "No snapshots found past max age of %s", max_age )
+                        logger.info( "No snapshots found past max age of %s", max_age )
 
                     if snapshots_past_max_age:
-                        logging.info( 'Deleting snapshots created before %s: %s', age_threshold, snapshots_past_max_age )
+                        logger.info( 'Deleting snapshots created before %s: %s', age_threshold, snapshots_past_max_age )
                         for s in snapshots_past_max_age:
                             # Must do iterate through this or the overrode delete() will not be called
                             # To make this work without iterating, we must change to a pre_delete signal
@@ -214,7 +213,7 @@ class Auto_Snapshot( PeriodicTask ):
                             try:
                                 s.delete()
                             except:
-                                logging.error( "Failed to delete snapshot %s", s )
+                                logger.error( "Failed to delete snapshot %s", s )
 
                 # Keep X snapshots
                 # TODO Make seperate async task for this so we're not blocked
@@ -226,28 +225,27 @@ class Auto_Snapshot( PeriodicTask ):
                         snapshots_past_max_count = dataset.snapshots().filter( 
                             name__startswith=dataset_name + '@' + sched['snapshot-prefix'] )[keep_at_most:]
                     except:
-                        logging.info( "No snapshots found over keep-at-most count of %s", keep_at_most )
+                        logger.info( "No snapshots found over keep-at-most count of %s", keep_at_most )
 
                     if snapshots_past_max_count:
-                        logging.error( "Deleting snapshots past keep-at-most count of %s: %s",
+                        logger.error( "Deleting snapshots past keep-at-most count of %s: %s",
                                 keep_at_most, snapshots_past_max_count )
                         for s in snapshots_past_max_count:
                             try:
                                 s.delete()
                             except:
-                                logging.error( "Failed to delete snapshot %s", s )
+                                logger.error( "Failed to delete snapshot %s", s )
 
 
 #@task
 #def Auto_Snapshot_Filesystem(*args, **kwargs):
 #    """ Cleans up old automatic snapshots """
-#    #logging = self.get_logger(**kwargs)
 #    # TODO
 #    pass
 
 #@task
 #def Auto_Snapshot_Filesystem_Clean(*args, **kwargs):
 #    """ Cleans up old automatic snapshots """
-#    #logging = self.get_logger(**kwargs)
 #    # TODO
 #    pass
+
