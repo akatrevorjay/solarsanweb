@@ -1,8 +1,11 @@
-from celery.task import periodic_task
-from celery.task.base import PeriodicTask
+from celery.task import periodic_task, task
+from celery.task.base import PeriodicTask, Task
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
+
 from storage.models import Pool, Pool_IOStat
 from solarsan.utils import convert_human_to_bytes
-import os, logging, time
+import os, time
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
@@ -13,6 +16,163 @@ from kstats import kstats
 from pyrrd.backend import bindings
 from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
 from pyrrd.rrd import DataSource, RRA, RRD
+
+"""
+Per-File IO Monitor
+"""
+
+from storage.models import Filesystem
+import iterpipes
+
+#class File_IO_Monitor(PeriodicTask):
+class File_IO_Monitor(Task):
+    #run_every = timedelta(seconds=10)
+    def run(self, *args, **kwargs):
+        events = list(kwargs.get('events', ['access', 'modify', 'create', 'delete']))
+        capture_length = str(int(kwargs.get('capture_length', 10)))
+
+        # TODO Don't hardcode this. Get list of Pool's filesystem mountpoints, or just run this once per dataset, all at once per dataset mountpoint.
+        watches = list(kwargs.get('watches', ['/dpool/tmp']))
+
+        filesystem_map = dict([(f[0], {'name': f[1], 'id': f[2]}) for f in Filesystem.objects.values_list('mountpoint', 'name', 'id')])
+        filesystem_map_keys = filesystem_map.keys()
+        filesystem_map_keys.sort()
+        filesystem_map_keys.reverse()
+
+        # Initial command
+        cmd = 'inotifywatch -r -t {}'
+        cargs = [capture_length]
+        # Add events
+        cmd += ' '+' '.join([('-e {}') for i in range(len(events))])
+        cargs += events
+        # Add watches
+        cmd += ' '+' '.join([('{}') for i in range(len(watches))])
+        cargs += watches
+        # Nullify stderr
+        cmd += ' '+'2>/dev/null'
+
+        #print 'cmd=%s cargs=%s' % (cmd, cargs)
+        data = {}
+        header = []
+        for line in iterpipes.run(iterpipes.linecmd(cmd, *cargs)):
+            line = line.rstrip('\n')
+            if len(header) == 0:
+                # always fields: total, filename
+                header = str(line).split()
+                continue
+            line = dict(zip(header, str(line).split()))
+            filename = line.pop('filename')
+
+            filesystem = None
+            for fs in filesystem_map_keys:
+                if filename.startswith(fs):
+                    filesystem = filesystem_map[fs]
+                    break
+            if filesystem:
+                data[filesystem['name']] = line
+            else:
+                #logger.warning('Got bad result from IO Monitor: "%s"', line)
+                print 'line=%s' % line
+        print "data=%s" % data
+
+
+#
+# pure python version, ended up being rather slow compared to parsing inotifywatch for obvious reasons..
+#
+# Plan is to duplicate the functionality of while sleep 1; do inotifywatch -t 10 -r /gvol0; done
+# But instead do it in code and track it over time.
+#
+
+import pyinotify
+
+class File_IO_Monitor_Event_Handler_Py(pyinotify.ProcessEvent):
+    abbacus = {}
+    totals = {}
+    totals_wd = {}
+    #def __init__(self, *args, **kwargs):
+    #    super(File_IO_Monitor_Event_Handler_Py, self).__init__(*args, **kwargs)
+    def process_default(self, event):
+        #print "event: %s path: %s mask: %s" % (event.maskname, event.pathname, event.mask)
+        #self.last_event = event
+
+        if not event.wd in self.abbacus:
+            self.abbacus[event.wd] = {}
+        if not event.pathname in self.abbacus[event.wd]:
+            self.abbacus[event.wd][event.pathname] = {}
+        if not event.mask in self.abbacus[event.wd][event.pathname]:
+            self.abbacus[event.wd][event.pathname][event.mask] = 0
+        self.abbacus[event.wd][event.pathname][event.mask] += 1
+
+        if not event.mask in self.totals:
+            self.totals[event.mask] = 0
+        self.totals[event.mask] += 1
+
+        if not event.wd in self.totals_wd:
+            self.totals_wd[event.wd] = {}
+        if not event.mask in self.totals_wd[event.wd]:
+            self.totals_wd[event.wd][event.mask] = 0
+        self.totals_wd[event.wd][event.mask] += 1
+
+#class File_IO_Monitor(PeriodicTask):
+class File_IO_Monitor_Py(Task):
+    #run_every = timedelta(seconds=10)
+    def run(self, timeout=30, *args, **kwargs):
+        if not hasattr(self, 'notifier'):
+            self.wm = pyinotify.WatchManager()
+            self.mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_ACCESS | pyinotify.IN_MODIFY
+            #self.mask = pyinotify.ALL_EVENTS
+            self.handler = File_IO_Monitor_Event_Handler_Py()
+            # Internally, 'handler' is a callable object which on new events will be called like this: handler(new_event)
+            self.wdd = self.wm.add_watch('/tmp', self.mask, rec=True, auto_add=True)
+            self.notifier = pyinotify.Notifier(self.wm, self.handler, timeout=timeout, read_freq=5)
+        self.notifier.process_events()
+        while self.notifier.check_events():
+            self.notifier.read_events()
+            self.notifier.process_events()
+
+        #self.abbacus = self.handler.abbacus.copy()
+        #self.handler.abbacus.clear()
+        #print self.abbacus
+
+        #key = 'IN_ACCESS'
+        #abbs_key = dict(filter(lambda (x,y): key in y, self.handler.abbacus.items()))
+        #abbs_key_sorted = sorted(abbs_attrib.iterkeys(), key=lambda k: abbs_attrib[k][key])
+        #abbs_key = dict([(x,y[key]) for x,y in self.abbacus.items() if key in y])
+
+
+#
+# Using self-patched watchdog library
+#
+
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+# TODO Red/black balanced tree algo:
+#import bintrees
+
+class File_IO_Monitor_Event_Handler_Py2(FileSystemEventHandler):
+    abbacus = {}
+    def on_any_event(self, event):
+        if event.is_directory:
+            return
+        if not event.src_path in self.abbacus:
+            self.abbacus[event.src_path] = {}
+        if not event.event_type in self.abbacus[event.src_path]:
+            self.abbacus[event.src_path][event.event_type] = 0
+        self.abbacus[event.src_path][event.event_type]+=1
+        print "event: %s path: %s" % (event.event_type, event.src_path)
+        print "events: %s" % self.abbacus
+
+
+#class File_IO_Monitor(PeriodicTask):
+class File_IO_Monitor_Py2(Task):
+    #run_every = timedelta(seconds=10)
+    def run(self, *args, **kwargs):
+        if not hasattr(self, 'observer'):
+            event_handler = File_IO_Monitor_Event_Handler_Py2()
+            self.observer = Observer()
+            self.observer.schedule(event_handler, path='/tmp/montest', recursive=True)
+            self.observer.start()
+
 
 """
 Pool IOStats
@@ -33,7 +193,7 @@ class Pool_IOStats_Populate(PeriodicTask):
             try:
                 pool = Pool.objects.get(name=i)
             except (KeyError, Pool.DoesNotExist):
-                logging.error('Got data for an unknown pool "%s"', i)
+                logger.error('Got data for an unknown pool "%s"', i)
                 continue
 
             iostats[i]['timestamp_end'] = timestamp_end
@@ -57,7 +217,7 @@ class Pool_IOStat_Clean(PeriodicTask):
         if count_to_remove > 0:
             Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - age_threshold).delete()
 
-            logging.debug("Deleted %d/%d entires", count_to_remove, count)
+            logger.debug("Deleted %d/%d entires", count_to_remove, count)
 
 """
 RRD Stats
@@ -115,7 +275,7 @@ def rrd_update(*args, **kwargs):
                     for i, kstat_raw in enumerate(ksMap[rmodule][kmodule][dsType][filename]):
                         s_kstat = kstat_raw.split('_')
                         for x, y in enumerate(filename.split('_')):
-                            #logging.debug("x=%s y=%s %s", s_kstat[0], y, x)
+                            #logger.debug("x=%s y=%s %s", s_kstat[0], y, x)
 
                             if (len(s_kstat) == 1) or (s_kstat[0] != y):
                                 break
@@ -128,9 +288,9 @@ def rrd_update(*args, **kwargs):
                             s_kstat[x] = s_kstat[x][:1]
 
                         kstat_pretty = kstat.replace('_', ' ').capitalize()
-                        logging.debug("dstype=%s, filename=%s, kstat_raw=%s, kstat=%s, kstat_pretty=%s, value=%s",
-                                      dsType, filename, kstat_raw, kstat, kstat_pretty,
-                                      ks[rmodule][kmodule][kstat_raw])
+                        #logger.debug("dstype=%s, filename=%s, kstat_raw=%s, kstat=%s, kstat_pretty=%s, value=%s",
+                        #              dsType, filename, kstat_raw, kstat, kstat_pretty,
+                        #              ks[rmodule][kmodule][kstat_raw])
 
                         ds1 = DataSource(dsName='%s' % kstat, dsType=dsType, heartbeat=300)
 
