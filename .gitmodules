@@ -151,3 +151,6 @@
 [submodule "vendor-local/pkgs/django-tastypie"]
 	path = vendor-local/pkgs/django-tastypie
 	url = git://github.com/toastdriven/django-tastypie.git
+[submodule "vendor-local/pkgs/watchdog"]
+	path = vendor-local/pkgs/watchdog
+	url = git://github.com/gorakhargosh/watchdog.git
