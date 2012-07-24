@@ -148,3 +148,6 @@
 [submodule "vendor-local/pkgs/pyinotify"]
 	path = vendor-local/pkgs/pyinotify
 	url = git://github.com/seb-m/pyinotify.git
+[submodule "vendor-local/pkgs/django-tastypie"]
+	path = vendor-local/pkgs/django-tastypie
+	url = git://github.com/toastdriven/django-tastypie.git
