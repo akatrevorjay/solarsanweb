@@ -105,7 +105,7 @@ def list( *names, **kwargs ):
         Also aggregates parent/children information """
     zargs = ['list', '-H', '-t', kwargs.get( 'type', 'all' )]
     if 'depth' in kwargs:
-        zargs.extend( [ '-d', kwargs['depth'] ] )
+        zargs.extend( [ '-d', str(kwargs['depth']) ] )
     if kwargs.get( 'recursive', False ) == True:
         zargs.append( '-r' )
     props = kwargs.get( 'props', ['name', 'type', 'used', 'available', 'creation', 'referenced',
@@ -118,7 +118,11 @@ def list( *names, **kwargs ):
                                  'usedbysnapshots', 'usedbydataset', 'usedbychildren',
                                  'usedbyrefreservation', 'logbias', 'dedup', 'mlslabel', 'sync',
                                  'refcompressratio'] )
-    zargs.extend( [ '-o', ','.join( props ) ] )
+    if isinstance(props, basestring): props = [props]
+    if isinstance(props, tuple): props = list(props)
+    if 'name' not in props: props.append('name')
+
+    zargs.extend( [ '-o', ','.join(props).lower() ] )
     if names:   zargs.extend( names )
 
     # Hide stderr if requested, or merge with stdout, etc
@@ -132,6 +136,7 @@ def list( *names, **kwargs ):
     # Run command and parse output
     dataset_list = {}
     for line in iterpipes.run( cmd.zfs( *zargs ) ):
+        line = line.rstrip("\n")
         line = dict( zip( props, str( line ).split( "\t" ) ) )
 
         # Make some changes

@@ -16,6 +16,10 @@ import cmd
 Pool Handling
 """
 
+#create [-fn] [-o property=value] ...
+#     [-O file-system-property=value] ...
+#     [-m mountpoint] [-R root] <pool> <vdev> ...
+
 def create(name, **kwargs):
     """ Create pool """
     # TODO HDD selector in web gui that lets you build pools
@@ -53,7 +57,11 @@ def list(*pools, **kwargs):
                                  'size','altroot','ashift','autoexpand','autoreplace','bootfs',
                                  'cachefile','dedupditto','delegation','failmode','listsnapshots',
                                  'readonly','version'] )
-    zargs.extend([ '-o', ','.join(props) ])
+    if isinstance(props, basestring): props = [props]
+    if isinstance(props, tuple): props = list(props)
+    if 'name' not in props: props.append('name')
+
+    zargs.extend([ '-o', ','.join(props).lower() ])
     if pools:
         zargs.extend(pools)
 

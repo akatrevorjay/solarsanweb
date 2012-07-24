@@ -7,3 +7,5 @@ import pool
 import dataset
 from tree import tree
 
+from objects import Pool, Filesystem, Volume, Snapshot
+
