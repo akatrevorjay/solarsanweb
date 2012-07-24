@@ -1,5 +1,6 @@
 #!/bin/bash
-[[ -n "$basedir" ]] || . "${BASH_SOURCE[0]%/*}/env"
+env_path=$(readlink -f "${BASH_SOURCE[0]}"); env_path="${env_path%/*}/env"
+[[ -n "$basedir" ]] || . "$env_path"
 
 cmd="${__BASHISM[script_self]}"
 debug "cmd=\"$cmd\" args=\"$*\""
