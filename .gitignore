@@ -1,28 +1,26 @@
 *.pyc
 
+env/
+data/*
+
+solarsanweb/settings_local.py
+
 *.swp
 *.swo
 celeryconfig.py
-solarsanweb/settings_local.py
 solarsanweb/templates/b
 solarsanweb/templates/admin.old
 _crap/
 snippets/
 PYSMELLTAGS
 polls
+
 3rd/
-env/
 .ropeproject/
 .pydevproject
 .project
 .settings
 
-data/*
-
-*.log
-*.pid
-celerybeat-schedule
-
-/sqlite.db
+.zfs
 tmp
 
