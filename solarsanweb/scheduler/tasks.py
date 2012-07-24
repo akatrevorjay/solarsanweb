@@ -4,7 +4,10 @@
 #from celery.task import periodic_task, task, chord
 #from celery.task.base import PeriodicTask, Task
 #from celery.task.sets import subtask
-#import datetime, time, logging
+#from celery.utils.log import get_task_logger
+#logger = get_task_logger(__name__)
+
+#import datetime, time
 #from datetime import timedelta
 #from django.utils import timezone
 #import zfs
