@@ -21,6 +21,7 @@ urlpatterns = patterns('',
 
     (r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
 
+    (r'^admin/uwsgi/', include('uwsgi_admin.urls')),                        # uwsgi admin
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),          # Admin docs
     #url(r'^admin/', include(site.urls)),                                    # Admin (mongoadmin)
     url(r'^admin/', include(admin.site.urls)),                              # Admin

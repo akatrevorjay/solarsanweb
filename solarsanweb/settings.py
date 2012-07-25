@@ -59,8 +59,7 @@ DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter',]
 ##
 
 ## Use MongoDB for Auth
-AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
-#AUTHENTICATION_BACKENDS = ( 'permission_backend_nonrel.backends.NonrelPermissionBackend', )
+#AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
 
 ## Persistent sessions
 #if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -189,14 +188,10 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
 
-    # Nonrel related
-    #'djangotoolbox',
-    #'permission_backend_nonrel',
-
     # Third party libs
     'djcelery',
     #'djkombu.transport',
-    #'djcelery.transport',
+    'djcelery.transport',
     'django_extensions',
     'south',
 
@@ -206,6 +201,7 @@ INSTALLED_APPS = (
     #'django_assets',
     #'kitsune',
     'waffle',
+    'uwsgi_admin',
 
     # Debug toolbar
     'debug_toolbar',
@@ -281,6 +277,7 @@ JINJA2_DISABLED_TEMPLATES = (
     #'cache_panel',
     'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
     'admin', 'registration',
+    'uwsgi.html',
     'logs',
     'kitsune',
     'crispy_forms',
@@ -444,7 +441,11 @@ djcelery.setup_loader()
 BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
 CELERY_RESULT_BACKEND = "amqp"
-#CELERY_DEFAULT_RATE_LIMIT = "100/s"
+CELERY_DEFAULT_RATE_LIMIT =" 50/s" #100/s
+BROKER_CONNECTION_MAX_RETRIES = "50" #100
+#CELERYD_LOG_COLOR = True
+#CELERY_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
+#CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
 
 ## Celery extra opts
 CELERY_QUEUES = {
