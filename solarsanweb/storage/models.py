@@ -5,6 +5,133 @@ import logging
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 import zfs
 
+from django_mongokit import connection
+from django_mongokit.document import DjangoDocument
+import datetime
+from django.utils import timezone
+
+"""
+Pools
+"""
+
+
+
+@connection.register
+class zPool(DjangoDocument):
+    class Meta:
+        verbose_name_plural = 'Pools'
+    collection_name = 'storage_pools'
+    use_dot_notation = True
+    #use_autorefs = True
+
+    structure = {
+        'name': unicode,
+        'props': dict,
+        #'props': {unicode: unicode},
+        #'filesystems': [zDataset],
+        #'filesystem': zDataset,
+        'last_modified': datetime.datetime,
+        'created': datetime.datetime,
+        'importing': bool,
+    }
+
+    required_fields = ['name']
+
+    default_values = {
+        'last_modified': timezone.now,
+        'created': timezone.now,
+    }
+
+    indexes = [
+        {'fields': ['name'], 'unique': True},
+    ]
+
+    def zfs( self ):
+        """ Returns ZFS object for this dataset """
+        return zfs.Pool(self.name)
+
+    #@property
+    #def filesystem( self ):
+    #    """ Returns the matching filesystem for Pool """
+    #    return Filesystem.objects.get( pool_id=self.id, name=self.name )
+    #def filesystems( self, **kwargs ):
+    #    """ Lists filesystems of this pool """
+    #    return Filesystem.objects.filter( type='filesystem', pool_id=self.id, **kwargs )
+    #def filesystem_create( self, name, **kwargs ):
+    #    """ Creates a filesystem in the pool """
+    #    logging.info( 'Request to create filesystem (%s) on pool (%s)', name, self.name )
+    #    # Get DB entry ready (and validate data)
+    #    filesystem = Filesystem( name=name, pool_id=self.id )
+    #    filesystem.save()
+    #    # Return saved filesystem object
+    #    return filesystem
+    #def iostat( self, **kwargs ):
+    #    """ Returns newly generated ZFS IOStats """
+    #    zpool_iostat = zfs.pool.iostat( self.name, **kwargs )
+    #    return zpool_iostat[self.name]
+
+@connection.register
+class zDataset(DjangoDocument):
+    class Meta:
+        verbose_name_plural = 'Datasets'
+    collection_name = 'storage_datasets'
+    use_dot_notation = True
+    #use_autorefs = True
+
+    structure = {
+        'name': unicode,
+        'type': unicode,
+        'props': dict,
+        #'pool': zPool,
+        #'pool': unicode,
+        #'parent': zDataset,
+        #'pool_name': zPool,
+        #'snapshots': [zSnapshot],
+        'last_modified': datetime.datetime,
+        'created': datetime.datetime,
+        'importing': bool,
+    }
+
+    required_fields = ['name']
+
+    default_values = {
+        'last_modified': timezone.now,
+        'created': timezone.now,
+    }
+
+    indexes = [
+        {'fields': ['name'], 'unique': True},
+    ]
+
+    #basename = models.CharField( max_length=128 )
+    #pool = models.ForeignKey( Pool )
+
+    #@property
+    def zfs( self ):
+        """ Returns ZFS object for this dataset """
+        return zfs.Dataset(self.name, type=self.type)
+
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
+
+## TODO This should be done in validate anyway, but it's a good example
+def create_zPool_zfs(sender, instance, created, **kwargs):
+    logging.info("Got signal for create_zPool_zfs! sender=%s instance=%s created=%s kwargs=%s", sender, instance, created, kwargs)
+    if created:
+        pool = zfs.Pool(instance.name)
+        if not pool.exists():
+            ## TODO real ZFS Pool creation function
+            logging.error("Pool object was created but it does not exist in ZFS. Deleting from DB.")
+            instance.delete()
+
+post_save.connect(create_zPool_zfs, sender=zPool)
+
+
+
+
+"""
+SQL Models
+"""
+
 from solarsan.models import EnabledModelManager
 
 class ZFSBackedModel( models.Model ):

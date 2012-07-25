@@ -16,7 +16,55 @@ from django.utils import timezone
 Import pool/dataset info from system into DB
 """
 
+from django_mongokit import get_database, connection
+from storage.models import zPool, zDataset
+import re
 import zfs
+
+class Import_ZFS_Metadata2(PeriodicTask):
+    run_every = timedelta(minutes=5)
+    def run(self, *args, **kwargs):
+        self.col_pools = get_database()[zPool.collection_name]
+        self.col_datasets = get_database()[zDataset.collection_name]
+
+        #self.col_pools.update({}, {'$set': {'importing': True}}, multi=True)
+        for pool in self.col_pools.zPool.find():
+            zfs_pool = pool.zfs()
+            pool.update({'props': zfs_pool.props.all})
+            pool.save()
+
+            zfs_dataset = zfs_pool.filesystem
+            pool_filesystem = self.do_zfs_dataset(pool, zfs_dataset)
+            self.do_filesystem_children(pool, zfs_dataset)
+    def do_zfs_dataset(self, pool, zfs_dataset, **kwargs):
+        #parent = kwargs.get('parent', None)
+        dataset = self.col_datasets.zDataset.find_one({'name': zfs_dataset.name})
+        if dataset == None:
+            dataset = self.col_datasets.zDataset()
+            dataset['name'] = unicode(zfs_dataset.name)
+            dataset.save()
+        self.col_datasets.update(
+                {'name': zfs_dataset.name},
+                {'$set': {'type': unicode(zfs_dataset._zfs_type),
+                          'props': zfs_dataset.props.all, },
+                 '$unset': {'importing': 1}, })
+        return dataset
+    def do_filesystem_children(self, pool, zfs_dataset_parent):
+        filesystems = []
+        parent_regex = re.compile('^%s/[^/]+$' % zfs_dataset_parent.name)
+        self.col_datasets.update(
+                {'name': parent_regex},
+                {'$set': {'importing': True, 'last_modified': timezone.now()}},
+                multi=True)
+        for zfs_dataset in zfs_dataset_parent.children():
+            dataset = self.do_zfs_dataset(pool, zfs_dataset, parent=zfs_dataset_parent)
+            if dataset.type == 'filesystem':
+                filesystems.append(zfs_dataset)
+        for zfs_dataset in filesystems:
+            # Run recursively on this node's children
+            self.do_filesystem_children(pool, zfs_dataset)
+        self.col_datasets.remove({'name': parent_regex, 'importing': True})
+
 
 # TODO This function should only be needed on initial deploys of solarsanweb and should not be a crutch
 class Import_ZFS_Metadata( PeriodicTask ):
@@ -33,7 +81,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
             # Do filter disabled ones from here!
             for obj in val.objects.all():
                 if not obj.name in list( self.data[key] ):
-                    logger.error( "Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
+                    logger.info( "Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
                             obj._zfs_type, obj.name )
                     obj.enabled = False
                     obj.save()
@@ -62,7 +110,7 @@ class Import_ZFS_Metadata( PeriodicTask ):
                     pv['enabled'] = True
                     for k, v in pv.iteritems(): setattr( pool, k, v )
                 except ( KeyError, Pool.DoesNotExist ):
-                    logger.error( 'Found pool "%s"', p )
+                    logger.info( 'Found pool "%s"', p )
                     del pv['type']
                     pool = Pool( **pv )
                 pool.save( db_only=True )
