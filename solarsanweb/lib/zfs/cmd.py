@@ -24,7 +24,7 @@ def _cmd(cmd, *zargs):
     # Black magic
     cmdf = paths[cmd]+' '+' '.join([
         ('{}') for i in range(len(zargs)) ])
-    logging.debug("_cmd: %s %s", cmd, zargs)
+    #logging.debug("_cmd: %s %s", cmd, zargs)
     return iterpipes.linecmd(cmdf, *zargs)
 
 

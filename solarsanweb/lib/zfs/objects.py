@@ -141,8 +141,7 @@ class SnapshottableDataset(object):
 
     #@property
     def children(self, **kwargs):
-        datasets = dataset.list(self.name, type=kwargs.get('type', 'all'), prop=['name', 'type'], depth=kwargs.get('depth', 1))
-        return [(Dataset(ds, type=datasets[ds]['type'])) for ds in datasets.keys()]
+        return [(Dataset(x, type=y['type'])) for x,y in dataset.list(self.name, type=kwargs.get('type', 'all'), prop=['name', 'type'], depth=kwargs.get('depth', 1)).iteritems() if y['name'] != self.name]
 
     #def snapshot( self, snapshot_name, **kwargs ):
     #    """ Snapshot this dataset """
