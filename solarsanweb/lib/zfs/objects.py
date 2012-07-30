@@ -14,7 +14,20 @@ from .common import Error, NotImplemented
 import pool, dataset, cmd, common
 
 
+
+ZFS_PROPS = {
+    'Pool':     ['name', 'size', 'cap', 'altroot', 'health', 'guid', 'version', 'bootfs', 'delegation', 'replace', 'cachefile', 'failmode', 'listsnaps', 'expand', 'dedupditto',
+                 'dedup', 'free', 'alloc', 'rdonly', 'ashift'],
+    'Dataset':  ['name', 'type', 'creation', 'used', 'avail', 'refer', 'ratio', 'mounted', 'origin', 'quota', 'reserv', 'volsize', 'volblock', 'recsize', 'mountpoint',
+                 'sharenfs', 'checksum', 'compress', 'atime', 'devices', 'exec', 'setuid', 'rdonly', 'zoned', 'snapdir', 'aclinherit', 'canmount', 'xattr', 'copies', 'version',
+                 'utf8only', 'normalization', 'case', 'vscan', 'nbmand', 'sharesmb', 'refquota', 'refreserv', 'primarycache', 'secondarycache', 'usedsnap', 'usedds', 'usedchild',
+                 'usedrefreserv', 'defer_destroy', 'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio'],
+    }
+
+
 DATA_TREE = {}
+OBJ_TREE = DATA_TREE['objs'] = {
+                            }
 
 """
 Base
@@ -24,13 +37,24 @@ class zfsBase( object ):
     """ Base class """
     _zfs_type = 'base'
 
-    #def __new__(cls, *args, **kwargs):
-    #    return super(zfsBase, cls).__new__(cls, *args, **kwargs)
+    def __new__(cls, name, *args, **kwargs):
+        if name in OBJ_TREE and cls.__name__ in OBJ_TREE[name]:
+            return OBJ_TREE[name][cls.__name__]
+        self = super(zfsBase, cls).__new__(cls, *args, **kwargs)
+
+        if not name in OBJ_TREE: OBJ_TREE[name] = {}
+        OBJ_TREE[name][self.__class__.__name__] = self
+
+        return self
 
     def __init__(self, name, *args, **kwargs):
         """ Initialize """
+        #print '__init__ args=%s kwargs=%s' % (args, kwargs)
         self.name = name
-        self.clear()
+        if not getattr(self, 'props', False):
+            self.props = {}
+            self.get()
+        #self.clear()
 
     def __repr__(self):
         name = getattr(self, 'name', None)
@@ -53,47 +77,95 @@ class zfsBase( object ):
     def type(self):
         return self.parent.__class__.__name__
 
+    #def get(self, *args, **kwargs):
     def get(self, *args, **kwargs):
-        args = args or ['all']
+        kwargs['walk_only'] = [self.name]
+        print 'get args=%s kwargs=%s' % (args, kwargs)
+        return self._get(*args, **kwargs)
+
+    @classmethod
+    def _get(cls, *args, **kwargs):
         zargs = ['get']
+
+        # Props
+        args = args or ['all']
         if not isinstance(args, list):
             args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
 
-        if isinstance(self, Dataset):
+        # Object[s] to start walking tree from
+        walk_only = kwargs.get('walk_only', [])
+        if not isinstance(walk_only, list):
+            walk_only = isinstance(walk_only, basestring) and [walk_only] or isinstance(walk_only, tuple) and list(walk_only)
+
+        # The zfs command has gotten a few interface tweaks over the years that give it en edge over zpool
+        if cls == Dataset or Dataset.__subclasscheck__(cls):
             if kwargs.get('recursive') == True: zargs.append('-r')
             if 'source' in kwargs: zargs.extend(['-s', str(kwargs['source'])])
             if 'depth' in kwargs: zargs.extend(['-d', int(kwargs['depth'])])
 
-        zargs += [','.join(args).lower(), self.name]
-        zcmd = isinstance(self, Dataset) and cmd.zfs(*zargs) or cmd.zpool(*zargs)
+        zargs += [','.join(args).lower(), ]
+        zargs.extend(walk_only)
 
-        parents = {}
+        if cls == Dataset or Dataset.__subclasscheck__(cls):
+            zcmd = cmd.zfs(*zargs)
+        else:
+            zcmd = cmd.zpool(*zargs)
+
+        # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
+        objs = OBJ_TREE
         ret = {}
         skip = 1
+        last_obj_name = ''
         for line in iterpipes.run(zcmd):
             line = str(line).rstrip("\n")
             if skip > 0:
                 skip -= 1
                 cols = [ line.index(col) for col in line.split() ]
                 continue
-            (parent_name, name, value, source) = [line[cols[x]: x+1 == len(cols) and len(line) or cols[x+1] ].strip() for x in xrange(len(cols))]
-            if not parent_name in ret:
-                parents[parent_name] = parent_name == self.name and self or isinstance(self, Dataset) and Dataset(parent_name)
-                ret[parent_name] = {}
-            ret[ parent_name ][ name ] = Property(name=name, value=value, source=source, parent=parents[parent_name])
-            if parent_name == self.name:
-                if value == '-' and source == '-' and name in self.props: del(self.props[name])
-                else: self.props[name] = ret[parent_name][name]
+            (obj_name, name, value, source) = [line[cols[x]: x+1 == len(cols) and len(line) or cols[x+1] ].strip() for x in xrange(len(cols))]
+            #print 'obj_name=%s name=%s value=%s source=%s' % (obj_name, name, value, source)
 
+            # As far as I know, this is always returned first (on Datasets, not returned at all for pool), but we may not want to rely on this.
+            if obj_name != last_obj_name:
+                #print 'new obj_name from last_obj_name! %s %s' % (obj_name, last_obj_name)
+
+                obj_cls = None
+                if name == 'type':
+                    if value == 'filesystem':
+                        obj_cls = Filesystem
+                    elif value == 'snapshot':
+                        obj_cls = Snapshot
+                    elif value == 'volume':
+                        obj_cls = Volume
+                    #elif value == 'dataset':
+                    #    obj_cls = Dataset
+                if not obj_cls and cls == Pool:
+                    obj_cls = Pool
+                #    if cls == Dataset or Dataset.__subclasscheck__(cls):
+                #        obj_cls = Dataset
+                #    elif cls == Pool or Pool.__subclasscheck__(cls):
+                #        obj_cls = Pool
+                if not obj_name in objs: objs[obj_name] = {}
+                #if not obj_cls: raise Exception('Could not figure out what class an object is supposed to be')
+                print 'obj_cls=%s' % obj_cls
+                if not obj_cls.__name__ in objs[obj_name]: objs[obj_name][obj_cls.__name__] = obj_cls(obj_name)
+                o = objs[obj_name][obj_cls.__name__]
+
+                if obj_name in walk_only: ret[obj_name] = o
+
+            o.props[ name ] = Property(name=name, value=value, source=source, obj=o)
+            if value == '-' and source == '-' and name in o.props: del(o.props[name])
+
+            last_obj_name = obj_name
         # If we're a dataset and recursive opt is set, return the ful hash including dataset name as first key
-        if isinstance(self, Dataset) and kwargs.get('recursive'): return ret
-        # Otherwise, return the first (and should be only) result
+        if cls == Dataset or Dataset.__subclasscheck__(cls) and kwargs.get('recursive'): return ret
+
         if len(args) == 1 and 'all' not in args: ret = ret[ret.keys()[0]]
         return ret[ret.keys()[0]]
 
     def set(self, name, value, **kwargs):
         zargs = ['set', '%s=%s' % (str(name), str(value)), self.name]
-        #print 'name=%s value=%s xargs=%s' % (name, value, zargs)
+        print 'set name=%s value=%s xargs=%s' % (name, value, zargs)
         zcmd = isinstance(self, Dataset) and cmd.zfs(*zargs) or cmd.zpool(*zargs)
         ret = iterpipes.check_call(zcmd)
         self.get(name)
@@ -103,41 +175,58 @@ class zfsBase( object ):
         self.props = {}
         self.get()
 
-
     @classmethod
     def list(cls, *args, **kwargs):
-        props = kwargs.get('props', ['all'])
+        zargs = ['list', '-H']
+
+        # Property selection
+        props = kwargs.get('props', ['name'])
         if not isinstance(props, list):
             props = isinstance(props, basestring) and [props] or isinstance(props, tuple) and list(props)
-        zargs = [ 'list', '-H', '-o', ','.join(props).lower(), ]
+        zargs += ['-o', ','.join(props).lower(), ]
+
+        # ZFS object selection (pool/dataset starting point for walking tree, etc)
         if not isinstance(args, list):
             args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
         zargs.extend(args)
 
-        if isinstance(cls, Dataset) or cls == Dataset:
-            if props == ['all']: col_names = ['name', 'type', 'creation', 'used', 'avail', 'refer', 'ratio', 'mounted', 'origin', 'quota', 'reserv', 'volsize', 'volblock', 'recsize', 'mountpoint', 'sharenfs', 'checksum', 'compress', 'atime', 'devices', 'exec', 'setuid', 'rdonly', 'zoned', 'snapdir', 'aclinherit', 'canmount', 'xattr', 'copies', 'version', 'utf8only', 'normalization', 'case', 'vscan', 'nbmand', 'sharesmb', 'refquota', 'refreserv', 'primarycache', 'secondarycache', 'usedsnap', 'usedds', 'usedchild', 'usedrefreserv', 'defer_destroy', 'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio']
+        # Datasets (the zfs command in particular) have a better CLI interface, so allow for more control when it comes to those
+        if cls == Dataset or Dataset.__subclasscheck__(cls):
             if kwargs.get('recursive') == True: zargs.append('-r')
             if 'type' in kwargs: zargs += ['-t', kwargs.get('type')]
             if 'source' in kwargs: zargs.extend(['-s', str(kwargs['source'])])
             if 'depth' in kwargs: zargs.extend(['-d', int(kwargs['depth'])])
-        else:
-            if props == ['all']: col_names = ['name', 'size', 'cap', 'altroot', 'health', 'guid', 'version', 'bootfs', 'delegation', 'replace', 'cachefile', 'failmode', 'listsnaps', 'expand', 'dedupditto', 'dedup', 'free', 'alloc', 'rdonly', 'ashift']
 
-        if 'objs' not in DATA_TREE: DATA_TREE['objs'] = {}
-        if cls.__name__ not in DATA_TREE['objs']: DATA_TREE['objs'][cls.__name__] = {}
-        objs = DATA_TREE['objs'][cls.__name__]
+        # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
+        objs = OBJ_TREE
         ret = {}
 
-        zcmd = isinstance(cls, Dataset) or cls == Dataset and cmd.zfs(*zargs) or cmd.zpool(*zargs)
+        # Generate command and execute, parse output
+        if cls == Dataset or Dataset.__subclasscheck__(cls):
+            zcmd = cmd.zfs(*zargs)
+        else:
+            zcmd = cmd.zpool(*zargs)
+
         for line in iterpipes.run(zcmd):
-            line = dict(zip(col_names, str(line).rstrip("\n").split()))
+            line = dict(zip(props == ['all'] and ZFS_PROPS[cls.__name__] or props,
+                            str(line).rstrip("\n").split()))
             parent_name = line['name']
-            if not parent_name in objs:
-                objs[parent_name] = cls(parent_name)
+            if not parent_name in objs: objs[parent_name] = {}
+            if cls.__name__ not in objs[parent_name]:
+                o = cls(parent_name)
+                objs[parent_name][o.__class__.__name__] = o
+
             # Inject the props we can get from the list into the object
             # (is this even needed at all or would it be better to just use get for this sort of thing since it gets ALL props in one go?)
-            objs[parent_name].props.update( dict([(k, Property(name=k, value=v, parent=objs[parent_name])) for k,v in line.iteritems() ]) )
-            ret[ parent_name ] = objs[parent_name]
+            #objs[parent_name].props.update( dict([(k, Property(name=k, value=v, parent=objs[parent_name])) for k,v in line.iteritems() ]) )
+
+            if cls == Dataset or Dataset.__subclasscheck__(cls):
+                if '@' in parent_name: obj_cls = Snapshot
+                else: obj_cls = Filesystem
+            else:
+                obj_cls = Pool
+
+            ret[ parent_name ] = objs[parent_name][obj_cls.__name__]
         return ret
 
 
@@ -153,6 +242,7 @@ class Property(object):
     def __repr__(self):
         return "Property('%s', source='%s')" % (self.value, self.source)
     def __setattr__(self, name, value):
+        """ This is  here to automatically save property values """
         if hasattr(self, 'parent') and name == 'value': self.parent.set(self.name, value)
         #if name == 'value' and hasattr(self, 'parent'): return self.parent.set(self.parent, name, value)
         return super(Property, self).__setattr__(name, value)
