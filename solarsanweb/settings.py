@@ -431,32 +431,49 @@ if not hasattr(safestring, '__html__'):
 ##
 ## Celery (async tasks)
 ##
-
-## django-celery
+from kombu import Exchange, Queue
+from kombu.common import Broadcast
 import djcelery
 djcelery.setup_loader()
+
 #CELERYBEAT_SCHEDULER = "solarsanweb.solarsan.utils.CeleryBeatScheduler"
+CELERY_TIMEZONE = TIME_ZONE
+#CELERYD_CONCURRENCY = 25
 
 ## Celery broker
-BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
+#BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
+BROKER_URL = "pyamqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
-CELERY_RESULT_BACKEND = "amqp"
 CELERY_DEFAULT_RATE_LIMIT =" 50/s" #100/s
 BROKER_CONNECTION_MAX_RETRIES = "50" #100
 #CELERYD_LOG_COLOR = True
 #CELERY_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
 #CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
 
-## Celery extra opts
-CELERY_QUEUES = {
-    'box_%s' % SERVER_NAME: {'binding_key': 'box_%s' % SERVER_NAME},
-    'shared':               {'binding_key': 'shared'},
+## Celery results
+CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hrs
+#CELERY_RESULT_BACKEND = "amqp"
+CELERY_RESULT_BACKEND = "mongodb"
+CELERY_MONGODB_BACKEND_SETTINGS = {
+    "database": DATABASES['mongodb']['NAME'],
 }
+
+#default_exchange = Exchange('default', type='direct')
+#media_exchange = Exchange('media', type='direct')
+
+## Celery extra opts
+CELERY_QUEUES = (
+    #Queue('default', Exchange('default'), routing_key='default'),
+    Queue('box_%s' % SERVER_NAME, Exchange('tasks'), durable=True, routing_key='box_%s'%SERVER_NAME, queue_arguments={'x-ha-policy': 'all'}),
+    Queue('shared', Exchange('shared'), durable=True, routing_key='shared', queue_arguments={'x-ha-policy': 'all'}),
+    #Broadcast('shared_broadcast', Exchange('shared_broadcast'), routing_key='shared_broadcast', queue_arguments={'x-ha-policy': 'all'}),
+    Broadcast('shared_broadcast'),
+)
 
 #CELERY_DEFAULT_EXCHANGE = "celery"
 CELERY_DEFAULT_EXCHANGE = "tasks"
 CELERY_DEFAULT_EXCHANGE_TYPE = "direct"
-CELERY_DEFAULT_QUEUE = "box_" + SERVER_NAME
+CELERY_DEFAULT_QUEUE = "box_%s" % SERVER_NAME
 CELERY_DEFAULT_ROUTING_KEY = 'box_%s' % SERVER_NAME
 
 #CELERY_ROUTES = ({"myapp.tasks.compress_video": {
@@ -469,6 +486,7 @@ CELERY_DEFAULT_ROUTING_KEY = 'box_%s' % SERVER_NAME
 if DEBUG:
     CELERY_SEND_EVENTS = True
     CELERY_SEND_TASK_SENT_EVENT = True
+    CELERY_TRACK_STARTED = True
 
 ## Extra task modules (def = [INSTALLED_APPS].tasks)
 CELERY_IMPORTS = (
