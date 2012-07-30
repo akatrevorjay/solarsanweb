@@ -1,4 +1,4 @@
-#from celery import subtask
+from celery import group
 from celery.schedules import crontab
 from celery.task import periodic_task, task, chord
 from celery.task.base import PeriodicTask, Task
@@ -58,9 +58,9 @@ class Cluster_Node_Query(Task):
             try:
                 probe = api.probe()
             except:
-                logger.error( 'Cluster discovery (probe \'%s\'): Failed.', kwargs['host'])
+                logger.error( 'Cluster discovery (probe \'%s\'): Failed.', host)
                 return False
-            logger.debug( "Cluster discovery (probe '%s'): Hostname is '%s'.", kwargs['host'], probe['hostname'])
+            logger.debug( "Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
 
             # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we should do it a layer above.
             cnode = self.col.ClusterNode.find_one({'hostname': probe['hostname']})
@@ -99,7 +99,7 @@ class Cluster_Node_Discover( PeriodicTask ):
                 cache.set('ClusterBeaconStartedTS', timezone.now(), 300)
 
         # Call Query task for each host to probe their API
-        s = TaskSet(Cluster_Node_Query.subtask(host=node_ip) for node_ip in nodes)
+        s = group([Cluster_Node_Query.subtask(host=node_ip) for node_ip in nodes])
         s.apply_async()
 
 

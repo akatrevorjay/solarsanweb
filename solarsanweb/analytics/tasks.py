@@ -123,7 +123,7 @@ class File_IO_Monitor_Py(Task):
             #self.mask = pyinotify.ALL_EVENTS
             self.handler = File_IO_Monitor_Event_Handler_Py()
             # Internally, 'handler' is a callable object which on new events will be called like this: handler(new_event)
-            self.wdd = self.wm.add_watch('/tmp', self.mask, rec=True, auto_add=True)
+            self.wdd = self.wm.add_watch('/dpool/bricks', self.mask, rec=True, auto_add=True)
             self.notifier = pyinotify.Notifier(self.wm, self.handler, timeout=timeout, read_freq=5)
         self.notifier.process_events()
         while self.notifier.check_events():
