@@ -154,3 +154,6 @@
 [submodule "vendor-local/pkgs/watchdog"]
 	path = vendor-local/pkgs/watchdog
 	url = git://github.com/gorakhargosh/watchdog.git
+[submodule "vendor-local/pkgs/johnny-cache"]
+	path = vendor-local/pkgs/johnny-cache
+	url = https://github.com/jmoiron/johnny-cache.git
