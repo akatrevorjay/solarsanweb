@@ -159,6 +159,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
     'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
+    'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
 )
 
 ## Root URL routes
@@ -209,6 +210,9 @@ INSTALLED_APPS = (
     #'cache_panel',
     'debug_toolbar_mongo',
     'debug_toolbar_htmltidy',
+
+    #'sentry',
+    #'raven.contrib.django',
 )
 
 PROJECT_APPS = (
@@ -274,6 +278,7 @@ JINJA2_TEMPLATE_LOADERS = (
 
 JINJA2_DISABLED_TEMPLATES = (
     'debug_toolbar', 'debug_toolbar_user_panel',
+    'django_extensions',
     #'cache_panel',
     'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
     'admin', 'registration',
@@ -387,8 +392,10 @@ CACHES = {
     #    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
     #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
     #},
-    'default_mongodb': {
-        'BACKEND': 'django_mongodb_cache.MongoDBCache',
+    #'default_mongodb': {
+    'default': {
+        #'BACKEND': 'django_mongodb_cache.MongoDBCache',
+        'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
         'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
     },
 }
@@ -396,7 +403,7 @@ CACHES = {
 #if DEBUG:   CACHES['default'] = CACHES['default_mem']
 #else:       CACHES['default'] = CACHES['default_db']
 #else:       CACHES['default'] = CACHES['default_file']
-CACHES['default'] = CACHES['default_mongodb']
+#CACHES['default'] = CACHES['default_mongodb']
 
 ##
 ## Jinja2/Coffin Templates
@@ -549,11 +556,11 @@ LOGGING = {
         },
     },
     'loggers': {
-        #'django': {
-        #    'handlers':['console'],
-        #    'propagate': True,
-        #    'level':'INFO',
-        #},
+        'django': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'INFO',
+        },
         'django.db.backends': {
             'handlers': ['console'],
             #'level': 'DEBUG',
@@ -565,10 +572,15 @@ LOGGING = {
             'level': 'ERROR',
             'propogate': False,
         },
-        #'apps': {
-        #    'handlers': ['console',],
-        #    'level': 'DEBUG',
-        #},
+        'apps': {
+            'handlers': ['console',],
+            'level': 'DEBUG',
+        },
+        'solarsanweb': {
+            'handlers': ['console',],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
@@ -603,7 +615,44 @@ client.captureException()
 MIDDLEWARE_CLASSES += (
     'raven.contrib.django.middleware.Sentry404CatchMiddleware',         # Catch 404s
     'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',  # Catch Errors
+    #'sentry.middleware.SentryMiddleware',
 )
+
+## DSN of your Sentry server (https://github.com/dcramer/sentry)
+## For info on configuring Django to use Sentry, see
+## http://raven.readthedocs.org/en/latest/config/django.html
+#SENTRY_DSN = 'http://public:secret@example.com/1'
+
+## A sample logging configuration. The only tangible logging
+## performed by this configuration is to send an email to
+## the site admins on every HTTP 500 error.
+## See http://docs.djangoproject.com/en/dev/topics/logging for
+## more details on how to customize your logging configuration.
+#LOGGING = {
+#    'version': 1,
+#    'disable_existing_loggers': True,
+#    'root': {
+#        'level': 'WARNING',
+#        'handlers': ['sentry'],
+#    },
+#    'handlers': {
+#        'sentry': {
+#            'level': 'WARNING',
+#            'class': 'raven.contrib.django.handlers.SentryHandler',
+#        },
+#        'mail_admins': {
+#            'level': 'ERROR',
+#            'class': 'django.utils.log.AdminEmailHandler',
+#        }
+#    },
+#    'loggers': {
+#        'django.request': {
+#            'handlers': ['mail_admins'],
+#            'level': 'ERROR',
+#            'propagate': True,
+#        },
+#    }
+#}
 
 ##
 ## SolarSan Log UI
