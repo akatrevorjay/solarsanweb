@@ -27,6 +27,9 @@ class Import_ZFS_Metadata2(PeriodicTask):
         self.col_pools = get_database()[zPool.collection_name]
         self.col_datasets = get_database()[zDataset.collection_name]
 
+        # This makes a nice cache
+        zfs.objects.Dataset._get()
+
         #self.col_pools.update({}, {'$set': {'importing': True}}, multi=True)
         for pool in self.col_pools.zPool.find():
             zfs_pool = pool.zfs()

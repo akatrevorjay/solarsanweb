@@ -20,6 +20,7 @@
     '3rd/nvd3/nv.d3.min.js',
     '3rd/chosen/chosen/chosen.jquery.min.js',
     'js/base.js',
+    '3rd/raven-js/dist/raven-0.6pre.min.js',
     %}
     <script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>
 {% endfor %}
@@ -29,6 +30,10 @@
     '3rd/flot/jquery.flot.crosshair.js',
     'js/jquery.animate-colors-min.js',
 #}
+
+<script type="text/javascript">
+    Raven.config('{{ raven_dsn }}');
+</script>
 
 {% endblock %}
 
