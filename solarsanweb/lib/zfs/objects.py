@@ -23,13 +23,6 @@ ZFS_PROPS = {
                  'usedrefreserv', 'defer_destroy', 'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio'],
     }
 
-from django_mongokit import get_database, connection
-#from storage.models import zPool, zDataset
-
-
-class MongoZFSBridge(object):
-    pass
-
 
 class CachedDataTree(dict):
     prefix = 'zfs_obj_tree'
@@ -106,6 +99,12 @@ class zfsBase( object ):
     def type(self):
         return self.parent.__class__.__name__
 
+    @classmethod
+    def get_prop_list(cls):
+        for subclass in zfsBase.__subclasses__():
+            if isinstance(subclass, self):
+                return ZFS_PROPS[subclass.__name__]
+
     #def get(self, *args, **kwargs):
     def get(self, *args, **kwargs):
         kwargs['walk_only'] = [self.name]
@@ -125,6 +124,7 @@ class zfsBase( object ):
         walk_only = kwargs.get('walk_only', [])
         if not isinstance(walk_only, list):
             walk_only = isinstance(walk_only, basestring) and [walk_only] or isinstance(walk_only, tuple) and list(walk_only)
+        if not walk_only and cls == Pool: raise Exception('Cannot _get Pools without giving me a list (walk_only)')
 
         # The zfs command has gotten a few interface tweaks over the years that give it en edge over zpool
         if Dataset.__subclasscheck__(cls):
@@ -133,7 +133,7 @@ class zfsBase( object ):
             if 'depth' in kwargs: zargs.extend(['-d', int(kwargs['depth'])])
 
         zargs += [','.join(args).lower(), ]
-        zargs.extend(walk_only)
+        if walk_only: zargs.extend(walk_only)
 
         if Dataset.__subclasscheck__(cls):
             zcmd = cmd.zfs(*zargs)
@@ -166,14 +166,8 @@ class zfsBase( object ):
                         if value == subclass.__name__.lower():
                             obj_cls = subclass
                             break
-                if not obj_cls and cls == Pool:
-                    obj_cls = Pool
-                #    if Dataset.__subclasscheck__(cls):
-                #        obj_cls = Dataset
-                #    elif cls == Pool or Pool.__subclasscheck__(cls):
-                #        obj_cls = Pool
+                if not obj_cls and cls == Pool: obj_cls = Pool
                 if not obj_name in objs: objs[obj_name] = {}
-                #if not obj_cls: raise Exception('Could not figure out what class an object is supposed to be')
                 #print 'obj_cls=%s' % obj_cls
                 if not obj_cls.__name__ in objs[obj_name]: objs[obj_name][obj_cls.__name__] = obj_cls(obj_name)
                 o = objs[obj_name][obj_cls.__name__]
@@ -307,6 +301,26 @@ class Property(object):
 #        return self.parent._props
 
 
+class Properties(dict):
+    def __init__(self, parent, *args, **kwargs):
+        self.parent = parent
+        super(Properties, self).__init__(name, *args, **kwargs)
+    def __getitem__(self, key):
+        super(Properties, self).__getitem__(key)
+    def __setitem__(self, key, value):
+        super(Properties, self).__setitem__(key, value)
+    #def __len__(self):
+    #    return len(self.values)
+    #def __delitem__(self, key):
+    #    del self.values[key]
+    def __iter__(self):
+        return iter(ZFS_PROPS['Dataset'])
+    #def __reversed__(self):
+    #    return reversed(self.values)
+
+
+
+
 
 """
 Pool Handling
@@ -315,20 +329,9 @@ Pool Handling
 class Pool( zfsBase ):
     """ Pool class """
     _zfs_type = 'pool'
-    _props = ['name', 'allocated','capacity','dedupratio','free','guid','health',
-              'size','altroot','ashift','autoexpand','autoreplace','bootfs',
-              'cachefile','dedupditto','delegation','failmode','listsnapshots',
-              'readonly','version']
 
     #def __init__(self, name, *args, **kwargs):
     #    super(Pool, self).__init__(name, *args, **kwargs)
-
-    def _get_prop(self, *args):
-        props = pool.list(self.name, props=list(args))[self.name]
-        if len(args) == 1:
-            return props[args[0]]
-        else:
-            return props
 
     @property
     def filesystem( self ):
@@ -339,7 +342,6 @@ class Pool( zfsBase ):
 class Dataset( zfsBase ):
     """ Dataset class """
     _zfs_type = 'dataset'
-    _props = ['name', 'setuid', 'referenced', 'zoned', 'primarycache', 'logbias', 'creation', 'sync', 'dedup', 'sharenfs', 'usedbyrefreservation', 'sharesmb', 'canmount', 'mountpoint', 'casesensitivity', 'utf8only', 'xattr', 'mounted', 'compression', 'usedbysnapshots', 'copies', 'aclinherit', 'compressratio', 'readonly', 'version', 'normalization', 'type', 'secondarycache', 'refreservation', 'available', 'used', 'Exec', 'refquota', 'refcompressratio', 'quota', 'vscan', 'reservation', 'atime', 'recordsize', 'usedbychildren', 'usedbydataset', 'mlslabel', 'checksum', 'devices', 'nbmand', 'snapdir']
 
     #def __init__(self, name, *args, **kwargs):
     #    super(Dataset, self).__init__(name, *args, **kwargs)
@@ -355,13 +357,6 @@ class Dataset( zfsBase ):
         else:
             cls = Filesystem
         return super(Dataset, cls).__new__(cls, *args, **kwargs)
-
-    def _get_prop(self, *args):
-        props = dataset.list(self.name, type=self._zfs_type, props=list(args))[self.name]
-        if len(args) == 1:
-            return props[args[0]]
-        else:
-            return props
 
     @property
     def pool( self ):
