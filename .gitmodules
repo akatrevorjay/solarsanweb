@@ -157,3 +157,6 @@
 [submodule "vendor-local/pkgs/johnny-cache"]
 	path = vendor-local/pkgs/johnny-cache
 	url = https://github.com/jmoiron/johnny-cache.git
+[submodule "solarsanweb/static/3rd/raven-js"]
+	path = solarsanweb/static/3rd/raven-js
+	url = git://github.com/lincolnloop/raven-js.git
