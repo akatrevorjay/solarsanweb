@@ -160,3 +160,12 @@
 [submodule "solarsanweb/static/3rd/raven-js"]
 	path = solarsanweb/static/3rd/raven-js
 	url = git://github.com/lincolnloop/raven-js.git
+[submodule "vendor-local/pkgs/django-pretty-times"]
+	path = vendor-local/pkgs/django-pretty-times
+	url = git://github.com/imtapps/django-pretty-times.git
+[submodule "vendor-local/pkgs/django_compressor"]
+	path = vendor-local/pkgs/django_compressor
+	url = git://github.com/jezdez/django_compressor.git
+[submodule "vendor-local/pkgs/django-extensions"]
+	path = vendor-local/pkgs/django-extensions
+	url = git://github.com/django-extensions/django-extensions.git
