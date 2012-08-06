@@ -52,16 +52,10 @@ OBJ_TREE = {}
 """
 Base
 """
-from mongoengine import *
-import mongoengine
-#from django_extensions.mongodb.models import TimeStampedModel, TitleSlugDescriptionModel, ActivatorModelManager, ActivatorModel
-from django_extensions.mongodb.models import *
-from django_extensions.mongodb.fields import *
 
-class zfsBase(TimeStampedModel):
+class zfsBase(object):
     """ Base class """
     _zfs_type = 'base'
-    name = StringField()
     def __new__(cls, name, *args, **kwargs):
         if name in OBJ_TREE and cls.__name__ in OBJ_TREE[name]:
             return OBJ_TREE[name][cls.__name__]
