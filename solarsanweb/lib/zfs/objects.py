@@ -10,7 +10,6 @@ from django.utils import timezone
 import iterpipes
 from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 from django.core.cache import cache
-
 from .common import Error, NotImplemented
 import pool, dataset, cmd, common
 
@@ -22,7 +21,6 @@ ZFS_PROPS = {
                  'utf8only', 'normalization', 'case', 'vscan', 'nbmand', 'sharesmb', 'refquota', 'refreserv', 'primarycache', 'secondarycache', 'usedsnap', 'usedds', 'usedchild',
                  'usedrefreserv', 'defer_destroy', 'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio'],
     }
-
 
 class CachedDataTree(dict):
     prefix = 'zfs_obj_tree'
@@ -54,11 +52,16 @@ OBJ_TREE = {}
 """
 Base
 """
+from mongoengine import *
+import mongoengine
+#from django_extensions.mongodb.models import TimeStampedModel, TitleSlugDescriptionModel, ActivatorModelManager, ActivatorModel
+from django_extensions.mongodb.models import *
+from django_extensions.mongodb.fields import *
 
-class zfsBase( object ):
+class zfsBase(TimeStampedModel):
     """ Base class """
     _zfs_type = 'base'
-
+    name = StringField()
     def __new__(cls, name, *args, **kwargs):
         if name in OBJ_TREE and cls.__name__ in OBJ_TREE[name]:
             return OBJ_TREE[name][cls.__name__]
