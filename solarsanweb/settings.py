@@ -136,8 +136,40 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    'compressor.finders.CompressorFinder',
 )
+
+COMPRESS_PRECOMPILERS = (
+    ('text/coffeescript', 'coffee --compile --stdio'),
+    ('text/less', 'lessc {infile} {outfile}'),
+    ('text/x-sass', 'sass {infile} {outfile}'),
+    ('text/x-scss', 'sass --scss {infile} {outfile}'),
+)
+
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.JSMinFilter',
+    #'compressor.filters.jsmin.SlimItFilter',
+    #'compressor.filters.closure.ClosureCompilerFilter',
+    #'compressor.filters.yui.YUIJSFilter',
+    #'compressor.filters.template.TemplateFilter',
+]
+
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    #'compressor.filters.csstidy.CSSTidyFilter',
+    #'compressor.filters.datauri.CssDataUriFilter',
+    #'compressor.filters.yui.YUICSSFilter',
+    'compressor.filters.cssmin.CSSMinFilter',
+    #'compressor.filters.template.TemplateFilter',
+]
+
+if DEBUG: COMPRESS_DEBUG_TOGGLE = 'nocompress'
+#COMPRESS_OFFLINE = True
+#COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
+COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
+#COMPRESS_CACHE_BACKEND = 'default'
+COMPRESS_ENABLED = True
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -198,11 +230,12 @@ INSTALLED_APPS = (
 
     # For future use
     'djsupervisor',
-    'crispy_forms',
+    #'crispy_forms',
     #'django_assets',
     #'kitsune',
     'waffle',
     'uwsgi_admin',
+    'compressor',
 
     # Debug toolbar
     'debug_toolbar',
@@ -285,7 +318,7 @@ JINJA2_DISABLED_TEMPLATES = (
     'uwsgi.html',
     'logs',
     'kitsune',
-    'crispy_forms',
+    #'crispy_forms',
     'mongonaut',
     'speedtracer',
 
@@ -308,11 +341,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 
-    'django.middleware.gzip.GZipMiddleware',                    # Compress output
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
     'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
 
     'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
+
+    'django.middleware.gzip.GZipMiddleware',                    # Compress output
 )
 
 if DEBUG: MIDDLEWARE_CLASSES += (
@@ -348,6 +382,7 @@ DEBUG_TOOLBAR_PANELS = (
 #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
 def custom_show_toolbar(request):
+    return False
     #if DEBUG: return True              # Show if DEBUG; default == DEBUG and if source ip in INTERNAL_IPS
     return request.user.is_superuser    # Show if logged in as a superuser
 
@@ -410,7 +445,6 @@ CACHES = {
 ##
 
 #JINJA2_FILTERS = (
-#    #'path.to.myfilter',
 #)
 
 #JINJA2_TESTS = {
@@ -419,7 +453,7 @@ CACHES = {
 
 JINJA2_EXTENSIONS = (
     'jinja2.ext.do', 'jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols',
-    #'compressor.contrib.jinja2ext.CompressorExtension',
+    'compressor.contrib.jinja2ext.CompressorExtension',
 )
 
 #from jinja2 import StrictUndefined
