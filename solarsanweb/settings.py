@@ -142,7 +142,8 @@ STATICFILES_FINDERS = (
 
 COMPRESS_PRECOMPILERS = (
     ('text/coffeescript', 'coffee --compile --stdio'),
-    ('text/less', 'lessc {infile} {outfile}'),
+    #('text/less', 'lessc {infile} {outfile}'),
+    ('text/less', 'recess --compile {infile}'),
     ('text/x-sass', 'sass {infile} {outfile}'),
     ('text/x-scss', 'sass --scss {infile} {outfile}'),
 )
@@ -235,7 +236,6 @@ INSTALLED_APPS = (
     #'kitsune',
     'waffle',
     'uwsgi_admin',
-    'compressor',
 
     # Debug toolbar
     'debug_toolbar',
@@ -246,6 +246,7 @@ INSTALLED_APPS = (
 
     #'sentry',
     #'raven.contrib.django',
+    'compressor',
 )
 
 PROJECT_APPS = (
@@ -342,11 +343,11 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
-    'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
 
     'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
 
-    'django.middleware.gzip.GZipMiddleware',                    # Compress output
+    #'django.middleware.gzip.GZipMiddleware',                    # Compress output
+    'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
 )
 
 if DEBUG: MIDDLEWARE_CLASSES += (
@@ -382,7 +383,8 @@ DEBUG_TOOLBAR_PANELS = (
 #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
 def custom_show_toolbar(request):
-    return False
+    if request.is_ajax():
+        return False
     #if DEBUG: return True              # Show if DEBUG; default == DEBUG and if source ip in INTERNAL_IPS
     return request.user.is_superuser    # Show if logged in as a superuser
 
@@ -390,7 +392,7 @@ DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
     #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
     'HIDE_DJANGO_SQL': False,
-    'TAG': 'div',
+    #'TAG': 'div',
     'ENABLE_STACKTRACES' : True,
     'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
 }
