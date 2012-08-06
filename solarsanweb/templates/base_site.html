@@ -9,32 +9,31 @@
     'css/font-awesome.css',
     '3rd/chosen/chosen/chosen.css',
     'css/base.css',
+    'css/nv.d3.css',
     %}
-    <link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" />
+    <link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" charset="utf-8"/>
 {% endfor %}
-
 {# <link type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700" rel="stylesheet" /> #}
+{% endblock %}
 
-{% for j in 'js/jquery.js',
-    '3rd/d3/d3.v2.min.js',
-    '3rd/nvd3/nv.d3.min.js',
-    '3rd/chosen/chosen/chosen.jquery.min.js',
+{% block js_head %}
+{% for j in 'js/jquery-1.7.2.js',
+    '3rd/d3/d3.v2.js',
+    '3rd/nvd3/nv.d3.js',
+    'js/chosen.jquery.js',
     'js/base.js',
-    '3rd/raven-js/dist/raven-0.6pre.min.js',
+    '3rd/raven-js/dist/raven-0.6pre.js',
     %}
     <script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>
 {% endfor %}
-{#
+{#  '3rd/chosen/chosen/chosen.jquery.js',
     '3rd/flot/jquery.flot.js',
     '3rd/flot/jquery.flot.time.js',
     '3rd/flot/jquery.flot.crosshair.js',
-    'js/jquery.animate-colors-min.js',
-#}
-
+    'js/jquery.animate-colors-min.js', #}
 <script type="text/javascript">
     Raven.config('{{ raven_dsn }}');
 </script>
-
 {% endblock %}
 
 {% block js_jquery %}

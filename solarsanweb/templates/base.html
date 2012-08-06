@@ -1,4 +1,4 @@
-{% extends "bootstrap/layouts/base_navbar_responsive.html" %}
+{% extends "bootstrap2/layouts/base_navbar_responsive.html" %}
 
 {% block title %}SolarSan Console{% endblock %}
 
@@ -19,8 +19,6 @@
                 <li>
                     <a href="/storage/pools/detail/{{ pool.name|urlize }}">{{ pool.name }}</a>
                 </li>
-                
-                
                 {% endfor %}
             </ul>
         </li>
