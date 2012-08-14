@@ -3,10 +3,140 @@ $ kstats.py -- Port of arcstat.pl from perl to python, with a (what I believe) i
 ~ Trevor Joynson aka trevorj <trevorj@localhostsolutions.com>
 """
 
+import string
+from copy import copy
 import os, logging
 from solarsan.utils import dict_diff
+import collections
 
-class kstats:
+
+#a = [3,4,5,5,5,6]
+#b = [1,3,4,4,5,5,6,7]
+#a_multiset = collections.Counter(a)
+#b_multiset = collections.Counter(b)
+#overlap = list((a_multiset & b_multiset).elements())
+#a_remainder = list((a_multiset - b_multiset).elements())
+#b_remainder = list((b_multiset - a_multiset).elements())
+#print overlap, a_remainder, b_remainder
+
+
+KSTATS_PATH = "/proc/spl"
+
+
+def get_tree():
+    kstats_path = KSTATS_PATH
+    if kstats_path.endswith(os.path.sep):
+        kstats_path = kstats_path[:-1]
+
+    ret = {}
+    for root, dirs, files in os.walk(kstats_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+
+            path = file_path[len(kstats_path):].translate(string.maketrans('/_', '  ')).split()
+            cur_file = ret
+            for p in path:
+                if not p in cur_file: cur_file[p] = {}
+                cur_file = cur_file[p]
+
+            m_path = collections.Counter(path)
+
+            for x, line in enumerate(str(open(os.path.join(root, file), 'r').read()).splitlines()):
+                if x == 1:
+                    header = line.split()
+                    if 'data' in header and 'value' not in header:
+                        header[header.index('data')] = 'value'
+                if x < 2 or not header: continue
+
+                stat = dict(zip(header, line.split(None, len(header))))
+
+                name = stat['name'].replace('_', ' ').split()
+                del stat['name']
+
+                m_name = collections.Counter(name)
+                #fixed_name = list((m_path - m_name).elements()) + list((m_path & m_name).elements()) + list((m_name - m_path).elements())
+                fixed_name = list((m_name - m_path).elements())
+                fixed_name = ['_'.join(fixed_name)]
+
+                cur = cur_file
+                for p in fixed_name[:-1]:
+                    if not p in cur: cur[p] = {}
+                    cur = cur[p]
+
+                cur[fixed_name[-1]] = stat
+
+    ## TODO Count each dict element; if there's only a single element in a tree level, then flatten it into an underscore
+    ## Maybe we just don't make it a tree till the end here instead and expand it upon underscores if there's more than one value with an underscored phrase?
+
+    #def kstats_walk(name, value):
+    #    if isinstance(value, int) or isinstance(value, float):
+    #        value = str(value)
+
+    #    if isinstance(value, basestring):
+    #        #logger.debug('Got basestring %s: %s', name, value)
+    #        statsd.gauge(name, value)
+
+    #    elif isinstance(value, list):
+    #        for x,v in enumerate(value):
+    #            kstats_walk('%s.%s' % (name, x), v)
+
+    #    elif isinstance(value, dict):
+    #        #logger.debug('Got dict %s: %s', name, value)
+    #        if 'value' in value:
+    #            kstats_walk(name, value['value'])
+    #        else:
+    #            for k,v in value.iteritems():
+    #                kstats_walk('%s.%s' % (name, k), v)
+
+    #    #else:
+    #    #    logger.debug('Got unknown stat %s: %s', name, value)
+
+
+    return ret
+
+
+def get():
+    kstats_path = KSTATS_PATH
+    if kstats_path.endswith(os.path.sep):
+        kstats_path = kstats_path[:-1]
+
+    ret = {}
+    for root, dirs, files in os.walk(kstats_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+
+            path = file_path[len(kstats_path):].translate(string.maketrans('/_', '  ')).split()
+            cur_file = ret
+            for p in path[:1]:
+                if not p in cur_file: cur_file[p] = {}
+                cur_file = cur_file[p]
+
+            rpath = copy(path)
+            rpath.reverse()
+
+            for x, line in enumerate(str(open(os.path.join(root, file), 'r').read()).splitlines()):
+                if x == 1:
+                    header = line.split()
+                    if 'data' in header:
+                        header[header.index('data')] = 'value'
+                if x < 2 or not header: continue
+
+                stat = dict(zip(header, line.split(None, len(header))))
+                if not 'value' in header:
+                    logging.debug('Leaving behind kstat %s because it has no value', stat)
+                    continue
+                name = stat['name'].replace('_', ' ').split()
+
+                for p,n in zip(rpath, name):
+                    if p == n: name.pop(0)
+                    else: break
+
+                del stat['name']
+                cur_file['.'.join(path[1:] + name)] = stat['value']
+    return ret
+
+
+class KStats:
     def __init__(self):
         self.update()
     def update(self, *args, **kwargs):

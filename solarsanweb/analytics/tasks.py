@@ -12,10 +12,12 @@ from django.conf import settings
 
 import zfs
 
-from kstats import kstats
+#from kstats import KStats as kstats
+import kstats
 from pyrrd.backend import bindings
 from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
 from pyrrd.rrd import DataSource, RRA, RRD
+from django_statsd.clients import statsd
 
 """
 Per-File IO Monitor
@@ -186,18 +188,23 @@ class Pool_IOStats_Populate(PeriodicTask):
         timestamp_end = timezone.now()
 
         for i in iostats:
-            ## Convert human readable values to bytes
-            for j in ['alloc', 'free', 'bandwidth_read', 'bandwidth_write']:
-                iostats[i][j] = int(convert_human_to_bytes(iostats[i][j]))
-
             try:
                 pool = Pool.objects.get(name=i)
             except (KeyError, Pool.DoesNotExist):
                 logger.error('Got data for an unknown pool "%s"', i)
                 continue
 
-            iostats[i]['timestamp_end'] = timestamp_end
             del iostats[i]['name']
+
+            for j in iostats[i].keys():
+                if j not in ['timestamp']:
+                    statsd.gauge('iostats.%s.%s' % (pool.name, j), iostats[i][j])
+
+            iostats[i]['timestamp_end'] = timestamp_end
+
+            for j in ['alloc', 'free', 'bandwidth_read', 'bandwidth_write']:
+                # Convert human readable to bytes
+                iostats[i][j] = int(convert_human_to_bytes(iostats[i][j]))
 
             pool.pool_iostat_set.create(**iostats[i])
 
@@ -219,11 +226,49 @@ class Pool_IOStat_Clean(PeriodicTask):
 
             logger.debug("Deleted %d/%d entires", count_to_remove, count)
 
+
+"""
+KStats
+"""
+
+class KStats_Update(PeriodicTask):
+    run_every = timedelta(minutes=1)
+    def run(self, *args, **kwargs):
+        ks = kstats.get_tree()
+        for key in ks.keys():
+            self.kstats_walk(key, ks[key])
+
+    def kstats_walk(self, name, value):
+        if isinstance(value, int) or isinstance(value, float):
+            value = str(value)
+
+        if isinstance(value, basestring):
+            #logger.debug('Got basestring %s: %s', name, value)
+            #print 'Got basestring %s: %s' % (name, value)
+            statsd.gauge(name, value)
+
+        elif isinstance(value, list):
+            for x,v in enumerate(value):
+                self.kstats_walk('%s.%s' % (name, x), v)
+
+        elif isinstance(value, dict):
+            #logger.debug('Got dict %s: %s', name, value)
+            if 'value' in value:
+                self.kstats_walk(name, value['value'])
+            else:
+                for k,v in value.iteritems():
+                    self.kstats_walk('%s.%s' % (name, k), v)
+
+        else:
+            logger.error('Got unknown KStat type: %s: %s', name, value)
+
+
+
 """
 RRD Stats
 """
 
-@periodic_task(run_every=timedelta(minutes=5))
+#@periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):
     StartTime = int(time.time())
     ks = kstats().kstat
