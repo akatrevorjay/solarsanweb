@@ -2,7 +2,7 @@
 /* _______
  * base.js
  */
-$(function() {
+jQuery(function($) {
 
 //
 // Include Django CSRF token in ajax requests
@@ -67,3 +67,4 @@ function readableFileSize(size) {
 $("a[rel='tooltip']").tooltip({placement: 'right'});
 
 });
+

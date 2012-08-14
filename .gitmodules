@@ -108,7 +108,7 @@
 	url = git://github.com/django-nonrel/django-dbindexer.git
 [submodule "vendor-local/pkgs/django-debug-toolbar"]
 	path = vendor-local/pkgs/django-debug-toolbar
-	url = git://github.com/django-debug-toolbar/django-debug-toolbar.git
+	url = git://github.com/akatrevorjay/django-debug-toolbar.git
 #[submodule "vendor-local/pkgs/mongodb-cache"]
 #	path = vendor-local/pkgs/mongodb-cache
 #	url = git://github.com/django-nonrel/mongodb-cache.git
@@ -169,3 +169,42 @@
 [submodule "vendor-local/pkgs/django-extensions"]
 	path = vendor-local/pkgs/django-extensions
 	url = git://github.com/django-extensions/django-extensions.git
+[submodule "vendor-local/pkgs/py-statsd"]
+	path = vendor-local/pkgs/py-statsd
+	url = git://github.com/sivy/py-statsd.git
+[submodule "vendor-local/pkgs/carbon"]
+	path = vendor-local/pkgs/carbon
+	url = git://github.com/graphite-project/carbon.git
+[submodule "vendor-local/pkgs/whisper"]
+	path = vendor-local/pkgs/whisper
+	url = git://github.com/graphite-project/whisper.git
+[submodule "vendor-local/pkgs/graphite-web"]
+	path = vendor-local/pkgs/graphite-web
+	url = git://github.com/graphite-project/graphite-web.git
+[submodule "vendor-local/pkgs/statsite"]
+	path = vendor-local/pkgs/statsite
+	url = git://github.com/kiip/statsite.git
+[submodule "vendor-local/pkgs/ceres"]
+	path = vendor-local/pkgs/ceres
+	url = git://github.com/graphite-project/ceres.git
+[submodule "vendor-local/pkgs/django-statsd"]
+	path = vendor-local/pkgs/django-statsd
+	url = git://github.com/andymckay/django-statsd.git
+[submodule "solarsanweb/static/3rd/boomerang"]
+	path = solarsanweb/static/3rd/boomerang
+	url = git://github.com/lognormal/boomerang.git
+[submodule "vendor-local/pkgs/django-statsd-wolph"]
+	path = vendor-local/pkgs/django-statsd-wolph
+	url = git://github.com/WoLpH/django-statsd.git
+[submodule "vendor-local/pkgs/django-minify"]
+	path = vendor-local/pkgs/django-minify
+	url = git://github.com/WoLpH/django-minify.git
+[submodule "solarsanweb/static/3rd/requirejs"]
+	path = solarsanweb/static/3rd/requirejs
+	url = git://github.com/jrburke/requirejs.git
+[submodule "solarsanweb/static/3rd/gritter"]
+	path = solarsanweb/static/3rd/gritter
+	url = git://github.com/jboesch/Gritter.git
+[submodule "vendor-local/pkgs/collectd-carbon"]
+	path = vendor-local/pkgs/collectd-carbon
+	url = git://github.com/indygreg/collectd-carbon.git

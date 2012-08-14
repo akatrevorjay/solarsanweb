@@ -9,3 +9,8 @@ pyflakes
 pylint
 pep8
 
+graphite-web
+carbon
+whisper
+txamqp
+python-utils django-utils2

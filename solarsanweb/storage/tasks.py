@@ -21,8 +21,9 @@ from storage.models import zPool, zDataset
 import re
 import zfs
 
-class Import_ZFS_Metadata2(PeriodicTask):
-    run_every = timedelta(minutes=5)
+#class Import_ZFS_Metadata2(PeriodicTask):
+class Import_ZFS_Metadata2(Task):
+    #run_every = timedelta(minutes=5)
     def run(self, *args, **kwargs):
         self.col_pools = get_database()[zPool.collection_name]
         self.col_datasets = get_database()[zDataset.collection_name]

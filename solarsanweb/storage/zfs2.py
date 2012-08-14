@@ -1,52 +1,12 @@
 
-from storage.models import zPool, zDataset
-#from storage.models import zPool as Pool, zDataset as Dataset
 import zfs.objects as zfs
-
 import logging, datetime, time
 
 from mongoengine import *
 import mongoengine
 #from django_extensions.mongodb.models import TimeStampedModel, TitleSlugDescriptionModel, ActivatorModelManager, ActivatorModel
-from django_extensions.mongodb.models import *
-from django_extensions.mongodb.fields import *
-
-zfsMongoMap = {
-        'pool': {
-            'mongo': zPool,
-            'zfs': zfs.Pool,
-            },
-        'dataset': {
-            'mongo': zDataset,
-            'zfs': zfs.Dataset,
-            },
-        'filesystem': {
-            'mongo': zDataset,
-            'zfs': zfs.Filesystem,
-            },
-        'snapshot': {
-            'mongo': zDataset,
-            'zfs': zfs.Snapshot,
-            },
-        'volume': {
-            'mongo': zDataset,
-            'zfs': zfs.Volume,
-            },
-        }
-
-
-#class zfsBase(zfs.zfsBase):
-#    def __init__(self, *args, **kwargs):
-#        map = self._mongo_map = zfsMongoMap[self._zfs_type]
-#        super(zfsBaseMongo, self).__init__(*args, **kwargs)
-#        dbo = self.dbo = col.find({'name': self.name})
-#        if not dbo:
-#            dbo = None
-
-
-#class Log(Document):
-#    ip_address = StringField()
-#    meta = {'max_documents': 1000, 'max_size': 2000000}
+#from django_extensions.mongodb.models import *
+#from django_extensions.mongodb.fields import *
 
 
 class TimestampedDocument(mongoengine.Document):
@@ -77,7 +37,6 @@ class Property(mongoengine.EmbeddedDocument):
 
 
 
-
 class zfsBaseMongo(TimestampedDocument):
     meta = {'collection': 'storage_base',
             'allow_inheritance': True,
@@ -92,6 +51,7 @@ class zfsBaseMongo(TimestampedDocument):
 class Pool(zfsBaseMongo, zfs.Pool):
     meta = {'collection': 'storage_pools',
             }
+
     ## TODO Should this be overriden to return db data or should the mongo object's attrs return db data,
     ##   but whenever list() or get() are called, it automatically updates those objects?
     #def list(self, *args, **kwargs):
@@ -105,12 +65,50 @@ class Dataset(zfsBaseMongo, zfs.Dataset):
     meta = {'collection': 'storage_datasets',
             }
 
+    #def __init__(self, name, *args, **kwargs):
+    #    super(Dataset, self).__init__(name, *args, **kwargs)
 
-class Filesystem(Dataset, zfs.Filesystem):
+    #def __new__(cls, *args, **kwargs):
+    #    if 'type' in kwargs:
+    #        for subclass in Dataset.__subclasses__():
+    #            #if subclass._zfs_type == kwargs['type']:
+    #            #    return super(Dataset, cls).__new__(subclass, *args, **kwargs)
+    #            if kwargs['type'] in ZFS_TYPE_MAP:
+    #                return super(Dataset, cls).__new__(ZFS_TYPE_MAP[ kwargs['type'] ], *args, **kwargs)
+    #        raise Exception, 'Dataset type not supported'
+    #    elif '@' in args[0]:
+    #        cls = ZFS_TYPE_MAP['snapshot']
+    #    else:
+    #        cls = ZFS_TYPE_MAP['filesystem']
+    #    return super(Dataset, cls).__new__(cls, *args, **kwargs)
+
+
+#class SnapshottableDataset(zfs.SnapshottableDataset):
+class SnapshottableDataset(object):
     pass
 
 
-class Volume(Dataset, zfs.Volume):
+class Filesystem(Dataset, SnapshottableDataset, zfs.Filesystem):
     pass
+
+
+class Volume(Dataset, SnapshottableDataset, zfs.Volume):
+    pass
+
+
+class Snapshot(Dataset, zfs.Snapshot):
+    pass
+
+
+
+ZFS_TYPE_MAP = {
+    'pool': Pool,
+    'dataset': Dataset,
+    'filesystem': Filesystem,
+    'volume': Volume,
+    'snapshot': Snapshot,
+    }
+
+zfs.ZFS_TYPE_MAP = ZFS_TYPE_MAP
 
 

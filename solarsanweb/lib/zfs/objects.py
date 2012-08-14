@@ -13,6 +13,11 @@ from django.core.cache import cache
 from .common import Error, NotImplemented
 import pool, dataset, cmd, common
 
+#from mongoengine.fields import *
+#from mongoengine import *
+import mongoengine
+
+
 ZFS_PROPS = {
     'Pool':     ['name', 'size', 'cap', 'altroot', 'health', 'guid', 'version', 'bootfs', 'delegation', 'replace', 'cachefile', 'failmode', 'listsnaps', 'expand', 'dedupditto',
                  'dedup', 'free', 'alloc', 'rdonly', 'ashift'],
@@ -55,6 +60,13 @@ Base
 
 class zfsBase(object):
     """ Base class """
+    meta = {'collection': 'storage_base',
+            'allow_inheritance': True,
+            'indexes': [{'fields': ['name'], 'unique': True}],
+            }
+    #abstract = True
+    #name = mongoengine.StringField(required=True, unique=True)
+    #props = ListField(EmbeddedDocumentField(Property))
     _zfs_type = 'base'
     def __new__(cls, name, *args, **kwargs):
         if name in OBJ_TREE and cls.__name__ in OBJ_TREE[name]:
@@ -66,9 +78,18 @@ class zfsBase(object):
 
         return self
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """ Initialize """
         #print '__init__ args=%s kwargs=%s' % (args, kwargs)
+        name = kwargs.get('name', args[0])
+        if 'name' in kwargs:
+            name = kwargs.pop('name')
+        else:
+            if not isinstance(args, list):
+                args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
+            if not len(args[0]) > 0:
+                raise Exception('No name was given')
+            name = kwargs['name'] = args.pop(0)
         self.name = name
         if not getattr(self, 'props', False):
             self.props = {}
@@ -335,6 +356,57 @@ class Pool( zfsBase ):
         """ Returns the matching Filesystem for this Pool """
         return Filesystem(self.name)
 
+    def iostat(*pools, **kwargs):
+        """ Utility to return zpool iostats on the specified pools """
+        zargs = ['iostat', '-Tu']
+        if pools:
+            if not isinstance(pools, list):
+                pools = isinstance(pools, basestring) and [pools] or isinstance(pools, tuple) and list(pools)
+            zargs.extend(pools)
+        capture_length = str(kwargs.get('capture_length', '30'))
+        how_many = str(int(kwargs.get('how_many', 1)) + 1)
+        zargs.extend([capture_length, how_many])
+
+        iostat = {}
+        timestamp = False
+        skip_past_dashline = False
+        for line in iterpipes.run(cmd.zpool(*zargs)):
+            line = str(line).rstrip("\n")
+
+            # Got a timestamp
+            if line.isdigit():
+                # If this is our first record, skip till we get the header seperator
+                if not timestamp:
+                    skip_past_dashline = True
+                # TZify the timestamp
+                timestamp = timezone.make_aware(
+                        datetime.datetime.fromtimestamp(int(line)), timezone.get_current_timezone() )
+                continue
+
+            # If we haven't gotten the dashline yet, wait till the line after it
+            if skip_past_dashline == True:
+                if line.startswith('-----'):
+                    skip_past_dashline = False
+                continue
+
+            # If somehow we got here without a timestamp, something is probably wrong.
+            if timestamp == False:
+                logging.error("Got unexpected input from zpool iostat: %s", line)
+                raise Error
+
+            try:
+                # Parse iostats output
+                j = {}
+                (j['name'], j['alloc'], j['free'], j['iops_read'], j['iops_write'], j['bandwidth_read'],
+                 j['bandwidth_write']) = line.split()
+                j['timestamp'] = timestamp
+                iostat[j['name']] = j
+            except:
+                logging.error("Could not parse input from zpool iostat: %s", line)
+                raise Error
+        return iostat
+
+
 
 class Dataset( zfsBase ):
     """ Dataset class """
@@ -346,13 +418,15 @@ class Dataset( zfsBase ):
     def __new__(cls, *args, **kwargs):
         if 'type' in kwargs:
             for subclass in Dataset.__subclasses__():
-                if subclass._zfs_type == kwargs['type']:
-                    return super(Dataset, cls).__new__(subclass, *args, **kwargs)
+                #if subclass._zfs_type == kwargs['type']:
+                #    return super(Dataset, cls).__new__(subclass, *args, **kwargs)
+                if kwargs['type'] in ZFS_TYPE_MAP:
+                    return super(Dataset, cls).__new__(ZFS_TYPE_MAP[ kwargs['type'] ], *args, **kwargs)
             raise Exception, 'Dataset type not supported'
         elif '@' in args[0]:
-            cls = Snapshot
+            cls = ZFS_TYPE_MAP['snapshot']
         else:
-            cls = Filesystem
+            cls = ZFS_TYPE_MAP['filesystem']
         return super(Dataset, cls).__new__(cls, *args, **kwargs)
 
     @property
@@ -481,8 +555,95 @@ class Snapshot( Dataset ):
 
 
 
+ZFS_TYPE_MAP = {
+    'pool': Pool,
+    'dataset': Dataset,
+    'filesystem': Filesystem,
+    'volume': Volume,
+    'snapshot': Snapshot,
+    }
 
 
+
+#class TimestampedDocument(mongoengine.Document):
+#    meta = {'collection': 'storage_base',
+#            'allow_inheritance': True,
+#            }
+#    #abstract = True
+#    created = mongoengine.DateTimeField(default=datetime.datetime.now())
+#    modified = mongoengine.DateTimeField(default=datetime.datetime.now())
+
+
+##class Property(mongoengine.EmbeddedDocument, zfs.Property):
+#class Property(mongoengine.EmbeddedDocument):
+#    name = mongoengine.StringField(required=True)
+#    value = mongoengine.StringField(required=True)
+#    source = mongoengine.StringField()
+
+#    def __str__(self):
+#        return str(self.value)
+#    def __unicode__(self):
+#        return unicode(self.value)
+#    def __repr__(self):
+#        return "Property(name=%s, value=%s, source=%s)" % (self.name, self.value, self.source)
+#    def __call__(self, *args, **kwargs):
+#        """ Sets property with value """
+#        #if hasattr(self, 'parent'): self.parent.set(self.name, value)
+#        return super(Property, self).__call__(*args, **kwargs)
+
+
+
+
+#class Dataset(zfsBaseMongo, zfs.Dataset):
+#    #pool = ReferenceField(Pool, reverse_delete_rule=CASCADE)
+#    meta = {'collection': 'storage_datasets',
+#            }
+
+#    #def __init__(self, name, *args, **kwargs):
+#    #    super(Dataset, self).__init__(name, *args, **kwargs)
+
+#    #def __new__(cls, *args, **kwargs):
+#    #    if 'type' in kwargs:
+#    #        for subclass in Dataset.__subclasses__():
+#    #            #if subclass._zfs_type == kwargs['type']:
+#    #            #    return super(Dataset, cls).__new__(subclass, *args, **kwargs)
+#    #            if kwargs['type'] in ZFS_TYPE_MAP:
+#    #                return super(Dataset, cls).__new__(ZFS_TYPE_MAP[ kwargs['type'] ], *args, **kwargs)
+#    #        raise Exception, 'Dataset type not supported'
+#    #    elif '@' in args[0]:
+#    #        cls = ZFS_TYPE_MAP['snapshot']
+#    #    else:
+#    #        cls = ZFS_TYPE_MAP['filesystem']
+#    #    return super(Dataset, cls).__new__(cls, *args, **kwargs)
+
+
+##class SnapshottableDataset(zfs.SnapshottableDataset):
+#class SnapshottableDataset(object):
+#    pass
+
+
+#class Filesystem(Dataset, SnapshottableDataset, zfs.Filesystem):
+#    pass
+
+
+#class Volume(Dataset, SnapshottableDataset, zfs.Volume):
+#    pass
+
+
+#class Snapshot(Dataset, zfs.Snapshot):
+#    pass
+
+
+
+#ZFS_TYPE_MAP = {
+#    'pool': Pool,
+#    'dataset': Dataset,
+#    'filesystem': Filesystem,
+#    'volume': Volume,
+#    'snapshot': Snapshot,
+#    }
+
+#zfs.ZFS_TYPE_MAP = ZFS_TYPE_MAP
 
 
 
