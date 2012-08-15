@@ -81,6 +81,10 @@ Volumes
 import rtslib
 #root = rtslib.root
 
+#from storage.models import Target
+class Target(object):
+    pass
+
 class TargetView(object):
     model = Target
     slug_field = "name"
