@@ -91,9 +91,10 @@ class zfsBase(object):
                 raise Exception('No name was given')
             name = kwargs['name'] = args.pop(0)
         self.name = name
+
         if not getattr(self, 'props', False):
-            self.props = {}
-            self.get()
+            self.props = Properties(self, lazy=kwargs.get('lazy', False))
+
         #self.clear()
 
     def __repr__(self):
@@ -109,7 +110,8 @@ class zfsBase(object):
 
     #@property
     def exists(self):
-        if 'type' in getattr(self, 'props', {}):
+        #if 'type' in getattr(self, 'props', {}):
+        if 'type' in self.props:
             return True
         return False
 
@@ -120,7 +122,7 @@ class zfsBase(object):
     @classmethod
     def get_prop_list(cls):
         for subclass in zfsBase.__subclasses__():
-            if isinstance(subclass, self):
+            if issubclass(cls, subclass) or subclass == cls:
                 return ZFS_PROPS[subclass.__name__]
 
     #def get(self, *args, **kwargs):
@@ -178,32 +180,28 @@ class zfsBase(object):
             if obj_name != last_obj_name:
                 #print 'new obj_name from last_obj_name! %s %s' % (obj_name, last_obj_name)
 
-                obj_cls = None
-                if name == 'type':
-                    for subclass in Dataset.__subclasses__():
-                        if value == subclass.__name__.lower():
-                            obj_cls = subclass
-                            break
-                if not obj_cls and cls == Pool: obj_cls = Pool
-                if not obj_name in objs: objs[obj_name] = {}
-                #print 'obj_cls=%s' % obj_cls
-                if not obj_cls.__name__ in objs[obj_name]: objs[obj_name][obj_cls.__name__] = obj_cls(obj_name)
-                o = objs[obj_name][obj_cls.__name__]
+                #obj_cls = None
+                #if name == 'type':
+                #    for subclass in Dataset.__subclasses__():
+                #        if value == subclass.__name__.lower():
+                #            obj_cls = subclass
+                #            break
+                #if not obj_cls and cls == Pool: obj_cls = Pool
+                #if not obj_name in objs: objs[obj_name] = {}
+                ##print 'obj_cls=%s' % obj_cls
+                #if not obj_cls.__name__ in objs[obj_name]: objs[obj_name][obj_cls.__name__] = obj_cls(obj_name)
+                #o = objs[obj_name][obj_cls.__name__]
 
-                if obj_name in walk_only: ret[obj_name] = o
-
-            try:
-                o.props[ name ] = Property(name=name, value=value, source=source, obj=o)
-                if value == '-' and source == '-' and name in o.props: del(o.props[name])
-            except:
-                logging.error("Problem adding property %s %s %s to %s", name, value, source, o)
-
+                if not obj_name in ret: ret[obj_name] = {}
+            ret[ obj_name ][ name ] = {'value': value, 'source': source}
 
             last_obj_name = obj_name
-        # If we're a dataset and recursive opt is set, return the ful hash including dataset name as first key
+
+        # If we're a dataset and recursive opt is set, return the full hash including dataset name as first key
         if Dataset.__subclasscheck__(cls) and kwargs.get('recursive'): return ret
 
-        if len(args) == 1 and 'all' not in args: ret = ret[ret.keys()[0]]
+        # If we only requested a single property from a single object that isn't the magic word 'all', just return the value.
+        if not kwargs.get('recursive') and len(args) == 1 and 'all' not in args: ret = ret[ret.keys()[0]]
         return ret[ret.keys()[0]]
 
     def set(self, name, value, **kwargs):
@@ -272,72 +270,182 @@ class zfsBase(object):
                 obj_cls = Pool
 
             o = objs[parent_name][obj_cls.__name__]
-
-            # Inject the props we can get from the list into the object
-            # (is this even needed at all or would it be better to just use get for this sort of thing since it gets ALL props in one go?)
-            o.props.update( dict([(k, Property(name=k, value=v, parent=o)) for k,v in line.iteritems() ]) )
-
             ret[ parent_name ] = o
         return ret
 
 
 class Property(object):
     def __init__(self, **kwargs):
-        for k in ['name', 'source', 'value', 'parent']:
-            #setattr(self, k, unicode(kwargs.get(k)))
-            setattr(self, k, kwargs.get(k))
+        #kwargs.setdefault('modified', False)
+        #kwargs.setdefault('inherit', False)
+        self.modified = False
+        self.inherit = False
+        self.source = 'local'
+        self.lazy = False
+        self.value = None
+
+        for k in ['name', 'source', 'value', 'parent', 'inherit', 'modified', 'lazy']:
+            if k in kwargs:
+                setattr(self, k, kwargs.get(k))
+
+        if self.lazy and not self.value:
+            self.value = self._lazy_value
+
     def __str__(self):
         return str(self.value)
+
     def __unicode__(self):
         return unicode(self.value)
+
     def __repr__(self):
-        return "Property('%s', source='%s')" % (self.value, self.source)
-    def __call__(self, value):
+        prefix = ''
+        source = getattr(self, 'source')
+        vars = {}
+
+        if self.lazy and not self.modified:
+            prefix += 'Lazy'
+
+        else:
+            if source in ['default', 'local']:
+                prefix += self.source.capitalize()
+
+            elif source:
+                prefix += 'Inherited'
+                vars['source'] = source
+
+            if self.modified:
+                prefix += 'Unsaved'
+
+            vars['value'] = self.value
+
+        name = prefix + self.__class__.__name__
+        return "%s(**%s)" % (name, vars)
+
+    def inherit(self):
+        """ Set property to inherit it's value from parent """
+        self.__call__(inherit=True)
+
+    def __call__(self, value, inherit=False, modified=True, save=False):
         """ Sets property with value """
+        if inherit:
+            self.inherit = True
+            value = None
+
         self.value = value
-    def __setattr__(self, name, value):
-        """ Automatically saves when .value is set """
-        if name == 'value' and hasattr(self, 'parent'): self.parent.set(self.name, value)
-        return super(Property, self).__setattr__(name, value)
+        self.modified = modified
 
+        if save:
+            self.save()
 
-#class Properties(object):
-#    def __init__(self, parent):
-#        self.parent = parent
-#    def __getattribute__(self, attr):
-#        if attr == 'parent':
-#            return super(Properties, self).__getattribute__(attr)
-#        elif attr in self.parent._props:
-#            return self.parent._get_prop(attr)
-#        elif attr == 'all':
-#            return self.parent._get_prop(*self.parent._props)
-#        else:
-#            return super(Properties, self).__getattribute__(attr)
-#    def __call__(self, prop=None):
-#        if prop:
-#            return self.parent._get_prop(prop)
-#        return self.parent._props
+    def save(self):
+        if self.modified:
+            if self.inherit:
+                return self.parent.inherit(self.name)
+            else:
+                return self.parent.set(self.name, self.value)
+        else:
+            return True
 
+    def has_parent(self):
+        return getattr(self, 'parent', None) != None
+
+    @property
+    def _lazy_value(self):
+        return self.parent.get(self.name)
 
 class Properties(dict):
-    def __init__(self, parent, *args, **kwargs):
-        self.parent = parent
-        super(Properties, self).__init__(name, *args, **kwargs)
-    def __getitem__(self, key):
-        super(Properties, self).__getitem__(key)
+    def __init__(self, parent=None, lazy=False, cache=True):
+        self._parent = parent
+        self.lazy = lazy
+        self.cache = cache
+
+        # no kwargs since we dont want to start out with data
+        super(Properties, self).__init__()
+
+        #if not self.lazy and self.cache:
+        #    self.refresh()
+        #else:
+        #    for p in self._parent.get_prop_list():
+        #        self[p] = Property(name=p, parent=self._parent, lazy=True)
+
+    def __getitem__(self, key, refresh=False):
+        cache = self.cache
+
+        if not cache:
+            refresh = True
+
+        if refresh or key not in self:
+            ## TODO Timestamp caching?
+            if cache and getattr(self, '_refresh_ts', None) == None:
+                self.refresh()
+                value = self[key]
+            else:
+                value = self._parent.get(key)
+
+                if isinstance(value, dict):
+                    value = self._propify(name=key, value=value)
+
+                if cache:
+                    self[ key ] = value
+
+            return value
+        else:
+            if cache:
+                value = super(Properties, self).__getitem__(key)
+
+        return value
+
+    def _propify(self, name=None, value=None):
+            if isinstance(value, int) or isinstance(value, float):
+                value = str(value)
+
+            if isinstance(value, basestring):
+                value = {'value': value}
+
+            if isinstance(value, dict) and 'value' in value:
+                value['parent'] = self._parent
+
+                if 'name' in value and isinstance(name, basestring):
+                    value['name'] = name
+                else:
+                    raise Exception('Name was not provided')
+
+                value = Property(**value)
+
+            if isinstance(value, Property):
+                return value
+
+            else:
+                raise Exception('Could not create property object from: %s, %s' % (name, value))
+
     def __setitem__(self, key, value):
-        super(Properties, self).__setitem__(key, value)
-    #def __len__(self):
-    #    return len(self.values)
+        if self.cache:
+            if key in self:
+                if isinstance(value, dict):
+                    value = value['value']
+                if value != self[ key ].value:
+                    self[ key ](value)
+            else:
+                value = self._propify(name=key, value=value)
+                return super(Properties, self).__setitem__(key, value)
+
     #def __delitem__(self, key):
-    #    del self.values[key]
-    def __iter__(self):
-        return iter(ZFS_PROPS['Dataset'])
-    #def __reversed__(self):
-    #    return reversed(self.values)
+    #    return super(Properties, self).__delitem__(key)
 
+    #def __iter__(self):
+    #    return iter(self.__list__())
 
+    def __list__(self):
+        return self._parent.get_prop_list()
 
+    def get(self, *args, **kwargs):
+        for k,v in self._parent.get(*args, **kwargs).iteritems():
+            v['name'] = k
+            self[k] = v
+    refresh = get
+
+    #def _save(self):
+    #    pass
 
 
 """

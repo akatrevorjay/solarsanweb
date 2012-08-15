@@ -257,6 +257,7 @@ class KStats_Update(PeriodicTask):
                 self.kstats_walk(name, value['value'])
             else:
                 for k,v in value.iteritems():
+                    if k in ['flags']: continue
                     self.kstats_walk('%s.%s' % (name, k), v)
 
         else:
