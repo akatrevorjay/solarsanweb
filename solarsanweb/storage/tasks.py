@@ -227,7 +227,7 @@ class Auto_Snapshot( PeriodicTask ):
                     continue
 
                 try:
-                    latest_snapshot_creation = dataset.snapshots().filter( 
+                    latest_snapshot_creation = dataset.snapshots().filter(
                         name__startswith=dataset_name + '@' + sched['snapshot-prefix'] ).latest().creation
                     age_threshold = now - sched['snapshot-every']
                     if not latest_snapshot_creation < age_threshold:
@@ -250,7 +250,7 @@ class Auto_Snapshot( PeriodicTask ):
                     age_threshold = now - max_age
 
                     try:
-                        snapshots_past_max_age = dataset.snapshots().filter( 
+                        snapshots_past_max_age = dataset.snapshots().filter(
                             name__startswith=dataset_name + '@' + sched['snapshot-prefix'],
                             creation__lt=age_threshold )
                     except ( Snapshot.DoesNotExist ):
@@ -274,7 +274,7 @@ class Auto_Snapshot( PeriodicTask ):
                     keep_at_most = sched['keep-at-most']
 
                     try:
-                        snapshots_past_max_count = dataset.snapshots().filter( 
+                        snapshots_past_max_count = dataset.snapshots().filter(
                             name__startswith=dataset_name + '@' + sched['snapshot-prefix'] )[keep_at_most:]
                     except:
                         logger.info( "No snapshots found over keep-at-most count of %s", keep_at_most )
@@ -300,4 +300,3 @@ class Auto_Snapshot( PeriodicTask ):
 #    """ Cleans up old automatic snapshots """
 #    # TODO
 #    pass
-

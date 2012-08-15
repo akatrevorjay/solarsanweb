@@ -73,3 +73,26 @@ class DatasetHealthDetailView(DatasetView, generic.DetailView):
 class DatasetSnapshotsView(DatasetView, generic.DetailView):
     template_name = 'storage/dataset_snapshots.html'
 
+
+"""
+Volumes
+  >> LIO target management for volumes
+"""
+import rtslib
+#root = rtslib.root
+
+class TargetView(object):
+    model = Target
+    slug_field = "name"
+    context_object_name = 'target'
+
+class TargetACLsView(TargetView, generic.DetailView):
+    template_name = 'storage/target_acls_detail.html'
+
+class TargetLunsView(TargetView, generic.DetailView):
+    template_name = 'storage/target_luns_detail.html'
+
+
+
+
+
