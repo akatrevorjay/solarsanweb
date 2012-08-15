@@ -208,3 +208,12 @@
 [submodule "vendor-local/pkgs/collectd-carbon"]
 	path = vendor-local/pkgs/collectd-carbon
 	url = git://github.com/indygreg/collectd-carbon.git
+[submodule "vendor-local/pkgs/rtslib-fb"]
+	path = vendor-local/pkgs/rtslib-fb
+	url = git://github.com/agrover/rtslib-fb.git
+[submodule "vendor-local/pkgs/targetcli-fb"]
+	path = vendor-local/pkgs/targetcli-fb
+	url = git://github.com/agrover/targetcli-fb.git
+[submodule "vendor-local/pkgs/configshell-fb"]
+	path = vendor-local/pkgs/configshell-fb
+	url = git://github.com/agrover/configshell-fb.git
