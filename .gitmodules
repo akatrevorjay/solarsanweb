@@ -217,3 +217,6 @@
 [submodule "vendor-local/pkgs/configshell-fb"]
 	path = vendor-local/pkgs/configshell-fb
 	url = git://github.com/agrover/configshell-fb.git
+[submodule "vendor-local/pkgs/pypercube"]
+	path = vendor-local/pkgs/pypercube
+	url = git://github.com/sbuss/pypercube.git
