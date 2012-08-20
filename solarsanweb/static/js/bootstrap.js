@@ -1,1 +1,1 @@
-../3rd/bootstrap/bootstrap/js/bootstrap.js
+../bootstrap/js/bootstrap.js
