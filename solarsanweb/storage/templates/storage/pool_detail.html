@@ -101,7 +101,7 @@
     /* ___________
      * pool_detail
      */
-    $(function() {
+!function ($) {
 
         /*
          * dataset-select
@@ -139,7 +139,7 @@
         $(".dataset-list .dataset-select").first().addClass('active');
         //click();
 
-    }); 
+}(window.jQuery);
 </script>
 
 {% endblock %}

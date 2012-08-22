@@ -54,7 +54,7 @@
 /* ___________
  * page_detail
  */
-$(function() {
+!function ($) {
 
 /*
  * page-content-sidenav dataset-select
@@ -114,7 +114,7 @@ page_content_sidenav_select_bind();
 $(".page-content-sidenav .page-content-select").first().addClass('active'); //click();
 
 
-});
+}(window.jQuery);
 </script>
 
 {% endblock %}
