@@ -44,7 +44,7 @@ urlpatterns = patterns('',
     #url(r'^admin/', include(site.urls)),                                    # Admin (mongoadmin)
     url(r'^admin/', include(admin.site.urls)),                              # Admin
 
-    url(r'^', include('debug_toolbar_htmltidy.urls')),                      # DJDT HtmlTidy
+    #url(r'^', include('debug_toolbar_htmltidy.urls')),                      # DJDT HtmlTidy
 
     #url(r'^', include('solarsan.urls')),
     #url(r'^formtest/', include('formtest.urls')),

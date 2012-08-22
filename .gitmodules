@@ -220,3 +220,9 @@
 [submodule "vendor-local/pkgs/pypercube"]
 	path = vendor-local/pkgs/pypercube
 	url = git://github.com/sbuss/pypercube.git
+[submodule "vendor-local/pkgs/spark.py"]
+	path = vendor-local/pkgs/spark.py
+	url = git://github.com/kennethreitz/spark.py.git
+[submodule "vendor-local/pkgs/cement"]
+	path = vendor-local/pkgs/cement
+	url = git://github.com/cement/cement.git

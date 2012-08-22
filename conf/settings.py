@@ -354,7 +354,7 @@ MIDDLEWARE_CLASSES = (
     #'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     #'django_statsd.middleware.GraphiteMiddleware',
 
-    'waffle.middleware.WaffleMiddleware',                       # waffle
+    #'waffle.middleware.WaffleMiddleware',                       # waffle
 
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',     # Enable Session support
@@ -475,7 +475,7 @@ CACHES = {
 ##
 
 #STATSD_CLIENT = 'django_statsd.clients.' + (DEBUG and 'toolbar' or 'normal')
-#STATSD_CLIENT = 'normal'
+STATSD_CLIENT = 'django_statsd.clients.normal'
 STATSD_PREFIX = PROJECT_NAME
 
 STATSD_PATCHES = [
