@@ -226,3 +226,6 @@
 [submodule "vendor-local/pkgs/cement"]
 	path = vendor-local/pkgs/cement
 	url = git://github.com/cement/cement.git
+[submodule "solarsanweb/static/3rd/bootstrap-editable"]
+	path = solarsanweb/static/3rd/bootstrap-editable
+	url = git://github.com/vitalets/bootstrap-editable.git
