@@ -266,6 +266,7 @@ PROJECT_APPS = (
     'configure',
     'storage',
     'analytics',
+    'zfs',
     #'formtest',
 )
 
@@ -713,7 +714,17 @@ RAVEN_CONFIG = {
     'register_signals': True,
 }
 
-## TEMP GRAPHITE
+##
+## Cube
+##
+
+CUBE_COLLECTOR_URL = 'udp://localhost:1180'
+
+
+##
+## TEMP GRAPHITE CHANGES
+##
+
 #from raven.contrib.django.models import client
 #client.captureException()
 
