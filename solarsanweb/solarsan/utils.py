@@ -15,6 +15,23 @@ import inspect
 from braces.views import LoginRequiredMixin, PermissionRequiredMixin, SuperuserRequiredMixin #, UserFormKwargsMixin, UserKwargModelFormMixIn
 from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAndRedirectToEditView, SelectRelatedMixin
 
+
+"""
+Cache Helpers
+"""
+
+from django.core import cache
+class CacheDict(dict):
+    prefix = 'zfs_obj_tree'
+    ttl = 15
+    def __getitem__(self, key):
+        print 'get key=%s' % key
+        return cache.get('%s__%s' % (self.prefix, key))
+    def __setitem__(self, key, value):
+        print 'set key=%s value=%s' % (key, value)
+        cache.set('%s__%s' % (self.prefix, key), value, self.ttl)
+
+
 """
 Devel helpers
 """
