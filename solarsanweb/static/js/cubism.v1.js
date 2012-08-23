@@ -1,0 +1,1 @@
+../3rd/cubism/cubism.v1.js
