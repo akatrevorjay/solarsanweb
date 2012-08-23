@@ -229,3 +229,6 @@
 [submodule "solarsanweb/static/3rd/bootstrap-editable"]
 	path = solarsanweb/static/3rd/bootstrap-editable
 	url = git://github.com/vitalets/bootstrap-editable.git
+[submodule "solarsanweb/static/3rd/animate.css"]
+	path = solarsanweb/static/3rd/animate.css
+	url = git://github.com/daneden/animate.css.git
