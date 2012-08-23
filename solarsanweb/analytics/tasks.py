@@ -180,7 +180,7 @@ class File_IO_Monitor_Py2(Task):
 Pool IOStats
 """
 
-class Pool_IOStats_Populate(PeriodicTask):
+class Pool_IOStats_Populate(Task):
     """ Periodic task to log iostats per pool to db. """
     run_every = timedelta(seconds=30)
     def run(self, capture_length=30, *args, **kwargs):
@@ -209,7 +209,7 @@ class Pool_IOStats_Populate(PeriodicTask):
             pool.pool_iostat_set.create(**iostats[i])
 
 
-class Pool_IOStat_Clean(PeriodicTask):
+class Pool_IOStat_Clean(Task):
     """ Periodic Task to clean old IOStats per pool in db """
     run_every = timedelta(days=1)
     def run(self, *args, **kwargs):
