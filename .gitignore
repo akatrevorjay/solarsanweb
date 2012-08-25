@@ -1,13 +1,13 @@
 *.pyc
 
-env/
-data/*
+/env
+/data
 
-solarsanweb/settings_local.py
+/solarsanweb/settings_local.py
 
 *.swp
 *.swo
-celeryconfig.py
+/celeryconfig.py
 solarsanweb/templates/b
 solarsanweb/templates/admin.old
 _crap/
@@ -16,11 +16,11 @@ PYSMELLTAGS
 polls
 
 3rd/
-.ropeproject/
-.pydevproject
-.project
-.settings
-*.komodoproject
+/.ropeproject/
+/.pydevproject
+/.project
+/.settings
+/*.komodoproject
 
 .zfs
 tmp
