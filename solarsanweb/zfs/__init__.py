@@ -9,6 +9,6 @@ import dataset
 from tree import tree
 
 # new
-from objects import Pool, Filesystem, Volume, Snapshot
+from objects import Pool, Dataset, Filesystem, Volume, Snapshot
 import cmd
 

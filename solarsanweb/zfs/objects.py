@@ -67,8 +67,11 @@ class DatasetDocument(zfsBaseDocument):
 
 
 ZFS_MONGO_MAP = {
-        'pool':     PoolDocument,
-        'dataset':  DatasetDocument,
+        'pool':         PoolDocument,
+        'dataset':      DatasetDocument,
+        'filesystem':   DatasetDocument,
+        'volume':       DatasetDocument,
+        'snapshot':     DatasetDocument,
     }
 
 
@@ -153,7 +156,7 @@ class zfsBase(object):
             raise AttributeError("DB support is disabled for this instance '%s'" % self)
 
         if not ZFS_MONGO_MAP.get(self._zfs_type):
-            raise AttributeError("Could not find entry in ZFS_MONGO_MAP for this zfs type '%s', not using DB." % self._zfs_type)
+            raise AttributeError("Could not find entry in ZFS_MONGO_MAP for this zfs type %s of %s, not using DB." % (self._zfs_type, self))
 
         return ZFS_MONGO_MAP[self._zfs_type]
 
