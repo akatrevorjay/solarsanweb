@@ -1,25 +1,9 @@
 # Django settings for solarsanweb project.
 
-PROJECT_NAME = "solarsanweb"
-
-import socket
-SERVER_NAME = socket.gethostname()
-
-##
-## Paths
-##
-
-import os, sys
-
-TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-PROJECT_DIR = os.path.join(TOP_DIR, PROJECT_NAME)
-DATA_DIR = os.path.join(TOP_DIR, "data")
-
-for i in ['vendor', 'vendor-local']:
-    sys.path.insert(0, os.path.join(TOP_DIR, i))
-
-sys.path.insert(0, os.path.join(PROJECT_DIR, 'lib'))
-sys.path.insert(0, PROJECT_DIR)
+# Paths
+import os
+import sys
+execfile(os.path.join(os.path.dirname(__file__), os.path.pardir, 'conf', 'project_exec.py'))
 
 ##
 ## Project Common
@@ -441,6 +425,13 @@ PASSWORD_HASHERS = (
 #AUTH_PROFILE_MODULE = 'solarsan.models.UserProfile'
 
 ##
+## Get server name
+##
+
+import socket
+SERVER_NAME = socket.gethostname()
+
+##
 ## Cache backend
 ##
 
@@ -803,5 +794,3 @@ try:
     from settings_local import * #IGNORE:W0614
 except ImportError:
     pass
-
-
