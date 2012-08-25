@@ -517,11 +517,13 @@ class Pool( zfsBase ):
 
     def cached_status(self):
         """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
-        for line in iterpipes.run(cmd.zdb('-Cv')):
-            line = str(line).rstrip("\n")
+        zargs = ['-C', '-v']
+        out = [str(x).rstrip("\n") for x in iterpipes.run(cmd.zdb(*zargs))]
+        ret = yaml.load("\n".join(out))
 
-            ret = yaml.load(iterpipes.run(cmd.zdb('-C', '-v')))
-            return ret
+        print ret
+
+        return ret
 
 
 class Dataset( zfsBase ):
