@@ -3,7 +3,7 @@
 # Paths
 import os
 import sys
-execfile(os.path.join(os.path.dirname(__file__), os.path.pardir, 'conf', 'project_exec.py'))
+from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
 
 ##
 ## Project Common
