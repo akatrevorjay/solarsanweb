@@ -29,13 +29,11 @@ DATABASES = {
         'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
     },
     'mongodb': {
-        #'ENGINE': 'django_mongodb_engine',
         'ENGINE': 'django_mongokit.mongodb',
         'NAME': PROJECT_NAME,
     },
 }
 
-#DATABASE_ROUTERS = ['django_mongodb_engine.router.MongoDBRouter',]
 DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter',]
 
 ##
@@ -268,26 +266,8 @@ MONGODB_MANAGED_APPS = (
     'solarsan',
     'status',
     #'configure',
-    #'storage',         # TODO remove requirement on .id in Import_ZFS_Metadata
+    #'storage',        # TODO remove requirement on .id in Import_ZFS_Metadata
     'analytics',       # TODO convert data to fixture
-
-    #'debug_toolbar',
-    #'debug_toolbar_user_panel',
-    #'cache_panel',
-    #'debug_toolbar_mongo',
-
-    #'django_mongodb_cache',
-
-    #'djangotoolbox',
-    #'django_mongodb_engine',
-    #'django.contrib.auth',
-    #'djcelery',
-    #'smuggler',
-
-    #'permission_backend_nonrel',
-    #'mongonaut',
-
-    #'raven.contrib.django',
 )
 
 MONGODB_MANAGED_MODELS = (
