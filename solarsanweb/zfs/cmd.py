@@ -13,7 +13,7 @@ User vars
 
 paths = {'zfs':     "/sbin/zfs",
          'zpool':   "/sbin/zpool",
-         'zdb':     "/usr/sbin/zdb",
+         'zdb':     "/sbin/zdb",
          }
 
 
