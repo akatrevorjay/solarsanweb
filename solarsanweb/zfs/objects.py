@@ -9,11 +9,12 @@ import time
 import datetime
 import logging
 import iterpipes
+import yaml
 
 import cmd
 import common
 import dataset
-import mongoengine
+import models as z
 
 from .common import Error, NotImplemented
 from django.utils import timezone
@@ -35,63 +36,18 @@ OBJ_TREE = {}
 
 
 """
-Mongo
-"""
-
-class zfsBaseDocument(mongoengine.Document):
-    meta = {'abstract': True}
-    name = mongoengine.StringField(required=True, unique=True)
-    #name = mongoengine.StringField()
-    enabled = mongoengine.BooleanField(default=True)
-    # TODO Need to make this store as a dict in parent too
-    #props = mongoengine.DictField()
-
-    created = mongoengine.DateTimeField(default=datetime.datetime.now())
-    # TODO Override validation and ensure modified gets updated on modification
-    modified = mongoengine.DateTimeField(default=datetime.datetime.now())
-
-    #def __init__(self, *args, **kwargs):
-    #    # Apparently mongoengine.Document accepts no init *args
-    #    super(zfsBaseDocument, self).__init__(**kwargs)
-
-
-
-class PoolDocument(zfsBaseDocument):
-    meta = {'collection': 'storage_pools'}
-    pass
-
-
-class DatasetDocument(zfsBaseDocument):
-    meta = {'collection': 'storage_datasets'}
-    pass
-
-
-ZFS_MONGO_MAP = {
-        'pool':         PoolDocument,
-        'dataset':      DatasetDocument,
-        'filesystem':   DatasetDocument,
-        'volume':       DatasetDocument,
-        'snapshot':     DatasetDocument,
-    }
-
-
-"""
 Base
 """
 
 class zfsBase(object):
     """ Base class """
 
+    dbm = z.zfsBaseDocument
     _zfs_type = 'base'
 
     flags = {
             'obj_tree': False,
             'db': True,
-            }
-
-    meta = {'collection': 'storage_base',
-            'allow_inheritance': True,
-            'indexes': [{'fields': ['name'], 'unique': True}],
             }
 
     """
@@ -149,18 +105,6 @@ class zfsBase(object):
     """
 
     @property
-    def dbm(self):
-        """ Returns database model """
-
-        if not self.flags.get('db'):
-            raise AttributeError("DB support is disabled for this instance '%s'" % self)
-
-        if not ZFS_MONGO_MAP.get(self._zfs_type):
-            raise AttributeError("Could not find entry in ZFS_MONGO_MAP for this zfs type %s of %s, not using DB." % (self._zfs_type, self))
-
-        return ZFS_MONGO_MAP[self._zfs_type]
-
-    @property
     def dbo(self):
         """ Returns database object """
 
@@ -168,10 +112,24 @@ class zfsBase(object):
             raise AttributeError("DB support is disabled for this instance '%s'" % self)
 
         if not getattr(self, '_dbo', None):
-            #self._dbo, created = self.dbm.objects.get_or_create({'name': name, 'enabled': True})
-            self._dbo, created = self.dbm.objects.get_or_create(name=self.name, auto_save=False)
+            lookup_data = {'name': self.name,
+                           'auto_save': False}
+            self._dbo, created = self.dbm.objects.get_or_create(name=self.name,
+                                                                auto_save=False)
+            if created:
+                # New in DB, fill with zfs values
+                logging.warning("Creating dbo for %s '%s'", self.type, self.name)
+                dbo = self._dbo
 
         return self._dbo
+
+    @property
+    def id(self):
+        return self._dbo.id
+
+    def save(self, *args, **kwargs):
+        return self._dbo.save(*args, **kwargs)
+
 
 
     """
@@ -331,7 +289,8 @@ class zfsBase(object):
                 skip -= 1
                 cols = [ line.index(col) for col in line.split() ]
                 continue
-            (obj_name, name, value, source) = [line[cols[x]: x+1 == len(cols) and len(line) or cols[x+1] ].strip() for x in xrange(len(cols))]
+            #(obj_name, name, value, source) = [line[cols[x]: x+1 == len(cols) and len(line) or cols[x+1] ].strip() for x in xrange(len(cols))]
+            (obj_name, name, value, source) = line.split(None, len(cols))
             #print 'obj_name=%s name=%s value=%s source=%s' % (obj_name, name, value, source)
             if not obj_name:
                 continue
@@ -495,6 +454,7 @@ Pool Handling
 
 class Pool( zfsBase ):
     """ Pool class """
+    dbm = z.PoolDocument
     _zfs_type = 'pool'
 
     #def __init__(self, name, *args, **kwargs):
@@ -555,10 +515,18 @@ class Pool( zfsBase ):
                 raise Error
         return iostat
 
+    def cached_status(self):
+        """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
+        for line in iterpipes.run(cmd.zdb('-Cv')):
+            line = str(line).rstrip("\n")
+
+            ret = yaml.load(iterpipes.run(cmd.zdb('-C', '-v')))
+            return ret
 
 
 class Dataset( zfsBase ):
     """ Dataset class """
+    dbm = z.DatasetDocument
     _zfs_type = 'dataset'
 
     #def __init__(self, name, *args, **kwargs):
@@ -672,18 +640,21 @@ class SnapshottableDataset(object):
 
 
 class Filesystem( Dataset, SnapshottableDataset ):
+    dbm = z.FilesystemDocument
     _zfs_type = 'filesystem'
     """ Filesystem """
     pass
 
 
 class Volume( Dataset, SnapshottableDataset ):
+    dbm = z.VolumeDocument
     _zfs_type = 'volume'
     """ Volume """
     pass
 
 
 class Snapshot( Dataset ):
+    dbm = z.SnapshotDocument
     _zfs_type = 'snapshot'
     """ Filesystem snapshot """
 
@@ -711,5 +682,3 @@ ZFS_TYPE_MAP = {
     'volume': Volume,
     'snapshot': Snapshot,
     }
-
-

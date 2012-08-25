@@ -11,8 +11,10 @@ import iterpipes
 User vars
 """
 
-paths = {'zfs':    "/sbin/zfs",
-         'zpool':  "/sbin/zpool", }
+paths = {'zfs':     "/sbin/zfs",
+         'zpool':   "/sbin/zpool",
+         'zdb':     "/usr/sbin/zdb",
+         }
 
 
 """
@@ -22,9 +24,8 @@ Command Handling
 def _cmd(cmd, *zargs):
     """ Returns a prepped linecmd """
     # Black magic
-    cmdf = paths[cmd]+' '+' '.join([
-        ('{}') for i in range(len(zargs)) ])
-    #logging.debug("_cmd: %s %s", cmd, zargs)
+    cmdf = paths[cmd]+' '+' '.join([ ('{}') for i in range(len(zargs)) ])
+    logging.debug("zfs.cmd: %s %s", cmd, zargs)
     return iterpipes.linecmd(cmdf, *zargs)
 
 
@@ -38,4 +39,6 @@ def zfs(*zargs):
     return _cmd('zfs', *zargs)
 
 
-
+def zdb(*zargs):
+    """ Returns linecmd for zdb execution """
+    return _cmd('zdb', *zargs)

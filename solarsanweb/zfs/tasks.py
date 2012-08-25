@@ -11,10 +11,9 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
 
-#from zfs.models import Pool
-#import zfs.db
-from zfs import Pool, Dataset, Filesystem, Volume
 import zfs
+from objects import Pool, Dataset, Filesystem, Volume
+#from models import PoolDocument, DatasetDocument
 import cube_python
 
 
@@ -63,57 +62,35 @@ Import pool/dataset info from system into DB
 class ImportZFSMetadata(Task):
     #run_every = timedelta(minutes=5)
     def run(self, *args, **kwargs):
-        #zfs.db.PoolDocument.objects.all().update(multi=True, importing=True)
-        for pool_name,zfs_pool in Pool.list().iteritems():
-            pool = zfs_pool.dbo
-            #pool.update({'props': zfs_pool.props.all})
+        for pool_name,pool in Pool.list().iteritems():
             if not getattr(pool, 'id', None):
-                logger.warning("Found new ZFS storage pool '%s'", zfs_pool.name)
-                pool.save()
+                logger.warning("Found new ZFS storage pool '%s'", pool.name)
 
-            zfs_dataset = zfs_pool.filesystem
-            pool_filesystem = self.do_zfs_dataset(pool, zfs_dataset)
-            self.do_filesystem_children(pool, zfs_dataset)
-    def do_zfs_dataset(self, pool, zfs_dataset, **kwargs):
+            pool_fs = pool.filesystem
+            Filesystem.dbm.objects.filter(parent=pool_fs, pool=pool).update(set__importing=True,
+                                                                                  multi=True)
+            pool_fs = self.do_zfs_dataset(pool, pool_fs)
+            self.do_filesystem_children(pool, pool_fs)
+    def do_zfs_dataset(self, pool, dataset, **kwargs):
         #parent = kwargs.get('parent', None)
-        dataset = zfs_dataset.dbo
-
-        #if not getattr(dataset, 'id', None):
-        #    dataset.save()
-
-        #zfs_dataset.dbm.objects.update(
-        #        {'name': zfs_dataset.name},
-        #        {'$set': {'type': unicode(zfs_dataset._zfs_type),
-        #                  #'props': zfs_dataset.props.all,
-        #                  },
-        #         '$unset': {'importing': 1}, })
-
-        zfs_dataset.dbm.objects.filter(name__startswith=zfs_dataset.nameall().update(importing=True)
+        if not getattr(dataset, 'id', None):
+            logger.warning("Found new dataset '%s'", dataset.name)
 
         return dataset
-    def do_filesystem_children(self, pool, zfs_dataset_parent):
+    def do_filesystem_children(self, pool, parent):
         filesystems = []
-        parent_regex = re.compile('^%s/[^/]+$' % zfs_dataset_parent.name)
+        parent_regex = re.compile('^%s/[^/]+$' % parent.name)
 
-        zfs_dataset_parent.dbm.objects.update(
-                            {'name': parent_regex},
-                            {'$set': {'importing': True, 'last_modified': timezone.now()}
-                        },
-                    multi=True,
-                )
+        dataset.children().update(set__importing=True, multi=True)
 
-        for zfs_dataset in zfs_dataset_parent.children():
-            dataset = self.do_zfs_dataset(pool, zfs_dataset, parent=zfs_dataset_parent)
+        for dataset in parent.children():
+            dataset = self.do_zfs_dataset(pool, dataset, parent=parent)
 
-            if zfs_dataset.type == 'filesystem':
-                filesystems.append(zfs_dataset)
+            if dataset.type == 'filesystem':
+                filesystems.append(dataset)
 
-        for zfs_dataset in filesystems:
+        for fs in filesystems:
             # Run recursively on this node's children
-            self.do_filesystem_children(pool, zfs_dataset)
+            self.do_filesystem_children(pool, fs)
 
-        zfs_dataset_parent.dbm.objects.remove({'name': parent_regex, 'importing': True})
-
-
-
-
+        #zfs_dataset_parent.dbm.objects.remove({'name': parent_regex, 'importing': True})
