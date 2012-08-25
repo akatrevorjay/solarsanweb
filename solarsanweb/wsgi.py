@@ -18,7 +18,7 @@ framework.
 """
 
 import os
-execfile(os.path.join(os.path.dirname(__file__), os.path.pardir, 'paths.py'))
+execfile(os.path.join(os.path.dirname(__file__), 'paths.py'))
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
