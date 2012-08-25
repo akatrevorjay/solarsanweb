@@ -99,8 +99,10 @@ class Cluster_Node_Discover( PeriodicTask ):
                 cache.set('ClusterBeaconStartedTS', timezone.now(), 300)
 
         # Call Query task for each host to probe their API
-        s = group([Cluster_Node_Query.subtask(host=node_ip) for node_ip in nodes])
-        s.apply_async()
+        for node_ip in nodes:
+            Cluster_Node_Query.delay(host=node_ip)
+        #s = group([Cluster_Node_Query.subtask(host=node_ip) for node_ip in nodes])
+        #s.apply_async()
 
 
 
