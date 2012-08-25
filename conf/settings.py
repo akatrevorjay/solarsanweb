@@ -368,6 +368,12 @@ MIDDLEWARE_CLASSES = (
 #MONGONAUT_TWITTER_BOOTSTRAP_ALERT = http://twitter.github.com/bootstrap/assets/js/bootstrap-alert.js"
 
 ##
+## django-supervisor
+##
+
+SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
+
+##
 ## django-debug-toolbar
 ##
 
