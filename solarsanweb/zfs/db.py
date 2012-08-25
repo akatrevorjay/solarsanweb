@@ -34,10 +34,11 @@ class Wrapper(object):
 class zfsBaseDocument(mongoengine.Document):
     meta = {'abstract': True}
     name = mongoengine.StringField(required=True, unique=True)
+    #type = mongoengine.StringField(required=True)
     #name = mongoengine.StringField()
-    enabled = mongoengine.BooleanField(default=True)
     # TODO Need to make this store as a dict in parent too
     #props = mongoengine.DictField()
+    misc = mongoengine.DictField()
 
     created = mongoengine.DateTimeField(default=datetime.datetime.now())
     modified = mongoengine.DateTimeField(default=datetime.datetime.now())

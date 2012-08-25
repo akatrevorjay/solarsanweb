@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.conf import settings
 
 #from zfs.models import Pool
-#from zfs.db import PoolDocument
+#import zfs.db
 from zfs import Pool, Dataset, Filesystem, Volume
 import zfs
 import cube_python
@@ -63,10 +63,12 @@ Import pool/dataset info from system into DB
 class ImportZFSMetadata(Task):
     #run_every = timedelta(minutes=5)
     def run(self, *args, **kwargs):
+        #zfs.db.PoolDocument.objects.all().update(multi=True, importing=True)
         for pool_name,zfs_pool in Pool.list().iteritems():
             pool = zfs_pool.dbo
             #pool.update({'props': zfs_pool.props.all})
             if not getattr(pool, 'id', None):
+                logger.warning("Found new ZFS storage pool '%s'", zfs_pool.name)
                 pool.save()
 
             zfs_dataset = zfs_pool.filesystem
@@ -75,15 +77,18 @@ class ImportZFSMetadata(Task):
     def do_zfs_dataset(self, pool, zfs_dataset, **kwargs):
         #parent = kwargs.get('parent', None)
         dataset = zfs_dataset.dbo
-        if not getattr(dataset, 'id', None):
-            dataset.save()
 
-        zfs_dataset.dbm.objects.update(
-                {'name': zfs_dataset.name},
-                {'$set': {'type': unicode(zfs_dataset._zfs_type),
-                          #'props': zfs_dataset.props.all,
-                          },
-                 '$unset': {'importing': 1}, })
+        #if not getattr(dataset, 'id', None):
+        #    dataset.save()
+
+        #zfs_dataset.dbm.objects.update(
+        #        {'name': zfs_dataset.name},
+        #        {'$set': {'type': unicode(zfs_dataset._zfs_type),
+        #                  #'props': zfs_dataset.props.all,
+        #                  },
+        #         '$unset': {'importing': 1}, })
+
+        zfs_dataset.dbm.objects.filter(name__startswith=zfs_dataset.nameall().update(importing=True)
 
         return dataset
     def do_filesystem_children(self, pool, zfs_dataset_parent):
