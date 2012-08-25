@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 WSGI config for solarsanweb project.
 
@@ -13,23 +16,14 @@ middleware here, or combine a Django application with an application of another
 framework.
 
 """
+
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "solarsanweb.settings")
-
-import sys
-PROJECT_NAME = 'solarsanweb'
-TOP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-PROJECT_DIR = os.path.join(TOP_DIR, PROJECT_NAME)
-DATA_DIR = os.path.join(TOP_DIR, "data")
-
-for i in ['vendor', 'vendor-local']:
-    sys.path.insert(0, os.path.join(TOP_DIR, i))
-sys.path.insert(0, PROJECT_DIR)
-
+execfile(os.path.join(os.path.dirname(__file__), os.path.pardir, 'conf', 'project_exec.py'))
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
 # setting points here.
+
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
@@ -49,10 +43,9 @@ djcelery.setup_loader()
 try:
     import uwsgi
     from uwsgidecorators import timer
-
-    #from uwsgidecorators import *
-    #@timer(30, target='spooler')
-    #def hello_world(signum):
+    # from uwsgidecorators import *
+    # @timer(30, target='spooler')
+    # def hello_world(signum):
     #        print("30 seconds elapsed")
 
     from django.utils import autoreload
@@ -65,4 +58,3 @@ try:
                 uwsgi.reload()
 except:
     pass
-
