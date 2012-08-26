@@ -9,7 +9,6 @@ import time
 import datetime
 import logging
 import iterpipes
-import yaml
 
 import cmd
 import common
@@ -517,13 +516,28 @@ class Pool( zfsBase ):
 
     def cached_status(self):
         """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
-        zargs = ['-C', '-v']
-        out = [str(x).rstrip("\n") for x in iterpipes.run(cmd.zdb(*zargs))]
-        ret = yaml.load("\n".join(out))
+        z = cmd.ZdbCommand('-C', '-v')
+        ret = z(ofilter=cmd.SafeYamlFilter)
 
-        print ret
+        ## TODO Take some of this wonderous info and put it to good use besides just returning it. ##
+
+        for pool in ret.keys():
+            if not pool == self.name:
+                continue # temporary
+
+            # Basic info
+            self.pool_guid = ret[pool]['pool_guid']
+            self.state = ret[pool]['state']
+            self.txg = ret[pool]['txg']
+            self.version = ret[pool]['version']
+
+            # Snag vdevs
+            self.vdev_children = ret[pool]['vdev_children']
+            self.vdev_tree = ret[pool]['vdev_tree']
 
         return ret
+
+
 
 
 class Dataset( zfsBase ):
@@ -535,10 +549,9 @@ class Dataset( zfsBase ):
     #    super(Dataset, self).__init__(name, *args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
+        """ Dataset factory; returns back a subclass of dataset as the instance you requested """
         if 'type' in kwargs:
             for subclass in Dataset.__subclasses__():
-                #if subclass._zfs_type == kwargs['type']:
-                #    return super(Dataset, cls).__new__(subclass, *args, **kwargs)
                 if kwargs['type'] in ZFS_TYPE_MAP:
                     return super(Dataset, cls).__new__(ZFS_TYPE_MAP[ kwargs['type'] ], *args, **kwargs)
             raise Exception, 'Dataset type not supported'
@@ -550,11 +563,12 @@ class Dataset( zfsBase ):
 
     @property
     def pool( self ):
-        """ Returns the matching Pool for this Filesystem """
+        """ Returns the matching Pool for this Dataset """
         return Pool(self.path(0, 1))
 
     @property
     def parent(self):
+        """ Returns the parenta of this Dataset """
         path = self.path()
         if len(path) == 1:
             return None
