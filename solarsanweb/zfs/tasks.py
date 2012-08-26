@@ -36,8 +36,8 @@ class PoolIOStats(PeriodicTask):
                 logger.error('Got data for an unknown pool "%s"', i)
                 continue
 
-            event = {'type': 'pool_iostat',
-                     'time': iostats[i]['timestamp'],
+            event = {'time': iostats[i]['timestamp'],
+                     'type': 'pool_iostat',
                      'data': {
                          'pool':        pool.name,
                          #'duration':    timestamp_end - iostats[i]['timestamp']
@@ -67,30 +67,33 @@ class ImportZFSMetadata(Task):
                 logger.warning("Found new ZFS storage pool '%s'", pool.name)
 
             pool_fs = pool.filesystem
-            Filesystem.dbm.objects.filter(parent=pool_fs, pool=pool).update(set__importing=True,
-                                                                                  multi=True)
+            pool_children = Dataset.dbm.objects.filter(name__startswith='%s/' % pool_name)
+            pool_children.update(set__importing=True, multi=True)
+
             pool_fs = self.do_zfs_dataset(pool, pool_fs)
             self.do_filesystem_children(pool, pool_fs)
+
+            pool_children.filter(importing=True, enabled__ne=False).update(set__enabled=False)
+            #pool_children.filter(importing=True).delete(modified__lt=timezone.now() -
+            #                                            datetime.timedelta(days=7))
     def do_zfs_dataset(self, pool, dataset, **kwargs):
         #parent = kwargs.get('parent', None)
         if not getattr(dataset, 'id', None):
             logger.warning("Found new dataset '%s'", dataset.name)
-
         return dataset
     def do_filesystem_children(self, pool, parent):
         filesystems = []
-        parent_regex = re.compile('^%s/[^/]+$' % parent.name)
-
-        dataset.children().update(set__importing=True, multi=True)
+        #parent_regex = re.compile('^%s/[^/]+$' % parent.name)
 
         for dataset in parent.children():
-            dataset = self.do_zfs_dataset(pool, dataset, parent=parent)
-
+            if not getattr(dataset, 'id', None):
+                logger.warning("Found new dataset '%s'", dataset.name)
+            else:
+                dataset.dbo.update(unset__importing=True)
+            dataset.dbo.pool = pool.dbo
+            dataset.dbo.save()
             if dataset.type == 'filesystem':
                 filesystems.append(dataset)
-
         for fs in filesystems:
             # Run recursively on this node's children
             self.do_filesystem_children(pool, fs)
-
-        #zfs_dataset_parent.dbm.objects.remove({'name': parent_regex, 'importing': True})

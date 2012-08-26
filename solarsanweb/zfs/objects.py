@@ -124,10 +124,10 @@ class zfsBase(object):
 
     @property
     def id(self):
-        return self._dbo.id
+        return self.dbo.id
 
     def save(self, *args, **kwargs):
-        return self._dbo.save(*args, **kwargs)
+        return self.dbo.save(*args, **kwargs)
 
 
 
@@ -518,7 +518,10 @@ class Pool( zfsBase ):
         """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
         z = cmd.ZdbCommand('-C', '-v')
         ret = z(ofilter=cmd.SafeYamlFilter)
+        self._parse_vdev_info(ret)
+        return ret
 
+    def _parse_vdev_info(self, ret):
         ## TODO Take some of this wonderous info and put it to good use besides just returning it. ##
 
         for pool in ret.keys():
@@ -535,7 +538,7 @@ class Pool( zfsBase ):
             self.vdev_children = ret[pool]['vdev_children']
             self.vdev_tree = ret[pool]['vdev_tree']
 
-        return ret
+        #return ret
 
 
 
