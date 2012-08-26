@@ -21,6 +21,7 @@ import cube_python
 Pool IOStats
 """
 
+
 class PoolIOStats(PeriodicTask):
     """ Periodic task to log iostats per pool to db. """
     run_every = timedelta(seconds=30)
@@ -53,14 +54,15 @@ class PoolIOStats(PeriodicTask):
         e.close()
 
 
+
 """
 Import pool/dataset info from system into DB
 """
 
 
-#class Import_ZFS_Metadata2(PeriodicTask):
-class ImportZFSMetadata(Task):
-    #run_every = timedelta(minutes=5)
+#class ImportZFSMetadata(Task):
+class Import_ZFS_Metadata2(PeriodicTask):
+    run_every = timedelta(minutes=30)
     def run(self, *args, **kwargs):
         for pool_name,pool in Pool.list().iteritems():
             if not getattr(pool, 'id', None):
@@ -97,3 +99,4 @@ class ImportZFSMetadata(Task):
         for fs in filesystems:
             # Run recursively on this node's children
             self.do_filesystem_children(pool, fs)
+
