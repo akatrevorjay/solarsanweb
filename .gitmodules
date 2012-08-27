@@ -232,3 +232,15 @@
 [submodule "solarsanweb/static/3rd/animate.css"]
 	path = solarsanweb/static/3rd/animate.css
 	url = git://github.com/daneden/animate.css.git
+[submodule "vendor-local/pkgs/python-kmod"]
+	path = vendor-local/pkgs/python-kmod
+	url = git://github.com/agrover/python-kmod.git
+[submodule "vendor-local/pkgs/python-lvm"]
+	path = vendor-local/pkgs/python-lvm
+	url = git://github.com/agrover/python-lvm.git
+[submodule "vendor-local/pkgs/targetd"]
+	path = vendor-local/pkgs/targetd
+	url = git://github.com/agrover/targetd.git
+[submodule "vendor-local/pkgs/urwid"]
+	path = vendor-local/pkgs/urwid
+	url = git://github.com/wardi/urwid.git
