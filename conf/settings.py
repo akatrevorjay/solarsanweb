@@ -2,7 +2,7 @@
 
 # Paths
 import os
-import sys
+#import sys
 from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
 
 ##
@@ -11,7 +11,7 @@ from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
 
 DEBUG = TEMPLATE_DEBUG = True
 
-ADMINS = ( ('LocSol', 'info@localhostsolutions.com'), )
+ADMINS = (('LocSol', 'info@localhostsolutions.com'), )
 MANAGERS = ADMINS
 
 # Make this unique, and don't share it with anybody.
@@ -21,12 +21,12 @@ DATABASES = {
     ## TODO If MongoDB is the method moving forward, then this may want to be changed to sqlite for non-compat apps, then use a DatabaseRouter to selectively
     ##   route queries to the proper db.
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': PROJECT_NAME,                 # Or path to database file if using sqlite3.
-        'USER': 'root',                       # Not used with sqlite3.
-        'PASSWORD': 'locsol',                 # Not used with sqlite3.
-        'HOST': '',                           # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                           # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql',   # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': PROJECT_NAME,                   # Or path to database file if using sqlite3.
+        'USER': 'root',                         # Not used with sqlite3.
+        'PASSWORD': 'locsol',                   # Not used with sqlite3.
+        'HOST': '',                             # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                             # Set to empty string for default. Not used with sqlite3.
     },
     'mongodb': {
         'ENGINE': 'django_mongokit.mongodb',
@@ -34,7 +34,7 @@ DATABASES = {
     },
 }
 
-DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter',]
+DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
 
 ##
 ## MongoDB -- mongoengine
@@ -49,6 +49,7 @@ DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter',]
 #else:       SESSION_ENGINE = 'mongoengine.django.sessions'
 #SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_ENGINE = 'mongoengine.django.sessions'
+#SESSION_ENGINE = 'django_mongoengine.django.sessions'
 SESSION_COOKIE_NAME = PROJECT_NAME + '_sess'
 
 from mongoengine import connect
@@ -155,7 +156,8 @@ COMPRESS_CSS_FILTERS = [
     #'compressor.filters.template.TemplateFilter',
 ]
 
-if DEBUG: COMPRESS_DEBUG_TOGGLE = 'nocompress'
+if DEBUG:
+    COMPRESS_DEBUG_TOGGLE = 'nocompress'
 #COMPRESS_OFFLINE = True
 #COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
 COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
@@ -208,6 +210,20 @@ INSTALLED_APPS = (
     # Uncomment the next lines to enable the admin:
     #'mongoadmin',
     #'mongonaut',
+
+    # Debug toolbar
+    'debug_toolbar',
+    #'debug_toolbar_user_panel',
+    #'cache_panel',
+    #'debug_toolbar_mongo',
+    #'debug_toolbar_htmltidy',
+    #'django_statsd',
+
+    'django_mongoengine.debug_toolbar',
+    'django_mongoengine.auth',
+    'django_mongoengine.admin.sites',
+    'django_mongoengine.admin',
+
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
@@ -229,14 +245,6 @@ INSTALLED_APPS = (
     #'uwsgi_admin',
     #'sitetree',
 
-    # Debug toolbar
-    'debug_toolbar',
-    #'debug_toolbar_user_panel',
-    #'cache_panel',
-    'debug_toolbar_mongo',
-    #'debug_toolbar_htmltidy',
-    'django_statsd',
-
     #'sentry',
     #'raven.contrib.django',
     'compressor',
@@ -256,10 +264,20 @@ PROJECT_APPS = (
 INSTALLED_APPS += PROJECT_APPS
 
 ## Enable some apps when debugging
-if DEBUG: INSTALLED_APPS += (
+if DEBUG:
+    INSTALLED_APPS += (
         'smuggler',         # DB fixture manager
         #'speedtracer',
     )
+
+##
+## mongoengine
+##
+
+MONGODB_DATABASES = {
+    'default': {'name': PROJECT_NAME}
+}
+DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
 
 ## List of apps/models that should use mongo.
 MONGODB_MANAGED_APPS = (
@@ -289,21 +307,22 @@ JINJA2_TEMPLATE_LOADERS = (
 JINJA2_DISABLED_TEMPLATES = (
     'debug_toolbar', 'debug_toolbar_user_panel',
     #'cache_panel',
-    'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
+    #'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
+    'mongodb-panel.html', '_stats.html',
     'django_statsd',
     #r'debug_toolbar/.*',
     #r'toolbar_statsd/statsd.html',
-    'toolbar_statsd',
+    #'toolbar_statsd',
     #r'debug_toolbar/base.html',
     'django_extensions',
 
     'admin', 'registration',
     'uwsgi.html',
     'logs',
-    'kitsune',
+    #'kitsune',
     #'crispy_forms',
-    'mongonaut',
-    'speedtracer',
+    #'mongonaut',
+    #'speedtracer',
 
     #r'[^/]+\.html',                           # All generic templates
     #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
@@ -368,34 +387,38 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.signals.SignalDebugPanel',
     'debug_toolbar.panels.logger.LoggingPanel',
     'debug_toolbar.panels.cache.CacheDebugPanel',
+    'django_mongoengine.debug_toolbar.panel.MongoDebugPanel',
+
     #'debug_toolbar_user_panel.panels.UserPanel',
     #'cache_panel.CachePanel',
-    'debug_toolbar_mongo.panel.MongoDebugPanel',
+    #'debug_toolbar_mongo.panel.MongoDebugPanel',
     #'django_statsd.panel.StatsdPanel',
     #'debug_toolbar_htmltidy.panels.HTMLTidyDebugPanel',
 )
 
 #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
+
 def custom_show_toolbar(request):
-    return True ## HACK
+    return True  # HACK
     try:
         if request.is_ajax():
             return False
         #if DEBUG: return True              # Show if DEBUG; default == DEBUG and if source ip in INTERNAL_IPS
         return request.user.is_superuser    # Show if logged in as a superuser
-    except: return False
+    except:
+        return False
 
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
     #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
     'HIDE_DJANGO_SQL': False,
     #'TAG': 'div',
-    'ENABLE_STACKTRACES' : True,
+    'ENABLE_STACKTRACES': True,
     'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
 }
 
-INTERNAL_IPS=['127.0.0.1']
+INTERNAL_IPS = ['127.0.0.1']
 
 ## Password Hash Priority (and what's allowed)
 PASSWORD_HASHERS = (
@@ -422,25 +445,25 @@ SERVER_NAME = socket.gethostname()
 ##
 
 CACHES = {
-        #'default_mem': {
-        #    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        #    'LOCATION': PROJECT_NAME,
-        #},
-        #'default_db': {
-        #    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        #    'LOCATION': PROJECT_NAME+'_django_db_cache',
-        #},
-        #'default_file': {
-        #    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
-        #},
-        #'default_mongodb': {
-        'default': {
-            #'BACKEND': 'django_mongodb_cache.MongoDBCache',
-            'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
-            'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
-        },
-    }
+    #'default_mem': {
+    #    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    #    'LOCATION': PROJECT_NAME,
+    #},
+    #'default_db': {
+    #    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+    #    'LOCATION': PROJECT_NAME+'_django_db_cache',
+    #},
+    #'default_file': {
+    #    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
+    #},
+    #'default_mongodb': {
+    'default': {
+        #'BACKEND': 'django_mongodb_cache.MongoDBCache',
+        'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
+        'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
+    },
+}
 
 #if DEBUG:   CACHES['default'] = CACHES['default_mem']
 #else:       CACHES['default'] = CACHES['default_db']
@@ -457,23 +480,23 @@ STATSD_CLIENT = 'django_statsd.clients.normal'
 STATSD_PREFIX = PROJECT_NAME
 
 STATSD_PATCHES = [
-        #'django_statsd.patches.db',
-        #'django_statsd.patches.cache',
-    ]
+    #'django_statsd.patches.db',
+    #'django_statsd.patches.cache',
+]
 
 TOOLBAR_STATSD = {
-        'graphite': '/render/',
-        'roots': ['%s.dev'%PROJECT_NAME, '%s.stage'%PROJECT_NAME],
-    }
+    'graphite': '/render/',
+    'roots': ['%s.dev' % PROJECT_NAME, '%s.stage' % PROJECT_NAME],
+}
 
 # List of keys to record (def)
 STATSD_RECORD_KEYS = [
-        #'window.performance.timing.domComplete',
-        #'window.performance.timing.domInteractive',
-        #'window.performance.timing.domLoading',
-        #'window.performance.navigation.redirectCount',
-        #'window.performance.navigation.type',
-    ]
+    #'window.performance.timing.domComplete',
+    #'window.performance.timing.domInteractive',
+    #'window.performance.timing.domLoading',
+    #'window.performance.navigation.redirectCount',
+    #'window.performance.navigation.type',
+]
 
 #from django.http import HttpResponseForbidden
 #
@@ -482,16 +505,14 @@ STATSD_RECORD_KEYS = [
 #        return HttpResponseForbidden()
 #
 #STATSD_RECORD_GUARD = internal_only
-
-
-
+#
 ##
 ## Jinja2/Coffin Templates
 ##
-
+#
 #JINJA2_FILTERS = (
 #)
-
+#
 #JINJA2_TESTS = {
 #    #'test_name': 'path.to.mytest',
 #}
@@ -530,8 +551,8 @@ CELERY_TIMEZONE = TIME_ZONE
 BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_URL = "pyamqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
-CELERY_DEFAULT_RATE_LIMIT =" 50/s" #100/s
-BROKER_CONNECTION_MAX_RETRIES = "50" #100
+CELERY_DEFAULT_RATE_LIMIT = "50/s"  # 100/s
+BROKER_CONNECTION_MAX_RETRIES = "50"  # 100
 #CELERYD_LOG_COLOR = True
 #CELERY_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
 #CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
@@ -550,7 +571,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 ## Celery extra opts
 CELERY_QUEUES = (
     #Queue('default', Exchange('default'), routing_key='default'),
-    Queue('box_%s' % SERVER_NAME, Exchange('tasks'), durable=True, routing_key='box_%s'%SERVER_NAME, queue_arguments={'x-ha-policy': 'all'}),
+    Queue('box_%s' % SERVER_NAME, Exchange('tasks'), durable=True, routing_key='box_%s' % SERVER_NAME, queue_arguments={'x-ha-policy': 'all'}),
     Queue('shared', Exchange('shared'), durable=True, routing_key='shared', queue_arguments={'x-ha-policy': 'all'}),
     #Broadcast('shared_broadcast', Exchange('shared_broadcast'), routing_key='shared_broadcast', queue_arguments={'x-ha-policy': 'all'}),
     Broadcast('shared_broadcast'),
@@ -594,9 +615,10 @@ CELERY_IMPORTS = (
 # more details on how to customize your logging configuration.
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
-    #'disable_existing_loggers': False,
+    #'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'root': {
+        #'level': 'DEBUG',
         'level': 'WARNING',
         #'handlers': ['sentry'],
     },
@@ -618,10 +640,10 @@ LOGGING = {
         #'test_statsd_handler': {
         #    'class': 'django_statsd.loggers.errors.StatsdHandler',
         #},
-        #'sentry': {
-        #    'level': 'DEBUG',
-        #    'class': 'raven.contrib.django.handlers.SentryHandler',
-        #},
+        'sentry': {
+            'level': 'DEBUG',
+            'class': 'raven.contrib.django.handlers.SentryHandler',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -639,35 +661,35 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers':['console'],
+            'handlers': ['console'],
             'propagate': True,
-            'level':'INFO',
+            'level': 'DEBUG',
         },
         'django.db.backends': {
             'handlers': ['console'],
             #'level': 'DEBUG',
             'level': 'INFO',
-            'propagate': False,
+            #'propagate': False,
         },
-        'werkzeug': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propogate': False,
-        },
+        #'werkzeug': {
+        #    'handlers': ['console'],
+        #    'level': 'ERROR',
+        #    'propogate': False,
+        #},
         'apps': {
-            'handlers': ['console',],
+            'handlers': ['console', ],
             'level': 'DEBUG',
         },
         'solarsanweb': {
-            'handlers': ['console',],
+            'handlers': ['console', ],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
+        #'django.request': {
+        #    'handlers': ['mail_admins'],
+        #    'level': 'ERROR',
+        #    'propagate': True,
+        #},
         #'raven': {
         #    'level': 'WARNING',
         #    'handlers': ['console'],
@@ -777,6 +799,6 @@ SOLARSAN_CLUSTER = {
 
 try:
     #pylint: disable-msg=W0401
-    from settings_local import * #IGNORE:W0614
+    from settings_local import *  # IGNORE:W0614
 except ImportError:
     pass
