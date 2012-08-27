@@ -7,6 +7,7 @@ import logging
 import iterpipes
 import yaml
 
+
 """
 User vars
 """
@@ -21,17 +22,20 @@ PATHS = {'zfs':     "/sbin/zfs",
 Command Handling
 """
 
-def _cmd(cmd, *args):
+def _cmd(*args, **kwargs):
     """ Returns a prepped linecmd """
-    # Black magic
-    cmdf = PATHS[cmd]+' '+' '.join([ ('{}') for i in range(len(args)) ])
-    logging.debug("zfs.cmd: %s %s", cmd, args)
-    return iterpipes.linecmd(cmdf, *args)
+    if not isinstance(args, list):
+        args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
+    kwargs['cmd'] = args.pop(0)
+    cmd = Command(*args, **kwargs)
+
+    return cmd()
 
 
-def zpool(*args):
+def zpool(*args, **kwargs):
     """ Returns linecmd for zpool execution """
-    return _cmd('zpool', *args)
+    cmd = ZFSCommand(*args, **kwargs)
+    return cmd()
 
 
 def zfs(*args):
@@ -67,6 +71,7 @@ class Command(object):
         ofilter = kwargs.get('ofilter', None)
         if ofilter:
             self.ofilter = ofilter
+        self._checks(*args, **kwargs)
 
     def _checks(self, *args, **kwargs):
         if not getattr(self, 'cmd', None):
