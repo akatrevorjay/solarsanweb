@@ -6,7 +6,8 @@ $ zfs/cmd.py -- Interface to zfs command line utilities
 import logging
 import iterpipes
 import yaml
-
+import re
+#from solarsan.utils import args_list
 
 """
 User vars
@@ -16,38 +17,6 @@ PATHS = {'zfs':     "/sbin/zfs",
          'zpool':   "/sbin/zpool",
          'zdb':     "/sbin/zdb",
          }
-
-
-"""
-Command Handling
-"""
-
-def _cmd(*args, **kwargs):
-    """ Returns a prepped linecmd """
-    if not isinstance(args, list):
-        args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
-    kwargs['cmd'] = args.pop(0)
-    cmd = Command(*args, **kwargs)
-
-    return cmd()
-
-
-def zpool(*args, **kwargs):
-    """ Returns linecmd for zpool execution """
-    cmd = ZFSCommand(*args, **kwargs)
-    return cmd()
-
-
-def zfs(*args):
-    """ Returns linecmd for zfs execution """
-    return _cmd('zfs', *args)
-
-
-def zdb(*args):
-    """ Returns linecmd for zdb execution """
-    return _cmd('zdb', *args)
-
-
 
 """
 
@@ -90,7 +59,7 @@ class Command(object):
 
         # Generate command arg mask from *args with some black pymagic
         cmdf = self.cmd+' '+' '.join(['{}' for i in xrange(len(args))])
-        logging.debug("Command: %s", self)
+        logging.debug("Command: %s %s %s %s", self, self.cmd, args, kwargs)
         print "Command: %s %s %s %s" % (self, self.cmd, args, kwargs)
 
         ofilter = kwargs.pop('ofilter', getattr(self, 'ofilter', None))
@@ -173,6 +142,8 @@ Parsers
 #@parser.register
 class Parser(object):
     """ Parser Base """
+    def __init__(self, *args, **kwargs):
+        pass
     def __call__(self, data, *args, **kwargs):
         raise Exception("No __call__ method found for parser '%s'", self)
 
@@ -184,21 +155,108 @@ class NullParser(Parser):
         return data
 
 
-#@parser.register
-class ZfsSpaceDelimWithHeaderParser(Parser):
-    pass
+"""
+Command Handling
+"""
+
+def _cmd(cmd, *args, **kwargs):
+    """ Returns a prepped linecmd """
+    kwargs['cmd'] = cmd
+    cmd = Command(*args, **kwargs)
+    return cmd()
 
 
-#@parser.register
-class ZfsMachineReadableParser(Parser):
-    pass
+def zpool(*args, **kwargs):
+    """ Returns linecmd for zpool execution """
+    cmd = ZPoolCommand(*args, **kwargs)
+    return cmd()
 
 
-#@parser.register
-class ZdbYamlParser(Parser):
-    pass
+def zfs(*args, **kwargs):
+    """ Returns linecmd for zfs execution """
+    cmd = ZfsCommand(*args, **kwargs)
+    return cmd()
 
 
-#@parser.register
-class ZdbDatasetParser(Parser):
-    pass
+def zdb(*args, **kwargs):
+    """ Returns linecmd for zdb execution """
+    cmd = ZdbCommand(*args, **kwargs)
+    return cmd()
+
+
+
+
+class RegexParser(Parser):
+    def __init__(self, expression, **kwargs):
+        self.expression = expression
+        self.initial_kwargs = kwargs
+        super(RegexParser, self).__init__(**kwargs)
+    def __call__(self, *data, **kw):
+        kwargs = self.initial_kwargs.copy()
+        kwargs.update(kw)
+
+        if not isinstance(data, list):
+            data = isinstance(data, basestring) and [data] or isinstance(data, tuple) and list(data)
+        if len(data) == 1:
+            data = data[0].splitlines()
+
+        group_by = kwargs.get('group_by', 'group_by')
+        strict = kwargs.get('strict')
+        expression = kwargs.get('expression', getattr(self, 'expression'))
+        linere = re.compile(expression)
+
+        if 'group_by' in linere.groupindex:
+            ret = {}
+        else:
+            ret = []
+
+        skip = kwargs.get('skip', 0)
+        skipped = 0
+        for line in data:
+            if skipped < skip:
+                skipped += 1
+                continue
+
+            m = linere.match(line)
+            if not m:
+                error = "Unable to parse line '%s'" % line
+                logging.error(error)
+                if strict:
+                    raise Exception("%s and strict is in effect" % error)
+                continue
+            m = m.groupdict()
+
+            if isinstance(ret, dict):
+                key = m.pop(group_by)
+                ret[key] = m
+            else:
+                ret.append(m)
+        return ret
+
+def cmd_parse(command, parser):
+    return parser(command())
+
+def zdb_datasets(*args):
+    return cmd_parse(
+        ZdbCommand('-d', *args),
+        RegexParser(r'^Dataset (?P<group_by>[^ ]+) \[ZPL\], ID (?P<id>\d+), cr_txg (?P<cr_txg>\d+), (?P<size>[0-9\.]+\w), (?P<objects>\d+) objects$',
+                    skip=1,
+                    strict=True)
+        )
+
+def zpool_status(pool):
+    if not pool:
+        raise Exception("Cannot get status of pool '%s'", pool)
+    z = ZPoolCommand('status')
+    data = z(pool).splitlines()
+
+    pool_re = re.match(r'^\s+pool:\s+(\w+)', data[0])
+    if not pool_re:
+        raise Exception("Could not find pool name in response: '%s'")
+    pool = pool_re.group(0)
+
+    parser = RegexParser('^\t +(?P<group_by>\w+\d+)\s+(?P<state>\w+)\s+(?P<read>\d+)\s+(?P<write>\d+)\s+(?P<cksum>\d+)$',
+                         strict=True)
+
+    return parser(*data[7:])
+

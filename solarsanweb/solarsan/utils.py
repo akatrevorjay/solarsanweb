@@ -7,6 +7,7 @@ import string, os, sys
 import logging, datetime, time
 from django import http
 import inspect
+from decorator import decorator
 
 ##
 ## django-braces -- Nice reusable MixIns
@@ -15,6 +16,20 @@ import inspect
 from braces.views import LoginRequiredMixin, PermissionRequiredMixin, SuperuserRequiredMixin #, UserFormKwargsMixin, UserKwargModelFormMixIn
 from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAndRedirectToEditView, SelectRelatedMixin
 
+"""
+Decorators
+"""
+
+@decorator
+def trace(f, *args, **kw):
+    print "calling %s with args %s, %s" % (f.func_name, args, kw)
+    return f(*args, **kw)
+
+@decorator
+def args_list(f, *args, **kwargs):
+    if not isinstance(args, list):
+        args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
+    return f(*args, **kwargs)
 
 """
 Cache Helpers
@@ -38,7 +53,7 @@ Devel helpers
 
 class TrueDebug(object):
     ### Alpha ###
-    """A simple debugger. Add debug() to a function and it prints the function name and any objects included. 
+    """A simple debugger. Add debug() to a function and it prints the function name and any objects included.
     Adding True to locale prints the file name where the function is. Adding False to log turns the log off.
     This feature can be modified to trace deeper and find the bugs faster, ending the puzzle box."""
     def __init__(self, objects=None, locale=False, log=True, parents=False):
@@ -313,4 +328,3 @@ def statelazyproperty( func ):
             return value
 
     return property( _get )
-

@@ -6,6 +6,7 @@ from django.conf.urls.defaults import patterns, include, url
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+from django_mongoengine.admin import site
 #from mongoadmin import site
 
 import time
@@ -38,10 +39,11 @@ urlpatterns = patterns('',
     url(r'^analytics/', include('analytics.urls')),
     url(r'^services/timing/', include('django_statsd.urls')),
 
-    (r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
+    #(r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
     (r'^admin/uwsgi/', include('uwsgi_admin.urls')),                        # uwsgi admin
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),          # Admin docs
-    #url(r'^admin/', include(site.urls)),                                    # Admin (mongoadmin)
+    url(r'^admin/', include(site.urls)),                                    # Admin (mongoadmin)
+    #url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/', include(admin.site.urls)),                              # Admin
 
     #url(r'^', include('debug_toolbar_htmltidy.urls')),                      # DJDT HtmlTidy

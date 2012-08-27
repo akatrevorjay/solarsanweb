@@ -12,107 +12,6 @@ from datetime import timedelta
 from django.utils import timezone
 #from django.core.files.storage import Storage
 
-"""
-Import pool/dataset info from system into DB
-"""
-
-
-# TODO This function should only be needed on initial deploys of solarsanweb and should not be a crutch
-class Import_ZFS_Metadata( PeriodicTask ):
-    """ Syncs ZFS pools/datasets to DB """
-    run_every = timedelta( minutes=30 )
-
-    data = {}
-
-    def run( self, *args, **kwargs ):
-        self.data = {'pools': {}, 'datasets': {}}
-        self.do_level( zfs.tree() )
-
-        # Delete things which are no longer in existence
-        for key, val in {'pools': Pool, 'datasets': Dataset}.items():
-            # Do filter disabled ones from here!
-            for obj in val.objects.all():
-                if not obj.name in list( self.data[key] ):
-                    logger.info( "Cannot find %s '%s' in ZFS, yet is in the DB. Disabling",
-                            obj._zfs_type, obj.name )
-                    obj.enabled = False
-                    obj.save()
-            self.data[key] = []
-
-    def do_level( self, cur ):
-        """ This gets called for each level of the tree to loop through it, then it's children """
-        # First, take care of any objects
-        if getattr( cur, 'has', None ):       self.do_level_items( cur )
-
-        # Call this function recursively for each cur[key]
-        for child_key in cur.keys():    self.do_level( cur[child_key] )
-
-    def do_level_items( self, cur ):
-        """ This gets called for each level of the tree to handle the level's items """
-        has = getattr( cur, 'has', [] )
-
-        # Pools
-        if 'pools' in has:
-            pools = cur.pools
-            for pv in pools.itervalues():
-                # The 'name' key of an object is always the full path name; ie, not relative to the tree.
-                p = pv['name']
-                try:
-                    pool = Pool.objects_unfiltered.get( name=p )
-                    pv['enabled'] = True
-                    for k, v in pv.iteritems(): setattr( pool, k, v )
-                except ( KeyError, Pool.DoesNotExist ):
-                    logger.info( 'Found pool "%s"', p )
-                    del pv['type']
-                    pool = Pool( **pv )
-                pool.save( db_only=True )
-                self.data['pools'][p] = True
-
-        # Datasets
-        datasets = []
-        if 'filesystems' in has: datasets.extend( cur.filesystems.items() )
-        if 'snapshots' in has:   datasets.extend( cur.snapshots.items() )
-        datasets = dict( datasets )
-        for dv in datasets.values():
-            # The 'name' key of an object is always the full path name; ie, not relative to the tree.
-            d = dv['name']
-            try:
-                # Get existing dataset, if it doesn't exist the except below will catch it
-                if dv['type'] == 'snapshot':        dataset = Snapshot.objects_unfiltered.get( name=d )
-                elif dv['type'] == 'filesystem':    dataset = Filesystem.objects_unfiltered.get( name=d )
-                elif dv['type'] == 'pool':          dataset = Pool.objects_unfiltered.get( name=d )
-                else:
-                    logger.error( "Found unknown type '%s': '%s'", dv['type'], d )
-                    continue
-                # Ensure enabled
-                dv['enabled'] = True
-                # Apply data to existing dataset
-                for k, v in dv.iteritems(): setattr( dataset, k, v )
-            except ( KeyError, Pool.DoesNotExist, Filesystem.DoesNotExist, Snapshot.DoesNotExist ):
-                logger.info( 'Found %s "%s"', dv['type'], d )
-                if dv['type'] == 'pool':
-                    dataset = Pool( **dv )
-                else:
-                    dataset_path = d.split( '/' )
-                    dataset_pool = Pool.objects_unfiltered.get( name=dataset_path[0].split( '@' )[0] )
-                    dv['pool_id'] = dataset_pool.id
-                    if dv['type'] == 'snapshot':
-                        dataset = Snapshot( **dv )
-                    elif dv['type'] == 'filesystem':
-                        dataset = Filesystem( **dv )
-            # Save dataset
-            dataset.save( db_only=True )
-            self.data['datasets'][d] = True
-
-
-class Cleanup_Disabled_Storage_Items( PeriodicTask ):
-    """ Cleans up disabled storage items from DB """
-    run_every = timedelta( days=1 )
-    def run( self, *args, **kwargs ):
-        # Delete disabled items that are too old to care about.
-        for key, val in {'pools': Pool, 'datasets': Dataset}.items():
-            val.objects_unfiltered.filter( enabled=False, last_modified__gt=timezone.now() - timedelta( days=7 ) ).delete()
-
 
 """
 Auto Snapshot
@@ -150,9 +49,10 @@ config = {
     },
 }
 
-class Auto_Snapshot( PeriodicTask ):
+class Auto_Snapshot( Task ):
+#class Auto_Snapshot( PeriodicTask ):
     """ Cron job to periodically take a snapshot of datasets """
-    run_every = timedelta( minutes=5 )
+    #run_every = timedelta( minutes=5 )
     # TODO Make this work properly, maybe by populating config dict on the fly, until then don't run at all.
     abstract = True
 
