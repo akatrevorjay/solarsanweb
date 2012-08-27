@@ -3,17 +3,22 @@
 /env
 /data
 
-/solarsanweb/settings_local.py
+/conf/settings_local.py
 
 *.swp
 *.swo
 /celeryconfig.py
-solarsanweb/templates/b
-solarsanweb/templates/admin.old
+/solarsanweb/templates/b
+/solarsanweb/templates/admin.old
 _crap/
 snippets/
 PYSMELLTAGS
 polls
+vendor-local/pkgs/_meh/
+vendor-local/pkgs/cube_python
+# stupid hg repo won't clone with hg-fast-import
+vendor-local/pkgs/south
+vendor-local/pkgs/django-piston
 
 3rd/
 /.ropeproject/

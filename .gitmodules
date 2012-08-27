@@ -244,3 +244,6 @@
 [submodule "vendor-local/pkgs/urwid"]
 	path = vendor-local/pkgs/urwid
 	url = git://github.com/wardi/urwid.git
+[submodule "vendor-local/pkgs/django-mongoengine"]
+	path = vendor-local/pkgs/django-mongoengine
+	url = git://github.com/MongoEngine/django-mongoengine.git

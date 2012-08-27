@@ -1,0 +1,6 @@
+git filter-branch --env-filter 'if [ "$GIT_AUTHOR_EMAIL" = "root@Stor3.ib0" ]; then
+     GIT_AUTHOR_EMAIL=trevorj@localhostsolutions.com;
+     GIT_AUTHOR_NAME="Trevor Joynson (trevorj)";
+     GIT_COMMITTER_EMAIL=$GIT_AUTHOR_EMAIL;
+     GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"; fi' -- --all
+
