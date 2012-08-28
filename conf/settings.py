@@ -184,7 +184,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
     'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
-    'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
+    #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
 )
 
 ## Root URL routes
@@ -640,10 +640,10 @@ LOGGING = {
         #'test_statsd_handler': {
         #    'class': 'django_statsd.loggers.errors.StatsdHandler',
         #},
-        'sentry': {
-            'level': 'DEBUG',
-            'class': 'raven.contrib.django.handlers.SentryHandler',
-        },
+        #'sentry': {
+        #    'level': 'DEBUG',
+        #    'class': 'raven.contrib.django.handlers.SentryHandler',
+        #},
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -708,10 +708,10 @@ LOGGING = {
 ## Sentry/Raven
 ##
 
-RAVEN_CONFIG = {
-    'dsn': 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2',
-    'register_signals': True,
-}
+#RAVEN_CONFIG = {
+#    'dsn': 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2',
+#    'register_signals': True,
+#}
 
 ##
 ## Cube
@@ -802,3 +802,5 @@ try:
     from settings_local import *  # IGNORE:W0614
 except ImportError:
     pass
+
+
