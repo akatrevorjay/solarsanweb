@@ -247,3 +247,9 @@
 [submodule "vendor-local/pkgs/django-mongoengine"]
 	path = vendor-local/pkgs/django-mongoengine
 	url = git://github.com/MongoEngine/django-mongoengine.git
+[submodule "solarsanweb/static/3rd/icomoon"]
+	path = solarsanweb/static/3rd/icomoon
+	url = git://github.com/Keyamoon/IcoMoon--limited-.git
+[submodule "solarsanweb/static/3rd/kickstrap"]
+	path = solarsanweb/static/3rd/kickstrap
+	url = git://github.com/ajkochanowicz/Kickstrap.git
