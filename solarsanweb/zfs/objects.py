@@ -8,14 +8,12 @@ import sys
 import time
 import datetime
 import logging
-import iterpipes
 
 import cmd
 import common
 import dataset
 import models as z
 
-from .common import Error, NotImplemented
 from django.utils import timezone
 from solarsan.utils import FilterableDict, CacheDict, convert_bytes_to_human, convert_human_to_bytes
 
@@ -160,9 +158,13 @@ class zfsBase(object):
         return self._zfs_type
 
     @classmethod
-    def get_prop_list(cls):
-        """ Returns list of default property names """
+    def get_default_prop_list(cls):
+        """ Returns list of actual property names """
         return ZFS_PROPS[self._zfs_type]
+
+    def get_prop_list(self):
+        """ Returns list of default property names """
+        raise NotImplementedError
 
     def get(self, *args, **kwargs):
         """ Returns requested properties *args with **kwargs opts for self """
@@ -170,12 +172,19 @@ class zfsBase(object):
         return self._get(*args, **kwargs)
 
     def set(self, name, value, **kwargs):
-        zargs = ['set', '%s=%s' % (str(name), str(value)), self.name]
-        #print 'set name=%s value=%s xargs=%s' % (name, value, zargs)
-        zcmd = isinstance(self, Dataset) and cmd.zfs(*zargs) or cmd.zpool(*zargs)
-        ret = iterpipes.check_call(zcmd)
-        self.get(name)
-        return ret
+        # Initial arguments
+        args = ['set']
+        # Options
+        if kwargs.get('recursive'):
+            args.append('-r')
+
+        # Generate args & command
+        args.extend(['%s=%s' % (str(name), str(value)), self.name])
+        zcmd = isinstance(self, Dataset) and cmd.zfs or cmd.zpool
+        # Check for bad retval
+        ret = zcmd(*args, ret=int)
+        if ret > 0:
+            raise Exception('set failed; retval=%s' % ret)
 
     def clear(self):
         self.props = {}
@@ -213,12 +222,9 @@ class zfsBase(object):
         ret = {}
 
         # Generate command and execute, parse output
-        if Dataset.__subclasscheck__(cls):
-            zcmd = cmd.zfs(*zargs)
-        else:
-            zcmd = cmd.zpool(*zargs)
+        zcmd = Dataset.__subclasscheck__(cls) and cmd.zfs or cmd.zpool
 
-        for line in iterpipes.run(zcmd):
+        for line in zcmd(*zargs).splitlines():
             line = dict(zip(props == ['all'] and ZFS_PROPS[cls.__name__] or props,
                             str(line).rstrip("\n").split()))
             parent_name = line['name']
@@ -272,17 +278,14 @@ class zfsBase(object):
         zargs += [','.join(args).lower(), ]
         if walk_only: zargs.extend(walk_only)
 
-        if Dataset.__subclasscheck__(cls):
-            zcmd = cmd.zfs(*zargs)
-        else:
-            zcmd = cmd.zpool(*zargs)
+        zcmd = Dataset.__subclasscheck__(cls) and cmd.zfs or cmd.zpool
 
         # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
         objs = OBJ_TREE
         ret = {}
         skip = 1
         last_obj_name = ''
-        for line in iterpipes.run(zcmd):
+        for line in zcmd(*zargs).splitlines():
             line = str(line).rstrip("\n")
             if skip > 0:
                 skip -= 1
@@ -401,7 +404,7 @@ class Properties(dict):
         if value:
             return self._propify(name=key, value=value)
         else:
-            return KeyError(k)
+            return KeyError(key)
 
     def _propify(self, name=None, value=None):
             if isinstance(value, int) or isinstance(value, float):
@@ -436,7 +439,7 @@ class Properties(dict):
         return iter([ (x, self.get(x, None)) for x in self.__list__() ])
 
     def __list__(self):
-        return self._parent.get_prop_list()
+        return self._parent.get_default_prop_list()
 
     def get(self, *args, **kwargs):
         for k,v in self._parent.get(*args, **kwargs).iteritems():
@@ -464,7 +467,8 @@ class Pool( zfsBase ):
         """ Returns the matching Filesystem for this Pool """
         return Filesystem(self.name)
 
-    def iostat(*pools, **kwargs):
+    @classmethod
+    def iostat(cls, *pools, **kwargs):
         """ Utility to return zpool iostats on the specified pools """
         zargs = ['iostat', '-Tu']
         if pools:
@@ -478,7 +482,7 @@ class Pool( zfsBase ):
         iostat = {}
         timestamp = False
         skip_past_dashline = False
-        for line in iterpipes.run(cmd.zpool(*zargs)):
+        for line in cmd.zpool(*zargs).splitlines():
             line = str(line).rstrip("\n")
 
             # Got a timestamp
@@ -500,7 +504,7 @@ class Pool( zfsBase ):
             # If somehow we got here without a timestamp, something is probably wrong.
             if timestamp == False:
                 logging.error("Got unexpected input from zpool iostat: %s", line)
-                raise Error
+                raise Exception
 
             try:
                 # Parse iostats output
@@ -511,7 +515,7 @@ class Pool( zfsBase ):
                 iostat[j['name']] = j
             except:
                 logging.error("Could not parse input from zpool iostat: %s", line)
-                raise Error
+                raise Exception
         return iostat
 
     def cached_status(self):

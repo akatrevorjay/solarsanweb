@@ -11,10 +11,6 @@ class Error(Exception):
     """ Base Error """
     pass
 
-class NotImplemented(Error):
-    """ This function still needs to be written """
-    pass
-
 
 """
 Common Funcs

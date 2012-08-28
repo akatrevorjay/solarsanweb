@@ -6,9 +6,7 @@ $ zfs/cmd.py -- Interface to zfs command line utilities
 #import os, sys
 import datetime, logging
 from django.utils import timezone
-import iterpipes
 from solarsan.utils import FilterableDict, convert_human_to_bytes
-from .common import Error, NotImplemented
 
 import cmd
 
@@ -24,26 +22,25 @@ def create(name, **kwargs):
     """ Create pool """
     # TODO HDD selector in web gui that lets you build pools
     #   No need to support anything but RAID10
-    raise NotImplemented
+    raise NotImplementedError
 
     zargs = ['create']
     # TODO -o opts; compress=on, atime=off, etc
     if not name:
-        raise Error("zfs_pool was attempted with an empty name")
+        raise Exception("zfs_pool was attempted with an empty name")
     zargs.append(name)
 
     logging.info('Creating pool %s with %s', name, kwargs)
-    iterpipes.check_call(cmd.zpool(*zargs))
-    return list(name)
+    return cmd.zpool(*zargs, ret=bool)
 
 def destroy():
-    raise NotImplemented
+    raise NotImplementedError
 
 def add():
-    raise NotImplemented
+    raise NotImplementedError
 
 def remove():
-    raise NotImplemented
+    raise NotImplementedError
 
 
 def list(*pools, **kwargs):
@@ -74,7 +71,7 @@ def list(*pools, **kwargs):
 
 
     pool_list = FilterableDict()
-    for line in iterpipes.run(cmd.zpool(*zargs)):
+    for line in cmd.zpool(*zargs).splitlines():
         line = str(line).rstrip("\n").split("\t")
         # Wooooooh
         pool = dict(zip(props, line))
@@ -109,7 +106,7 @@ def iostat(*pools, **kwargs):
     iostat = FilterableDict()
     timestamp = False
     skip_past_dashline = False
-    for line in iterpipes.run(cmd.zpool(*zargs)):
+    for line in cmd.zpool(*zargs).splitlines():
         line = str(line).rstrip("\n")
 
         # Got a timestamp
@@ -131,7 +128,7 @@ def iostat(*pools, **kwargs):
         # If somehow we got here without a timestamp, something is probably wrong.
         if timestamp == False:
             logging.error("Got unexpected input from zpool iostat: %s", line)
-            raise Error
+            raise Exception
 
         try:
             # Parse iostats output
@@ -143,49 +140,45 @@ def iostat(*pools, **kwargs):
             iostat[j['name']] = j
         except:
             logging.error("Could not parse input from zpool iostat: %s", line)
-            raise Error
+            raise Exception
     return iostat
 
 
 def status():
-    raise NotImplemented
+    raise NotImplementedError
 
 def offline():
-    raise NotImplemented
+    raise NotImplementedError
 
 def clear():
-    raise NotImplemented
+    raise NotImplementedError
 
 def attach():
-    raise NotImplemented
+    raise NotImplementedError
 
 def detach():
-    raise NotImplemented
+    raise NotImplementedError
 
 def replace():
-    raise NotImplemented
+    raise NotImplementedError
 
 def splite():
-    raise NotImplemented
+    raise NotImplementedError
 
 def scrub():
-    raise NotImplemented
+    raise NotImplementedError
 
 def Import():
-    raise NotImplemented
+    raise NotImplementedError
 
 def export():
-    raise NotImplemented
+    raise NotImplementedError
 
 def upgrade():
-    raise NotImplemented
+    raise NotImplementedError
 
 def history():
-    raise NotImplemented
+    raise NotImplementedError
 
 def events():
-    raise NotImplemented
-
-
-
-
+    raise NotImplementedError

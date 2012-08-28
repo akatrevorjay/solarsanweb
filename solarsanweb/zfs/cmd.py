@@ -70,8 +70,14 @@ class Command(object):
         itercmd = mkcmd(cmdf, *args, **kwargs)
 
         ret = ''
-        if ret_type == bool:
+        if kwargs.get('error'):
             return iterpipes.check_call(iterpipes.bincmd(cmdf, *args, **kwargs))
+        elif ret_type == bool:
+            try:
+                iterpipes.check_call(iterpipes.bincmd(cmdf, *args, **kwargs))
+                return True
+            except iterpipes.CalledProcessError:
+                return False
 
         elif ret_type == int:
             return iterpipes.call(iterpipes.bincmd(cmdf, *args, **kwargs))
@@ -259,4 +265,3 @@ def zpool_status(pool):
                          strict=True)
 
     return parser(*data[7:])
-
