@@ -118,6 +118,8 @@ class ClusterNode(DjangoDocument):
         v_afs = netifaces.address_families.values()
         for iface_name,iface in self['interfaces'].iteritems():
             assert bool(v_iface_name.match(iface_name))
+            #if not bool(v_iface_name.match(iface_name)):
+            #    continue
             for af, addrs in iface.iteritems():
                 assert af in v_afs
                 for ip,mask in addrs:
@@ -150,13 +152,13 @@ def convert_netmask_to_cidr(arg):
 
 ## TODO Fixtures for default network config
 class NetworkInterfaceConfig( models.Model ):
-    PROTO_CHOICES = ( 
+    PROTO_CHOICES = (
         ( 'none', 'Disabled' ),
         ( 'static', 'Static IP' ),
         ( 'dhcp', 'DHCP' ),
     )
     ## TODO Add 8-32
-    CIDR_CHOICES = ( 
+    CIDR_CHOICES = (
         ( 1, '128.0.0.0' ),
         ( 2, '192.0.0.0' ),
         ( 3, '224.0.0.0' ),
@@ -285,4 +287,3 @@ def NetworkInterfaceList():
             pass
     #return dict( [( x, lambda NetworkInterface( x ) except: None) for x in netifaces.interfaces()] )
     return ret
-
