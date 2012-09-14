@@ -1,16 +1,16 @@
 
 from django.conf import settings
-from django_mongokit import get_database, connection
-from storage.models import zPool
+import zfs as z
+
 
 def pools(request):
     try:
-        conn = get_database()[zPool.collection_name]
-        pools = conn.zPool.find()
-        #pools = Pool.objects.all()
-        return {'pools': pools}
+        pools = z.Pool.dbm.objects.values_list('name')
+        pools = [z.Pool(x) for x in pools]
     except:
-        return {}
+        pools = []
+
+    return {'pools': pools}
 
 
 def raven_dsn(request):
