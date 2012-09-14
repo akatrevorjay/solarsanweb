@@ -18,16 +18,6 @@ from django.utils import timezone
 from solarsan.utils import FilterableDict, CacheDict, convert_bytes_to_human, convert_human_to_bytes
 
 
-ZFS_PROPS = {
-    'Pool':     ['name', 'size', 'cap', 'altroot', 'health', 'guid', 'version', 'bootfs', 'delegation', 'replace', 'cachefile', 'failmode', 'listsnaps', 'expand', 'dedupditto',
-                 'dedup', 'free', 'alloc', 'rdonly', 'ashift'],
-    'Dataset':  ['name', 'type', 'creation', 'used', 'avail', 'refer', 'ratio', 'mounted', 'origin', 'quota', 'reserv', 'volsize', 'volblock', 'recsize', 'mountpoint',
-                 'sharenfs', 'checksum', 'compress', 'atime', 'devices', 'exec', 'setuid', 'rdonly', 'zoned', 'snapdir', 'aclinherit', 'canmount', 'xattr', 'copies', 'version',
-                 'utf8only', 'normalization', 'case', 'vscan', 'nbmand', 'sharesmb', 'refquota', 'refreserv', 'primarycache', 'secondarycache', 'usedsnap', 'usedds', 'usedchild',
-                 'usedrefreserv', 'defer_destroy', 'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio'],
-    }
-
-
 #OBJ_TREE = CacheDict()
 OBJ_TREE = {}
 
@@ -160,7 +150,7 @@ class zfsBase(object):
     @classmethod
     def get_default_prop_list(cls):
         """ Returns list of actual property names """
-        return ZFS_PROPS[self._zfs_type]
+        return self.PROPS
 
     def get_prop_list(self):
         """ Returns list of default property names """
@@ -225,7 +215,7 @@ class zfsBase(object):
         zcmd = Dataset.__subclasscheck__(cls) and cmd.zfs or cmd.zpool
 
         for line in zcmd(*zargs).splitlines():
-            line = dict(zip(props == ['all'] and ZFS_PROPS[cls.__name__] or props,
+            line = dict(zip(props == ['all'] and getattr(self, 'PROPS', None) or props,
                             str(line).rstrip("\n").split()))
             parent_name = line['name']
             if not parent_name in objs: objs[parent_name] = {}
@@ -456,6 +446,8 @@ Pool Handling
 
 class Pool( zfsBase ):
     """ Pool class """
+    PROPS = ['name', 'size', 'cap', 'altroot', 'health', 'guid', 'version', 'bootfs', 'delegation', 'replace', 'cachefile', 'failmode', 'listsnaps', 'expand', 'dedupditto',
+             'dedup', 'free', 'alloc', 'rdonly', 'ashift']
     dbm = z.PoolDocument
     _zfs_type = 'pool'
 
@@ -549,6 +541,12 @@ class Pool( zfsBase ):
 
 class Dataset( zfsBase ):
     """ Dataset class """
+    PROPS =  ['name', 'type', 'creation', 'used', 'avail', 'refer', 'ratio', 'mounted', 'origin', 'quota', 'reserv',
+              'volsize', 'volblock', 'recsize', 'mountpoint', 'sharenfs', 'checksum', 'compress', 'atime', 'devices',
+              'exec', 'setuid', 'rdonly', 'zoned', 'snapdir', 'aclinherit', 'canmount', 'xattr', 'copies', 'version',
+              'utf8only', 'normalization', 'case', 'vscan', 'nbmand', 'sharesmb', 'refquota', 'refreserv',
+              'primarycache', 'secondarycache', 'usedsnap', 'usedds', 'usedchild', 'usedrefreserv', 'defer_destroy',
+              'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio']
     dbm = z.DatasetDocument
     _zfs_type = 'dataset'
 
