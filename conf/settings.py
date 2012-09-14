@@ -52,9 +52,6 @@ SESSION_ENGINE = 'mongoengine.django.sessions'
 #SESSION_ENGINE = 'django_mongoengine.django.sessions'
 SESSION_COOKIE_NAME = PROJECT_NAME + '_sess'
 
-from mongoengine import connect
-connect(PROJECT_NAME)
-
 ##
 ## Django Common
 ##
@@ -218,7 +215,6 @@ INSTALLED_APPS = (
     #'debug_toolbar_mongo',
     #'debug_toolbar_htmltidy',
     #'django_statsd',
-
     'django_mongoengine.debug_toolbar',
     'django_mongoengine.auth',
     'django_mongoengine.admin.sites',
@@ -616,11 +612,12 @@ CELERY_IMPORTS = (
 LOGGING = {
     'version': 1,
     #'disable_existing_loggers': True,
-    'disable_existing_loggers': False,
+    #'disable_existing_loggers': False,
     'root': {
-        #'level': 'DEBUG',
-        'level': 'WARNING',
-        #'handlers': ['sentry'],
+        'level': 'DEBUG',
+        'handlers': ['console'],
+        #'level': 'WARNING',
+        #'handlers': ['console', 'sentry'],
     },
     'formatters': {
         'standard': {
@@ -667,9 +664,9 @@ LOGGING = {
         },
         'django.db.backends': {
             'handlers': ['console'],
-            #'level': 'DEBUG',
-            'level': 'INFO',
-            #'propagate': False,
+            'propagate': True,
+            'level': 'DEBUG',
+            #'level': 'INFO',
         },
         #'werkzeug': {
         #    'handlers': ['console'],
@@ -679,6 +676,7 @@ LOGGING = {
         'apps': {
             'handlers': ['console', ],
             'level': 'DEBUG',
+            'propagate': True,
         },
         'solarsanweb': {
             'handlers': ['console', ],
