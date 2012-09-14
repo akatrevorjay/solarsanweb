@@ -6,6 +6,7 @@ from django.conf.urls.defaults import patterns, include, url
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+
 from django_mongoengine.admin import site
 #from mongoadmin import site
 
@@ -20,7 +21,8 @@ time.sleep(3)
 dt = int((time.time() - start) * 1000)
 statsd.timing('slept', dt)
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     #url(r'^$', 'solarsanweb.views.home', name='home'),
     url(r'^$', include('analytics.urls')),
 
@@ -42,9 +44,9 @@ urlpatterns = patterns('',
     #(r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
     (r'^admin/uwsgi/', include('uwsgi_admin.urls')),                        # uwsgi admin
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),          # Admin docs
-    url(r'^admin/', include(site.urls)),                                    # Admin (mongoadmin)
+    url(r'^admin/', include(site.urls)),                                    # Admin (django-mongoengine/mongoadmin)
     #url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/', include(admin.site.urls)),                              # Admin
+    #url(r'^admin/', include(admin.site.urls)),                              # Admin
 
     #url(r'^', include('debug_toolbar_htmltidy.urls')),                      # DJDT HtmlTidy
 
