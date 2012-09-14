@@ -253,3 +253,12 @@
 [submodule "solarsanweb/static/3rd/kickstrap"]
 	path = solarsanweb/static/3rd/kickstrap
 	url = git://github.com/ajkochanowicz/Kickstrap.git
+[submodule "vendor-local/pkgs/relish"]
+	path = vendor-local/pkgs/relish
+	url = git://github.com/dolph/relish.git
+[submodule "vendor-local/pkgs/pylibssh2"]
+	path = vendor-local/pkgs/pylibssh2
+	url = git://github.com/wallix/pylibssh2.git
+[submodule "solarsanweb/static/3rd/slickgrid"]
+	path = solarsanweb/static/3rd/slickgrid
+	url = https://github.com/mleibman/SlickGrid.git
