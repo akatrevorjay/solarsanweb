@@ -131,14 +131,14 @@ class NetworkInterfaceConfigView( generic.FormView ):
     def form_valid( self, form ):
         form.instance.name = self.name
         form.save()
-        messages.info( 
+        messages.info(
             self.request,
             "Save successful!"
         )
         return super( NetworkInterfaceConfigView, self ).form_valid( form )
 
     def form_invalid( self, form ):
-        messages.error( 
+        messages.error(
             self.request,
             "Something didn't seem quite right, so we didn't save. Take a gander below and see if you can spot what's up."
         )
@@ -233,19 +233,19 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 
 #class ProcessAddQuote(BaseCreateView, JSONResponseMixin):
 #    """
-#    View mixin used built-in view class BaseCreateView 
+#    View mixin used built-in view class BaseCreateView
 #    `https://docs.djangoproject.com/en/dev/ref/class-based-views/#django.views.generic.edit.BaseCreateView`
-#    And proposed json serialize mixin to serialize response, i.o we using AJAX 
+#    And proposed json serialize mixin to serialize response, i.o we using AJAX
 #    in form displaying and processing.
-#    
-#    BaseCreateView are creates view form form data, every time new instance. 
-#    This class using ModeFormMixin 
+#
+#    BaseCreateView are creates view form form data, every time new instance.
+#    This class using ModeFormMixin
 #    `https://docs.djangoproject.com/en/dev/ref/class-based-views/#django.views.generic.edit.ModelFormMixin`
 #    `https://docs.djangoproject.com/en/dev/ref/class-based-views/#django.views.generic.edit.ProcessFormView`
 #    which construct modelform view as usual and ProcessFormView which validate and process form.
-#    """   
+#    """
 #    form_class = QuoteAdd
-#    
+#
 #    def form_invalid(self, form):
 #        """
 #        Collect errors for serializing.
@@ -254,7 +254,7 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        for i in form.errors.keys():
 #            errors['errors'][i] = form.errors[i].as_text()
 #        return self.render_json_to_response(errors)
-#    
+#
 #    def convert_context_to_json(self, context):
 #        """
 #        Method are serialze saved quote instance or form errors.
@@ -266,11 +266,11 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        except TypeError:
 #            raise TypeError('context object is not serializeble')
 #        else:
-#            isinstance(context.__class__(), models.Model)            
+#            isinstance(context.__class__(), models.Model)
 #            context = {'author': context.author, 'content': context.content}
 #        finally:
 #            return super(ProcessAddQuote, self).convert_context_to_json(context)
-#    
+#
 #    def form_valid(self, form):
 #        """
 #        If form is valid user field appoint to current user. Then save instance.
