@@ -168,16 +168,8 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, "templates"),
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    # Defaults for Django 1.4
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.static",
-    "django.core.context_processors.tz",
-
-    # Not default
+from django.conf import global_settings
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
     'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
