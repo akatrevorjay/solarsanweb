@@ -200,6 +200,14 @@ INSTALLED_APPS = (
     #'mongoadmin',
     #'mongonaut',
 
+    'django_mongoengine.auth',
+    'django_mongoengine.admin.sites',
+    'django_mongoengine.admin',
+
+    'django.contrib.admin',
+    # Uncomment the next line to enable admin documentation:
+    'django.contrib.admindocs',
+
     # Debug toolbar
     'debug_toolbar',
     #'debug_toolbar_user_panel',
@@ -208,13 +216,6 @@ INSTALLED_APPS = (
     #'debug_toolbar_htmltidy',
     #'django_statsd',
     'django_mongoengine.debug_toolbar',
-    'django_mongoengine.auth',
-    'django_mongoengine.admin.sites',
-    'django_mongoengine.admin',
-
-    'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
-    'django.contrib.admindocs',
 
     # Third party libs
     'djcelery',
@@ -327,16 +328,10 @@ MIDDLEWARE_CLASSES = (
     #'django_statsd.middleware.GraphiteMiddleware',
 
     #'waffle.middleware.WaffleMiddleware',                       # waffle
-
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',     # Enable Session support
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-
+) + global_settings.MIDDLEWARE_CLASSES + (
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
 
-    'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
+    #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
 
     #'django.middleware.gzip.GZipMiddleware',                    # Compress output
     'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
