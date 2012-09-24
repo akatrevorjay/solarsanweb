@@ -1,4 +1,6 @@
+{% extends 'storage/dataset_detail.html' %}
 
+{% block dataset_detail %}
 <pre>
 
     Dataset "{{ dataset.name }}":
@@ -10,4 +12,4 @@
 {{ dataset.__dict__|pprint }}
 
 </pre>
-
+{% endblock %}

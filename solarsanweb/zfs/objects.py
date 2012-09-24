@@ -17,123 +17,104 @@ import models as z
 from django.utils import timezone
 from solarsan.utils import FilterableDict, CacheDict, convert_bytes_to_human, convert_human_to_bytes
 
+"""
+class Friendly(object):
+    def hello(self):
+        print 'Hello'
 
-#OBJ_TREE = CacheDict()
-OBJ_TREE = {}
+class Person(object): pass
 
+# we can't change the original classes, so we replace them
+class newFriendly: pass
+newFriendly.__dict__ = dict(Friendly.__dict__)
+Friendly = newFriendly
+class newPerson: pass
+newPerson.__dict__ = dict(Person.__dict__)
+Person = newPerson
+
+p = Person()
+Person.__bases__ = (Friendly,)
+p.hello()  # prints "Hello"
+"""
 
 """
 Base
 """
 
-class zfsBase(object):
-    """ Base class """
 
-    dbm = z.zfsBaseDocument
-    _zfs_type = 'base'
 
-    flags = {
-            'obj_tree': False,
-            'db': True,
-            }
+#OBJ_TREE = CacheDict()
+#OBJ_TREE = {}
 
-    """
-    Magic
-    """
+class SingletonMixIn(object):
+    """ Caches objects and re-use existing instances """
+    flags = {'obj_tree': False, }
+    def __new__(cls, *args, **kwargs):
+        name = kwargs.get('name', args and args[0] or None)
+        cls_name = cls.__name__
 
-    def __new__(cls, name, *args, **kwargs):
         obj_tree = kwargs.get('obj_tree', cls.flags.get('obj_tree'))
-        if obj_tree:
+        if obj_tree and name:
             if name in OBJ_TREE and cls.__name__ in OBJ_TREE[name]:
                 return OBJ_TREE[name][cls.__name__]
 
         self = super(zfsBase, cls).__new__(cls, *args, **kwargs)
 
-        if obj_tree:
+        if obj_tree and name:
             if not name in OBJ_TREE:
                 OBJ_TREE[name] = {}
             OBJ_TREE[name][self.__class__.__name__] = self
 
         return self
 
+
+class ReprMixIn(object):
+    def __repr__(self):
+        return "<%s: %s>" % (self.__class__.__name__, getattr(self, 'name', None))
+    def __unicode__(self):
+        return self.name
+
+
+#class BaseMixIn(ReprMixIn, SingletonMixIn):
+class BaseMixIn(ReprMixIn):
+    pass
+
+
+ZFS_TYPE_MAP = {}
+
+
+class zfsBaseCommon(object):
+    """ Base common class """
     def __init__(self, *args, **kwargs):
         """ Initialize """
-        # Name
-        name = kwargs.get('name', args[0])
-        if 'name' in kwargs:
-            name = kwargs.pop('name')
-        else:
-            if not isinstance(args, list):
-                args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
-            if not len(args[0]) > 0:
-                raise Exception('No name was given')
-            name = kwargs['name'] = args.pop(0)
+        # Replace list with the instance version
+        #self.list = self._list_instance
+        self._get_type = self._get_type_instance
+        return super(zfsBaseCommon, self).__init__(*args, **kwargs)
 
-        self.name = name
-
-        # If db is turned off for this object, disable db
-        if not kwargs.get('db', True):
-            self.flags.update(db=False)
-
-        # Props
-        if not getattr(self, 'props', None):
-            self.props = Properties(self)
-
-    def __repr__(self):
-        name = getattr(self, 'name', None)
-        return "%s('%s')" % (type(self).__name__, name)
-
-    #idumps  = lambda self: `self`
-    #__str__ = lambda self: self.dumps()
-
-
-    """
-    Mongo Glue
-    """
+    def clear(self):
+        self.props = {}
+        self.get()
 
     @property
-    def dbo(self):
-        """ Returns database object """
+    def type(self):
+        """ Returns ZFS object type string """
+        return self.__class__.__name__.lower()
 
-        if not self.flags.get('db'):
-            raise AttributeError("DB support is disabled for this instance '%s'" % self)
+    @classmethod
+    def _get_type_class(cls, name):
+        return cls.ZFS_TYPE_MAP[name]
+    def _get_type_instance(self, name):
+        return self.ZFS_TYPE_MAP[name]
+    _get_type = _get_type_class
 
-        if not getattr(self, '_dbo', None):
-            lookup_data = {'name': self.name,
-                           'auto_save': False}
-            self._dbo, created = self.dbm.objects.get_or_create(name=self.name,
-                                                                auto_save=False)
-            if created:
-                # New in DB, fill with zfs values
-                logging.warning("Creating dbo for %s '%s'", self.type, self.name)
-                dbo = self._dbo
-
-        return self._dbo
-
-    @property
-    def id(self):
-        return self.dbo.id
-
-    def save(self, *args, **kwargs):
-        return self.dbo.save(*args, **kwargs)
-
-
-
-    """
-    Instance
-    """
 
     def path( self, start=0, len=None ):
         """ Splits name of object into paths starting at index start """
         return self.name.split( '/' )[start:len]
 
-    def exists(self, force_check=False):
+    def exists(self):
         """ Checks if object exists """
-        # If we're not forced, just see if this entry's already in the db. If it's not, then do a check anyway.
-        if not force_check and self.flags.get('db'):
-            if getattr(self, 'dbo', None):
-                return True
-
         # Check if type property is there, should always be there.
         try:
             self.list(self.name)
@@ -142,10 +123,86 @@ class zfsBase(object):
         except:
             return False
 
-    @property
-    def type(self):
-        """ Returns ZFS object type string """
-        return self._zfs_type
+    @classmethod
+    def list(cls, *args, **kwargs):
+        zargs = ['list', '-H']
+        self = kwargs.pop('self', None)
+        get_type = self and self._get_type or cls._get_type
+        skip = kwargs.get('skip', None)
+
+        # Property selection
+        props = kwargs.get('props', ['name'])
+        if not isinstance(props, list):
+            props = isinstance(props, basestring) and [props] or isinstance(props, tuple) and list(props)
+        if not get_type('pool').__subclasscheck__(cls) and 'type' not in props:
+            props += ['type']
+        if not 'guid' in props:
+            props.append('guid')
+        zargs += ['-o', ','.join(props).lower(), ]
+        # ZFS object selection (pool/dataset starting point for walking tree, etc)
+        if not isinstance(args, list):
+            args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
+        zargs.extend(args)
+
+        # Datasets (the zfs command in particular) have a better CLI interface, so allow for more control when it comes to those
+        if get_type('pool').__subclasscheck__(cls):
+            obj_type_default = 'pool'
+        else:
+            if kwargs.get('recursive') == True:
+                zargs.append('-r')
+            zargs.extend(['-t', kwargs.get('type', 'all')])
+            if 'source' in kwargs:
+                zargs.extend(['-s', str(kwargs['source'])])
+            if 'depth' in kwargs:
+                zargs.extend(['-d', str(int(kwargs['depth']))])
+            obj_type_default = None
+
+        # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
+        #objs = OBJ_TREE
+        ret_type = kwargs.get('ret', dict)
+        if ret_type == list:
+            ret = []
+        elif ret_type == dict:
+            ret = {}
+        else:
+            raise Exception("Invalid return object type '%s' specified")
+
+        # Generate command and execute, parse output
+        for line in cls.zcmd(*zargs).splitlines():
+            line = dict(zip(props == ['all'] and getattr(self, 'PROPS', None) or props,
+                            str(line).rstrip("\n").split()))
+
+            name = line['name']
+            if skip and skip == name:
+                continue
+
+            obj_type = line.get('type', obj_type_default)
+            obj_cls = cls.ZFS_TYPE_MAP[obj_type]
+            #############
+            ## HACKERY ##
+            #############
+            if getattr(obj_cls, '_fields', None):
+                obj, created = obj_cls.objects.get_or_create(name=name, guid=line['guid'], auto_save=False)
+            else:
+                obj = obj_cls(name=name)
+            if ret_type == dict:
+                ret[name] = obj
+            elif ret_type == list:
+                ret.append(obj)
+
+            #if not name in objs:
+            #    objs[name] = {}
+            #if obj_cls.__name__ not in objs[name]:
+            #    o = cls(name=name)
+            #    objs[name][o.__class__.__name__] = o
+            #o = objs[name][obj_cls.__name__]
+            #ret[name] = o
+
+        return ret
+
+
+class zfsBaseProps(object):
+    props = None
 
     @classmethod
     def get_default_prop_list(cls):
@@ -170,74 +227,10 @@ class zfsBase(object):
 
         # Generate args & command
         args.extend(['%s=%s' % (str(name), str(value)), self.name])
-        zcmd = isinstance(self, Dataset) and cmd.zfs or cmd.zpool
         # Check for bad retval
-        ret = zcmd(*args, ret=int)
+        ret = self.zcmd(*args, ret=int)
         if ret > 0:
             raise Exception('set failed; retval=%s' % ret)
-
-    def clear(self):
-        self.props = {}
-        self.get()
-
-    """
-    Class
-    """
-
-    @classmethod
-    def list(cls, *args, **kwargs):
-        zargs = ['list', '-H']
-
-        # Property selection
-        props = kwargs.get('props', ['name'])
-        if not isinstance(props, list):
-            props = isinstance(props, basestring) and [props] or isinstance(props, tuple) and list(props)
-        if Dataset.__subclasscheck__(cls) and 'type' not in props: props += ['type']
-        zargs += ['-o', ','.join(props).lower(), ]
-
-        # ZFS object selection (pool/dataset starting point for walking tree, etc)
-        if not isinstance(args, list):
-            args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
-        zargs.extend(args)
-
-        # Datasets (the zfs command in particular) have a better CLI interface, so allow for more control when it comes to those
-        if Dataset.__subclasscheck__(cls):
-            if kwargs.get('recursive') == True: zargs.append('-r')
-            if 'type' in kwargs: zargs += ['-t', kwargs.get('type')]
-            if 'source' in kwargs: zargs.extend(['-s', str(kwargs['source'])])
-            if 'depth' in kwargs: zargs.extend(['-d', int(kwargs['depth'])])
-
-        # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
-        objs = OBJ_TREE
-        ret = {}
-
-        # Generate command and execute, parse output
-        zcmd = Dataset.__subclasscheck__(cls) and cmd.zfs or cmd.zpool
-
-        for line in zcmd(*zargs).splitlines():
-            line = dict(zip(props == ['all'] and getattr(self, 'PROPS', None) or props,
-                            str(line).rstrip("\n").split()))
-            parent_name = line['name']
-            if not parent_name in objs: objs[parent_name] = {}
-            if cls.__name__ not in objs[parent_name]:
-                o = cls(parent_name)
-                objs[parent_name][o.__class__.__name__] = o
-
-            obj_cls = None
-            obj_type = line.get('type', 'pool')
-            if obj_type == 'filesystem':
-                obj_cls = Filesystem
-            elif obj_type == 'snapshot':
-                obj_cls = Snapshot
-            elif obj_type == 'volume':
-                obj_cls = Volume
-            elif obj_type == 'pool':
-                obj_cls = Pool
-
-            o = objs[parent_name][obj_cls.__name__]
-            ret[ parent_name ] = o
-        return ret
-
 
     @classmethod
     def _get(cls, *args, **kwargs):
@@ -256,7 +249,7 @@ class zfsBase(object):
         if not walk_only and cls == Pool: raise Exception('Cannot _get Pools without giving me a list (walk_only)')
 
         # The zfs command has gotten a few interface tweaks over the years that give it en edge over zpool
-        if Dataset.__subclasscheck__(cls):
+        if cls._get_type('dataset').__subclasscheck__(cls):
             if kwargs.get('recursive'):
                 zargs.append('-r')
             if 'source' in kwargs:
@@ -268,14 +261,11 @@ class zfsBase(object):
         zargs += [','.join(args).lower(), ]
         if walk_only: zargs.extend(walk_only)
 
-        zcmd = Dataset.__subclasscheck__(cls) and cmd.zfs or cmd.zpool
-
         # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
-        objs = OBJ_TREE
         ret = {}
         skip = 1
         last_obj_name = ''
-        for line in zcmd(*zargs).splitlines():
+        for line in cls.zcmd(*zargs).splitlines():
             line = str(line).rstrip("\n")
             if skip > 0:
                 skip -= 1
@@ -295,32 +285,48 @@ class zfsBase(object):
             last_obj_name = obj_name
 
         # If we're a dataset and recursive opt is set, return the full hash including dataset name as first key
-        if Dataset.__subclasscheck__(cls) and kwargs.get('recursive'): return ret
+        if cls._get_type('dataset').__subclasscheck__(cls) and kwargs.get('recursive'): return ret
 
         # If we only requested a single property from a single object that isn't the magic word 'all', just return the value.
         if not kwargs.get('recursive') and len(args) == 1 and 'all' not in args: ret = ret[ret.keys()[0]]
         return ret[ret.keys()[0]]
 
 
+#class zfsBase(SingletonMixIn):
+class zfsBase(zfsBaseProps, zfsBaseCommon, BaseMixIn):
+    ZFS_TYPE_MAP = ZFS_TYPE_MAP
+    def __new__(cls, *args, **kwargs):
+        #logging.debug("GOT NEW FOR %s WITH args=%s kwargs=%s", cls, args, kwargs)
+        return super(zfsBase, cls).__new__(cls, *args, **kwargs)
+
+    def __init__(self, *args, **kwargs):
+        #logging.debug("GOT INIT FOR %s WITH args=%s kwargs=%s", self, args, kwargs)
+        return super(zfsBase, self).__init__(*args, **kwargs)
+        #return bases_func(self, '__init__', *args, **kwargs)
+
+#def bases_func(self, name, *args, **kwargs):
+#    #for base in self.__class__.__bases__:
+#    for base in self.__class__.mro():
+#        ret = None
+#        func = getattr(base, name, None)
+#        if func:
+#            ret = func(*args, **kwargs)
+#        print "base=%s func=%s ret=%s" % (base, func, ret)
+
+
+
+
 
 class Property(object):
+
     def __init__(self, **kwargs):
-        #kwargs.setdefault('modified', False)
-        #kwargs.setdefault('inherit', False)
         self.modified = False
         self.inherit = False
         self.source = 'local'
         self.value = None
 
         for k in ['name', 'source', 'value', 'parent', 'inherit', 'modified']:
-            if k in kwargs:
-                setattr(self, k, kwargs.get(k))
-
-    def __str__(self):
-        return str(self.value)
-
-    def __unicode__(self):
-        return unicode(self.value)
+            setattr(self, k, kwargs.get(k, None))
 
     def __repr__(self):
         prefix = ''
@@ -329,10 +335,8 @@ class Property(object):
 
         if source == '-':
             prefix += 'Statistic'
-
         elif source in ['default', 'local']:
             prefix += self.source.capitalize()
-
         elif source:
             prefix += 'Inherited'
             vars['source'] = source
@@ -341,9 +345,18 @@ class Property(object):
             prefix += 'Unsaved'
 
         vars['value'] = self.value
-
         name = prefix + self.__class__.__name__
         return "%s(**%s)" % (name, vars)
+
+    def __unicode__(self):
+        return unicode(self.value)
+
+    def __str__(self):
+        return str(self.value)
+
+    """
+    Property management
+    """
 
     def inherit(self):
         """ Set property to inherit it's value from parent """
@@ -360,7 +373,6 @@ class Property(object):
 
         self.value = value
         self.modified = modified
-
         if save:
             self.save()
 
@@ -381,6 +393,7 @@ class Property(object):
     #    return self.parent.get(self.name)
 
 
+
 class Properties(dict):
     def __init__(self, parent=None):
         self._parent = parent
@@ -397,27 +410,27 @@ class Properties(dict):
             return KeyError(key)
 
     def _propify(self, name=None, value=None):
-            if isinstance(value, int) or isinstance(value, float):
-                value = str(value)
+        if isinstance(value, int) or isinstance(value, float):
+            value = str(value)
 
-            if isinstance(value, basestring):
-                value = {'value': value}
+        if isinstance(value, basestring):
+            value = {'value': value}
 
-            if isinstance(value, dict) and 'value' in value:
-                value['parent'] = self._parent
+        if isinstance(value, dict) and 'value' in value:
+            value['parent'] = self._parent
 
-                if not 'name' in value and isinstance(name, basestring):
-                    value['name'] = name
-                else:
-                    raise Exception('Name was not provided')
-
-                value = Property(**value)
-
-            if isinstance(value, Property):
-                return value
-
+            if not 'name' in value and isinstance(name, basestring):
+                value['name'] = name
             else:
-                raise Exception('Could not create property object from: %s, %s' % (name, value))
+                raise Exception('Name was not provided')
+
+            value = Property(**value)
+
+        if isinstance(value, Property):
+            return value
+
+        else:
+            raise Exception('Could not create property object from: %s, %s' % (name, value))
 
     def __setitem__(self, key, value):
         pass
@@ -439,25 +452,58 @@ class Properties(dict):
     #def _save(self):
     #    pass
 
+    # TODO Make this work
+    #def reload(self):
+    #    if getattr(self, 'name', None):
+    #        self.props = self._get_type('properties')(self)
+
 
 """
 Pool Handling
 """
 
-class Pool( zfsBase ):
-    """ Pool class """
+class PoolBase(object):
+    """ Pool base class """
     PROPS = ['name', 'size', 'cap', 'altroot', 'health', 'guid', 'version', 'bootfs', 'delegation', 'replace', 'cachefile', 'failmode', 'listsnaps', 'expand', 'dedupditto',
              'dedup', 'free', 'alloc', 'rdonly', 'ashift']
-    dbm = z.PoolDocument
-    _zfs_type = 'pool'
+
+    @staticmethod
+    def zcmd(*args, **kwargs):
+        return cmd.zpool(*args, **kwargs)
 
     #def __init__(self, name, *args, **kwargs):
-    #    super(Pool, self).__init__(name, *args, **kwargs)
+    #    return super(PoolBase, self).__init__(name, *args, **kwargs)
+
+    def children(self, **kwargs):
+        return self.filesystem.children(**kwargs)
 
     @property
     def filesystem( self ):
         """ Returns the matching Filesystem for this Pool """
-        return Filesystem(self.name)
+        return self._get_type('filessytem')(self.name)
+
+    #@property
+    #def filesystem( self ):
+    #    """ Returns the matching filesystem for Pool """
+    #    return Filesystem.objects.get( pool_id=self.id, name=self.name )
+
+    #def filesystems( self, **kwargs ):
+    #    """ Lists filesystems of this pool """
+    #    return Filesystem.dbm.objects.filter(name__startswith='%s/'%self.name, **kwargs)
+
+    #def filesystem_create( self, name, **kwargs ):
+    #    """ Creates a filesystem in the pool """
+    #    logging.info( 'Request to create filesystem (%s) on pool (%s)', name, self.name )
+    #    # Get DB entry ready (and validate data)
+    #    filesystem = Filesystem( name=name, pool_id=self.id )
+    #    filesystem.save()
+    #    # Return saved filesystem object
+    #    return filesystem
+
+    #def iostat( self, **kwargs ):
+    #    """ Returns newly generated ZFS IOStats """
+    #    zpool_iostat = zfs.pool.iostat( self.name, **kwargs )
+    #    return zpool_iostat[self.name]
 
     @classmethod
     def iostat(cls, *pools, **kwargs):
@@ -484,7 +530,7 @@ class Pool( zfsBase ):
                     skip_past_dashline = True
                 # TZify the timestamp
                 timestamp = timezone.make_aware(
-                        datetime.datetime.fromtimestamp(int(line)), timezone.get_current_timezone() )
+                    datetime.datetime.fromtimestamp(int(line)), timezone.get_current_timezone() )
                 continue
 
             # If we haven't gotten the dashline yet, wait till the line after it
@@ -510,36 +556,13 @@ class Pool( zfsBase ):
                 raise Exception
         return iostat
 
-    def cached_status(self):
-        """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
-        z = cmd.ZdbCommand('-C', '-v')
-        ret = z(ofilter=cmd.SafeYamlFilter)
-        self._parse_vdev_info(ret)
-        return ret
 
-    def _parse_vdev_info(self, ret):
-        ## TODO Take some of this wonderous info and put it to good use besides just returning it. ##
-
-        for pool in ret.keys():
-            if not pool == self.name:
-                continue # temporary
-
-            # Basic info
-            self.pool_guid = ret[pool]['pool_guid']
-            self.state = ret[pool]['state']
-            self.txg = ret[pool]['txg']
-            self.version = ret[pool]['version']
-
-            # Snag vdevs
-            self.vdev_children = ret[pool]['vdev_children']
-            self.vdev_tree = ret[pool]['vdev_tree']
-
-        #return ret
+class Pool(PoolBase, zfsBase):
+    """ Pool class """
+    pass
 
 
-
-
-class Dataset( zfsBase ):
+class DatasetBase(object):
     """ Dataset class """
     PROPS =  ['name', 'type', 'creation', 'used', 'avail', 'refer', 'ratio', 'mounted', 'origin', 'quota', 'reserv',
               'volsize', 'volblock', 'recsize', 'mountpoint', 'sharenfs', 'checksum', 'compress', 'atime', 'devices',
@@ -547,29 +570,47 @@ class Dataset( zfsBase ):
               'utf8only', 'normalization', 'case', 'vscan', 'nbmand', 'sharesmb', 'refquota', 'refreserv',
               'primarycache', 'secondarycache', 'usedsnap', 'usedds', 'usedchild', 'usedrefreserv', 'defer_destroy',
               'userrefs', 'logbias', 'dedup', 'mlslabel', 'sync', 'refratio']
-    dbm = z.DatasetDocument
-    _zfs_type = 'dataset'
 
-    #def __init__(self, name, *args, **kwargs):
-    #    super(Dataset, self).__init__(name, *args, **kwargs)
+    @staticmethod
+    def zcmd(*args, **kwargs):
+        return cmd.zfs(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
         """ Dataset factory; returns back a subclass of dataset as the instance you requested """
-        if 'type' in kwargs:
-            for subclass in Dataset.__subclasses__():
-                if kwargs['type'] in ZFS_TYPE_MAP:
-                    return super(Dataset, cls).__new__(ZFS_TYPE_MAP[ kwargs['type'] ], *args, **kwargs)
-            raise Exception, 'Dataset type not supported'
-        elif '@' in args[0]:
-            cls = ZFS_TYPE_MAP['snapshot']
-        else:
-            cls = ZFS_TYPE_MAP['filesystem']
-        return super(Dataset, cls).__new__(cls, *args, **kwargs)
+        obj_cls = None
+        #if cls is Dataset or D:
+        if True:
+            obj_type = kwargs.pop('type', None)
+            if not obj_type:
+                name = kwargs.get('name')
+                if '@' in name:
+                    obj_type = 'snapshot'
+                else:
+                    ## TODO Detect the difference between filesystem/volume
+                    obj_type = 'filesystem'
+                    #obj_type = 'volume'
+            if obj_type:
+                obj_cls = cls.ZFS_TYPE_MAP[obj_type]
+        return super(DatasetBase, cls).__new__(obj_cls or cls, *args, **kwargs)
+
+    def __init__(self, *args, **kwargs):
+        logging.debug('GOT INIT AT %s WITH args=%s kwargs=%s', self, args, kwargs)
+        return super(DatasetBase, self).__init__(*args, **kwargs)
 
     @property
     def pool( self ):
         """ Returns the matching Pool for this Dataset """
-        return Pool(self.path(0, 1))
+        return self._get_type('pool')(self.path(0, 1))
+
+    def children(self, **kwargs):
+        assert hasattr(self, 'name')
+        kwargs.update({'depth': kwargs.get('depth', 1),
+                       'props': ['name', 'type'],
+                       'skip': self.name,
+                       })
+        kwargs['self'] = self
+        ret = self.list(self.name, **kwargs)
+        return ret
 
     @property
     def parent(self):
@@ -577,7 +618,7 @@ class Dataset( zfsBase ):
         path = self.path()
         if len(path) == 1:
             return None
-        return Dataset('/'.join(path[:-1]))
+        return self._get_type('dataset')('/'.join(path[:-1]))
 
     def inherit(self, name, **kwargs):
         zargs = ['inherit']
@@ -624,24 +665,18 @@ class Dataset( zfsBase ):
             self.get()
         return ret
 
+class Dataset(DatasetBase, zfsBase):
+    pass
 
-
-
-class SnapshottableDataset(object):
-    #@property
+class SnapshottableDatasetBase(object):
     def snapshots(self, **kwargs):
         """ Lists snapshots of this dataset """
         kwargs['type'] = 'snapshot'
         return self.children(**kwargs)
 
-    #@property
     def filesystems(self, **kwargs):
         kwargs['type'] = 'filesystem'
         return self.children(**kwargs)
-
-    #@property
-    def children(self, **kwargs):
-        return [(Dataset(x, type=y['type'])) for x,y in dataset.list(self.name, type=kwargs.get('type', 'all'), prop=['name', 'type'], depth=kwargs.get('depth', 1)).iteritems() if y['name'] != self.name]
 
     def snapshot(self, name, **kwargs):
         """ Create snapshot """
@@ -659,24 +694,25 @@ class SnapshottableDataset(object):
         return Snapshot(name)
 
 
+class FilesystemBase(object):
+    """ Filesystem """
+    pass
 
-class Filesystem( Dataset, SnapshottableDataset ):
-    dbm = z.FilesystemDocument
-    _zfs_type = 'filesystem'
+class Filesystem(FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase):
     """ Filesystem """
     pass
 
 
-class Volume( Dataset, SnapshottableDataset ):
-    dbm = z.VolumeDocument
-    _zfs_type = 'volume'
+class VolumeBase(object):
     """ Volume """
     pass
 
+#class Volume(VolumeBase, SnapshottableDatasetBase, Dataset):
+class Volume(VolumeBase, SnapshottableDatasetBase, DatasetBase, zfsBase):
+    pass
 
-class Snapshot( Dataset ):
-    dbm = z.SnapshotDocument
-    _zfs_type = 'snapshot'
+
+class SnapshotBase(object):
     """ Filesystem snapshot """
 
     @property
@@ -694,12 +730,15 @@ class Snapshot( Dataset ):
         """ Returns the associated filesystem for this snapshot """
         return Filesystem(self.filesystem_name)
 
+class Snapshot(SnapshotBase, SnapshottableDatasetBase, Dataset):
+    pass
 
 
-ZFS_TYPE_MAP = {
+ZFS_TYPE_MAP.update({
     'pool': Pool,
     'dataset': Dataset,
     'filesystem': Filesystem,
     'volume': Volume,
     'snapshot': Snapshot,
-    }
+    'properties': Properties,
+})

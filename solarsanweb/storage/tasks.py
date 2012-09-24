@@ -1,3 +1,4 @@
+
 from celery.schedules import crontab
 from celery.task import periodic_task, task, chord
 from celery.task.base import PeriodicTask, Task
@@ -5,7 +6,7 @@ from celery.utils.log import get_task_logger
 from celery.task.sets import subtask
 logger = get_task_logger(__name__)
 
-from storage.models import Pool, Pool_IOStat, Dataset, Filesystem, Snapshot
+from storage.models import Pool, Dataset, Filesystem, Snapshot
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
 import datetime, time
 from datetime import timedelta

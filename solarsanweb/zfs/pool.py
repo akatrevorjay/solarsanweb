@@ -93,6 +93,55 @@ def list(*pools, **kwargs):
         pool_list[ pool['name'] ] = pool
     return pool_list
 
+"""
+def list(*args, **kwargs):
+    zargs = ['list', '-H']
+
+    # Property selection
+    props = kwargs.get('props', ['name'])
+    if not isinstance(props, list):
+        props = isinstance(props, basestring) and [props] or isinstance(props, tuple) and list(props)
+    zargs += ['-o', ','.join(props).lower(), ]
+
+    # ZFS object selection (pool/dataset starting point for walking tree, etc)
+    if not isinstance(args, list):
+        args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
+    zargs.extend(args)
+
+    obj_type_default = 'pool'
+
+    ret_type = kwargs.get('ret', dict)
+    if ret_type == list:
+        ret = []
+    elif ret_type == dict:
+        ret = {}
+    else:
+        raise Exception("Invalid return object type '%s' specified")
+
+    # Generate command and execute, parse output
+    for line in cls.zcmd(*zargs).splitlines():
+        line = dict(zip(props == ['all'] and getattr(self, 'PROPS', None) or props,
+                        str(line).rstrip("\n").split()))
+
+        name = line['name']
+        obj_type = line.get('type', obj_type_default)
+        obj_cls = cls.ZFS_TYPE_MAP[obj_type]
+        obj = obj_cls(name=name)
+        if ret_type == dict:
+            ret[name] = obj
+        elif ret_type == list:
+            ret.append(obj)
+
+        #if not name in objs:
+        #    objs[name] = {}
+        #if obj_cls.__name__ not in objs[name]:
+        #    o = cls(name=name)
+        #    objs[name][o.__class__.__name__] = o
+        #o = objs[name][obj_cls.__name__]
+        #ret[name] = o
+
+    return ret
+"""
 
 def iostat(*pools, **kwargs):
     """ Utility to return zpool iostats on the specified pools """

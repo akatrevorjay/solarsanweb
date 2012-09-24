@@ -12,8 +12,10 @@ from django.utils import timezone
 from django.conf import settings
 
 import zfs
-from objects import Pool, Dataset, Filesystem, Volume
-#from models import PoolDocument, DatasetDocument
+#from objects import Pool, Dataset, Filesystem, Volume
+import storage.models as m
+from storage.models import Pool, Dataset, Filesystem, Volume
+
 import cube_python
 
 
@@ -64,39 +66,50 @@ Import pool/dataset info from system into DB
 class Import_ZFS_Metadata2(PeriodicTask):
     run_every = timedelta(minutes=30)
     def run(self, *args, **kwargs):
-        for pool_name,pool in Pool.list().iteritems():
+        for pool in m.Pool.list(ret=list):
             if not getattr(pool, 'id', None):
                 logger.warning("Found new ZFS storage pool '%s'", pool.name)
+                pool.reload_zdb()
+                pool.save()
+
+            children = {}
+            for k, v in m.ZFS_TYPE_MAP.iteritems():
+                if not getattr(v, 'objects', None):
+                    continue
+                children[k] = v.objects.filter(name__startswith='%s/' % pool.name)
+                children[k].update(set__importing=True, multi=True)
 
             pool_fs = pool.filesystem
-            pool_children = Dataset.dbm.objects.filter(name__startswith='%s/' % pool_name)
-            pool_children.update(set__importing=True, multi=True)
+            self.walk(pool, pool_fs)
 
-            pool_fs = self.do_zfs_dataset(pool, pool_fs)
-            self.do_filesystem_children(pool, pool_fs)
-
-            pool_children.filter(importing=True, enabled__ne=False).update(set__enabled=False)
-            #pool_children.filter(importing=True).delete(modified__lt=timezone.now() -
+            #children.filter(importing=True, enabled__ne=False).update(set__enabled=False)
+            #children.filter(importing=True).delete(modified__lt=timezone.now() -
             #                                            datetime.timedelta(days=7))
-    def do_zfs_dataset(self, pool, dataset, **kwargs):
-        #parent = kwargs.get('parent', None)
-        if not getattr(dataset, 'id', None):
-            logger.warning("Found new dataset '%s'", dataset.name)
-        return dataset
-    def do_filesystem_children(self, pool, parent):
+
+            for k in children.iterkeys():
+                children[k].filter(importing=True).delete()
+
+    def walk(self, pool, parent):
         filesystems = []
         #parent_regex = re.compile('^%s/[^/]+$' % parent.name)
 
-        for dataset in parent.children():
+        if not getattr(parent, 'id', None):
+            logger.warning("Found new dataset '%s'", parent.name)
+            parent.pool = pool
+            parent.save()
+
+        for dataset in parent.children(ret=list):
+            #logger.debug("Dataset %s", dataset)
             if not getattr(dataset, 'id', None):
                 logger.warning("Found new dataset '%s'", dataset.name)
             else:
-                dataset.dbo.update(unset__importing=True)
-            dataset.dbo.pool = pool.dbo
-            dataset.dbo.save()
+                dataset.update(unset__importing=True)
+            dataset.pool = pool
+            dataset.save()
             if dataset.type == 'filesystem':
                 filesystems.append(dataset)
+
         for fs in filesystems:
             # Run recursively on this node's children
-            self.do_filesystem_children(pool, fs)
+            self.walk(pool, fs)
 

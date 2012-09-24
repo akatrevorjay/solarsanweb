@@ -1,463 +1,409 @@
+
 from django.db import models
 from jsonfield import JSONField
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 import zfs
+import zfs.objects
+import zfs.cmd
 
-from django_mongokit import connection
-from django_mongokit.document import DjangoDocument
 import datetime
 from django.utils import timezone
 
-"""
-Pools
-"""
-
-
-
-@connection.register
-class zPool(DjangoDocument):
-    class Meta:
-        verbose_name_plural = 'Pools'
-    collection_name = 'storage_pools'
-    use_dot_notation = True
-    #use_autorefs = True
-
-    structure = {
-        'name': unicode,
-        'props': dict,
-        #'props': {unicode: unicode},
-        #'filesystems': [zDataset],
-        #'filesystem': zDataset,
-        'last_modified': datetime.datetime,
-        'created': datetime.datetime,
-        'importing': bool,
-    }
-
-    required_fields = ['name']
-
-    default_values = {
-        'last_modified': timezone.now,
-        'created': timezone.now,
-    }
-
-    indexes = [
-        {'fields': ['name'], 'unique': True},
-    ]
-
-    def zfs( self ):
-        """ Returns ZFS object for this dataset """
-        return zfs.Pool(self.name)
-
-    #@property
-    #def filesystem( self ):
-    #    """ Returns the matching filesystem for Pool """
-    #    return Filesystem.objects.get( pool_id=self.id, name=self.name )
-    #def filesystems( self, **kwargs ):
-    #    """ Lists filesystems of this pool """
-    #    return Filesystem.objects.filter( type='filesystem', pool_id=self.id, **kwargs )
-    #def filesystem_create( self, name, **kwargs ):
-    #    """ Creates a filesystem in the pool """
-    #    logging.info( 'Request to create filesystem (%s) on pool (%s)', name, self.name )
-    #    # Get DB entry ready (and validate data)
-    #    filesystem = Filesystem( name=name, pool_id=self.id )
-    #    filesystem.save()
-    #    # Return saved filesystem object
-    #    return filesystem
-    #def iostat( self, **kwargs ):
-    #    """ Returns newly generated ZFS IOStats """
-    #    zpool_iostat = zfs.pool.iostat( self.name, **kwargs )
-    #    return zpool_iostat[self.name]
-
-@connection.register
-class zDataset(DjangoDocument):
-    class Meta:
-        verbose_name_plural = 'Datasets'
-    collection_name = 'storage_datasets'
-    use_dot_notation = True
-    #use_autorefs = True
-
-    structure = {
-        'name': unicode,
-        'type': unicode,
-        'props': dict,
-        #'pool': zPool,
-        #'pool': unicode,
-        #'parent': zDataset,
-        #'pool_name': zPool,
-        #'snapshots': [zSnapshot],
-        'last_modified': datetime.datetime,
-        'created': datetime.datetime,
-        'importing': bool,
-    }
-
-    required_fields = ['name']
-
-    default_values = {
-        'last_modified': timezone.now,
-        'created': timezone.now,
-    }
-
-    indexes = [
-        {'fields': ['name'], 'unique': True},
-    ]
-
-    #basename = models.CharField( max_length=128 )
-    #pool = models.ForeignKey( Pool )
-
-    #@property
-    def zfs( self ):
-        """ Returns ZFS object for this dataset """
-        return zfs.Dataset(self.name, type=self.type)
-
-from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
-
-## TODO This should be done in validate anyway, but it's a good example
-def create_zPool_zfs(sender, instance, created, **kwargs):
-    logging.info("Got signal for create_zPool_zfs! sender=%s instance=%s created=%s kwargs=%s", sender, instance, created, kwargs)
-    if created:
-        pool = zfs.Pool(instance.name)
-        if not pool.exists():
-            ## TODO real ZFS Pool creation function
-            logging.error("Pool object was created but it does not exist in ZFS. Deleting from DB.")
-            instance.delete()
-
-post_save.connect(create_zPool_zfs, sender=zPool)
-
-
-
 
 """
-SQL Models
+Mongo
 """
 
-from solarsan.models import EnabledModelManager
+import mongoengine as m
+from datetime import datetime
 
-class ZFSBackedModel( models.Model ):
-    class Meta:
-        abstract = True
-    _zfs_type = None
-    enabled = models.BooleanField( default=True )
-    objects = EnabledModelManager()
-    objects_unfiltered = models.Manager()
+"""
+Signal example
 
-    def save( self, **kwargs ):
-        """ Creates a (self._zfs_type) and saves it to the DB """
-        # If we're importing, just save directly
-        if kwargs.pop( 'db_only', False ) == True or self.pk:
-            return super( ZFSBackedModel, self ).save()
+# Register signal
+#import django.dispatch
+#pizza_done = django.dispatch.Signal(providing_args=["toppings", "size"])
 
-        # If we get here, we're not importing.
-        zfs_type = self._zfs_type
+#class PizzaStore(object):
+#    def send_pizza(self, toppings, size):
+#    Both send() and send_robust() return a list of tuple pairs [(receiver, response), ... ], representing the list of called receiver functions and their response values.
+#    send() differs from send_robust() in how exceptions raised by receiver functions are handled. send() does not catch any exceptions raised by receivers; it simply allows errors to propagate. Thus not all receivers may be notified of a signal in the face of an error.
+#    send_robust() catches all errors derived from Python's Exception class, and ensures all receivers are notified of the signal. If an error occurs, the error instance is returned in the tuple pair for the receiver that raised the error.
+#        pizza_done.send(sender=self, toppings=toppings, size=size)
+#        pizza_done.send_robust(sender=self, toppings=toppings, size=size)
 
-        # Does filesystem exist already on filesystem?
-        name = self.name
-        try:
-            # If it already exists, allow it through.
-            if zfs_type in ['filesystem', 'volume', 'snapshot', 'dataset']:
-                zfs_ret = zfs.dataset.list( name )
-            elif zfs_type in ['pool']:
-                zfs_ret = zfs.pool.list( name )
-            else:
-                raise Exception( "Object to be saved has an invalid type '%s'" % zfs_type )
-            zfs_existing = True
-            logging.info( "While creating requested " + zfs_type
-                    + " '%s', we've noticed it already exists in ZFS. Leaving " + zfs_type
-                    + " as is in ZFS; Saving to DB", name, name )
-        except:
-            # Good, it doesn't exist. Create it.
-            if zfs_type == 'snapshot':      zfs_ret = zfs.dataset.snapshot( name )
-            # FUCK Volume creation NOT IMPLEMENTED YET
-            #elif zfs_type == 'volume':      zfs_ret = zfs.volume.create( name, kwargs.get( 'size', '1G' ) )
-            elif zfs_type == 'volume':      pass
-            elif zfs_type in ['filesystem', 'dataset']:
-                                            zfs_ret = zfs.dataset.create( name )
-            # FUCK Pool creation NOT IMPLEMENTED YET
-            elif zfs_type == 'pool':        zfs_ret = zfs.pool.create( name )
-            else:                           raise Exception( "This " + zfs_type + " has an incorrect zfs_type, no thanks" )
-            zfs_existing = False
-            logging.info( "Created " + zfs_type + " in ZFS '%s', saving in DB", name )
+"""
 
-        try:
-            # Normalize data and stuff it
-            for key, val in zfs_ret[name].iteritems():
-                # I'm paranoid
-                if key == '_zfs_type': continue
-                setattr( self, key, val )
-
-            # Cool, now save to DB and hand it back
-            super( ZFSBackedModel, self ).save()
-        except:
-            # Since we're failing out due to something not going right with the DB save,
-            #   If the zfs object was NOT previously existing, ie this function actually created it,
-            #   then destroy it.
-            if zfs_existing == False:
-                # FIXME POOL OR DATASET DIFF CMDS
-                zfs.dataset.destroy( self.name )
-                logging.error( "Destroyed %s '%s' in ZFS since we're erroring out.", zfs_type, name )
-            raise Exception( "Created " + zfs_type + " in ZFS but it could not be saved to DB. " )
-
-    def delete( self, *args, **kwargs ):
-        """ Overridden delete that deletes the underlying ZFS object before deleting from DB """
-        # If we're importing, just save directly
-        if kwargs.pop( 'db_only', False ) == True:
-            return super( ZFSBackedModel, self ).delete( *args, **kwargs )
-
-        ## If we do not have a _zfs_type attribute, we may want to push it through to the DB
-        #try:
-        zfs_type = self._zfs_type
-        name = self.name
-        #except:
-        #    super(ZFSBackedModel, self).save(self)
-
-        # Does the object exist in ZFS? 
-        try:
-            zfs_ret = zfs.dataset.list( name )
-            zfs_existing = True
-        except( Exception ):
-            zfs_existing = False
-
-        # If so, can we destroy it?
-        if zfs_existing == True:
-            try:
-                logging.info( "Destroying %s '%s' [existing=%s]", zfs_type, name, zfs_existing )
-                zfs.dataset.destroy( name )
-            except:
-                raise Exception( "Failed to delete existing " + zfs_type + " in ZFS '%s', not deleting from DB", name )
-        # Delete from DB
-        super( ZFSBackedModel, self ).delete( *args, **kwargs )
-
-    def path( self, start=0, len=None ):
-        """ Splits name of object into paths starting at index start """
-        return self.name.split( '/' )[start:len]
+# Start blank, add in defaults. At the bottom of this file customizations are done.
+ZFS_TYPE_MAP = {}
+ZFS_TYPE_MAP.update(zfs.objects.ZFS_TYPE_MAP)
 
 
-class Pool( ZFSBackedModel ):
-    _zfs_type = 'pool'
-    name = models.CharField( max_length=128, unique=True )
-
-    last_modified = models.DateTimeField( auto_now=True )
-    delegation = models.BooleanField()
-    listsnapshots = models.BooleanField()
-    capacity = models.CharField( max_length=8 )
-    cachefile = models.CharField( max_length=255 )
-    free = models.CharField( max_length=32 )
-    ashift = models.IntegerField()
-    autoreplace = models.BooleanField()
-    bootfs = models.CharField( max_length=255 )
-    dedupditto = models.IntegerField()
-    dedupratio = models.CharField( max_length=32 )
-    health = models.CharField( max_length=32 )
-    failmode = models.CharField( max_length=32 )
-    version = models.IntegerField()
-    autoexpand = models.BooleanField()
-    readonly = models.BooleanField()
-    allocated = models.CharField( max_length=32 )
-    guid = models.CharField( max_length=32, unique=True )
-    altroot = models.CharField( max_length=255 )
-    size = models.CharField( max_length=32 )
-
-    def __unicode__( self ):
+class ReprMixIn(object):
+    def __repr__(self):
+        for k in ['name', 'guid', 'id']:
+            name = getattr(self, k, None)
+            if name:
+                break
+        return "<%s: %s>" % (self.__class__.__name__, name)
+    def __unicode__(self):
         return self.name
 
-    @property
-    def zfs( self ):
-        """ Returns ZFS object for this dataset """
-        zpool_list = zfs.pool.list( self.name )
-        return zpool_list[self.name]
+class BaseMixIn(ReprMixIn):
+    pass
+
+#class BaseDocument(BaseMixIn, m.Document):
+#    meta = {'abstract': True,}
+
+
+"""
+Property
+"""
+
+class PropertyDocument(BaseMixIn, m.EmbeddedDocument):
+    meta = {'abstract': True, }
+    name = m.StringField(required=True, unique=True)
+    value = m.StringField()
+
+    #created = m.DateTimeField(default=datetime.now())
+    ## TODO Override validation and ensure modified gets updated on modification
+    #modified = m.DateTimeField(default=datetime.now())
+
+class Property(PropertyDocument):
+    pass
+
+
+"""
+Base
+"""
+
+class zfsBaseDocument(BaseMixIn, m.Document):
+    meta = {'abstract': True,
+            'ordering': ['-created']}
+    name = m.StringField(required=True, unique=True)
+    #type = m.StringField(required=True)
+    #name = m.StringField()
+    # TODO Need to make this store as a dict in parent too
+    props = m.MapField(m.EmbeddedDocumentField(Property))
+    #misc = m.DictField()
+    importing = m.BooleanField()
+
+    created = m.DateTimeField(default=datetime.now())
+    # TODO Override validation and ensure modified gets updated on modification
+    modified = m.DateTimeField(default=datetime.now())
+    enabled = m.BooleanField()
+
+    def __init__(self, *args, **kwargs):
+        # Apparently m.Document accepts no init *args
+        # for cls in self.
+        #BaseMixIn.__init__()
+        return super(zfsBaseDocument, self).__init__(**kwargs)
+
+class zfsBase(zfs.objects.zfsBase):
+    ZFS_TYPE_MAP = ZFS_TYPE_MAP
+
+    def exists(self, force_check=False):
+        """
+        Checks if object exists.
+        If force_check=True, don't assume existence if object is in DB; always check on the filesystem level.
+        """
+        if not force_check and getattr(self, 'id', None):
+            return True
+        else:
+            return super(zfsBase, self).exists()
+            #return zfs.objects.zfsBase.exists(self)
+
+    #@classmethod
+    #def _list_class(self, *args, **kwargs):
+    #    ######################################
+    #    #### FUCKIN HACKERY DONT DO THIS #####
+    #    ######################################
+    #    ret = super(zfsBase, self).list(*args, **kwargs)
+    #    if ret:
+    #        if isinstance(ret, list):
+    #            for v in ret:
+    #                if getattr(v, 'reload'):
+    #                    v.reload()
+    #    return ret
+    #    return zfs.objects.zfsBase.exists(self)
+
+"""
+VDevs
+"""
+
+class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
+    meta = {'abstract': True, }
+            #'ordering': ['-created']}
+
+    #VDEV_TYPES=['root', 'mirror', 'disk']
+    #type = m.StringField(required=True, choices=VDEV_TYPES)
+    #vdev_id = m.IntField(unique=True, primary_key=True)
+    vdev_id = m.IntField()
+    guid = m.StringField(unique=True)
+
+    created = m.DateTimeField(default=datetime.now())
+    ## TODO Override validation and ensure modified gets updated on modification
+    modified = m.DateTimeField(default=datetime.now())
+
+class VDevRootDocument(VDevBaseDocument):
+    meta = {'abstract': True, }
+    #pool_guid = m.StringField()
+    #vdev_id = m.IntField()
+    state = m.IntField()
+    txg = m.IntField()
+
+class VDevRoot(VDevRootDocument):
+    pass
+
+
+
+class VDevPoolDocument(VDevBaseDocument):
+    meta = {'abstract': True, }
+    version = m.IntField()
+    name = m.StringField()
+    state = m.IntField()
+    txg = m.IntField()
+    hostname = m.StringField()
+
+    vdev_children = m.IntField()
+    vdev_tree = m.MapField(m.EmbeddedDocumentField(VDevRoot))
+
+class VDevPool(VDevPoolDocument):
+    #def children(self):
+    #    pass
+    pass
+
+
+
+class VDevChildDocument(VDevBaseDocument):
+    meta = {'abstract': True, }
+    ashift = m.IntField()
+    asize = m.IntField()
+    create_txg = m.IntField()
+    # Only on mirrored vdevs
+    DTL = m.IntField()
+    resilvering = m.IntField()
+    is_log = m.IntField()
+    metaslab_array = m.IntField()
+    metaslab_shift = m.IntField()
+
+class VDevDiskDocument(VDevChildDocument):
+    meta = {'abstract': True, }
+    path = m.StringField()
+    whole_disk = m.IntField()
+
+class VDevDisk(VDevDiskDocument):
+    pass
+
+class VDevMirrorDocument(VDevChildDocument):
+    meta = {'abstract': True, }
+    children = m.ListField(m.EmbeddedDocumentField(VDevDisk))
+
+class VDevMirror(VDevMirrorDocument):
+    pass
+
+
+VDEV_TYPE_MAP = {'root': None,
+                 'mirror': VDevMirror,
+                 'disk': VDevDisk, }
+
+
+"""
+Pool
+"""
+
+class PoolDocument(zfsBaseDocument):
+    meta = {'collection': 'pools',
+            'abstract': True, }
+    version = m.IntField()
+    state = m.IntField()
+    txg = m.IntField()
+    #guid = m.StringField(unique=True, required=True, primary_key=True)
+    guid = m.StringField(unique=True)
+    hostname = m.StringField()
+    vdevs = m.ListField(m.EmbeddedDocumentField(VDevChildDocument))
+
+    VDEV_TYPE_MAP = VDEV_TYPE_MAP
 
     @property
-    def filesystem( self ):
-        """ Returns the matching filesystem for Pool """
-        return Filesystem.objects.get( pool_id=self.id, name=self.name )
+    def filesystem(self):
+        """ Returns the matching Filesystem for this Pool """
+        assert self.name, "Cannot get filesystem for unnamed Pool"
+        #obj, created = self.ZFS_TYPE_MAP['filesystem'].objects.get_or_create(name=self.name, pool=self)
+        obj, created = self.ZFS_TYPE_MAP['filesystem'].objects.get_or_create(name=self.name, pool=self, auto_save=False)
+        obj.guid = obj.get('guid')['value']
+        return obj
 
-    def filesystems( self, **kwargs ):
-        """ Lists filesystems of this pool """
-        return Filesystem.objects.filter( type='filesystem', pool_id=self.id, **kwargs )
+    def reload_zdb(self):
+        """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
+        z = zfs.cmd.ZdbCommand('-C', '-v')
+        ret = z(ofilter=zfs.cmd.SafeYamlFilter)
+        ret = ret[self.name]
+        self._parse_zdb(ret)
 
-    def filesystem_create( self, name, **kwargs ):
-        """ Creates a filesystem in the pool """
-        logging.info( 'Request to create filesystem (%s) on pool (%s)', name, self.name )
-        # Get DB entry ready (and validate data)
-        filesystem = Filesystem( name=name, pool_id=self.id )
-        filesystem.save()
-        # Return saved filesystem object
-        return filesystem
+    def _parse_zdb(self, ret):
+        """ Parses pool status and vdev info from given zdb data """
+        # Basic info
+        # hostname, vdev_children, vdev_tree, name(single quoted)
+        self.guid = unicode(ret['pool_guid'])
+        self.state = ret['state']
+        self.txg = ret['txg']
+        self.version = ret['version']
 
-    def iostat( self, **kwargs ):
-        """ Returns newly generated ZFS IOStats """
-        zpool_iostat = zfs.pool.iostat( self.name, **kwargs )
-        return zpool_iostat[self.name]
+        # Just a count
+        vdev_children = ret['vdev_children']
 
+        # VDev parser
+        self._parse_zdb_vdev_tree(ret['vdev_tree'])
 
-class Pool_IOStat( models.Model ):
-    pool = models.ForeignKey( Pool )
+    def _parse_zdb_vdev_tree(self, cur):
 
-    timestamp = models.DateTimeField()
-    timestamp_end = models.DateTimeField()
+        def parse_vdev(cls, data):
+            obj = {}
+            data['vdev_id'] = data.pop('id', None)
+            for v in cls._fields.keys():
+                if v == 'id':
+                    continue
+                if v in data:
+                    obj[v] = unicode(data[v])
+            return cls(**obj)
 
-    alloc = models.FloatField()
-    free = models.FloatField()
-    bandwidth_read = models.IntegerField()
-    bandwidth_write = models.IntegerField()
-    iops_read = models.IntegerField()
-    iops_write = models.IntegerField()
+        obj_type = cur['type']
+        obj_cls = self.VDEV_TYPE_MAP[obj_type]
+        if obj_cls:
+            obj = parse_vdev(obj_cls, cur)
+        else:
+            obj = None
+        children = []
+
+        # Don't look for children with a type of disk, cause disks don't let disks have disks
+        if obj_type in ['mirror', 'root']:
+            # Walk through recursively
+            for v in cur.itervalues():
+                if isinstance(v, dict):
+                    cobj = self._parse_zdb_vdev_tree(cur=v)
+                    children.append(cobj)
+                    #children.insert(cobj.id, cobj)
+
+        if obj:
+            obj.children = children
+            return obj
+        elif obj_type == 'root':
+            self.vdevs = children
+        else:
+            raise Exception("Could not parse VDev tree")
+
+class Pool(PoolDocument, zfs.objects.PoolBase, zfsBase):
+    pass
+
+"""
+PoolIOStat
+"""
+
+# TODO Get rid of this once and for all, use cube instead
+class PoolIOStatDocument(m.Document, BaseMixIn):
+    meta = {'abstract': True, }
+            #'collection': 'pool_io_stat', }
+    pool = m.ReferenceField(Pool)
+
+    timestamp = m.DateTimeField()
+    timestamp_end = m.DateTimeField()
+
+    alloc = m.FloatField()
+    free = m.FloatField()
+    bandwidth_read = m.IntField()
+    bandwidth_write = m.IntField()
+    iops_read = m.IntField()
+    iops_write = m.IntField()
 
     def __unicode__( self ):
-        return self.pool.name + '_' + self.timestamp.strftime( '%F_%T' )
+        return self.pool.name + '_' + self.timestamp.strftime('%F_%T')
 
+class PoolIOStat(PoolIOStatDocument):
     def timestamp_epoch( self ):
-        return self.timestamp.strftime( '%s' )
+        return self.timestamp.strftime('%s')
 
 
-class FilesystemManager( models.Manager ):
-    def get_query_set( self ):
-        return super( FilesystemManager, self ).get_query_set().filter( type='filesystem', enabled=True )
-
-class VolumeManager( models.Manager ):
-    def get_query_set( self ):
-        return super( VolumeManager, self ).get_query_set().filter( type='volume', enabled=True )
-
-class SnapshotManager( models.Manager ):
-    def get_query_set( self ):
-        return super( SnapshotManager, self ).get_query_set().filter( type='snapshot', enabled=True )
+# Old alias, temporary cause I'm lazy
+Pool_IOStat = PoolIOStat
 
 
-class Dataset( ZFSBackedModel ):
-    class Meta:
-        ordering = ['name', 'creation']
-    _zfs_type = 'dataset'
 
-    name = models.CharField( max_length=128, unique=True )
-    last_modified = models.DateTimeField( auto_now=True )
-    basename = models.CharField( max_length=128 )
-    pool = models.ForeignKey( Pool )
-
-    setuid = models.BooleanField()
-    referenced = models.CharField( max_length=32 )
-    zoned = models.BooleanField()
-    primarycache = models.CharField( max_length=32 )
-    logbias = models.CharField( max_length=32 )
-    creation = models.DateTimeField()
-    sync = models.CharField( max_length=32 )
-    dedup = models.BooleanField()
-    sharenfs = models.CharField( max_length=255 )
-    usedbyrefreservation = models.CharField( max_length=32 )
-    sharesmb = models.CharField( max_length=255 )
-    canmount = models.CharField( max_length=32 )
-    mountpoint = models.CharField( max_length=255 )
-    casesensitivity = models.CharField( max_length=32 )
-    utf8only = models.BooleanField()
-    xattr = models.BooleanField()
-    mounted = models.BooleanField()
-    compression = models.CharField( max_length=32 )
-    usedbysnapshots = models.CharField( max_length=32 )
-    copies = models.IntegerField()
-    aclinherit = models.CharField( max_length=32 )
-    compressratio = models.CharField( max_length=32 )
-    readonly = models.BooleanField()
-    version = models.IntegerField()
-    normalization = models.CharField( max_length=32 )
-    type = models.CharField( max_length=32 )
-    secondarycache = models.CharField( max_length=32 )
-    refreservation = models.CharField( max_length=32 )
-    available = models.CharField( max_length=32 )
-    used = models.CharField( max_length=32 )
-    Exec = models.BooleanField()
-    refquota = models.CharField( max_length=32 )
-    refcompressratio = models.CharField( max_length=32 )
-    quota = models.CharField( max_length=32 )
-    vscan = models.BooleanField()
-    reservation = models.CharField( max_length=32 )
-    atime = models.BooleanField()
-    recordsize = models.CharField( max_length=32 )
-    usedbychildren = models.CharField( max_length=32 )
-    usedbydataset = models.CharField( max_length=32 )
-    mlslabel = models.CharField( max_length=255 )
-    checksum = models.CharField( max_length=32 )
-    devices = models.BooleanField()
-    nbmand = models.BooleanField()
-    snapdir = models.CharField( max_length=255 )
-
-    def __unicode__( self ):
-        return self.name
-
-    @property
-    def zfs( self ):
-        """ Returns ZFS object for this dataset """
-        zfs_list = zfs.dataset.list( self.name )
-        return zfs_list[self.name]
+"""
+Dataset
+"""
 
 
-class Filesystem( Dataset ):
-    """ Filesystem """
-    class Meta:
-        proxy = True
-    _zfs_type = 'filesystem'
-    objects = FilesystemManager()
+class DatasetDocument(zfsBaseDocument):
+    meta = {'collection': 'datasets',
+            'allow_inheritance': True, }
+            #'abstract': True, }
+    pool = m.ReferenceField(Pool,
+                            reverse_delete_rule=m.CASCADE)
+    parent = m.GenericReferenceField()
+    #parent = m.ReferenceField(DatasetDocument,
+    #                          reverse_delete_rule=m.CASCADE)
+    guid = m.StringField(unique=True)
 
-    def snapshots( self, **kwargs ):
-        """ Lists snapshots of this filesystem """
-        # Only filesystems can have snapshots
-        return Snapshot.objects.filter( type='snapshot', name__startswith=self.name + '@', **kwargs )
+    #def __init__(self, *args, **kwargs):
+    #    return super(DatasetDocument, self).__init__(*args, **kwargs)
 
-    def snapshot( self, snapshot_name, **kwargs ):
-        """ Snapshot this filesystem """
-        logging.info( 'Snapshot %s on filesystem %s', snapshot_name, self.name )
-        name = self.name + '@' + snapshot_name
-        # Get DB entry ready (and validate data)
-        snapshot = Snapshot( name=name, pool_id=self.pool_id )
-        snapshot.save()
-        # Return saved snapshot object
-        return snapshot
+    #def children(self, **kwargs):
+    #    return super(DatasetDocument, self).children(**kwargs)
 
+class DatasetBase(zfs.objects.DatasetBase):
+    pass
 
-class Volume( Dataset ):
-    """ Filesystem """
-    class Meta:
-        proxy = True
-    _zfs_type = 'volume'
-    objects = VolumeManager()
+class Dataset(DatasetDocument, DatasetBase, zfsBase):
+    pass
 
-    def snapshots( self, **kwargs ):
-        """ Lists snapshots of this filesystem """
-        # Only filesystems can have snapshots
-        return Snapshot.objects.filter( type='snapshot', name__startswith=self.name + '@', **kwargs )
+class SnapshottableDatasetBase(zfs.objects.SnapshottableDatasetBase):
+    pass
 
-    def snapshot( self, snapshot_name, **kwargs ):
-        """ Snapshot this filesystem """
-        logging.info( 'Snapshot %s on filesystem %s', snapshot_name, self.name )
-        name = self.name + '@' + snapshot_name
-        # Get DB entry ready (and validate data)
-        snapshot = Snapshot( name=name, pool_id=self.pool_id )
-        snapshot.save()
-        # Return saved snapshot object
-        return snapshot
+class FilesystemDocument(DatasetDocument):
+    #meta = {'abstract': True,}
+    pass
+
+class FilesystemBase(zfs.objects.FilesystemBase):
+    pass
+
+class Filesystem(FilesystemDocument, FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase):
+#class Filesystem(FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase, FilesystemDocument):
+    pass
+
+#class Filesystem(FilesystemDocument, SnapshottableDatasetBase, zfs.objects.FilesystemBase, DatasetBase, zfsBase):
+#    pass
 
 
-class Snapshot( Dataset ):
-    """ Filesystem snapshot """
-    _zfs_type = 'snapshot'
-    class Meta:
-        proxy = True
-        ordering = ['-creation']
-        get_latest_by = 'creation'
-    objects = SnapshotManager()
 
-    @property
-    def snapshot_name( self ):
-        """ Returns the snapshot name """
-        return self.basename.rsplit( '@', 1 )[1]
+class VolumeDocument(DatasetDocument):
+    #meta = {'abstract': True,}
+    pass
 
-    @property
-    def filesystem_name( self ):
-        """ Returns the associated filesystem name """
-        return self.basename.rsplit( '@', 1 )[0]
-
-    @property
-    def filesystem( self ):
-        """ Returns the associated filesystem for this snapshot """
-        return Filesystem.objects.get( name=self.filesystem_name )
+class Volume(VolumeDocument, SnapshottableDatasetBase, zfs.objects.VolumeBase, DatasetBase, zfsBase):
+    pass
 
 
+
+class SnapshotDocument(DatasetDocument):
+    #meta = {'abstract': True,}
+    pass
+
+class Snapshot(SnapshotDocument, zfs.objects.SnapshotBase, DatasetBase, zfsBase):
+    pass
+
+
+"""
+ZFS Object Map
+"""
+
+ZFS_TYPE_MAP.update({
+    'pool': Pool,
+    'dataset': Dataset,
+    'filesystem': Filesystem,
+    'volume': Volume,
+    'snapshot': Snapshot,
+    #'properties': zfs.objects.Properties,
+})

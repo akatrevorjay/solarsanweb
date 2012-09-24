@@ -1,14 +1,6 @@
+{% extends 'storage/dataset_detail.html' %}
 
-<!-- Breadcrumb update -->
-<div class="pool-breadcrumb-replace hide">
-    <ul>
-        {% with object = pool %}
-            {% set object_type = 'pool' %}
-            {% include 'solarsan/pool_breadcrumb.html' %}
-        {% endwith %}
-    </ul>
-</div>
-
+{% block dataset_detail %}
 <!-- Dataset Detail -->
 {% set pool_path = pool.path() %}
 <div class="row">
@@ -63,4 +55,4 @@
 <div class="row">
     <div id="dataset-detail-content" class="hero-unit"></div>
 </div>
-
+{% endblock %}

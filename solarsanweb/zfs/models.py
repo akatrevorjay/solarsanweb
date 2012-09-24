@@ -1,6 +1,7 @@
 
 import mongoengine as m
 from datetime import datetime
+#from storage.models import PropertyDocument
 
 """
 Signal example
@@ -124,8 +125,6 @@ class PoolDocument(zfsBaseDocument):
     hostname = m.StringField()
     #vdev_children = m.IntField()
     vdev_tree = m.MapField(field=m.EmbeddedDocumentField(VDevRoot))
-    pass
-
 
 
 class DatasetDocument(zfsBaseDocument):

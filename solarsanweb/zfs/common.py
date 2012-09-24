@@ -7,9 +7,9 @@ import datetime, time
 Exceptions
 """
 
-class Error(Exception):
-    """ Base Error """
-    pass
+#class Error(Exception):
+#    """ Base Error """
+#    pass
 
 
 """

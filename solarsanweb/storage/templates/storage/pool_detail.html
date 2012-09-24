@@ -13,6 +13,7 @@
 
 {% block content %}
 
+<!-- Pool Detail Title -->
 <div class="row">
     <div class="span12">
         <ul id="pool-breadcrumb" class="breadcrumb">
@@ -25,24 +26,19 @@
     </div>
 </div>
 
+<!-- Pool Detail -->
 <div class="row">
     <div class="span3">
         <div class="well sidebar-nav">
             <ul class="nav nav-list dataset-list">
                 <li class="nav-header">
-                    Pool
-                </li>
-                <li class="dataset-select">
-                    <a href="/storage/pools/info/{{ pool.name|urlize }}">pool: {{ pool.name }}</a>
-                </li>
-
-                <li class="nav-header">
-                    Datasets
+                    Storage
                 </li>
                 {% for dataset in pool.filesystems().order_by('name') %}
                 {% with dataset_path = dataset.path() %}
                 <li class="dataset-select">
                     <a href="/storage/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.pool.size }}"> {%- for path in dataset_path[1:] %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor -%}
+                    {% if dataset_path|count > 1 %}<span style="color: black">/</span>{% endif -%}
                     {{ dataset_path|last }} </a>
                 </li>
                 {% endwith %}
@@ -56,9 +52,12 @@
     </div>
     <div class="span9">
         <div id="dataset-info" style="padding-left: 10px">
-            {% with dataset = pool.filesystem %}
-            {% include 'storage/dataset_detail.html' %}
-            {% endwith %}
+            {% block dataset_info %}
+                {% with dataset = pool.filesystem %}
+                {% include 'storage/dataset_detail.html' %}
+                {% endwith %}
+            {% endblock %}
+            <pre>{{ request|pprint }}</pre>
         </div>
     </div>
 </div>
@@ -83,10 +82,6 @@
                             Allowed characters: [A-z0-9_/-]
                         </p>
                     </div>
-                    <label class="control-label" for="cluster">Clustered?</label>
-                    <div class="controls">
-                        <input type="checkbox" class="input-xlarge" id="cluster" checked="checked">
-                    </div>
                 </div>
             </div>
         </fieldset>
@@ -96,51 +91,6 @@
         <a href="#" class="btn btn-primary">Add</a>
     </div>
 </div>
-
-<script type="text/javascript">
-    /* ___________
-     * pool_detail
-     */
-!function ($) {
-
-        /*
-         * dataset-select
-         */
-
-        function dataset_click_apply() {
-            $(".dataset-select").not('.dataset-select-clickery').click(function(event) {
-                event.preventDefault();
-
-                $(this).parent().children(".active").removeClass("active", "fast");
-                $(this).addClass("active");
-
-                $.ajax({
-                    type : "GET",
-                    url : $(this).find('a:first').attr('href'),
-                    context : $(this),
-                }).done(function(data) {
-                    $("#dataset-info").html(data);
-                    var breadcrumb_html = $('#dataset-info .pool-breadcrumb-replace ul').html();
-                    $('#dataset-info .pool-breadcrumb-replace ul li').not('.static').remove();
-                    $("#pool-breadcrumb li").not('.static').remove();
-                    $("#pool-breadcrumb").append(breadcrumb_html);
-                    delete breadcrumb_html;
-
-                    dataset_click_apply();
-                });
-            }).addClass('dataset-select-clickery').children('a').tooltip({
-                placement : 'right'
-            });
-        }
-
-        dataset_click_apply();
-
-        // Act as if the first dataset has been clicked
-        $(".dataset-list .dataset-select").first().addClass('active');
-        //click();
-
-}(window.jQuery);
-</script>
 
 {% endblock %}
 

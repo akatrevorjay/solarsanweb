@@ -1,10 +1,6 @@
+{% extends 'storage/pool_detail.html' %}
 
-<!-- Breadcrumb update -->
-<div class="pool-breadcrumb-replace hide">
-    <ul>
-        {% include 'storage/pool_breadcrumb.html' %}
-    </ul>
-</div>
+{% block dataset_info %}
 
 <!-- Dataset Detail -->
 {% set dataset_path = dataset.path() %}
@@ -18,37 +14,31 @@
                     <span class="icon-bar"></span>
                 </a>
 
-                <a class="brand dataset-detail-select" href="#">{{ dataset_path[0] }} {{ dataset.path(1)|join('/') }}</a>
+                <a class="brand" href="#">{{ dataset_path[0] }} {{ dataset.path(1)|join('/') }}</a>
 
                 <div class="nav-collapse">
                     <ul class="nav dataset-detail-nav">
                         {% if dataset.pool.name == dataset.name %}
-                            <li class="dataset-detail-select"><a href="/storage/pools/health/{{ dataset.pool.name|urlize }}">Pool Health</a></li>
-                            <li class="dataset-detail-select"><a href="/analytics/pool/graphs/{{ dataset.pool.name|urlize }}">Pool Graphs</a></li>
-
-                            {#<li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="/storage/pool/health/{{ dataset.pool.name|urlize }}">Health</a></li>
-                                    <li><a href="/storage/pool/analytics/{{ dataset.pool.name|urlize }}">Analytics</a></li>
-                                </ul>
-                            </li>#}
+                            <li><a href="/storage/pools/health/{{ dataset.pool.name|urlize }}">Pool Health</a></li>
                         {% endif %}
-
-                        <li class="dataset-detail-select"><a href="/storage/datasets/health/{{ dataset.name|urlize }}">Health</a></li>
-                        <li class="dataset-detail-select"><a href="/storage/datasets/snapshots/{{ dataset.name|urlize }}">Snapshots</a></li>
+                        <li><a href="/storage/datasets/health/{{ dataset.name|urlize }}">Health</a></li>
+                        <li><a href="/storage/datasets/snapshots/{{ dataset.name|urlize }}">Snapshots</a></li>
                     </ul>
 
                     <ul class="nav pull-right">
                          <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li class="dataset-detail-select"><a href="/storage/datasets/snapshot/{{ dataset.name|urlize }}">Snapshot</a></li>
-                                {#<li><a href="#">Clone</a></li>#}
-                                <li class="divider"></li>
-                                <li class="dataset-detail-select"><a href="/storage/datasets/destroy/{{ dataset.name|urlize }}">Destroy</a></li>
-                                {#<li class="divider"></li>
-                                <li><a href="#">Separated link</a></li>#}
+                                {% if dataset.pool.name == dataset.name %}
+                                    <li><a href="/storage/datasets/snapshot/{{ dataset.name|urlize }}">Snapshot</a></li>
+                                {% else %}
+                                    <li><a href="/storage/datasets/snapshot/{{ dataset.name|urlize }}">Snapshot</a></li>
+                                    {#<li><a href="#">Clone</a></li>#}
+                                    <li class="divider"></li>
+                                    <li><a href="/storage/datasets/destroy/{{ dataset.name|urlize }}">Destroy</a></li>
+                                    {#<li class="divider"></li>
+                                    <li><a href="#">Separated link</a></li>#}
+                                {% endif %}
                             </ul>
                         </li>
                    </ul>
@@ -60,94 +50,17 @@
 
 <div class="row">
     <div id="dataset-detail-content" class="well">
-        {% if dataset.name == dataset.pool.name %}
-            {% with pool = dataset.pool %}
-            {% include 'storage/pool_health.html' %}
-            {% endwith %}
-        {% else %}
-            {% include 'storage/dataset_health.html' %}
-        {% endif %}
+        {% block dataset_detail %}
+            {% if dataset.name == dataset.pool.name %}
+                {% with pool = dataset.pool %}
+                {% include 'storage/pool_health.html' %}
+                {% endwith %}
+            {% else %}
+                {% include 'storage/dataset_health.html' %}
+            {% endif %}
+        {% endblock %}
     </div>
 </div>
 
-<script type="text/javascript">
-/* ______________
- * dataset_detail
- */
-!function ($) {
-
-/*
- * dataset-detail-select
- */
-
-function dataset_detail_click_apply() {
-    $(".dataset-detail-select").not('.dataset-detail-select-clickery').click(function(event) {
-        event.preventDefault();
-
-        $(this).parent().children(".active").removeClass("active", "fast");
-        $(this).addClass("active");
-
-        $.ajax({type: "GET",
-            url: $(this).find('a:first').attr('href'),
-            context: $(this),
-            }).done(function(data) {
-                $("#dataset-detail-content").html(data);
-                /*var breadcrumb_html = $('#dataset-info .pool-breadcrumb-replace ul').html();
-                $('#dataset-detail-content .pool-breadcrumb-replace ul li').not('.static').remove();
-                $("#pool-breadcrumb li").not('.static').remove();
-                $("#pool-breadcrumb").append(breadcrumb_html);
-                delete breadcrumb_html;
-
-                dataset_click_apply();*/
-            });
-        }).addClass('dataset-detail-select-clickery');
-}
-dataset_detail_click_apply();
-
-// Act as if the first dataset has been clicked
-$(".dataset-detail-list .dataset-detail-select").first().addClass('active'); //click();
-
-$.gritter.add({
-    // (string | mandatory) the heading of the notification
-    title: 'This is a notice!',
-    // (string | mandatory) the text inside the notification
-    text: 'This will fade out after a certain amount of time.'
-});
-
-$.gritter.add({
-    // (string | mandatory) the heading of the notification
-    title: 'This is a regular notice!',
-    // (string | mandatory) the text inside the notification
-    text: 'This will fade out after a certain amount of time.',
-    // (string | optional) the image to display on the left
-    image: 'http://a0.twimg.com/profile_images/59268975/jquery_avatar_bigger.png',
-    // (bool | optional) if you want it to fade out on its own or just sit there
-    sticky: false, 
-    // (int | optional) the time you want it to be alive for before fading out (milliseconds)
-    time: 8000,
-    // (string | optional) the class name you want to apply directly to the notification for custom styling
-    class_name: 'my-class',
-        // (function | optional) function called before it opens
-    before_open: function(){
-        /*alert('I am a sticky called before it opens');*/
-    },
-    // (function | optional) function called after it opens
-    after_open: function(e){
-        /*alert("I am a sticky called after it opens: \nI am passed the jQuery object for the created Gritter element...\n" + e);*/
-    },
-    // (function | optional) function called before it closes
-    before_close: function(e, manual_close){
-        // the manual_close param determined if they closed it by clicking the "x"
-        /*alert("I am a sticky called before it closes: I am passed the jQuery object for the Gritter element... \n" + e);*/
-    },
-    // (function | optional) function called after it closes
-    after_close: function(){
-        /*alert('I am a sticky called after it closes');*/
-    }
-});
-
-
-}(window.jQuery);
-</script>
-
+{% endblock %}
 

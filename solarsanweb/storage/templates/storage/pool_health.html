@@ -1,4 +1,6 @@
+{% extends 'storage/dataset_detail.html' %}
 
+{% block dataset_detail %}
 <table class="table table-striped">
     <caption>
         <b class="icon-help"></b> <button class="btn btn-primary">Pool: {{ pool.name }}</button>
@@ -96,13 +98,13 @@
                 <button class="btn btn-mini btn-success">Add</button>
             </td>
         </tr>
- 
+
    </tbody>
 </table>
-
 
 
 <pre>
 Pool: {{ pool.__dict__|pprint }}
 </pre>
 
+{% endblock %}

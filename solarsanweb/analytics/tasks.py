@@ -439,13 +439,13 @@ def rrd_update(*args, **kwargs):
                     #ca.arrow = '#FFFFFF'
 
                     ## Now that we've got everything set up, let's make a graph
-                    #g = Graph('dummy.png', end=endTime, vertical_label='Bits', 
+                    #g = Graph('dummy.png', end=endTime, vertical_label='Bits',
                         #color=ca)
                     #g.data.extend([def1, def2, cdef1, cdef2, area2, area1])
                     #g.title = '"In- and Out-bound Traffic Across Local Router"'
                     ##g.logarithmic = ' '
 
-                    ## Iterate through the different resoltions for which we want to 
+                    ## Iterate through the different resoltions for which we want to
                     ## generate graphs.
                     #for time, step in times:
                         ## First, the small graph

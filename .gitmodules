@@ -262,3 +262,9 @@
 [submodule "solarsanweb/static/3rd/slickgrid"]
 	path = solarsanweb/static/3rd/slickgrid
 	url = https://github.com/mleibman/SlickGrid.git
+[submodule "vendor-local/pkgs/django-mongogeneric"]
+	path = vendor-local/pkgs/django-mongogeneric
+	url = git://github.com/jschrewe/django-mongogeneric.git
+[submodule "vendor-local/pkgs/django-mongodbforms"]
+	path = vendor-local/pkgs/django-mongodbforms
+	url = git://github.com/jschrewe/django-mongodbforms.git

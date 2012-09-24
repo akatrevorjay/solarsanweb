@@ -11,7 +11,7 @@ class PoolDocumentAdmin(admin.DocumentAdmin):
 class DatasetDocumentAdmin(admin.DocumentAdmin):
     pass
 
-admin.site.register(PoolDocument, PoolDocumentAdmin)
-admin.site.register(DatasetDocument, DatasetDocumentAdmin)
+#admin.site.register(PoolDocument, PoolDocumentAdmin)
+#admin.site.register(DatasetDocument, DatasetDocumentAdmin)
 
 
