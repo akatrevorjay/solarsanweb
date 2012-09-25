@@ -68,11 +68,10 @@ class PoolHealthDetailView(PoolView, ZfsDetailView):
     def get_context_data(self, **kwargs):
         ctx = super(PoolHealthDetailView, self).get_context_data(**kwargs)
 
-        ctx_obj_name = self.context_object_name
-        obj = ctx[ctx_obj_name]
-        zobj = ctx[ctx_obj_name] = self.zfs_obj(obj.name)
-
-        ctx['dataset'] = zobj.filesystem
+        #ctx_obj_name = self.context_object_name
+        #obj = ctx[ctx_obj_name]
+        #zobj = ctx[ctx_obj_name] = self.zfs_obj(obj.name)
+        #ctx['dataset'] = obj.filesystem
 
         return ctx
 

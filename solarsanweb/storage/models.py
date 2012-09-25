@@ -233,8 +233,13 @@ class PoolDocument(zfsBaseDocument):
         assert self.name, "Cannot get filesystem for unnamed Pool"
         #obj, created = self.ZFS_TYPE_MAP['filesystem'].objects.get_or_create(name=self.name, pool=self)
         obj, created = self.ZFS_TYPE_MAP['filesystem'].objects.get_or_create(name=self.name, pool=self, auto_save=False)
-        obj.guid = obj.get('guid')['value']
+        if created:
+            obj.guid = obj.get('guid')['value']
+            obj.save()
         return obj
+
+    def filesystems(self):
+        return Filesystem.objects.filter(pool=self)
 
     def reload_zdb(self):
         """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
@@ -360,7 +365,12 @@ class Dataset(DatasetDocument, DatasetBase, zfsBase):
     pass
 
 class SnapshottableDatasetBase(zfs.objects.SnapshottableDatasetBase):
-    pass
+    def filesystems(self):
+        return Filesystem.objects.filter(pool=self.pool, name__startswith='%s/' % self.name)
+
+    def snapshots(self):
+        return Snapshot.objects.filter(pool=self.pool, name__startswith='%s/' % self.name)
+
 
 class FilesystemDocument(DatasetDocument):
     #meta = {'abstract': True,}

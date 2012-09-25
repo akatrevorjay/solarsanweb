@@ -34,7 +34,7 @@
                 <li class="nav-header">
                     Storage
                 </li>
-                {% for dataset in pool.filesystems().order_by('name') %}
+                {% for dataset in pool.filesystems() %}
                 {% with dataset_path = dataset.path() %}
                 <li class="dataset-select">
                     <a href="/storage/datasets/detail/{{ dataset.name|urlize }}" data-content="whoa" rel="tooltip" title="{{ dataset.used }} / {{ dataset.pool.size }}"> {%- for path in dataset_path[1:] %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor -%}

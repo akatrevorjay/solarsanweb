@@ -475,6 +475,7 @@ class PoolBase(object):
     #    return super(PoolBase, self).__init__(name, *args, **kwargs)
 
     def children(self, **kwargs):
+        kwargs['skip'] = None
         return self.filesystem.children(**kwargs)
 
     @property
@@ -606,9 +607,10 @@ class DatasetBase(object):
         assert hasattr(self, 'name')
         kwargs.update({'depth': kwargs.get('depth', 1),
                        'props': ['name', 'type'],
-                       'skip': self.name,
                        })
         kwargs['self'] = self
+        if not 'skip' in kwargs:
+            kwargs['skip'] = self.name
         ret = self.list(self.name, **kwargs)
         return ret
 

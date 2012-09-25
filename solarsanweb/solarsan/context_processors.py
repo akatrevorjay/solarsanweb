@@ -1,12 +1,10 @@
 
 from django.conf import settings
-import zfs as z
-
+from storage.models import Pool
 
 def pools(request):
     try:
-        pools = z.Pool.dbm.objects.values_list('name')
-        pools = [z.Pool(x) for x in pools]
+        pools = Pool.objects.all()
     except:
         pools = []
 

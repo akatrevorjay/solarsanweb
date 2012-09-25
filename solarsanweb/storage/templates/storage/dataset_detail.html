@@ -3,6 +3,10 @@
 {% block dataset_info %}
 
 <!-- Dataset Detail -->
+{% if not dataset %}
+{% set dataset = pool.filesystem %}
+{% endif %}
+
 {% set dataset_path = dataset.path() %}
 <div class="row">
     <div class="navbar dataset-detail-nav dataset-detail-list">

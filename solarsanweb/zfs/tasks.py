@@ -61,16 +61,15 @@ class PoolIOStats(PeriodicTask):
 Import pool/dataset info from system into DB
 """
 
-
 #class ImportZFSMetadata(Task):
-class Import_ZFS_Metadata2(PeriodicTask):
+class Import_ZFS_Metadata(PeriodicTask):
     run_every = timedelta(minutes=30)
     def run(self, *args, **kwargs):
         for pool in m.Pool.list(ret=list):
             if not getattr(pool, 'id', None):
                 logger.warning("Found new ZFS storage pool '%s'", pool.name)
-                pool.reload_zdb()
-                pool.save()
+            pool.reload_zdb()
+            pool.save()
 
             children = {}
             for k, v in m.ZFS_TYPE_MAP.iteritems():
