@@ -64,41 +64,7 @@ from pypercube.expression import EventExpression, MetricExpression, CompoundMetr
 from pypercube.expression import Sum, Min, Max, Median, Distinct
 from pypercube import time_utils
 
-def render_cube(request, *args, **kwargs):
-    pool = 'rpool'
-    pool = Pool.objects.get(name=pool)
-
-    # Build the Cube connection configuration
-    c = Cube('localhost')
-    # Query for an Event and filter it
-    e = EventExpression('pool_iostat', ['alloc', 'free',
-                                        'bandwidth_read', 'bandwidth_write',
-                                        'iops_read', 'iops_write'],
-                        ).eq('pool', pool.name)
-    #e = EventExpression("timing", ["path", "elapsed_ms"]).startswith('path', '/api/').eq('status', 200)
-    # This is equivalent to the Cube query
-    #   timing(path, elapsed_ms).re('path', '^/api/').eq('status', 200)
-    # Set up some time boundaries
-    stop = time_utils.now()
-    start = time_utils.yesterday(stop)
-    step = time_utils.STEP_1_HOUR
-    # Fetch the matching events, returns Event objects
-    #events = c.get_event(e, start=start, stop=stop, limit=10)
-    #print events
-
-    # Get the elapsed time of successful requests
-    e_time = EventExpression("pool_iostat", "iops_write").eq('pool', pool.name)
-    print e_time
-    # Get the number of requests
-    e_num = EventExpression("pool_iostat").eq('pool', pool.name)
-    print e_num
-    # Get a computed metric, returns Metric objects
-    metrics = c.get_metric(Sum(e_time) / Sum(e_num), start=start, stop=stop, step=step)
-    print metrics
-
-    e_iops = EventExpression("pool_iostat", ['iops_read', 'iops_write']).eq("pool", pool.name)
-
-
+from collections import defaultdict
 
 #@conditional_decorator(not settings.DEBUG, cache_page, 15)
 def render( request, *args, **kwargs ):
@@ -111,18 +77,14 @@ def render( request, *args, **kwargs ):
     step = float( request.GET['step'] )
 
     ret = []
-    values = {}
+    values = defaultdict(list)
 
     ## Pool_IOStat Graph
     if name in ['iops', 'bandwidth', 'usage']:
         if name == 'usage':
             fields = keys = ['alloc', 'free']
         elif name in ['iops', 'bandwidth']:
-            keys = ['read', 'write']
-            fields = ['%s_%s' % ( name, key ) for key in keys ]
-
-        for key in keys:
-            values[key] = []
+            fields = ['%s_%s' % ( name, key ) for key in ['read', 'write'] ]
 
         pool_name = 'rpool'
         pool = Pool.objects.get(name=pool_name)

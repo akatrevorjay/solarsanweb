@@ -66,7 +66,7 @@ draw_graph('{{ graph }}');
 function draw_graph(chart_name) {
 // Wrapping in nv.addGraph allows for '0 timeout render', stors rendered charts in nv.graphs, and may do more in the future... it's NOT required
 nv.addGraph(function() {
-  
+
   //if (nv.graphs.length)
     //nv.graphs[0] = chart;
     //var chart = nv.graphs[0];
@@ -76,8 +76,11 @@ nv.addGraph(function() {
 
     // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the partent chart, so need to chain separately
   chart.xAxis
-    .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
-//    .tickFormat(function(d) { return d3.time.format('%m/%e %I:%M%p')(new Date(d)) });
+    .tickSize(5,5,5)
+    //.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+    //.tickPadding(20)
+    .tickFormat(function(d) { return d3.time.format('%m/%e %I:%M%p')(new Date(d)) });
+    //.rotateLabels(-45);
 
   chart.yAxis
     .tickFormat(d3.format(',.3s'));
@@ -107,9 +110,9 @@ nv.addGraph(function() {
 
   //TODO: Figure out a good way to do this automatically
   nv.utils.windowResize(chart.update);
-  //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
 
 //  return chart;
+  return chart
 });
 }
 
@@ -154,7 +157,7 @@ var n = 4, // number of layers
 
 //format data to our liking, add keys
 var data = stream_layers(n,m).map(function(data, i) {
-  return { 
+  return {
     key: 'Stream' + i,
     values: data
   };
