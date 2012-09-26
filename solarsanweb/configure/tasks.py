@@ -46,28 +46,25 @@ class ClusterAPI(PistonAPI):
 
 class Cluster_Node_Query(Task):
     def run(self, *args, **kwargs):
-        # Setup DB
-        if not hasattr(self, 'col'):
-            self.col = get_database()[ClusterNode.collection_name]
-
         # Probe single host (say after beacon discovery)
-        if kwargs.get('host', None) != None:
-            host = kwargs['host']
-            api = ClusterAPI(host=host)
-            try:
-                probe = api.probe()
-            except:
-                logger.error( 'Cluster discovery (probe \'%s\'): Failed.', host)
-                return False
-            logger.debug( "Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
+        host =  kwargs.get('host')
+        if not host:
+            raise Exception('No host specified')
+        api = ClusterAPI(host=host)
+        try:
+            probe = api.probe()
+        except:
+            logger.error( 'Cluster discovery (probe \'%s\'): Failed.', host)
+            return False
+        logger.debug( "Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
 
-            # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we should do it a layer above.
-            cnode = self.col.ClusterNode.find_one({'hostname': probe['hostname']})
-            if cnode == None:
-                cnode = self.col.ClusterNode()
-            cnode.update(probe)
-            cnode['last_seen'] = timezone.now()
-            cnode.save()
+        # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we should do it a layer above.
+        cnode = ClusterNode.objects.get(hostname=probe['hostname'])
+        if cnode == None:
+            cnode = self.col.ClusterNode()
+        cnode.update(probe)
+        cnode['last_seen'] = timezone.now()
+        cnode.save()
 
 
 class Cluster_Node_Beacon( Task ):

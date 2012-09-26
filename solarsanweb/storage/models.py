@@ -313,8 +313,9 @@ class PoolIOStatDocument(m.Document, BaseMixIn):
             #'collection': 'pool_io_stat', }
     pool = m.ReferenceField(Pool)
 
-    timestamp = m.DateTimeField()
-    timestamp_end = m.DateTimeField()
+    created = m.DateTimeField(default=datetime.now())
+    # TODO Override validation and ensure modified gets updated on modification
+    modified = m.DateTimeField(default=datetime.now())
 
     alloc = m.FloatField()
     free = m.FloatField()
@@ -324,15 +325,13 @@ class PoolIOStatDocument(m.Document, BaseMixIn):
     iops_write = m.IntField()
 
     def __unicode__( self ):
-        return self.pool.name + '_' + self.timestamp.strftime('%F_%T')
+        return self.pool.name + '_' + self.created.strftime('%F_%T')
+
+    def created_epoch( self ):
+        return self.created.strftime('%s')
 
 class PoolIOStat(PoolIOStatDocument):
-    def timestamp_epoch( self ):
-        return self.timestamp.strftime('%s')
-
-
-# Old alias, temporary cause I'm lazy
-Pool_IOStat = PoolIOStat
+    pass
 
 
 

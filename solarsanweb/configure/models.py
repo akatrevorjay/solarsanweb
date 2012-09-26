@@ -5,44 +5,17 @@ from django.utils import timezone
 import datetime
 #import logging
 
-from django_mongokit import connection
-from django_mongokit.document import DjangoDocument
+import mongoengine as m
 
 """
-Config
+Validators
 """
-
-@connection.register
-class ConfigEntry(DjangoDocument):
-    class Meta:
-        verbose_name_plural = 'Configuration Entries'
-    collection_name = 'config'
-    use_dot_notation = True
-
-    structure = {
-        'key': unicode,
-        'val': None,
-        'last_modified': datetime.datetime,
-        'created': datetime.datetime,
-    }
-
-    required_fields = ['key']
-
-    default_values = {
-        'last_modified': timezone.now,
-        'created': timezone.now,
-    }
-
-    indexes = [
-        {'fields': ['key'], 'unique': True},
-    ]
-
-
-"""
-Cluster
-"""
+# TODO Move this elsewhere
 
 import re
+import ipcalc
+import IPy
+
 
 class MinLengthValidator(object):
     def __init__(self, min_length):
@@ -51,7 +24,6 @@ class MinLengthValidator(object):
         if not len(value) >= self.min_length:
             raise Exception('%s must be at least ' + str(self.min_length) + ' characters long.')
 
-import ipcalc, IPy
 
 class IPAddressValidator(object):
     def __init__(self, *args, **kwargs):
@@ -83,32 +55,6 @@ class EmailValidator(RegexValidator):
     regex = re.compile(r'(?:^|\s)[-a-z0-9_.]+@(?:[-a-z0-9]+\.)+[a-z]{2,6}(?:\s|$)', re.IGNORECASE)
 
 
-@connection.register
-class ClusterNode(DjangoDocument):
-    class Meta:
-        verbose_name_plural = 'ClusterNodes'
-    collection_name = 'cluster_nodes'
-    use_dot_notation = True
-
-    structure = {
-        'hostname': unicode,
-        #'uuid': unicode, #uuid.UUID
-        'interfaces': {
-            unicode: {                                  # name
-                unicode: [ (unicode, unicode), ],        # af [ (addr,netmask), ]
-            },
-        },
-        'last_seen': datetime.datetime,
-        'first_seen': datetime.datetime,
-    }
-
-    required_fields = ['hostname',]
-
-    default_values = {
-        'last_seen': timezone.now,
-        'first_seen': timezone.now,
-    }
-
     validators = {
         #'hostname': RegexValidator(r'^[a-z0-9]+$', re.IGNORECASE),
     }
@@ -130,12 +76,19 @@ class ClusterNode(DjangoDocument):
                     #    #assert False
         super(ClusterNode, self).validate(*args, **kwargs)
 
-    indexes = [
-        {'fields': ['hostname'], 'unique': True},
-        #{'fields': ['uuid'], 'unique': True},
-    ]
 
-#connection.register([ClusterNode])
+"""
+Cluster
+"""
+
+class ClusterNode(m.Document):
+    meta = {'collection': 'cluster_nodes',}
+    hostname = m.StringField(required=True, unique=True)
+    # TODO Make this an embedded document
+    interfaces = m.DictField()
+    last_seen = m.DateTimeField()
+    first_seen = m.DateTimeField()
+
 
 
 """
@@ -151,7 +104,8 @@ def convert_netmask_to_cidr(arg):
     return int( IPy.IP('0/%s' % arg, make_net=True).prefixlen() )
 
 ## TODO Fixtures for default network config
-class NetworkInterfaceConfig( models.Model ):
+
+class NetworkInterface(m.Document):
     PROTO_CHOICES = (
         ( 'none', 'Disabled' ),
         ( 'static', 'Static IP' ),
@@ -194,40 +148,22 @@ class NetworkInterfaceConfig( models.Model ):
     )
     #NETMASK_CHOICES = dict(zip(CIDR_CHOICES.values(), CIDR_CHOICES.keys())
 
-    name = models.CharField( max_length=13, unique=True )
-    ipaddr = models.IPAddressField( verbose_name='IP Address' )
-    cidr = models.PositiveIntegerField( max_length=2, choices=CIDR_CHOICES, verbose_name='Netmask' )
-    proto = models.CharField( max_length=16, default='none', choices=PROTO_CHOICES, verbose_name='Protocol' )
-    mtu = models.PositiveIntegerField( default=1500, verbose_name='MTU' )
-    last_modified = models.DateTimeField( auto_now=True )
-    created = models.DateTimeField( auto_now_add=True )
+    #name = models.CharField( max_length=13, unique=True )
+    #ipaddr = models.IPAddressField( verbose_name='IP Address' )
+    #cidr = models.PositiveIntegerField( max_length=2, choices=CIDR_CHOICES, verbose_name='Netmask' )
+    #proto = models.CharField( max_length=16, default='none', choices=PROTO_CHOICES, verbose_name='Protocol' )
+    #mtu = models.PositiveIntegerField( default=1500, verbose_name='MTU' )
+    #last_modified = models.DateTimeField( auto_now=True )
+    #created = models.DateTimeField( auto_now_add=True )
 
-    @property
-    def netmask( self ):
-        return str( ipcalc.Network( '1.1.1.1/%s' % self.cidr ).netmask() )
+    name = m.StringField(unique=True)
+    ipaddr = m.StringField()
+    cidr = m.IntField()
+    proto = m.StringField()
+    mtu = m.IntField()
+    modified = m.DateTimeField()
+    created = m.DateTimeField()
 
-    ## TODO This should probably be a global Config() entry instead of hard-coded crap or being per-interface
-    #gateway = models.IPAddressField()
-    @property
-    def gateway( self ):
-        return '10.16.38.254'
-
-    ## TODO This should probably be a global Config() entry instead of hard-coded crap or being per-interface
-    #dns = JSONField()
-    @property
-    def dns( self ):
-        return {'nameservers': ['8.8.8.8', '8.8.4.4'],
-                'search': ['solarsan.local'], }
-
-    #def get_absolute_url( self ):
-    #    return reverse( 'network-interface-detail', kwargs={'slug': self.name} )
-
-    def __unicode__( self ):
-        if self.ipaddr and self.cidr: return '%s (%s/%s)' % ( self.name, self.ipaddr, self.cidr )
-        else: return self.name
-
-
-class NetworkInterface( object ):
     def __init__( self, name ):
         #if not name in netifaces.interfaces():
             #raise Exception( 'No interface found with name %s' % name )
@@ -274,16 +210,40 @@ class NetworkInterface( object ):
         elif self.name.startswith( 'lo' ):  return 'local'
         else:                               return None
 
+    @property
+    def netmask( self ):
+        return str( ipcalc.Network( '1.1.1.1/%s' % self.cidr ).netmask() )
+
+    ## TODO This should probably be a global Config() entry instead of hard-coded crap or being per-interface
+    #gateway = models.IPAddressField()
+    @property
+    def gateway( self ):
+        return '10.16.38.254'
+
+    ## TODO This should probably be a global Config() entry instead of hard-coded crap or being per-interface
+    #dns = JSONField()
+    @property
+    def dns( self ):
+        return {'nameservers': ['8.8.8.8', '8.8.4.4'],
+                'search': ['solarsan.local'], }
+
+    #def get_absolute_url( self ):
+    #    return reverse( 'network-interface-detail', kwargs={'slug': self.name} )
+
+    def __unicode__( self ):
+        if self.ipaddr and self.cidr: return '%s (%s/%s)' % ( self.name, self.ipaddr, self.cidr )
+        else: return self.name
+
     def __repr__( self ):
         return '<%s: %s>' % ( type( self ).__name__, self.name )
 
-
-def NetworkInterfaceList():
-    ret = {}
-    for x in netifaces.interfaces():
-        try:
-            ret[x] = NetworkInterface(x)
-        except:
-            pass
-    #return dict( [( x, lambda NetworkInterface( x ) except: None) for x in netifaces.interfaces()] )
-    return ret
+    @classmethod
+    def list(cls):
+        ret = {}
+        for x in netifaces.interfaces():
+            try:
+                ret[x] = NetworkInterface(x)
+            except:
+                pass
+        #return dict( [( x, lambda NetworkInterface( x ) except: None) for x in netifaces.interfaces()] )
+        return ret

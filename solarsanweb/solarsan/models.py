@@ -1,9 +1,25 @@
 from django.db import models
-from jsonfield import JSONField
+#from jsonfield import JSONField
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
 import zfs
+import mongoengine as m
+
+
+"""
+Config
+"""
+
+class Config(m.Document):
+    meta = {'collection': 'config',}
+    name = m.StringField(unique=True)
+    config = m.DictField()
+    created = m.DateTimeField()
+    modified = m.DateTimeField()
+
+
+
 
 class EnabledModelManager(models.Manager):
     """ Returns objects that have enabled=True """

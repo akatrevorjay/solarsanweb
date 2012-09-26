@@ -14,10 +14,10 @@ from django_mongoengine.forms import EmbeddedDocumentForm
 
 
 
-class NetworkInterfaceConfigForm(forms.ModelForm):
+class NetworkInterfaceForm(EmbeddedDocumentForm):
     class Meta:
-        model = models.NetworkInterfaceConfig
-        exclude = ('name', 'last_modified', 'created',)
+        document = models.NetworkInterface
+        #exclude = ('name', 'created', 'modified')
 
 
 #class ConfigEntry(forms.ModelForm):

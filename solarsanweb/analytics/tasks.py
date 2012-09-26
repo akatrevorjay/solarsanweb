@@ -3,21 +3,19 @@ from celery.task.base import PeriodicTask, Task
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
-from storage.models import Pool, Pool_IOStat
-from solarsan.utils import convert_human_to_bytes
-import os, time
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 
+from storage.models import Pool, Filesystem, Volume, Snapshot, PoolIOStat
+from solarsan.utils import convert_human_to_bytes
+import os
+import time
 import zfs
 
 #from kstats import KStats as kstats
 import kstats
-from pyrrd.backend import bindings
-from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
-from pyrrd.rrd import DataSource, RRA, RRD
-from django_statsd.clients import statsd
+from statsd import statsd
 
 """
 Per-File IO Monitor
@@ -180,13 +178,18 @@ class File_IO_Monitor_Py2(Task):
 Pool IOStats
 """
 
-class Pool_IOStats_Populate(Task):
+import cube_python
+
+
+class Pool_IO_Stats(PeriodicTask):
     """ Periodic task to log iostats per pool to db. """
     run_every = timedelta(seconds=30)
     def run(self, capture_length=30, *args, **kwargs):
         iostats = zfs.pool.iostat(capture_length=capture_length)
-        timestamp_end = timezone.now()
+        #timestamp_end = datetime.utcnow()
+        #timestamp_end = timezone.now()
 
+        e = cube_python.Emitter(settings.CUBE_COLLECTOR_URL)
         for i in iostats:
             try:
                 pool = Pool.objects.get(name=i)
@@ -194,37 +197,27 @@ class Pool_IOStats_Populate(Task):
                 logger.error('Got data for an unknown pool "%s"', i)
                 continue
 
-            del iostats[i]['name']
+            event = {'time': iostats[i]['timestamp'],
+                     'type': 'pool_iostat',
+                     'data': {
+                         'pool':        pool.name,
+                         #'duration':    timestamp_end - iostats[i]['timestamp']
+                         },
+                     }
 
-            for j in iostats[i].keys():
-                if j not in ['timestamp']:
-                    statsd.gauge('iostats.%s.%s' % (pool.name, j), iostats[i][j])
+            # Convert human readable to bytes
+            for j in ['alloc', 'free', 'bandwidth_read', 'bandwidth_write', 'iops_read', 'iops_write']:
+                event['data'][j] = int(convert_human_to_bytes(iostats[i][j]))
+                #statsd.gauge(j, event['data'][j])
 
-            iostats[i]['timestamp_end'] = timestamp_end
+            ret = e.send(event)
 
-            for j in ['alloc', 'free', 'bandwidth_read', 'bandwidth_write']:
-                # Convert human readable to bytes
-                iostats[i][j] = int(convert_human_to_bytes(iostats[i][j]))
+            #event['data'].update({'pool': pool, })
+            #obj = PoolIOStat(**event['data'])
+            #obj.save()
 
-            pool.pool_iostat_set.create(**iostats[i])
-
-
-class Pool_IOStat_Clean(Task):
-    """ Periodic Task to clean old IOStats per pool in db """
-    run_every = timedelta(days=1)
-    def run(self, *args, **kwargs):
-        age_threshold = timedelta(days=180)
-        count = Pool_IOStat.objects.all().count()
-
-        try:
-            count_to_remove = Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - age_threshold).count()
-        except (KeyError, Pool_IOStat.DoesNotExist):
-            raise Exception("Cannot get list of entries to remove")
-
-        if count_to_remove > 0:
-            Pool_IOStat.objects.filter(timestamp_end__lt=timezone.now() - age_threshold).delete()
-
-            logger.debug("Deleted %d/%d entires", count_to_remove, count)
+            #logger.debug('event=%s ret=%s', event, ret)
+        e.close()
 
 
 """
@@ -233,10 +226,23 @@ KStats
 
 class KStats_Update(PeriodicTask):
     run_every = timedelta(minutes=1)
+    data = None
     def run(self, *args, **kwargs):
         ks = kstats.get_tree()
+
+        e = cube_python.Emitter(settings.CUBE_COLLECTOR_URL)
         for key in ks.keys():
+            self.data = {}
             self.kstats_walk(key, ks[key])
+            timestamp = timezone.now()
+
+            event = {'time': timestamp,
+                     'type': 'kstats_%s' % key,
+                     'data': self.data,
+                     }
+            ret = e.send(event)
+        e.close()
+        self.data = None
 
     def kstats_walk(self, name, value):
         if isinstance(value, int) or isinstance(value, float):
@@ -245,11 +251,12 @@ class KStats_Update(PeriodicTask):
         if isinstance(value, basestring):
             #logger.debug('Got basestring %s: %s', name, value)
             #print 'Got basestring %s: %s' % (name, value)
-            statsd.gauge(name, value)
+            #statsd.gauge(name, value)
+            self.data[name] = value
 
         elif isinstance(value, list):
             for x,v in enumerate(value):
-                self.kstats_walk('%s.%s' % (name, x), v)
+                self.kstats_walk('%s_%s' % (name, x), v)
 
         elif isinstance(value, dict):
             #logger.debug('Got dict %s: %s', name, value)
@@ -258,7 +265,7 @@ class KStats_Update(PeriodicTask):
             else:
                 for k,v in value.iteritems():
                     if k in ['flags']: continue
-                    self.kstats_walk('%s.%s' % (name, k), v)
+                    self.kstats_walk('%s_%s' % (name, k), v)
 
         else:
             logger.error('Got unknown KStat type: %s: %s', name, value)
@@ -268,6 +275,11 @@ class KStats_Update(PeriodicTask):
 """
 RRD Stats
 """
+
+
+from pyrrd.backend import bindings
+from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
+from pyrrd.rrd import DataSource, RRA, RRD
 
 #@periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):

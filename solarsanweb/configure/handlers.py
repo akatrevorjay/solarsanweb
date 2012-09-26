@@ -2,8 +2,7 @@
 from piston.handler import BaseHandler
 from piston.utils import rc, throttle
 
-from django_mongokit import get_database, connection
-from configure.models import ClusterNode, NetworkInterfaceList
+from configure.models import NetworkInterface
 
 from django.conf import settings
 
@@ -13,7 +12,7 @@ class ClusterProbeHandler(BaseHandler):
     methods_allowed = ('GET',)
 
     def read(self, request):
-        ifaces = NetworkInterfaceList()
+        ifaces = NetworkInterface.List()
         ret_ifaces = {}
         for iface_name, iface in ifaces.iteritems():
             for af, addrs in iface.addrs.iteritems():

@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from solarsan.utils import conditional_decorator
-from storage.models import Pool, Dataset, Filesystem, Snapshot, Pool_IOStat
+from storage.models import Pool, Dataset, Filesystem, Snapshot, PoolIOStat
 #from solarsan.forms import *
 
 from datetime import datetime, timedelta
@@ -58,15 +58,57 @@ def home( request, *args, **kwargs ):
             },
         context_instance=RequestContext( request ) )
 
+
+from pypercube.cube import Cube
+from pypercube.expression import EventExpression, MetricExpression, CompoundMetricExpression
+from pypercube.expression import Sum, Min, Max, Median, Distinct
+from pypercube import time_utils
+
+def render_cube(request, *args, **kwargs):
+    pool = 'rpool'
+    pool = Pool.objects.get(name=pool)
+
+    # Build the Cube connection configuration
+    c = Cube('localhost')
+    # Query for an Event and filter it
+    e = EventExpression('pool_iostat', ['alloc', 'free',
+                                        'bandwidth_read', 'bandwidth_write',
+                                        'iops_read', 'iops_write'],
+                        ).eq('pool', pool.name)
+    #e = EventExpression("timing", ["path", "elapsed_ms"]).startswith('path', '/api/').eq('status', 200)
+    # This is equivalent to the Cube query
+    #   timing(path, elapsed_ms).re('path', '^/api/').eq('status', 200)
+    # Set up some time boundaries
+    stop = time_utils.now()
+    start = time_utils.yesterday(stop)
+    step = time_utils.STEP_1_HOUR
+    # Fetch the matching events, returns Event objects
+    #events = c.get_event(e, start=start, stop=stop, limit=10)
+    #print events
+
+    # Get the elapsed time of successful requests
+    e_time = EventExpression("pool_iostat", "iops_write").eq('pool', pool.name)
+    print e_time
+    # Get the number of requests
+    e_num = EventExpression("pool_iostat").eq('pool', pool.name)
+    print e_num
+    # Get a computed metric, returns Metric objects
+    metrics = c.get_metric(Sum(e_time) / Sum(e_num), start=start, stop=stop, step=step)
+    print metrics
+
+    e_iops = EventExpression("pool_iostat", ['iops_read', 'iops_write']).eq("pool", pool.name)
+
+
+
 #@conditional_decorator(not settings.DEBUG, cache_page, 15)
 def render( request, *args, **kwargs ):
     """ Generates graph data in d3/nvd3 data format """
     name = request.GET['name']
     if name not in charts: raise http.Http404
 
-    start = int( request.GET['start'] )
-    stop = request.GET.get( 'stop', timezone.now().strftime( '%s' ) )
-    step = int( request.GET['step'] )
+    start = float( request.GET['start'] )
+    stop = float( request.GET.get( 'stop', datetime.now().strftime('%s') ))
+    step = float( request.GET['step'] )
 
     ret = []
     values = {}
@@ -78,48 +120,26 @@ def render( request, *args, **kwargs ):
         elif name in ['iops', 'bandwidth']:
             keys = ['read', 'write']
             fields = ['%s_%s' % ( name, key ) for key in keys ]
-            keys.append('total')
 
         for key in keys:
             values[key] = []
 
-        ## TODO This needs an offset, calculated by result count
-        iostat_psuedo_limit = 100
-        pool = Pool.objects.all()[0]
-        iostats = pool.pool_iostat_set.filter( timestamp__gt=datetime.fromtimestamp( float( start ) ),
-                                               timestamp__lt=datetime.fromtimestamp( float( stop ) ),
-                                               ).order_by( 'timestamp' )
-        iostat_offset = iostats.count() / iostat_psuedo_limit
-        iostats = iostats.only( *fields + ['timestamp'] )[::iostat_offset]
+        pool_name = 'rpool'
+        pool = Pool.objects.get(name=pool_name)
+        c = Cube('localhost')
+        start = datetime.fromtimestamp(start)
+        stop = datetime.fromtimestamp(stop)
+        #stop = datetime.now(tz=timezone.utc)
+        #step = long(step) * 60 * 1000
+        step = time_utils.STEP_5_MIN
 
-        for iostat in iostats:
-            time = int( iostat.timestamp_epoch() ) * 1000
+        for f in fields:
+            e = EventExpression('pool_iostat', f).eq('pool', pool.name).gt(f, 0)
+            metrics = c.get_metric(Median(e), start=start, stop=stop, step=step)
+            values[f] = map(lambda x: (float(x.time.strftime('%s')) * 1000, x.value), metrics)
 
-            if name == 'iops':
-                values['read'].append( ( time, int( iostat.iops_read ) ) )
-                values['write'].append( ( time, int( iostat.iops_write ) ) )
-                values['total'].append( ( time, int( iostat.iops_read ) + int( iostat.iops_write ) ) )
-            elif name == 'bandwidth':
-                values['read'].append( ( time, float( iostat.bandwidth_read ) ) )
-                values['write'].append( ( time, float( iostat.bandwidth_write ) ) )
-                values['total'].append( ( time, float( iostat.bandwidth_read ) + float( iostat.bandwidth_write ) ) )
-            elif name == 'usage':
-                #total = float( iostat.alloc + iostat.free )
-
-                ## Percentage
-                #values['alloc'].append( ( time, float( iostat.alloc / float( total ) * 100 ) ) )
-                #values['free'].append( ( time, float( iostat.free / float( total ) * 100 ) ) )
-
-                ## Raw values
-                values['alloc'].append( ( time, float( iostat.alloc ) ) )
-                values['free'].append( ( time, float( iostat.free ) ) )
-                #values['total'].append( ( time, total ) )
-
-        if name == 'iops':  name = 'IOPs'
-        else:               name = name.title()
-
-        ret = [ {'key': name + ' ' + key.title(),
-                 'values': values[key] } for key in keys ]
+        ret = [ {'key': key.replace('_', ' ').title(),
+                 'values': values[key] } for key in fields ]
 
     ## RRD Graph
     else:
@@ -150,7 +170,7 @@ def graphs( request, *args, **kwargs ):
         graphs[iostat_graph] = pyflot.Flot()
 
     count = 50
-    iostats = pool.pool_iostat_set.order_by( 'timestamp' )[:count]
+    iostats = pool.pool_iostat_set.order_by( 'created' )[:count]
 
     #total = int(iostats[0].alloc + iostats[0].free)
     #graph['usage'] = {'values': [float(iostats[0].alloc / float(total) * 100), float(iostats[0].free / float(total) * 100)] }
@@ -159,7 +179,7 @@ def graphs( request, *args, **kwargs ):
     bandwidth = {'read': [], 'write': []}
 
     for iostat in iostats:
-        time = int( iostat.timestamp.strftime( '%s' ) ) * 1000
+        time = int( iostat.created.strftime( '%s' ) ) * 1000
 
         iops['read'].append( ( time, int( iostat.iops_read ) ) )
         iops['write'].append( ( time, int( iostat.iops_write ) ) )

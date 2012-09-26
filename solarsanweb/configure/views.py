@@ -8,7 +8,8 @@ from django import http
 from django.views import generic
 
 from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
-from configure.models import ConfigEntry
+from solarsan.models import Config
+
 
 class HomeListView( generic.TemplateView ):
     template_name = 'configure/home_list.html'
@@ -20,19 +21,19 @@ class HomeListView( generic.TemplateView ):
 """
 Cluster
 """
+
+
 from django.core.cache import cache
 import gluster
-
-from django_mongokit import get_database, connection
 from configure.models import ClusterNode
+
 
 class ClusterPeerListView( generic.TemplateView ):
     template_name = 'configure/cluster/peer_list.html'
     def get( self, request, *args, **kwargs ):
         peers = gluster.peer.status()
         #discovered_peers = cache.get( 'RecentlyDiscoveredClusterNodes' )
-        col = get_database()[ClusterNode.collection_name]
-        discovered_peers = list(col.find())
+        discovered_peers = ClusterNode.objects.all()
         if discovered_peers:
             #discovered_peers = discovered_peers['nodes']
             #if '127.0.0.1' in discovered_peers:
@@ -64,30 +65,31 @@ class ClusterPeerDetailView( generic.TemplateView ):
                }
         return self.render_to_response( context )
 
+
 """
 Network
 """
+
 #from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.core.urlresolvers import reverse_lazy
 from django.forms.models import modelformset_factory
 from django.contrib import messages
-#from .forms import NetworkInterfaceConfigForm
 import forms
-from configure.models import NetworkInterface, NetworkInterfaceList, NetworkInterfaceConfig
+from configure.models import NetworkInterface
 
 
 class NetworkInterfaceListView( generic.TemplateView ):
     template_name = 'configure/network/interfaces.html'
     def get( self, request, *args, **kwargs ):
-        interfaces = NetworkInterfaceList()
+        interfaces = NetworkInterface.list()
         context = {'interfaces': interfaces, }
         return self.render_to_response( context )
 
 
 class NetworkInterfaceConfigView( generic.FormView ):
     template_name = 'configure/network/interfaces.html'
-    model = NetworkInterfaceConfig
-    form_class = forms.NetworkInterfaceConfigForm
+    model = NetworkInterface
+    form_class = forms.NetworkInterfaceForm
 
     def get( self, request, *args, **kwargs ):
         self.name = kwargs['slug']
