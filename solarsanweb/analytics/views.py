@@ -103,21 +103,24 @@ def render( request, *args, **kwargs ):
         ret = [ {'key': key.replace('_', ' ').title(),
                  'values': values[key] } for key in fields ]
 
-    ## RRD Graph
-    else:
-        ## An RRD graph was requested
-        rrd_path = os.path.join( settings.DATA_DIR, 'rrd', name + '.rrd' )
-        rrd = RRD( rrd_path, mode="r" )
-        rrd_data = rrd.fetch( resolution=int( step ), cf='AVERAGE',
-                  start=start,
-                  end=stop,
-                  returnStyle='ds' )
+    ### RRD Graph
+    #else:
+    #    ## An RRD graph was requested
+    #    rrd_path = os.path.join( settings.DATA_DIR, 'rrd', name + '.rrd' )
+    #    rrd = RRD( rrd_path, mode="r" )
+    #    rrd_data = rrd.fetch( resolution=int( step ), cf='AVERAGE',
+    #              start=start,
+    #              end=stop,
+    #              returnStyle='ds' )
+    #
+    #        ret = [ { 'key': ds,
+    #              'values': map( lambda x: ( x[0] * 1000, x[1] ),
+    #                             filter( lambda x: x[1] == x[1], rrd_data[ds] )
+    #                             )
+    #             } for ds in rrd_data.keys() ]
 
-        ret = [ { 'key': ds,
-                  'values': map( lambda x: ( x[0] * 1000, x[1] ),
-                                 filter( lambda x: x[1] == x[1], rrd_data[ds] )
-                                 )
-                 } for ds in rrd_data.keys() ]
+    else:
+        raise http.Http404()
 
     return http.HttpResponse( json.dumps( ret ), mimetype="application/json" )
 
