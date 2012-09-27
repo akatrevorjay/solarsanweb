@@ -14,7 +14,10 @@ import common
 import dataset
 import models as z
 
+from collections import defaultdict
+
 from django.utils import timezone
+from django.core import cache
 from solarsan.utils import FilterableDict, CacheDict, convert_bytes_to_human, convert_human_to_bytes
 
 """
@@ -90,11 +93,20 @@ class zfsBaseCommon(object):
         # Replace list with the instance version
         #self.list = self._list_instance
         self._get_type = self._get_type_instance
+        if 'name' in kwargs:
+            self.name = kwargs['name']
         return super(zfsBaseCommon, self).__init__(*args, **kwargs)
 
     def clear(self):
-        self.props = {}
         self.get()
+
+    @property
+    def props(self):
+        """ Sets and returns Properties object """
+        assert getattr(self, 'name', None)
+        if not getattr(self, '_props', None):
+            self._props = Properties(parent=self)
+        return self._props
 
     @property
     def type(self):
@@ -202,8 +214,6 @@ class zfsBaseCommon(object):
 
 
 class zfsBaseProps(object):
-    props = None
-
     @classmethod
     def get_default_prop_list(cls):
         """ Returns list of actual property names """
@@ -215,7 +225,8 @@ class zfsBaseProps(object):
 
     def get(self, *args, **kwargs):
         """ Returns requested properties *args with **kwargs opts for self """
-        kwargs['walk_only'] = [self.name]
+        kwargs.update({'self': self,
+                       'walk_only': [self.name], })
         return self._get(*args, **kwargs)
 
     def set(self, name, value, **kwargs):
@@ -236,8 +247,10 @@ class zfsBaseProps(object):
     def _get(cls, *args, **kwargs):
         """ Returns requested properties *args with **kwargs opts """
         zargs = ['get']
+        self = kwargs.pop('self', None)
+        get_type = self and self._get_type or cls._get_type
 
-        # Props
+         # Props
         args = args or ['all']
         if not isinstance(args, list):
             args = isinstance(args, basestring) and [args] or isinstance(args, tuple) and list(args)
@@ -246,49 +259,48 @@ class zfsBaseProps(object):
         walk_only = kwargs.get('walk_only', [])
         if not isinstance(walk_only, list):
             walk_only = isinstance(walk_only, basestring) and [walk_only] or isinstance(walk_only, tuple) and list(walk_only)
-        if not walk_only and cls == Pool: raise Exception('Cannot _get Pools without giving me a list (walk_only)')
 
         # The zfs command has gotten a few interface tweaks over the years that give it en edge over zpool
-        if cls._get_type('dataset').__subclasscheck__(cls):
+        if get_type('pool').__subclasscheck__(cls):
+            splitdelim = None
+            if not walk_only:
+                raise Exception('Cannot _get Pools without giving me a list (walk_only)')
+        else:
+            zargs.append('-H')
+            splitdelim = "\t"
             if kwargs.get('recursive'):
                 zargs.append('-r')
             if 'source' in kwargs:
                 zargs.extend(['-s', str(kwargs['source'])])
             if 'depth' in kwargs:
                 zargs.extend(['-d', int(kwargs['depth'])])
+            zargs.extend(['-t', kwargs.get('type', 'all')])
 
         # Build prop list to grab
         zargs += [','.join(args).lower(), ]
-        if walk_only: zargs.extend(walk_only)
+        # Tack on what to walk_only if so
+        if walk_only:
+            zargs.extend(walk_only)
 
         # Prep vars, trying out an idea by keeping all objects per active dataset/pool referenced to here, that way they are all in sync (hopefully?)
-        ret = {}
-        skip = 1
-        last_obj_name = ''
+        ret = defaultdict(dict)
+        skip = 0
         for line in cls.zcmd(*zargs).splitlines():
             line = str(line).rstrip("\n")
-            if skip > 0:
-                skip -= 1
-                cols = [ line.index(col) for col in line.split() ]
-                continue
-            #(obj_name, name, value, source) = [line[cols[x]: x+1 == len(cols) and len(line) or cols[x+1] ].strip() for x in xrange(len(cols))]
-            (obj_name, name, value, source) = line.split(None, len(cols))
-            #print 'obj_name=%s name=%s value=%s source=%s' % (obj_name, name, value, source)
-            if not obj_name:
-                continue
-
-            # As far as I know, this is always returned first (on Datasets, not returned at all for pool), but we may not want to rely on this.
-            if obj_name != last_obj_name:
-                if not obj_name in ret: ret[obj_name] = {}
-            ret[ obj_name ][ name ] = {'value': value, 'source': source}
-
-            last_obj_name = obj_name
+            (obj_name, name, value, source) = line.split(splitdelim, 4)
+            #ret[obj_name][name] = {'value': value, 'source': source}
+            ret[obj_name][name] = get_type('property')(parent_name=obj_name, name=name, value=value, source=source)
+            #if self and self.name == obj_name:
+            #    ret[obj_name][name].parent = self
+            #ret[obj_name][name] = get_type('property')(name=name, source=source, value=value)
 
         # If we're a dataset and recursive opt is set, return the full hash including dataset name as first key
-        if cls._get_type('dataset').__subclasscheck__(cls) and kwargs.get('recursive'): return ret
+        if not get_type('pool').__subclasscheck__(cls) and kwargs.get('recursive'):
+            return ret
 
         # If we only requested a single property from a single object that isn't the magic word 'all', just return the value.
-        if not kwargs.get('recursive') and len(args) == 1 and 'all' not in args: ret = ret[ret.keys()[0]]
+        if not kwargs.get('recursive') and len(args) == 1 and 'all' not in args:
+            ret = ret[ret.keys()[0]]
         return ret[ret.keys()[0]]
 
 
@@ -318,35 +330,31 @@ class zfsBase(zfsBaseProps, zfsBaseCommon, BaseMixIn):
 
 
 class Property(object):
+    name = None
+    source = None
+    value = None
+    parent_name = None
 
     def __init__(self, **kwargs):
-        self.modified = False
-        self.inherit = False
-        self.source = 'local'
-        self.value = None
-
-        for k in ['name', 'source', 'value', 'parent', 'inherit', 'modified']:
+        for k in ['name', 'source', 'value', 'parent_name']:
             setattr(self, k, kwargs.get(k, None))
 
     def __repr__(self):
         prefix = ''
-        source = getattr(self, 'source')
-        vars = {}
-
-        if source == '-':
+        source = ''
+        if self.source == '-':
             prefix += 'Statistic'
-        elif source in ['default', 'local']:
+        elif self.source in ['default', 'local']:
             prefix += self.source.capitalize()
-        elif source:
+        elif self.source:
             prefix += 'Inherited'
-            vars['source'] = source
+            source = ' source=%s' % self.source
 
-        if self.modified:
-            prefix += 'Unsaved'
+        #if self.modified:
+        #    prefix += 'Unsaved'
 
-        vars['value'] = self.value
         name = prefix + self.__class__.__name__
-        return "%s(**%s)" % (name, vars)
+        return "%s(%s=%s%s)" % (name, self.name, self.value, source)
 
     def __unicode__(self):
         return unicode(self.value)
@@ -385,31 +393,24 @@ class Property(object):
         else:
             return True
 
-    def has_parent(self):
-        return getattr(self, 'parent', None) != None
-
-    #@property
-    #def _lazy_value(self):
-    #    return self.parent.get(self.name)
-
 
 
 class Properties(dict):
     def __init__(self, parent=None):
         self._parent = parent
-
+        self.get()
         # no kwargs since we dont want to start out with data
-        super(Properties, self).__init__()
+        return super(Properties, self).__init__()
 
-    def __getitem__(self, key):
-        value = self._parent.get(key)
+    #def __getitem__(self, key):
+    #    value = self._parent.get(key)
+    #
+    #    if value:
+    #        return self._propify(name=key, value=value)
+    #    else:
+    #        return KeyError(key)
 
-        if value:
-            return self._propify(name=key, value=value)
-        else:
-            return KeyError(key)
-
-    def _propify(self, name=None, value=None):
+    def _propify(self, name=None, value=None, source=None):
         if isinstance(value, int) or isinstance(value, float):
             value = str(value)
 
@@ -424,7 +425,7 @@ class Properties(dict):
             else:
                 raise Exception('Name was not provided')
 
-            value = Property(**value)
+            value = self._parent._get_type('property')(**value)
 
         if isinstance(value, Property):
             return value
@@ -432,21 +433,20 @@ class Properties(dict):
         else:
             raise Exception('Could not create property object from: %s, %s' % (name, value))
 
-    def __setitem__(self, key, value):
-        pass
+    #def __setitem__(self, key, value):
+    #    pass
 
     #def __delitem__(self, key):
     #    return super(Properties, self).__delitem__(key)
 
-    def __iter__(self):
-        return iter([ (x, self.get(x, None)) for x in self.__list__() ])
+    #def __iter__(self):
+    #    return iter([ (x, self.get(x, None)) for x in self.__list__() ])
 
-    def __list__(self):
-        return self._parent.get_default_prop_list()
+    #def __list__(self):
+    #    return self._parent.get_default_prop_list()
 
     def get(self, *args, **kwargs):
         for k,v in self._parent.get(*args, **kwargs).iteritems():
-            v['name'] = k
             self[k] = v
 
     #def _save(self):
@@ -481,7 +481,7 @@ class PoolBase(object):
     @property
     def filesystem( self ):
         """ Returns the matching Filesystem for this Pool """
-        return self._get_type('filessytem')(self.name)
+        return self._get_type('filesystem')(name=self.name)
 
     #@property
     #def filesystem( self ):
@@ -595,13 +595,13 @@ class DatasetBase(object):
         return super(DatasetBase, cls).__new__(obj_cls or cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
-        logging.debug('GOT INIT AT %s WITH args=%s kwargs=%s', self, args, kwargs)
+        #logging.debug('GOT INIT AT %s WITH args=%s kwargs=%s', self, args, kwargs)
         return super(DatasetBase, self).__init__(*args, **kwargs)
 
     @property
     def pool( self ):
         """ Returns the matching Pool for this Dataset """
-        return self._get_type('pool')(self.path(0, 1))
+        return self._get_type('pool')(name=self.path(0, 1))
 
     def children(self, **kwargs):
         assert hasattr(self, 'name')
@@ -620,7 +620,7 @@ class DatasetBase(object):
         path = self.path()
         if len(path) == 1:
             return None
-        return self._get_type('dataset')('/'.join(path[:-1]))
+        return self._get_type('dataset')(name='/'.join(path[:-1]))
 
     def inherit(self, name, **kwargs):
         zargs = ['inherit']

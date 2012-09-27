@@ -186,8 +186,6 @@ class Pool_IO_Stats(PeriodicTask):
     run_every = timedelta(seconds=30)
     def run(self, capture_length=30, *args, **kwargs):
         iostats = zfs.pool.iostat(capture_length=capture_length)
-        #timestamp_end = datetime.utcnow()
-        #timestamp_end = timezone.now()
 
         e = cube_python.Emitter(settings.CUBE_COLLECTOR_URL)
         for i in iostats:
@@ -206,16 +204,12 @@ class Pool_IO_Stats(PeriodicTask):
                      }
 
             # Convert human readable to bytes
-            for j in ['alloc', 'free', 'bandwidth_read', 'bandwidth_write', 'iops_read', 'iops_write']:
+            for j in ['alloc', 'free',
+                      'bandwidth_read', 'bandwidth_write',
+                      'iops_read', 'iops_write']:
                 event['data'][j] = int(convert_human_to_bytes(iostats[i][j]))
-                #statsd.gauge(j, event['data'][j])
 
             ret = e.send(event)
-
-            #event['data'].update({'pool': pool, })
-            #obj = PoolIOStat(**event['data'])
-            #obj.save()
-
             #logger.debug('event=%s ret=%s', event, ret)
         e.close()
 

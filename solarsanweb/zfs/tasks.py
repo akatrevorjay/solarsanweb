@@ -29,6 +29,8 @@ class Import_ZFS_Metadata(PeriodicTask):
             if not getattr(pool, 'id', None):
                 logger.warning("Found new ZFS storage pool '%s'", pool.name)
             pool.reload_zdb()
+            pool.props.clear()
+            pool.props.update(pool.get())
             pool.save()
 
             children = {}
@@ -55,7 +57,7 @@ class Import_ZFS_Metadata(PeriodicTask):
         if not getattr(parent, 'id', None):
             logger.warning("Found new dataset '%s'", parent.name)
             parent.pool = pool
-            parent.save()
+        parent.save()
 
         for dataset in parent.children(ret=list):
             #logger.debug("Dataset %s", dataset)
@@ -63,11 +65,14 @@ class Import_ZFS_Metadata(PeriodicTask):
                 logger.warning("Found new dataset '%s'", dataset.name)
             else:
                 dataset.update(unset__importing=True)
-            dataset.pool = pool
-            dataset.save()
+            if dataset.pool != pool:
+                dataset.pool = pool
             if dataset.type == 'filesystem':
                 filesystems.append(dataset)
-
+                dataset.props.clear()
+                dataset.props.update(dataset.get())
+            else:
+                dataset.save()
         for fs in filesystems:
             # Run recursively on this node's children
             self.walk(pool, fs)

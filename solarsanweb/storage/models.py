@@ -66,7 +66,7 @@ class PropertyDocument(BaseMixIn, m.EmbeddedDocument):
     meta = {'abstract': True, }
     name = m.StringField(required=True, unique=True)
     value = m.StringField()
-
+    source = m.StringField()
     #created = m.DateTimeField(default=datetime.now())
     ## TODO Override validation and ensure modified gets updated on modification
     #modified = m.DateTimeField(default=datetime.now())
@@ -410,4 +410,5 @@ ZFS_TYPE_MAP.update({
     'volume': Volume,
     'snapshot': Snapshot,
     #'properties': zfs.objects.Properties,
+    'property': Property,
 })
