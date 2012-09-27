@@ -7,7 +7,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 
-from storage.models import Pool, Filesystem, Volume, Snapshot, PoolIOStat
+from storage.models import Pool, Filesystem, Volume, Snapshot
 from solarsan.utils import convert_human_to_bytes
 import os
 import time

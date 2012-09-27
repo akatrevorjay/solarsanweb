@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from solarsan.utils import conditional_decorator
-from storage.models import Pool, Dataset, Filesystem, Snapshot, PoolIOStat
+from storage.models import Pool, Dataset, Filesystem, Snapshot
 #from solarsan.forms import *
 
 from datetime import datetime, timedelta
@@ -31,8 +31,7 @@ import os, sys
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-charts = ['iops', 'bandwidth', 'usage', # IOStats
-          'arc_hitmiss', 'cache_eviction', 'cache_result', 'cache_size', 'dmu_tx_memory', 'dmu_tx', # RRD
+charts = ['arc_hitmiss', 'cache_eviction', 'cache_result', 'cache_size', 'dmu_tx_memory', 'dmu_tx', # RRD
           'hash_collisions', 'l2_hitmiss', 'mutex_operation']
 
 time_window_list = {int( timedelta( hours=1 ).total_seconds() ):     'Last hour',
@@ -59,18 +58,12 @@ def home( request, *args, **kwargs ):
         context_instance=RequestContext( request ) )
 
 
-from pypercube.cube import Cube
-from pypercube.expression import EventExpression, MetricExpression, CompoundMetricExpression
-from pypercube.expression import Sum, Min, Max, Median, Distinct
-from pypercube import time_utils
-
-from collections import defaultdict
 
 #@conditional_decorator(not settings.DEBUG, cache_page, 15)
 def render( request, *args, **kwargs ):
     """ Generates graph data in d3/nvd3 data format """
     name = request.GET['name']
-    if name not in charts: raise http.Http404
+    #if name not in charts: raise http.Http404
 
     start = float( request.GET['start'] )
     stop = float( request.GET.get( 'stop', datetime.now().strftime('%s') ))
@@ -78,30 +71,6 @@ def render( request, *args, **kwargs ):
 
     ret = []
     values = defaultdict(list)
-
-    ## Pool_IOStat Graph
-    if name in ['iops', 'bandwidth', 'usage']:
-        if name == 'usage':
-            fields = keys = ['alloc', 'free']
-        elif name in ['iops', 'bandwidth']:
-            fields = ['%s_%s' % ( name, key ) for key in ['read', 'write'] ]
-
-        pool_name = 'rpool'
-        pool = Pool.objects.get(name=pool_name)
-        c = Cube('localhost')
-        start = datetime.fromtimestamp(start)
-        stop = datetime.fromtimestamp(stop)
-        #stop = datetime.now(tz=timezone.utc)
-        #step = long(step) * 60 * 1000
-        step = time_utils.STEP_5_MIN
-
-        for f in fields:
-            e = EventExpression('pool_iostat', f).eq('pool', pool.name).gt(f, 0)
-            metrics = c.get_metric(Median(e), start=start, stop=stop, step=step)
-            values[f] = map(lambda x: (float(x.time.strftime('%s')) * 1000, x.value), metrics)
-
-        ret = [ {'key': key.replace('_', ' ').title(),
-                 'values': values[key] } for key in fields ]
 
     ### RRD Graph
     #else:
@@ -118,9 +87,6 @@ def render( request, *args, **kwargs ):
     #                             filter( lambda x: x[1] == x[1], rrd_data[ds] )
     #                             )
     #             } for ds in rrd_data.keys() ]
-
-    else:
-        raise http.Http404()
 
     return http.HttpResponse( json.dumps( ret ), mimetype="application/json" )
 

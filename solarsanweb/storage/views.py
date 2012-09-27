@@ -7,6 +7,9 @@ from django.views.decorators.cache import cache_page
 from django import http
 from django.views import generic
 
+from datetime import timedelta
+import json
+
 #from storage.models import zPool, zDataset
 from storage.models import Pool, Dataset, Filesystem, Snapshot
 import zfs as z
@@ -43,6 +46,8 @@ class ZfsSingleDocumentMixIn(mongogeneric.SingleDocumentMixin):
 class ZfsBaseDetailView(mongogeneric.BaseDetailView, ZfsSingleDocumentMixIn, mongogeneric.View):
     pass
 
+
+
 class ZfsDetailView(mongogeneric.SingleDocumentTemplateResponseMixin, ZfsBaseDetailView):
     """
     Render a "detail" view of an object.
@@ -75,11 +80,58 @@ class PoolHealthDetailView(PoolView, ZfsDetailView):
 
         return ctx
 
+
+from analytics.views import time_window_list
+import logging
+
+
 class PoolAnalyticsDetailView(PoolView, ZfsDetailView):
     template_name = 'storage/pool_analytics.html'
+    charts = ['iops', 'bandwidth', 'usage']
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
+        obj = kwargs['object']
+        time_window = int( kwargs.get( 'time_window', 86400 ) );
+        if not time_window in time_window_list:
+            raise http.Http404
+        name = kwargs.get( 'name', 'iops' )
+        if not name in self.charts:
+            raise http.Http404
+
+        ctx.update({'title': 'Analytics',
+                    'graph_list': self.charts,
+                    'time_window': time_window,
+                    'time_window_list': time_window_list,
+
+                    'graph': name, })
         return ctx
+    def get(self, request, **kwargs):
+        self.object = self.get_object()
+        kwargs.update({'request': request,
+                       'object': self.object, })
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+class JSONMixIn(object):
+    def get(self, request, **kwargs):
+        self.object = self.get_object()
+        kwargs.update({'request': request,
+                       'object': self.object, })
+        context = self.get_context_data(**kwargs)
+        ret = self.get_json_data(**kwargs)
+        return http.HttpResponse(json.dumps(ret),
+                                  mimetype="application/json", )
+
+class PoolAnalyticsRenderView(JSONMixIn, PoolAnalyticsDetailView):
+    def get_json_data(self, **kwargs):
+        ctx = self.get_context_data(**kwargs)
+        obj = kwargs['object']
+        render_func = getattr(obj.analytics, ctx['graph'])
+        kwargs['start'] = kwargs['request'].GET.get('start')
+        kwargs['format'] = 'nvd3'
+        ret = render_func(**kwargs)
+        return ret
+
 
 """
 Datasets

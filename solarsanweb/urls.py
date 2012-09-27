@@ -13,18 +13,17 @@ from django_mongoengine.admin import site
 import time
 #from statsd import StatsClient
 #statsd = StatsClient()
-from django_statsd.clients import statsd
-start = time.time()
-time.sleep(3)
+#from django_statsd.clients import statsd
+#start = time.time()
+#time.sleep(3)
 
 # You must convert to milliseconds:
-dt = int((time.time() - start) * 1000)
-statsd.timing('slept', dt)
+#dt = int((time.time() - start) * 1000)
+#statsd.timing('slept', dt)
 
 urlpatterns = patterns(
     '',
     #url(r'^$', 'solarsanweb.views.home', name='home'),
-    url(r'^$', include('analytics.urls')),
 
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^accounts/', include('django.contrib.auth.urls')),
@@ -33,6 +32,7 @@ urlpatterns = patterns(
     (r'^reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'django.contrib.auth.views.password_reset_confirm'),
     (r'^reset/done/$', 'django.contrib.auth.views.password_reset_complete'),
 
+    url(r'^$', include('status.urls')),
     url(r'^status/', include('status.urls')),
     url(r'^configure/', include('configure.urls')),
     url(r'^storage/', include('storage.urls')),

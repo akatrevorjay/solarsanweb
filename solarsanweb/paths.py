@@ -20,3 +20,4 @@ DATA_DIR = os.path.join(TOP_DIR, 'data')
 
 for i in [TOP_DIR, PROJECT_DIR, os.path.join(TOP_DIR, 'vendor-local')]:
     sys.path.insert(0, i)
+

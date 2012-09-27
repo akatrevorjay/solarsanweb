@@ -455,41 +455,6 @@ CACHES = {
 
 
 ##
-## django-statsd-mozilla
-##
-
-#STATSD_CLIENT = 'django_statsd.clients.' + (DEBUG and 'toolbar' or 'normal')
-STATSD_CLIENT = 'django_statsd.clients.normal'
-STATSD_PREFIX = PROJECT_NAME
-
-STATSD_PATCHES = [
-    #'django_statsd.patches.db',
-    #'django_statsd.patches.cache',
-]
-
-TOOLBAR_STATSD = {
-    'graphite': '/render/',
-    'roots': ['%s.dev' % PROJECT_NAME, '%s.stage' % PROJECT_NAME],
-}
-
-# List of keys to record (def)
-STATSD_RECORD_KEYS = [
-    #'window.performance.timing.domComplete',
-    #'window.performance.timing.domInteractive',
-    #'window.performance.timing.domLoading',
-    #'window.performance.navigation.redirectCount',
-    #'window.performance.navigation.type',
-]
-
-#from django.http import HttpResponseForbidden
-#
-#def internal_only(request):
-#    if request.META['REMOTE_ADDR'] not in INTERNAL_IPS:
-#        return HttpResponseForbidden()
-#
-#STATSD_RECORD_GUARD = internal_only
-#
-##
 ## Jinja2/Coffin Templates
 ##
 #
@@ -534,11 +499,13 @@ CELERY_TIMEZONE = TIME_ZONE
 BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_URL = "pyamqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
-CELERY_DEFAULT_RATE_LIMIT = "50/s"  # 100/s
+#CELERY_DEFAULT_RATE_LIMIT = "50/s"  # 100/s
+CELERY_DISABLE_RATE_LIMIT = True
 BROKER_CONNECTION_MAX_RETRIES = "50"  # 100
 #CELERYD_LOG_COLOR = True
 #CELERY_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
 #CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
+CELERYD_MAX_TASKS_PER_CHILD = "100"
 
 ## Celery results
 CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hrs
@@ -702,8 +669,8 @@ LOGGING = {
 ## Cube
 ##
 
-CUBE_COLLECTOR_URL = 'udp://localhost:1180'
-
+CUBE_HOST = 'localhost'
+CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 
 ##
 ## TEMP GRAPHITE CHANGES

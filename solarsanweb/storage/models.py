@@ -214,6 +214,27 @@ VDEV_TYPE_MAP = {'root': None,
 Pool
 """
 
+from analytics.cube import CubeAnalytics
+from pypercube.expression import EventExpression, MetricExpression, CompoundMetricExpression
+from pypercube.expression import Sum, Min, Max, Median, Distinct
+
+
+class PoolAnalytics(CubeAnalytics):
+    def __init__(self, pool):
+        self.pool = pool
+    def _get_event_expr(self, f, **kwargs):
+        return EventExpression('pool_iostat', f).eq('pool', self.pool.name).gt(f, 0)
+    def _get_metric_expr(self, f, **kwargs):
+        e = kwargs.get('event_expr', self._get_event_expr(f, **kwargs))
+        return Median(e)
+    def iops(self, **kwargs):
+        return self._render('iops_read', 'iops_write', **kwargs)
+    def bandwidth(self, **kwargs):
+        return self._render('bandwidth_read', 'bandwidth_write', **kwargs)
+    def usage(self, **kwargs):
+        return self._render('alloc', 'free', **kwargs)
+
+
 class PoolDocument(zfsBaseDocument):
     meta = {'collection': 'pools',
             'abstract': True, }
@@ -226,6 +247,11 @@ class PoolDocument(zfsBaseDocument):
     vdevs = m.ListField(m.EmbeddedDocumentField(VDevChildDocument))
 
     VDEV_TYPE_MAP = VDEV_TYPE_MAP
+
+    analytics = None
+    def __init__(self, *args, **kwargs):
+        self.analytics = PoolAnalytics(self)
+        return super(PoolDocument, self).__init__(*args, **kwargs)
 
     @property
     def filesystem(self):
@@ -302,37 +328,6 @@ class PoolDocument(zfsBaseDocument):
 
 class Pool(PoolDocument, zfs.objects.PoolBase, zfsBase):
     pass
-
-"""
-PoolIOStat
-"""
-
-# TODO Get rid of this once and for all, use cube instead
-class PoolIOStatDocument(m.Document, BaseMixIn):
-    meta = {'abstract': True, }
-            #'collection': 'pool_io_stat', }
-    pool = m.ReferenceField(Pool)
-
-    created = m.DateTimeField(default=datetime.now())
-    # TODO Override validation and ensure modified gets updated on modification
-    modified = m.DateTimeField(default=datetime.now())
-
-    alloc = m.FloatField()
-    free = m.FloatField()
-    bandwidth_read = m.IntField()
-    bandwidth_write = m.IntField()
-    iops_read = m.IntField()
-    iops_write = m.IntField()
-
-    def __unicode__( self ):
-        return self.pool.name + '_' + self.created.strftime('%F_%T')
-
-    def created_epoch( self ):
-        return self.created.strftime('%s')
-
-class PoolIOStat(PoolIOStatDocument):
-    pass
-
 
 
 """
