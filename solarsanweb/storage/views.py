@@ -168,6 +168,10 @@ class DatasetSnapshotsView(object):
     pass
 
 
+"""
+Filesystem
+"""
+
 
 class FilesystemView(DatasetView):
     document = Filesystem
@@ -178,10 +182,15 @@ class FilesystemHealthDetailView(FilesystemView, DatasetHealthDetailView, mongog
     template_name = 'storage/filesystem_health.html'
     pass
 
+
 class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric.DetailView):
     template_name = 'storage/filesystem_snapshots.html'
     pass
 
+
+"""
+Volumes
+"""
 
 
 class VolumeView(DatasetView):
@@ -196,39 +205,41 @@ class VolumeHealthDetailView(VolumeView, DatasetHealthDetailView, mongogeneric.D
         context['targets'] = target.list(fabric_module=fabric)
         return context
 
+
 class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailView):
     template_name = 'storage/volume_snapshots.html'
     pass
 
 
+"""
+Targets
+"""
 
-"""
-Volumes
-  >> LIO target management for volumes
-"""
-import rtslib
 import storage.target as target
-
-
 fabric = target.get_fabric_module('iscsi')
 
 
-class TargetListView(generic.TemplateView):
-    template_name = 'storage/target_list.html'
+class TargetDetailView(generic.TemplateView):
+    template_name = 'storage/target_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
     def get_context_data(self, **kwargs):
-        context = super(TargetListView, self).get_context_data(**kwargs)
-        context['targets'] = target.list(fabric_module=fabric, ret_type=dict)
+        context = super(TargetDetailView, self).get_context_data(**kwargs)
+        slug = kwargs['slug']
+
+        tgts = target.list(fabric_module=fabric, ret_type=dict)
+        if not slug in tgts:
+            raise http.Http404
+        tgt = tgts[slug]
+
+        context.update({
+            'object': tgt,
+            'target': tgt,
+            'targets': tgts.values(),
+        })
+
         return context
-
-
-class TargetACLsView(generic.DetailView):
-    template_name = 'storage/target_acls_detail.html'
-
-
-class TargetLunsView(generic.DetailView):
-    template_name = 'storage/target_luns_detail.html'
-
-
-
-
 

@@ -21,22 +21,18 @@
         <td>
             <button class="btn btn-mini" >{{ object.used or 0 }}/{{ object.capacity }}</button>
         </td>
-        <td>
+        <td colspan="2">
             <i class="icon-resize-small"></i>
             <small>compression:</small>
-        </td>
-        <td>
             {% if object.compression %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
             {% endif %}
         </td>
-        <td>
+        <td colspan="2">
             <i class="icon-th"></i>
             <small>dedup:</small>
-        </td>
-        <td>
             {% if object.dedup %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
@@ -121,24 +117,29 @@
     </caption>
     <thead>
         <tr>
-            <th>lun</th>
-            <th>target wwn</th>
             <th>tpg</th>
+            <th>lun</th>
+            <th>backstore</th>
             <th>fabric</th>
             <th>tasks</th>
         </tr>
     </thead>
-    {% for tpg in target.tpgs %}
-    {% for lun in tpg.attached_luns %}
     <tbody>
+        {% for tpg in object.tpgs %}
+        {% for lun in tpg.luns %}
         <tr>
+            <td>
+                tpg{{ tpg.tag }}
+            </td>
             <td>
                 lun{{ lun.lun }}
             </td>
             <td>
-                <a href="/storage/targets/{{ target.wwn|urlize }}">
-                    {{ target.wwn }}
+                {% with lun_volume = volumes.get(backstore_wwn=lun.storage_object.wwn) %}
+                <a href="/storage/volumes/detail/{{ lun_volume.name|urlize }}">
+                    {{ lun_volume.name }}
                 </a>
+                {% endwith %}
             </td>
             <td>
                 tpg{{ tpg.tag }}
@@ -155,8 +156,8 @@
                 <button class="btn btn-mini btn-danger">x</button>
             </td>
         </tr>
-    {% endfor %}
-    {% endfor %}
+        {% endfor %}
+        {% endfor %}
     </tbody>
 </table>
 

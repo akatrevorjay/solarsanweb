@@ -34,6 +34,42 @@ pre {
   /*color: black;*/
 }
 
+.accordion-heading.active .accordion-toggle {
+  background-color: #eee;
+  /*background-color: #08C;*/
+  /*background-color: rgba(0, 136, 204, 0.1);*/
+  /*color: white;*/
+}
+
+.accordion-heading .accordion-toggle:hover {
+  background-color: #eee;
+  /*background-color: rgba(0, 136, 204, 0.1);*/
+  /*color: white;*/
+  text-decoration: none;
+}
+
+
+.filesystem-detail-nav {
+  margin-bottom: 5px;
+}
+
+#filesystem-detail-content {
+  padding: 0px;
+}
+
+#pool-breadcrumb {
+  margin-bottom: 5px;
+}
+
+/*
+#filesystem-detail-content * {
+}
+*/
+
+
+
+
+
 /*
  * Cubism
  */

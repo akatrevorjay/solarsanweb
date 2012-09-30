@@ -21,28 +21,33 @@
         <td>
             <button class="btn btn-mini" >{{ filesystem.props.used }}/{{ filesystem.pool.props.capacity }}</button>
         </td>
+
         <td>
             <i class="icon-resize-small"></i>
             <small>compression:</small>
-        </td>
-        <td>
+
             {% if filesystem.props.compression %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
             {% endif %}
         </td>
+
+        <td>yup</td>
+
         <td>
             <i class="icon-th"></i>
             <small>dedup:</small>
-        </td>
-        <td>
+
             {% if filesystem.props.dedup %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
             {% endif %}
         </td>
+
+        <td>yup</td>
+
     </tr>
     <tr>
         <td><small>
@@ -151,7 +156,7 @@ d3.select("#graph_iops")
   .selectAll(".horizon")
     .data([
       {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))').multiply(-1)},
       //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
       //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
     ])

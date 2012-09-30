@@ -212,10 +212,10 @@ INSTALLED_APPS = (
     'debug_toolbar',
     #'debug_toolbar_user_panel',
     #'cache_panel',
-    #'debug_toolbar_mongo',
+    'debug_toolbar_mongo',
     #'debug_toolbar_htmltidy',
     #'django_statsd',
-    'django_mongoengine.debug_toolbar',
+    #'django_mongoengine.debug_toolbar',
 
     # Third party libs
     'djcelery',
@@ -297,7 +297,7 @@ JINJA2_DISABLED_TEMPLATES = (
     'debug_toolbar', 'debug_toolbar_user_panel',
     #'cache_panel',
     #'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
-    'mongodb-panel.html', '_stats.html',
+    'mongo-panel.html', '_stats.html',
     'django_statsd',
     #r'debug_toolbar/.*',
     #r'toolbar_statsd/statsd.html',
@@ -370,11 +370,11 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.signals.SignalDebugPanel',
     'debug_toolbar.panels.logger.LoggingPanel',
     'debug_toolbar.panels.cache.CacheDebugPanel',
-    'django_mongoengine.debug_toolbar.panel.MongoDebugPanel',
+    #'django_mongoengine.debug_toolbar.panel.MongoDebugPanel',
 
     #'debug_toolbar_user_panel.panels.UserPanel',
     #'cache_panel.CachePanel',
-    #'debug_toolbar_mongo.panel.MongoDebugPanel',
+    'debug_toolbar_mongo.panel.MongoDebugPanel',
     #'django_statsd.panel.StatsdPanel',
     #'debug_toolbar_htmltidy.panels.HTMLTidyDebugPanel',
 )

@@ -1,14 +1,21 @@
 
 from django.conf import settings
-from storage.models import Pool
+from storage.models import Pool, Filesystem, Volume
+
 
 def pools(request):
+    r = {}
     try:
-        pools = Pool.objects.all()
+        r = {'pools': Pool.objects.all(),
+             'filesystems': Filesystem.objects.all(),
+             'volumes': Volume.objects.all(),
+             }
     except:
-        pools = []
-
-    return {'pools': pools}
+        r = {'pools': [],
+             'filesystems': [],
+             'volumes': [],
+             }
+    return r
 
 
 def raven_dsn(request):

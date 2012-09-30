@@ -29,7 +29,6 @@
 <!-- Pool Detail -->
 <div class="row">
     <div class="span3 sidebar-nav">
-
         <div class="accordion" id="sidebar-nav-accordion">
 
             <div class="accordion-group">
@@ -162,106 +161,6 @@
             </div>
 
         </div>
-
-
-        <ul class="nav nav-pills nav-stacked">
-            <li style="text-align: center;" class="nav-header">
-                Pools
-            </li>
-            {% for obj in pools %}
-            {% if object.type == obj.type and object.name == obj.name %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="/storage/pools/detail/{{ obj.name|urlize }}">
-                    {{ obj.name }}
-                </a>
-            </li>
-            {% endfor %}
-
-            <li style="text-align: center;">
-                <a href="#add-pool-modal" data-toggle="modal">
-                    <span class="label label-info">add pool</span>
-                </a>
-            </li>
-        </ul>
-
-
-        <ul class="nav nav-pills nav-stacked">
-            <li style="text-align: center;" class="nav-header">
-                Filesystems (NAS)
-            </li>
-
-            {% for obj in filesystems|sort(attribute='name') %}
-            {% if object.type == obj.type and object.name == obj.name %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="/storage/filesystems/detail/{{ obj.name|urlize }}">
-                    {{ obj.name }}
-                </a>
-            </li>
-            {% endfor %}
-
-            <li style="text-align: center;">
-                <a href="#add-filesystem-modal" data-toggle="modal">
-                    <span class="label label-info">add filesystem</span>
-                </a>
-            </li>
-        </ul>
-
-
-        <ul class="nav nav-pills nav-stacked">
-            <li style="text-align: center;" class="nav-header">
-                Volumes (SAN)
-            </li>
-
-            {% for obj in volumes|sort(attribute='name') %}
-            {% if object.type == obj.type and object.name == obj.name %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="/storage/volumes/detail/{{ obj.name|urlize }}">
-                    {{ obj.name }}
-                </a>
-            </li>
-            {% endfor %}
-
-            <li style="text-align: center;">
-                <a href="#add-volume-modal" data-toggle="modal">
-                    <span class="label label-info">add volume</span>
-                </a>
-            </li>
-        </ul>
-
-
-        <ul class="nav nav-pills nav-stacked">
-            <li style="text-align: center;" class="nav-header">
-                Targets (SAN)
-            </li>
-
-            {% for obj in targets %}
-            {% if object.type == obj.type and object.wwn == obj.wwn %}
-            <li class="active">
-            {% else %}
-            <li>
-            {% endif %}
-                <a href="/storage/targets/detail/{{ obj.wwn|urlize }}">
-                    {{ obj.short_wwn() }}
-                </a>
-            </li>
-            {% endfor %}
-
-            <li style="text-align: center;">
-                <a href="#add-target-modal" data-toggle="modal">
-                    <span class="label label-info">add target</span>
-                </a>
-            </li>
-        </ul>
-
     </div>
 
     <div class="span9">

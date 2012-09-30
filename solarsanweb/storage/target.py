@@ -8,6 +8,14 @@ from storage.models import Pool, Filesystem, Volume, Snapshot
 root = rtslib.RTSRoot()
 
 
+def short_wwn(arg):
+    if isinstance(arg, rtslib.Target):
+        self = arg
+        arg = self.wwn
+    return arg.split(':', 2)[1]
+rtslib.target.Target.short_wwn = short_wwn
+rtslib.target.Target.type = 'target'
+
 def group_by(iterable, group_by):
     ret = {}
     for i in iterable:
@@ -22,7 +30,7 @@ def get_fabric_module(name):
     return name
 
 
-def list(fabric_module=None, ret_type=None):
+def list(fabric_module=None, ret_type=None, shorten=False):
     if fabric_module:
         fabric_module = get_fabric_module(fabric_module)
         ret = fabric_module.targets
@@ -31,6 +39,13 @@ def list(fabric_module=None, ret_type=None):
 
     if ret_type == dict:
         ret = group_by(ret, 'wwn')
+        if shorten:
+            update = {}
+            for k, v in ret.iteritems():
+                update[short_wwn(k)] = v
+            #ret.update(update)
+            ret = update
+
     elif ret_type == list:
         retn = []
         for t in root.targets:
