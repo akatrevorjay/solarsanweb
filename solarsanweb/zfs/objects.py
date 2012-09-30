@@ -579,8 +579,8 @@ class DatasetBase(object):
     def __new__(cls, *args, **kwargs):
         """ Dataset factory; returns back a subclass of dataset as the instance you requested """
         obj_cls = None
-        #if cls is Dataset or D:
-        if True:
+        if cls is Dataset or cls is DatasetBase:
+        #if True:
             obj_type = kwargs.pop('type', None)
             if not obj_type:
                 name = kwargs.get('name')

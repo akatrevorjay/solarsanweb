@@ -1,0 +1,95 @@
+{% extends "base_site.html" %}
+{% from "bootstrap/macros.html" import alert  %}
+{% from "bootstrap/forms/macros.html" import field, input  %}
+
+{% block css_extra %}
+<style></style>
+{% endblock %}
+
+{# Navbar is set in the app-specific override "base.html #}
+
+{% block pre_content %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Target List Title -->
+<div class="row">
+    <div class="span12">
+        <ul id="target-breadcrumb" class="breadcrumb">
+            <li class="static">
+                <a href="#">targets</a>
+                <span class="divider">&raquo;</span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Target List -->
+<div class="row">
+    <div class="span3">
+        <div class="well sidebar-nav">
+            <ul class="nav nav-pills nav-stacked">
+                <li class="nav-header">
+                    Target
+                </li>
+                {% for target in targets %}
+                <li><small>
+                    <a href="/storage/filesystems/detail/{{ filesystem.name|urlize }}" rel="tooltip" title="{{ filesystem.props.used }} / {{ filesystem.pool.props.size }}">
+                        {%- for path in filesystem_path[1:] %}&nbsp;&nbsp;&nbsp;&nbsp;{% endfor -%}
+                        {%- if filesystem_path|count > 1 %}<span style="color: black">/</span>{% endif -%}
+                        {{ filesystem_path|last }}
+                    </a>
+                </small></li>
+                {% endfor %}
+
+                <li>
+                    <a href="#add-filesystem-modal" data-toggle="modal" rel="tooltip" title="first tooltip"><span class="label label-info">add filesystem</span></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="span9">
+        <div id="filesystem-info" style="padding-left: 10px">
+            {% block filesystem_info %}
+                {% with filesystem = pool.filesystem %}
+                {% include 'storage/filesystem_detail.html' %}
+                {% endwith %}
+            {% endblock %}
+            <pre>{{ request|pprint }}</pre>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade hide" id="add-filesystem-modal">
+    <form class="form-horizontal">
+        <fieldset>
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    ×
+                </button>
+                <legend>
+                    Add new filesystem to pool "{{ pool.name }}"
+                </legend>
+            </div>
+            <div class="modal-body">
+                <div class="control-group">
+                    <label class="control-label" for="name">Name</label>
+                    <div class="controls">
+                        <input type="text" class="input-xlarge" id="name">
+                        <p class="help-block">
+                            Allowed characters: [A-z0-9_/-]
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+        <a href="#" class="btn btn-primary">Add</a>
+    </div>
+</div>
+
+{% endblock %}
+

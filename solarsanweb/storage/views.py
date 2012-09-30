@@ -11,7 +11,7 @@ from datetime import timedelta
 import json
 
 #from storage.models import zPool, zDataset
-from storage.models import Pool, Dataset, Filesystem, Snapshot
+from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 import zfs as z
 
 import mongogeneric
@@ -184,26 +184,48 @@ class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric
 
 
 
+class VolumeView(DatasetView):
+    document = Volume
+
+
+class VolumeHealthDetailView(VolumeView, DatasetHealthDetailView, mongogeneric.DetailView):
+    template_name = 'storage/volume_health.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(VolumeHealthDetailView, self).get_context_data(**kwargs)
+        context['targets'] = target.list(fabric_module=fabric)
+        return context
+
+class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailView):
+    template_name = 'storage/volume_snapshots.html'
+    pass
+
+
+
 """
 Volumes
   >> LIO target management for volumes
 """
 import rtslib
-#root = rtslib.root
+import storage.target as target
 
-#from storage.models import Target
-class Target(object):
-    pass
 
-class TargetView(object):
-    model = Target
-    slug_field = "name"
-    context_object_name = 'target'
+fabric = target.get_fabric_module('iscsi')
 
-class TargetACLsView(TargetView, generic.DetailView):
+
+class TargetListView(generic.TemplateView):
+    template_name = 'storage/target_list.html'
+    def get_context_data(self, **kwargs):
+        context = super(TargetListView, self).get_context_data(**kwargs)
+        context['targets'] = target.list(fabric_module=fabric, ret_type=dict)
+        return context
+
+
+class TargetACLsView(generic.DetailView):
     template_name = 'storage/target_acls_detail.html'
 
-class TargetLunsView(TargetView, generic.DetailView):
+
+class TargetLunsView(generic.DetailView):
     template_name = 'storage/target_luns_detail.html'
 
 

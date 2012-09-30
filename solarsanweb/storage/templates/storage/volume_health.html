@@ -1,14 +1,14 @@
-{% extends 'storage/filesystem_detail.html' %}
+{% extends 'storage/volume_detail.html' %}
 
-{% block filesystem_detail %}
+{% block object_detail %}
 <table class="table table-striped table-condensed">
     <tr>
-        <td colspan="1">
+        <td>
             <button class="btn btn-primary btn-large btn-block">
                 <span class="label-caps">
-                    <small>filesystem</small>
+                    <small>{{ object.type }}</small>
                 </span>
-                {{ filesystem.name }}
+                {{ object.name }}
             </button>
         </td>
         <td colspan="5"><div id="graph_iops"></div></td>
@@ -19,14 +19,14 @@
             <small>usage:</small>
         </td>
         <td>
-            <button class="btn btn-mini" >{{ filesystem.props.used }}/{{ filesystem.pool.props.capacity }}</button>
+            <button class="btn btn-mini" >{{ object.props.used or 0 }}/{{ object.pool.props.capacity }}</button>
         </td>
         <td>
             <i class="icon-resize-small"></i>
             <small>compression:</small>
         </td>
         <td>
-            {% if filesystem.props.compression %}
+            {% if object.props.compression %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
@@ -37,7 +37,7 @@
             <small>dedup:</small>
         </td>
         <td>
-            {% if filesystem.props.dedup %}
+            {% if object.props.dedup %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
@@ -50,21 +50,21 @@
             children:
         </small></td>
         <td><small>
-            {{ filesystem.props.usedbychildren }}
+            {{ object.props.usedbychildren }}
         </small></td>
         <td><small>
             &nbsp;&raquo;
             ratio:
         </small></td>
         <td><small>
-             {{ filesystem.props.compressratio }}
+             {{ object.props.compressratio }}
         </small></td>
         <td><small>
              &nbsp;&raquo;
             ratio:
         </small></td>
         <td><small>
-             {{ filesystem.pool.props.dedupratio }}
+             {{ object.pool.props.dedupratio }}
         </small></td>
      </tr>
     <tr>
@@ -73,21 +73,21 @@
             snapshots:
         </small></td>
         <td><small>
-             {{ filesystem.props.usedbysnapshots }}
+             {{ object.props.usedbysnapshots }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-             {{ filesystem.props.quota }}
+             {{ object.props.quota }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-             {{ filesystem.props.quota }}
+             {{ object.props.quota }}
         </small></td>
      </tr>
     <tr>
@@ -96,30 +96,83 @@
             ref:
         </small></td>
         <td><small>
-             {{ filesystem.props.usedbyrefreservation }}
+             {{ object.props.usedbyrefreservation }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-             {{ filesystem.props.quota }}
+             {{ object.props.quota }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-            {{ filesystem.props.quota }}
+            {{ object.props.quota }}
         </small></td>
      </tr>
 </table>
 
+
+<table class="table table-striped table-condensed">
+    {% set backstore = object.backstore() %}
+    <caption>
+        Target LUN Mapping:
+    </caption>
+    <thead>
+        <tr>
+            <th>lun</th>
+            <th>target wwn</th>
+            <th>tpg</th>
+            <th>fabric</th>
+            <th>tasks</th>
+        </tr>
+    </thead>
+    {% for lun in backstore.attached_luns %}
+    {% with target = lun.parent_tpg.parent_target %}
+    <tbody>
+        <tr>
+            <td>
+                lun{{ lun.lun }}
+            </td>
+            <td>
+                <a href="/storage/targets/{{ target.wwn|urlize }}">
+                    {{ target.wwn }}
+                </a>
+            </td>
+            <td>
+                tpg{{ lun.parent_tpg.tag }}
+            </td>
+            <td>
+                <span class="label-caps">{{ target.fabric_module.name }}</span>
+            </td>
+            <td>
+                <button class="btn btn-mini btn-danger">x</button>
+            </td>
+        </tr>
+    {% endwith %}
+    {% endfor %}
+    </tbody>
+</table>
+
+<div>
+    <a href="#add-lun-mapping">
+        <span class="label label-info" style="text-align: right;">
+            add lun mapping
+        </span>
+    </a>
+</div>
+<br />
+
+
 <blockquote>
 <pre>
-Filesystem: {{ filesystem.__dict__|pprint }}
+{{ object.type|capitalize }}: {{ object.__dict__|pprint }}
 </pre>
 </blockquote>
+
 
 <script>
 //
@@ -150,10 +203,10 @@ d3.select("#graph_iops").append("div")
 d3.select("#graph_iops")
   .selectAll(".horizon")
     .data([
-      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))')},
-      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
-      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
+      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.pool.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))')},
+      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.pool.name }}"))').divide(step)},
+      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))').divide(step)},
     ])
   .enter().append("div")
     .attr("class", "horizon")

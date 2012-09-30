@@ -16,6 +16,32 @@ from decorator import decorator
 from braces.views import LoginRequiredMixin, PermissionRequiredMixin, SuperuserRequiredMixin #, UserFormKwargsMixin, UserKwargModelFormMixIn
 from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAndRedirectToEditView, SelectRelatedMixin
 
+
+"""
+Exceptions
+"""
+
+
+class FormattedException(Exception):
+    def __init__(self, *args):
+        if args:
+            logging.error(*args)
+            message = args.pop(0)
+            if args:
+                message = message % args
+
+        # Call the base class constructor with the parameters it needs
+        Exception.__init__(self, message)
+
+
+class LoggedException(FormattedException):
+    def __init__(self, *args, **kwargs):
+        if args:
+            logging.error(*args)
+        super(LoggedException, self).__init__(self, *args, **kwargs)
+
+
+
 """
 Decorators
 """
