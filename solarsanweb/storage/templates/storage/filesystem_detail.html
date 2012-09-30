@@ -1,0 +1,76 @@
+{% extends 'storage/pool_detail.html' %}
+
+{% block filesystem_info %}
+
+<!-- Dataset Detail -->
+{% if not filesystem %}
+{% set filesystem = pool.filesystem %}
+{% endif %}
+
+{% set filesystem_path = filesystem.path() %}
+
+<div class="row">
+    <div class="navbar filesystem-detail-nav filesystem-detail-list">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto;">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".filesystem-detail-nav .nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+
+                <a class="brand" href="#">
+                    {{ filesystem_path[0] }}
+                    {% if filesystem_path|count > 1 %}
+                        {% for d in filesystem_path[1:] %}/{{ d }}{% endfor %}
+                    {% endif %}
+                </a>
+
+                <div class="nav-collapse">
+                    <ul class="nav">
+                         <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/storage/pools/health/{{ filesystem.pool.name|urlize }}">Health</a></li>
+                                <li><a href="/storage/pools/analytics/{{ filesystem.pool.name|urlize }}">Analytics</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="/storage/filesystems/health/{{ filesystem.name|urlize }}">Health</a></li>
+                        <li><a href="/storage/filesystems/snapshots/{{ filesystem.name|urlize }}">Snapshots</a></li>
+                    </ul>
+
+                    <ul class="nav pull-right">
+                         <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/storage/filesystems/snapshot/{{ filesystem.name|urlize }}">Snapshot</a></li>
+                                {#<li><a href="#">Clone</a></li>#}
+                                <li class="divider"></li>
+                                <li><a href="/storage/filesystems/destroy/{{ filesystem.name|urlize }}">Destroy</a></li>
+                                {#<li class="divider"></li>
+                                <li><a href="#">Separated link</a></li>#}
+                            </ul>
+                        </li>
+                   </ul>
+                </div><!-- /.nav-collapse -->
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
+</div>
+
+<div class="row">
+    <div id="filesystem-detail-content" class="well">
+        {% block filesystem_detail %}
+            {% if filesystem.name == filesystem.pool.name %}
+                {% with pool = filesystem.pool %}
+                {% include 'storage/pool_health.html' %}
+                {% endwith %}
+            {% else %}
+                {% include 'storage/filesystem_health.html' %}
+            {% endif %}
+        {% endblock %}
+    </div>
+</div>
+
+{% endblock %}
+

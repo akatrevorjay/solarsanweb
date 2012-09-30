@@ -268,3 +268,6 @@
 [submodule "vendor-local/pkgs/django-mongodbforms"]
 	path = vendor-local/pkgs/django-mongodbforms
 	url = git://github.com/jschrewe/django-mongodbforms.git
+[submodule "solarsanweb/static/3rd/bootstrap-toggle-buttons"]
+	path = solarsanweb/static/3rd/bootstrap-toggle-buttons
+	url = git://github.com/nostalgiaz/bootstrap-toggle-buttons.git

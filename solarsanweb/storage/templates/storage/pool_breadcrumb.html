@@ -1,9 +1,9 @@
 {% with %}
 
-{% if dataset %}
-    {% set object = dataset %}
-    {% set object_type = 'dataset' %}
-    {% set object_class = 'dataset-select' %}
+{% if filesystem %}
+    {% set object = filesystem %}
+    {% set object_type = 'filesystem' %}
+    {% set object_class = 'filesystem-select' %}
 {% elif pool %}
     {% set object = pool %}
     {% set object_type = 'pool' %}
@@ -17,7 +17,7 @@
 
 {% for path in object_path %}
     {% with %}
-        {% if object_type == 'dataset' %}
+        {% if object_type == 'filesystem' %}
             {% if loop.first %}
                 {% set object_type = 'pool' %}
                 {% set object_class = Null %}
@@ -27,7 +27,7 @@
         <li class="{{ object_class|default(object_type) }}{% if loop.last %} active{% endif %}">
             <a href="/{{ object_type }}s/detail/{{ object_path[0:loop.index]|join('/')|urlize }}">{{ path }}</a>
             {% if not loop.last %}
-            <span class="divider">{% if object_type == 'dataset' %}/{% else %}&raquo;{% endif %}</span>
+            <span class="divider">{% if object_type == 'filesystem' %}/{% else %}&raquo;{% endif %}</span>
             {% endif %}
         </li>
     {% endwith %}

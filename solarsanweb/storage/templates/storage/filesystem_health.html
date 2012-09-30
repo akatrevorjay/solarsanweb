@@ -1,0 +1,169 @@
+{% extends 'storage/filesystem_detail.html' %}
+
+{% block filesystem_detail %}
+<table class="table table-striped table-condensed">
+    <tr>
+        <td colspan="1">
+            <button class="btn btn-primary btn-large btn-block">
+                <span class="label-caps">
+                    <small>filesystem</small>
+                </span>
+                {{ filesystem.name }}
+            </button>
+        </td>
+        <td colspan="5"><div id="graph_iops"></div></td>
+    </tr>
+    <tr>
+        <td>
+            <i class="icon-adjust"></i>
+            <small>usage:</small>
+        </td>
+        <td>
+            <button class="btn btn-mini" >{{ filesystem.props.used }}/{{ filesystem.pool.props.capacity }}</button>
+        </td>
+        <td>
+            <i class="icon-resize-small"></i>
+            <small>compression:</small>
+        </td>
+        <td>
+            {% if filesystem.props.compression %}
+            <button class="btn btn-mini btn-success">On</button>
+            {% else %}
+            <button class="btn btn-mini btn-inverse">Off</button>
+            {% endif %}
+        </td>
+        <td>
+            <i class="icon-th"></i>
+            <small>dedup:</small>
+        </td>
+        <td>
+            {% if filesystem.props.dedup %}
+            <button class="btn btn-mini btn-success">On</button>
+            {% else %}
+            <button class="btn btn-mini btn-inverse">Off</button>
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td><small>
+            &nbsp;&raquo;
+            children:
+        </small></td>
+        <td><small>
+            {{ filesystem.props.usedbychildren }}
+        </small></td>
+        <td><small>
+            &nbsp;&raquo;
+            ratio:
+        </small></td>
+        <td><small>
+             {{ filesystem.props.compressratio }}
+        </small></td>
+        <td><small>
+             &nbsp;&raquo;
+            ratio:
+        </small></td>
+        <td><small>
+             {{ filesystem.pool.props.dedupratio }}
+        </small></td>
+     </tr>
+    <tr>
+        <td><small>
+            &nbsp;&raquo;
+            snapshots:
+        </small></td>
+        <td><small>
+             {{ filesystem.props.usedbysnapshots }}
+        </small></td>
+        <td><small>
+            <i class="icon-tint"></i>
+            quota:
+        </small></td>
+        <td><small>
+             {{ filesystem.props.quota }}
+        </small></td>
+        <td><small>
+            <i class="icon-tint"></i>
+            quota:
+        </small></td>
+        <td><small>
+             {{ filesystem.props.quota }}
+        </small></td>
+     </tr>
+    <tr>
+        <td><small>
+            &nbsp;&raquo;
+            ref:
+        </small></td>
+        <td><small>
+             {{ filesystem.props.usedbyrefreservation }}
+        </small></td>
+        <td><small>
+            <i class="icon-tint"></i>
+            quota:
+        </small></td>
+        <td><small>
+             {{ filesystem.props.quota }}
+        </small></td>
+        <td><small>
+            <i class="icon-tint"></i>
+            quota:
+        </small></td>
+        <td><small>
+            {{ filesystem.props.quota }}
+        </small></td>
+     </tr>
+</table>
+
+<blockquote>
+    <pre>
+        Filesystem: {{ filesystem.__dict__|pprint }}
+    </pre>
+</blockquote>
+
+<script>
+//
+var step = +cubism.option("step", 3e5);
+
+//
+var context = cubism.context()
+    .step(step)
+    .size(470);
+
+//
+var cube = context.cube("http://localhost:1081");
+
+/*
+// Add top and bottom axes to display the time.
+d3.select("#graph_iops").selectAll(".axis")
+    .data(["top", "bottom"])
+  .enter().append("div")
+    .attr("class", function(d) { return d + " axis"; })
+    .each(function(d) { d3.select(this).call(context.axis().ticks(12).orient(d)); });
+
+// Add a mouseover rule.
+d3.select("#graph_iops").append("div")
+    .attr("class", "rule")
+    .call(context.rule());
+*/
+
+d3.select("#graph_iops")
+  .selectAll(".horizon")
+    .data([
+      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))')},
+      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
+      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
+    ])
+  .enter().append("div")
+    .attr("class", "horizon")
+  .call(context.horizon()
+    .title(function(d) { return d.title; })
+    .metric(function(d) { return d.metric; })
+    .height(20)
+  );
+
+</script>
+
+
+{% endblock %}

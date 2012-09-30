@@ -146,7 +146,7 @@ class DatasetView(object):
             ctx = super(DatasetView, self).get_context_data(**kwargs)
         except:
             ctx = {}
-        ctx['pool'] = ctx['dataset'].pool
+        ctx['pool'] = ctx[self.context_object_name].pool
         return ctx
 
 #class DatasetListView(DatasetView, mongogeneric.ListView):
@@ -159,13 +159,29 @@ class DatasetView(object):
 #class DatasetDeleteView(DatasetView, mongogeneric.DetailView):
 #    pass
 
-class DatasetHealthDetailView(DatasetView, mongogeneric.DetailView):
+class DatasetHealthDetailView(object):
     template_name = 'storage/dataset_health.html'
     pass
 
-class DatasetSnapshotsView(DatasetView, mongogeneric.DetailView):
+class DatasetSnapshotsView(object):
     template_name = 'storage/dataset_snapshots.html'
     pass
+
+
+
+class FilesystemView(DatasetView):
+    document = Filesystem
+    context_object_name = 'filesystem'
+
+
+class FilesystemHealthDetailView(FilesystemView, DatasetHealthDetailView, mongogeneric.DetailView):
+    template_name = 'storage/filesystem_health.html'
+    pass
+
+class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric.DetailView):
+    template_name = 'storage/filesystem_snapshots.html'
+    pass
+
 
 
 """

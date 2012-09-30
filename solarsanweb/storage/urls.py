@@ -3,7 +3,7 @@ from django.conf.urls.defaults import patterns, url, include
 from django.views import generic
 
 import storage.views
-#from storage.models import Pool, Dataset, Snapshot
+#from storage.models import Pool, Filesystem, Snapshot
 
 urlpatterns = patterns('storage.views',
     (r'^pools/detail/(?P<slug>[A-z0-9_\-]+)$', storage.views.PoolHealthDetailView.as_view()),
@@ -15,8 +15,8 @@ urlpatterns = patterns('storage.views',
     (r'^pools/analytics/(?P<slug>[A-z0-9_\-]+)/(?P<name>[A-z0-9_\-]+)/(?P<time_window>[0-9]+)$', storage.views.PoolAnalyticsDetailView.as_view()),
     (r'^pools/analytics/(?P<slug>[A-z0-9_\-]+)/(?P<name>[A-z0-9_\-]+)/(?P<time_window>[0-9]+)/render$', storage.views.PoolAnalyticsRenderView.as_view()),
 
-    (r'^datasets/detail/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.DatasetHealthDetailView.as_view()),
-    (r'^datasets/health/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.DatasetHealthDetailView.as_view()),
-    (r'^datasets/snapshots/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.DatasetSnapshotsView.as_view()),
+    (r'^filesystems/detail/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.FilesystemHealthDetailView.as_view()),
+    (r'^filesystems/health/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.FilesystemHealthDetailView.as_view()),
+    (r'^filesystems/snapshots/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.FilesystemSnapshotsView.as_view()),
 )
 

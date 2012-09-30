@@ -62,7 +62,7 @@ class BaseMixIn(ReprMixIn):
 Property
 """
 
-class PropertyDocument(BaseMixIn, m.EmbeddedDocument):
+class PropertyDocument(BaseMixIn, m.EmbeddedDocument, zfs.objects.Property):
     meta = {'abstract': True, }
     name = m.StringField(required=True, unique=True)
     value = m.StringField()
@@ -70,6 +70,36 @@ class PropertyDocument(BaseMixIn, m.EmbeddedDocument):
     #created = m.DateTimeField(default=datetime.now())
     ## TODO Override validation and ensure modified gets updated on modification
     #modified = m.DateTimeField(default=datetime.now())
+
+    def __repr__(self):
+        prefix = ''
+        source = ''
+        if self.source == '-':
+            prefix += 'Statistic'
+        elif self.source in ['default', 'local', 'received']:
+            prefix += self.source.capitalize()
+        elif self.source:
+            prefix += 'Inherited'
+            source = ' source=%s' % self.source
+
+        #if self.modified:
+        #    prefix += 'Unsaved'
+
+        name = prefix + self.__class__.__name__
+        return "%s(%s=%s%s)" % (name, self.name, self.value, source)
+
+    def __unicode__(self):
+        return unicode(self.value)
+
+    def __str__(self):
+        return str(self.value)
+
+    def __nonzero__(self):
+        value = self.value
+        if value == 'on':
+            return True
+        elif value:
+            return False
 
 class Property(PropertyDocument):
     pass
@@ -189,10 +219,32 @@ class VDevChildDocument(VDevBaseDocument):
     metaslab_array = m.IntField()
     metaslab_shift = m.IntField()
 
+
+from solarsan.utils import convert_bytes_to_human
+
+
 class VDevDiskDocument(VDevChildDocument):
     meta = {'abstract': True, }
     path = m.StringField()
     whole_disk = m.IntField()
+
+    @property
+    def path_pretty(self):
+        return self.path.replace('/dev/', '')
+
+    @property
+    def asize_pretty(self):
+        return convert_bytes_to_human(self.asize)
+
+    @property
+    def health(self):
+        # TODO disk health
+        return 'Good'
+
+    @property
+    def type(self):
+        return 'disk'
+
 
 class VDevDisk(VDevDiskDocument):
     pass

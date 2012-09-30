@@ -179,7 +179,7 @@ Pool IOStats
 """
 
 import cube_python
-
+from datetime import datetime
 
 class Pool_IO_Stats(PeriodicTask):
     """ Periodic task to log iostats per pool to db. """
@@ -195,7 +195,7 @@ class Pool_IO_Stats(PeriodicTask):
                 logger.error('Got data for an unknown pool "%s"', i)
                 continue
 
-            event = {'time': iostats[i]['timestamp'],
+            event = {'time': datetime.utcnow(),
                      'type': 'pool_iostat',
                      'data': {
                          'pool':        pool.name,
