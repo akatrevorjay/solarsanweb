@@ -9,6 +9,8 @@
     {% set object_type = 'pool' %}
 {% endif %}
 
+{% if object.type in ['pool', 'filesystem'] %}
+
 {% set object_path = object.path() %}
 
 {% for path in object_additional %}
@@ -32,6 +34,8 @@
         </li>
     {% endwith %}
 {% endfor %}
+
+{% endif %}
 
 {% endwith %}
 

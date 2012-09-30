@@ -1,0 +1,63 @@
+{% extends 'storage/pool_detail.html' %}
+
+{% block filesystem_info %}
+
+<!-- Target Detail -->
+
+{% set object_path = object.wwn.split(':')[1:] %}
+
+<div class="row" style="display: none;">
+    <div class="navbar object-detail-nav object-detail-list">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto;">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".object-detail-nav .nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+
+                <a class="brand" href="#">
+                    {{ object_path[0] }}
+                    {% if object_path|count > 1 %}
+                        {% for d in object_path[1:] %}/{{ d }}{% endfor %}
+                    {% endif %}
+                </a>
+
+                <div class="nav-collapse">
+                    <ul class="nav">
+                         <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/storage/pools/health/{{ object.name|urlize }}">Health</a></li>
+                                <li><a href="/storage/pools/analytics/{{ object.name|urlize }}">Analytics</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="/storage/volumes/health/{{ object.name|urlize }}">Health</a></li>
+                        <li><a href="/storage/volumes/snapshots/{{ object.name|urlize }}">Snapshots</a></li>
+                    </ul>
+
+                    <ul class="nav pull-right">
+                         <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/storage/filesystems/snapshot/{{ object.name|urlize }}">Snapshot</a></li>
+                                <li class="divider"></li>
+                                <li><a href="/storage/filesystems/destroy/{{ object.name|urlize }}">Destroy</a></li>
+                            </ul>
+                        </li>
+                   </ul>
+                </div><!-- /.nav-collapse -->
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
+</div>
+
+<div class="row">
+    <div id="object-detail-content" class="well">
+        {% block object_detail %}
+        {% endblock %}
+    </div>
+</div>
+
+{% endblock %}
+
