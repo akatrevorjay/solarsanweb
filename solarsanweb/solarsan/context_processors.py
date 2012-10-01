@@ -11,33 +11,6 @@ import mongoengine.queryset
 #import copy
 
 
-def pickle_getstate(self):
-    col = None
-    objdict = self.__dict__.copy()
-
-    curdict = None
-    cursor = objdict.get('_cursor_obj', col)
-    if cursor:
-        cursor = cursor.clone()
-        objdict['_cursor_obj'] = cursor
-        cursor.__dict__.pop('_Cursor__collection')
-
-    objdict['_collection_obj'] = col
-
-    return objdict
-
-
-def pickle_setstate(self, objdict):
-    col = objdict['_document']._collection
-    objdict.update({'_collection_obj': col, })
-
-    cursor = objdict.get('_cursor_obj')
-    if cursor:
-        cursor.__dict__.update({'_Cursor__collection': col, })
-
-    self.__dict__.update(objdict)
-
-
 def _timeout():
     # One minute for dev, 5 minutes for prod
     timeout = settings.DEBUG and 60 or 300
@@ -58,9 +31,13 @@ class SingletonQuerySet(mongoengine.queryset.QuerySet):
 
 
 class ListQuerySet(list):
-    def __init__(self, document, init=True, fill=True):
+    objects = None
+    _objs = None
+    def __init__(self, document, init=True, fill=True, state=None):
         if init:
             self.objects = document.objects.clone()
+        if state:
+            self.__setstate__(state)
         if fill:
             self.fill()
 
@@ -83,23 +60,54 @@ class ListQuerySet(list):
     #    pass
 
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d['_data'] = list(self)
+
+        #if not d.get('objects'):
+        #    self.objects = {}
+
+        d['objects'] = self.objects.__dict__.copy()
+        d['objects'].pop('_collection_obj')
+
+        cursor = d['objects'].pop('_cursor_obj')
+        if cursor:
+            d['objects']['_cursor_obj'] = cursor.clone()
+            cursor = d['objects']['_cursor_obj']
+            cursor.__dict__.pop('_Cursor__collection')
+
+        return d
+
+    def __setstate__(self, d):
+        col = d['objects']['_document']._collection
+
+        d['objects']['_collection_obj'] = col
+
+        self.objects.__dict__.update(d.pop('objects'))
+
+        cursor = getattr(self.objects, '_cursor_obj', None)
+        if cursor:
+            cursor.__dict__['_Cursor__collection'] = col
+
+        self.extend(d.pop('_data'))
+
+        self.__dict__.update(d)
 
 
 def _model_cache(cls):
     name = '%ss' % cls.__name__.lower()
-    objdict = cache.get(name)
-    if objdict:
-        objs = ListQuerySet(cls, fill=False)
-        #objs = cls.objects.__class__(cls, cls._collection)
-        pickle_setstate(objs.objects, objdict)
+    d = cache.get(name)
+    if d:
+        objs = ListQuerySet(cls, fill=False, init=True, state=d)
 
+        #objs = cls.objects.__class__(cls, cls._collection)
         #logging.debug('got objdict from cache: objdict=%s', objdict)
         #logging.debug('got objs from cache: objs=%s', objs)
     else:
         objs = ListQuerySet(cls)
         #objs = cls.objects.all()
 
-        objdict = pickle_getstate(objs.objects)
+        objdict = objs.__getstate__()
         #logging.debug('new objs=%s', objdict)
 
         cache.set(name, objdict, _timeout())

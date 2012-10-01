@@ -135,7 +135,7 @@
                 lun{{ lun.lun }}
             </td>
             <td>
-                {% with lun_volume = volumes.get(backstore_wwn=lun.storage_object.wwn) %}
+                {% with lun_volume = volumes.objects.get(backstore_wwn=lun.storage_object.wwn) %}
                 <a href="/storage/volumes/detail/{{ lun_volume.name|urlize }}">
                     {{ lun_volume.name }}
                 </a>
