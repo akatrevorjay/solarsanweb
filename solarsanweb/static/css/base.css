@@ -18,6 +18,7 @@ body {
   /* Navbar shouldn't cover anything up */
   margin-top: 40px;
   font-size: 80%;
+  font-family: droid sans;
 }
 
 pre {
@@ -35,11 +36,25 @@ pre {
 }
 
 .accordion-heading.active .accordion-toggle {
-  background-color: #eee;
+  background-color: whiteSmoke;
   /*background-color: #08C;*/
   /*background-color: rgba(0, 136, 204, 0.1);*/
   /*color: white;*/
 }
+
+.sidebar-nav .accordion-inner li.active .muted {
+  color: #333;
+}
+
+.sidebar-nav .accordion-inner .muted {
+  font-size: 0.8em;
+}
+
+
+.accordion-group:hover .accordion-body, .accordion-group:hover .accordion-heading .accordion-toggle {
+  background-color: #f5f5f5;
+}
+
 
 .accordion-heading .accordion-toggle:hover {
   background-color: #eee;
@@ -136,9 +151,11 @@ header {
 .horizon {
   overflow: hidden;
   position: relative;
+}
 
-  /*border-top: solid 1px #000;
-  border-bottom: solid 1px #000;*/
+.horizon:first-child {
+  /*border-top: solid 1px #000;*/
+  border-bottom: solid 1px #000;
 }
 
 .horizon + .horizon {

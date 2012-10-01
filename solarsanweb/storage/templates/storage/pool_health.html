@@ -1,6 +1,6 @@
 {% extends 'storage/filesystem_detail.html' %}
 
-{% block filesystem_detail %}
+{% block object_detail %}
 <table class="table table-striped">
     <tr>
         <td colspan="1">
@@ -154,7 +154,7 @@ d3.select("#graph_iops")
   .selectAll(".horizon")
     .data([
       {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ pool.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ pool.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ pool.name }}"))').multiply(-1)},
       //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ pool.name }}"))').divide(step)},
       //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ pool.name }}"))').divide(step)},
     ])

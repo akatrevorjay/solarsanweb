@@ -1,6 +1,6 @@
 {% extends 'storage/pool_detail.html' %}
 
-{% block filesystem_info %}
+{% block object_content %}
 
 <!-- Dataset Detail -->
 {% if not filesystem %}
@@ -60,7 +60,7 @@
 
 <div class="row">
     <div id="filesystem-detail-content" class="well">
-        {% block filesystem_detail %}
+        {% block object_detail %}
             {% if filesystem.name == filesystem.pool.name %}
                 {% with pool = filesystem.pool %}
                 {% include 'storage/pool_health.html' %}

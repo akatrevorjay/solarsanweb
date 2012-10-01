@@ -1,6 +1,7 @@
 {% extends 'storage/filesystem_detail.html' %}
 
-{% block filesystem_detail %}
+{% block object_detail %}
+
 <!-- Pool Analytics -->
 {% set pool_path = pool.path() %}
 <select data-placeholder="Change graph" id="graph-select" class="chosen-select">
