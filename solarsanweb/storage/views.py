@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 from django import http
 from django.views import generic
 
@@ -202,7 +203,8 @@ class VolumeHealthDetailView(VolumeView, DatasetHealthDetailView, mongogeneric.D
 
     def get_context_data(self, **kwargs):
         context = super(VolumeHealthDetailView, self).get_context_data(**kwargs)
-        context['targets'] = target.list(fabric_module=fabric)
+        #context['targets'] = storage.target.list(fabric_module=fabric)
+        targets = context['targets'] = storage.target.list(cached=True)
         return context
 
 
@@ -215,8 +217,8 @@ class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailV
 Targets
 """
 
-import storage.target as target
-fabric = target.get_fabric_module('iscsi')
+import storage.target
+fabric = storage.target.get_fabric_module('iscsi')
 
 
 class TargetDetailView(generic.TemplateView):
@@ -230,15 +232,17 @@ class TargetDetailView(generic.TemplateView):
         context = super(TargetDetailView, self).get_context_data(**kwargs)
         slug = kwargs['slug']
 
-        tgts = target.list(fabric_module=fabric, ret_type=dict)
-        if not slug in tgts:
+        targets = storage.target.list(cached=True)
+
+        for t in targets:
+            if t.wwn == slug:
+                target = t
+        if not target:
             raise http.Http404
-        tgt = tgts[slug]
 
         context.update({
-            'object': tgt,
-            'target': tgt,
-            'targets': tgts.values(),
+            'object': target,
+            'target': target,
         })
 
         return context

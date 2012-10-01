@@ -18,6 +18,39 @@ from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAn
 
 
 """
+Singleton
+"""
+
+
+class Singleton:
+    __single = None
+    def __init__( self ):
+        if Singleton.__single:
+            raise Singleton.__single
+        Singleton.__single = self
+
+
+def Handle(x=Singleton):
+    try:
+        single = x()
+    except Singleton, s:
+        single = s
+    return single
+
+
+"""
+Proxy
+"""
+
+
+class Proxy:
+    def __init__( self, subject ):
+        self.__subject = subject
+    def __getattr__( self, name ):
+        return getattr( self.__subject, name )
+
+
+"""
 Exceptions
 """
 

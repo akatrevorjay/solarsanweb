@@ -4,8 +4,14 @@ from solarsan.utils import FormattedException, LoggedException
 import rtslib
 from storage.models import Pool, Filesystem, Volume, Snapshot
 
+from django.core.cache import cache
+from django.conf import settings
+
 
 root = rtslib.RTSRoot()
+
+
+CACHE_TIMEOUT = 600
 
 
 def short_wwn(arg):
@@ -15,6 +21,7 @@ def short_wwn(arg):
     return arg.split(':', 2)[1]
 rtslib.target.Target.short_wwn = short_wwn
 rtslib.target.Target.type = 'target'
+
 
 def group_by(iterable, group_by):
     ret = {}
@@ -30,12 +37,17 @@ def get_fabric_module(name):
     return name
 
 
-def list(fabric_module=None, ret_type=None, shorten=False):
-    if fabric_module:
-        fabric_module = get_fabric_module(fabric_module)
-        ret = fabric_module.targets
-    else:
-        ret = root.targets
+def list(ret_type=None, shorten=False, cached=False):
+    if cached:
+        ret = cache.get('targets')
+    if not cache or not ret:
+        ret = [x for x in root.targets]
+        if cached:
+            cache.set('targets', ret, CACHE_TIMEOUT)
+    #else:
+    #    # Currently no cache for this as this isn't used at all atm.
+    #    fabric_module = get_fabric_module(fabric_module)
+    #    ret = fabric_module.targets
 
     if ret_type == dict:
         ret = group_by(ret, 'wwn')
@@ -51,6 +63,7 @@ def list(fabric_module=None, ret_type=None, shorten=False):
         for t in root.targets:
             retn.append(t)
         ret = retn
+
     return ret
 
 def get_target(wwn, fabric_module=None):
