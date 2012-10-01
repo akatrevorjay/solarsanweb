@@ -18,7 +18,7 @@ body {
   /* Navbar shouldn't cover anything up */
   margin-top: 40px;
   font-size: 80%;
-  font-family: droid sans;
+  font-family: droid sans, arial;
 }
 
 pre {
@@ -51,13 +51,14 @@ pre {
 }
 
 
-.accordion-group:hover .accordion-body, .accordion-group:hover .accordion-heading .accordion-toggle {
-  background-color: #f5f5f5;
+/*.accordion-group:hover .accordion-body,*/
+.accordion-group:hover .accordion-heading .accordion-toggle {
+  background-color: whiteSmoke;
 }
 
 
 .accordion-heading .accordion-toggle:hover {
-  background-color: #eee;
+  /*background-color: #eee;*/
   /*background-color: rgba(0, 136, 204, 0.1);*/
   /*color: white;*/
   text-decoration: none;
@@ -82,6 +83,19 @@ pre {
 */
 
 
+
+.animated:hover {
+	-webkit-animation-duration: 1s;
+	   -moz-animation-duration: 1s;
+	    -ms-animation-duration: 1s;
+	     -o-animation-duration: 1s;
+	        animation-duration: 1s;
+	-webkit-animation-fill-mode: both;
+	   -moz-animation-fill-mode: both;
+	    -ms-animation-fill-mode: both;
+	     -o-animation-fill-mode: both;
+	        animation-fill-mode: both;
+}
 
 
 
