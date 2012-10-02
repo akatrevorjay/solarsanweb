@@ -28,10 +28,10 @@ DATABASES = {
         'HOST': '',                             # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                             # Set to empty string for default. Not used with sqlite3.
     },
-    'mongodb': {
-        'ENGINE': 'django_mongokit.mongodb',
-        'NAME': PROJECT_NAME,
-    },
+    #'mongodb': {
+    #    'ENGINE': 'django_mongokit.mongodb',
+    #    'NAME': PROJECT_NAME,
+    #},
 }
 
 DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
@@ -428,10 +428,10 @@ SERVER_NAME = socket.gethostname()
 ##
 
 CACHES = {
-    #'default_mem': {
-    #    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    #    'LOCATION': PROJECT_NAME,
-    #},
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': PROJECT_NAME,
+    },
     #'default_db': {
     #    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
     #    'LOCATION': PROJECT_NAME+'_django_db_cache',
@@ -441,11 +441,11 @@ CACHES = {
     #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
     #},
     #'default_mongodb': {
-    'default': {
-        #'BACKEND': 'django_mongodb_cache.MongoDBCache',
-        'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
-        'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
-    },
+    #'default': {
+    #    #'BACKEND': 'django_mongodb_cache.MongoDBCache',
+    #    'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
+    #    'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
+    #},
 }
 
 #if DEBUG:   CACHES['default'] = CACHES['default_mem']
@@ -512,7 +512,7 @@ CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hrs
 #CELERY_RESULT_BACKEND = "amqp"
 CELERY_RESULT_BACKEND = "mongodb"
 CELERY_MONGODB_BACKEND_SETTINGS = {
-    "database": DATABASES['mongodb']['NAME'],
+    "database": PROJECT_NAME,
 }
 
 #default_exchange = Exchange('default', type='direct')

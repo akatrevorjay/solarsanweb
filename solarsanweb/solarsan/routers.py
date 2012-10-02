@@ -5,6 +5,7 @@ import random
 
 _mongodbs = []
 
+
 def _init_mongodbs():
     for name, options in settings.DATABASES.iteritems():
         #if options['ENGINE'] != 'django_mongodb_engine':
@@ -29,13 +30,20 @@ class MongoDBRouter(object):
 
     See: http://docs.djangoproject.com/en/dev/topics/db/multi-db/#topics-db-multi-db-routing
     """
+    init_error = None
+    managed_apps = []
+    managed_models = []
 
     def __init__(self):
         if not _mongodbs:
-            _init_mongodbs()
-        self.managed_apps = [app.split('.')[-1] for app in
-                             getattr(settings, 'MONGODB_MANAGED_APPS', [])]
-        self.managed_models = getattr(settings, 'MONGODB_MANAGED_MODELS', [])
+            try:
+                _init_mongodbs()
+            except ImproperlyConfigured:
+                self.init_error = True
+
+        self.managed_apps.extend([app.split('.')[-1] for app in
+                             getattr(settings, 'MONGODB_MANAGED_APPS', [])])
+        self.managed_models.extend(getattr(settings, 'MONGODB_MANAGED_MODELS', []))
 
     def is_managed(self, model):
         """
@@ -54,7 +62,7 @@ class MongoDBRouter(object):
         if self.is_managed(model):
             return _mongodbs[0]
 
-    db_for_write = db_for_read # Same algorithm.
+    db_for_write = db_for_read  # Same algorithm.
 
     def allow_relation(self, obj1, obj2, **hints):
         """
@@ -71,8 +79,6 @@ class MongoDBRouter(object):
         elif self.is_managed(model):
             return db in _mongodbs
         return None
-
-
 
 
 class MongoRouter(object):
@@ -172,7 +178,7 @@ class MasterSlaveRouter(object):
 
     def db_for_read(self, model, **hints):
         "Point all read operations to a random slave"
-        return random.choice(['slave1','slave2'])
+        return random.choice(['slave1', 'slave2'])
 
     def db_for_write(self, model, **hints):
         "Point all write operations to the master"
@@ -180,7 +186,7 @@ class MasterSlaveRouter(object):
 
     def allow_relation(self, obj1, obj2, **hints):
         "Allow any relation between two objects in the db pool"
-        db_list = ('master','slave1','slave2')
+        db_list = ('master', 'slave1', 'slave2')
         if obj1._state.db in db_list and obj2._state.db in db_list:
             return True
         return None
