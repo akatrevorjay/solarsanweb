@@ -21,12 +21,12 @@ class ListQuerySet(list):
         if fill:
             self.fill()
 
-    def fill(self):
-        del self[:]
-        self.extend(
-            filter(lambda x: x not in self,
-                  list(self.objects.all()))
-        )
+    def fill(self, data=None, clear=True):
+        if clear:
+            del self[:]
+        if not data:
+            data = list(self.objects.all())
+        self.extend(data)
 
     def __getitem__(self, key):
         try:
@@ -42,26 +42,27 @@ class ListQuerySet(list):
     def __getstate__(self):
         ret = {}
 
+        # self
         ret['self'] = self.__dict__.copy()
-
+        # objects
         objects = ret['self'].pop('objects')
         ret['objects'] = objects.__dict__.copy()
         ret['objects'].pop('_collection_obj')
         ret['objects'].pop('_cursor_obj')
-
+        # data
         ret['data'] = list(self)
 
         return ret
 
     def __setstate__(self, ret):
+        # self
         self.__dict__.update(ret['self'])
-
+        # objects
         document = ret['objects']['_document']
         self.objects = document.objects.clone()
         self.objects.__dict__.update(ret['objects'])
-
-        del self[:]
-        self.extend(ret['data'])
+        # data
+        self.fill(data=ret['data'])
 
 
 def _model_cache(cls):
