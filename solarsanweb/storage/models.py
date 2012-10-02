@@ -488,12 +488,13 @@ class VolumeDocument(DatasetDocument):
     def backstore(self):
         """ Returns backstore object """
         if not self.backstore_wwn:
-            raise self.DoesNotExist("Could not get backstore for Volume '%s' as it has no backstore_wwn attribute", self)
+            raise self.DoesNotExist("Could not get backstore for Volume '%s' as it has no backstore_wwn attribute", self.name)
         root = rtslib.RTSRoot()
         for so in root.storage_objects:
             if so.wwn == self.backstore_wwn:
                 return so
-        raise LoggedException("Could not get block backstore for Volume '%s' specified as wwn=%s as it does not exist", self, self.backstore_wwn)
+        #raise LoggedException("Could not get block backstore for Volume '%s' specified as wwn=%s as it does not exist", self.name, self.backstore_wwn or None)
+        return None
 
     def create_backstore(self, **kwargs):
         """ Creates a backing storage object for target usage """

@@ -32,7 +32,6 @@ class SingletonQuerySet(mongoengine.queryset.QuerySet):
 
 class ListQuerySet(list):
     objects = None
-    _objs = None
     def __init__(self, document, init=True, fill=True, state=None):
         if init:
             self.objects = document.objects.clone()
@@ -42,6 +41,7 @@ class ListQuerySet(list):
             self.fill()
 
     def fill(self):
+        del self[:]
         self.extend(
             filter(lambda x: x not in self,
                   list(self.objects.all()))
@@ -53,51 +53,46 @@ class ListQuerySet(list):
         except IndexError:
             self.fill()
             ret = list.__getitem__(self, key)
-            #ret = self[key] = super(ListQuerySet, self).__getitem__(key)
         return ret
 
     #def __list__(self):
     #    pass
 
-
     def __getstate__(self):
-        d = self.__dict__.copy()
-        d['_data'] = list(self)
+        ret = {}
 
-        #if not d.get('objects'):
-        #    self.objects = {}
+        ret['self'] = self.__dict__.copy()
+        objects = ret['self'].pop('objects')
 
-        d['objects'] = self.objects.__dict__.copy()
-        d['objects'].pop('_collection_obj')
+        ret['data'] = list(self)
 
-        cursor = d['objects'].pop('_cursor_obj')
-        if cursor:
-            d['objects']['_cursor_obj'] = cursor.clone()
-            cursor = d['objects']['_cursor_obj']
-            cursor.__dict__.pop('_Cursor__collection')
+        ret['objects'] = objects.__dict__.copy()
+        ret['objects'].pop('_collection_obj')
 
-        return d
+        #cursor_obj = ret['objects'].pop('_cursor_obj')
+        ret['objects'].pop('_cursor_obj')
+        #if cursor_obj:
+        #    ret['cursor'] = cursor_obj.__dict__.copy()
+        #    ret['cursor'].pop('_Cursor__collection')
 
-    def __setstate__(self, d):
-        col = d['objects']['_document']._collection
+        return ret
 
-        d['objects']['_collection_obj'] = col
+    def __setstate__(self, ret):
+        self.__dict__ = ret['self']
 
-        self.objects.__dict__.update(d.pop('objects'))
+        document = ret['objects']['_document']
+        self.objects = document.objects.clone()
+        self.objects.__dict__.update(ret['objects'])
+        #self.objects.__dict__ = ret['objects']
 
-        cursor = getattr(self.objects, '_cursor_obj', None)
-        if cursor:
-            cursor.__dict__['_Cursor__collection'] = col
-
-        self.extend(d.pop('_data'))
-
-        self.__dict__.update(d)
+        #del self[:]
+        #self.extend(ret['data'])
 
 
 def _model_cache(cls):
     name = '%ss' % cls.__name__.lower()
-    d = cache.get(name)
-    if d:
+    d = cache.get(name, None)
+    if d == None:
         objs = ListQuerySet(cls, fill=False, init=True, state=d)
 
         #objs = cls.objects.__class__(cls, cls._collection)
@@ -122,9 +117,9 @@ def pools(request):
     filesystems = _model_cache(Filesystem)
     volumes    = _model_cache(Volume)
 
-    targets = cache.get('targets')
-    if not targets:
-        targets = target.list(cached=True)
+    targets = cache.get('targets', None)
+    if targets == None:
+        targets = target.list()
         cache.set('targets', targets, _timeout())
 
     ret = {'pools': pools,

@@ -38,6 +38,7 @@ def get_fabric_module(name):
 
 
 def list(ret_type=None, shorten=False, cached=False):
+    ret = None
     if cached:
         ret = cache.get('targets')
     if not cache or not ret:
@@ -71,7 +72,7 @@ def get_target(wwn, fabric_module=None):
         fabric_module = get_fabric_module(fabric_module)
         return rtslib.Target(fabric_module, wwn=wwn, mode='lookup')
     else:
-        targets = get_targets()
+        targets = list()
         if wwn in targets:
             return targets[wwn]
         else:
