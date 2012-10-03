@@ -9,54 +9,13 @@ from django import http
 from django.views import generic
 
 #from datetime import timedelta
-import json
-
-#from storage.models import zPool, zDataset
-from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
-import zfs as z
-
 import mongogeneric
+import logging
 
-
-"""
-Testing mongo to zfs bridge, scrapped but good example to override generic views
-"""
-
-class ZfsSingleDocumentMixIn(mongogeneric.SingleDocumentMixin):
-    #zfs_obj = None
-
-    #def get_context_data(self, **kwargs):
-    #    ctx = super(ZfsSingleDocumentMixIn, self).get_context_data(**kwargs)
-    #    ctx_obj_name = self.context_object_name
-    #    ctx['zfs_'+ctx_obj_name] = self.zfs_obj(ctx[ctx_obj_name])
-    #    return ctx
-
-    #def get_queryset(self):
-    #    """
-    #    Get the queryset to look an object up against. May not be called if
-    #    `get_object` is overridden.
-    #    """
-    #    if self.queryset is None:
-    #        if self.zfs_obj:
-    #            return self.zfs_obj.dbm.objects()
-    #        else:
-    #            return super(ZfsSingleDocumentMixIn, self).get_queryset()
-    #    return self.queryset.clone()
-    pass
-
-class ZfsBaseDetailView(mongogeneric.BaseDetailView, ZfsSingleDocumentMixIn, mongogeneric.View):
-    pass
-
-
-
-class ZfsDetailView(mongogeneric.SingleDocumentTemplateResponseMixin, ZfsBaseDetailView):
-    """
-    Render a "detail" view of an object.
-
-    By default this is a document instance looked up from `self.queryset`, but the
-    view will support display of *any* object by overriding `self.get_object()`.
-    """
-
+from solarsan.views import JsonMixIn, KwargsMixIn
+from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
+from analytics.views import time_window_list
+import storage.target
 
 """
 Pools
@@ -67,31 +26,17 @@ class PoolView(object):
     slug_field = 'name'
     context_object_name = 'pool'
 
-## TODO Create/Destroy
 
-class PoolHealthDetailView(PoolView, ZfsDetailView):
+class PoolHealthDetailView(PoolView, KwargsMixIn, mongogeneric.DetailView):
     template_name = 'storage/pool_health.html'
-    def get_context_data(self, **kwargs):
-        ctx = super(PoolHealthDetailView, self).get_context_data(**kwargs)
-
-        #ctx_obj_name = self.context_object_name
-        #obj = ctx[ctx_obj_name]
-        #zobj = ctx[ctx_obj_name] = self.zfs_obj(obj.name)
-        #ctx['dataset'] = obj.filesystem
-
-        return ctx
 
 
-from analytics.views import time_window_list
-import logging
-
-
-class PoolAnalyticsDetailView(PoolView, ZfsDetailView):
+class PoolAnalyticsDetailView(PoolView, KwargsMixIn, mongogeneric.DetailView):
     template_name = 'storage/pool_analytics.html'
     charts = ['iops', 'bandwidth', 'usage']
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
-        obj = kwargs['object']
+        obj = self.object
         time_window = int( kwargs.get( 'time_window', 86400 ) );
         if not time_window in time_window_list:
             raise http.Http404
@@ -106,24 +51,9 @@ class PoolAnalyticsDetailView(PoolView, ZfsDetailView):
 
                     'graph': name, })
         return ctx
-    def get(self, request, **kwargs):
-        self.object = self.get_object()
-        kwargs.update({'request': request,
-                       'object': self.object, })
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
 
-class JSONMixIn(object):
-    def get(self, request, **kwargs):
-        self.object = self.get_object()
-        kwargs.update({'request': request,
-                       'object': self.object, })
-        context = self.get_context_data(**kwargs)
-        ret = self.get_json_data(**kwargs)
-        return http.HttpResponse(json.dumps(ret),
-                                  mimetype="application/json", )
 
-class PoolAnalyticsRenderView(JSONMixIn, PoolAnalyticsDetailView):
+class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
     def get_json_data(self, **kwargs):
         ctx = self.get_context_data(**kwargs)
         obj = kwargs['object']
@@ -217,35 +147,35 @@ class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailV
 Targets
 """
 
-import storage.target
 fabric = storage.target.get_fabric_module('iscsi')
 
+a = mongogeneric.DetailView
 
-class TargetDetailView(generic.TemplateView):
+
+class TargetDetailView(KwargsMixIn, generic.DetailView):
     template_name = 'storage/target_detail.html'
 
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg, None)
+        try:
+            obj = storage.target.get(wwn=slug, cached=True)
+        except storage.target.DoesNotExist:
+            raise http.Http404
 
-    def get_context_data(self, **kwargs):
-        context = super(TargetDetailView, self).get_context_data(**kwargs)
-        slug = kwargs['slug']
+        targets = self.targets = storage.target.list(cached=True)
 
-        targets = storage.target.list(cached=True)
-
+        target = None
         for t in targets:
             if t.wwn == slug:
                 target = t
         if not target:
             raise http.Http404
 
-#        v = Volume.objects.get(backstore_wwn
+        return target
 
-        context.update({
-            'object': target,
-            'target': target,
-        })
-
+    def get_context_data(self, **kwargs):
+        context = super(VolumeHealthDetailView, self).get_context_data(**kwargs)
+        #context['targets'] = storage.target.list(fabric_module=fabric)
+        targets = context['targets'] = storage.target.list(cached=True)
         return context
 

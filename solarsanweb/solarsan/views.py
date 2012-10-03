@@ -1,30 +1,24 @@
+#from django.template import RequestContext
+#from django.utils.decorators import method_decorator
+#from django.views.decorators.csrf import csrf_exempt
+#from django.views.decorators.cache import cache_page, never_cache, patch_cache_control, patch_vary_headers, cache_control
+#from django.views.decorators.vary import vary_on_cookie, vary_on_headers
 from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page, never_cache, patch_cache_control, patch_vary_headers, cache_control
-from django.views.decorators.vary import vary_on_cookie, vary_on_headers
-
-### memcached keys must be < 120 bytes/chars, this silences the warning
-#import warnings
-#from django.core.cache import CacheKeyWarning
-#warnings.simplefilter("ignore", CacheKeyWarning)
-
 from django import http
 from django.views import generic
 
-from solarsan.utils import *
+#from solarsan.utils import LoggedInMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot
-#from solarsan.forms import *
-
-
-###
-### Authenticate a user with given creds
-###
 from django.contrib.auth import authenticate, login
+import mongogeneric
+
+"""
+Auth
+"""
 
 def login_view(request):
+    """ Authenticates user """
     username = request.POST['username']
     password = request.POST['password']
     user = authenticate(username=username, password=password)
@@ -38,6 +32,78 @@ def login_view(request):
     else:
         # Return an 'invalid login' error message.
         pass
+
+"""
+MixIns
+The kool-aid.
+"""
+
+class KwargsMixIn(object):
+    """ Adds request and kwargs to object """
+    def get(self, request, *args, **kwargs):
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        return super(KwargsMixIn, self).get(request, *args, **kwargs)
+
+
+class JsonMixIn(object):
+    """ Outputs self.get_json_data() as json"""
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(**kwargs)
+        ret = self.get_json_data(*args, **kwargs)
+        return http.HttpResponse(json.dumps(ret),
+                                  mimetype="application/json", )
+
+
+class LoggedInMixin( object ):
+    """ A mixin requiring a user to be logged in. """
+    def dispatch( self, request, *args, **kwargs ):
+        if not request.user.is_authenticated():
+            raise http.Http404
+        return super( LoggedInMixin, self ).dispatch( request, *args, **kwargs )
+
+"""
+Generics
+"""
+
+class SingleDocumentMixIn(mongogeneric.SingleDocumentMixin):
+    #zfs_obj = None
+
+    #def get_context_data(self, **kwargs):
+    #    ctx = super(SingleDocumentMixIn, self).get_context_data(**kw
+    #    ctx_obj_name = self.context_object_name
+    #    ctx['zfs_'+ctx_obj_name] = self.zfs_obj(ctx[ctx_obj_name])
+    #    return ctx
+
+    #def get_queryset(self):
+    #    """
+    #    Get the queryset to look an object up against. May not be calle
+    #    `get_object` is overridden.
+    #    """
+    #    if self.queryset is None:
+    #        if self.zfs_obj:
+    #            return self.zfs_obj.dbm.objects()
+    #        else:
+    #            return super(SingleDocumentMixIn, self).get_queryset
+    #    return self.queryset.clone()
+    pass
+
+
+class BaseDetailView(mongogeneric.BaseDetailView, SingleDocumentMixIn, mongogeneric.View):
+    pass
+
+
+class DetailView(mongogeneric.SingleDocumentTemplateResponseMixin, BaseDetailView):
+    """
+    Render a "detail" view of an object.
+
+    By default this is a document instance looked up from `self.queryset
+    view will support display of *any* object by overriding `self.get_ob
+    """
+
+
 
 #class AboutView(LoggedInMixin, generic.TemplateView):
 #    """ About page view. """
@@ -70,7 +136,7 @@ def login_view(request):
 #            'form': form,
 #        })
 #
-#class AjaxThingView(View): 
+#class AjaxThingView(View):
 #    # Note that I don't subclass the TemplateResponseMixin here!
 #
 #    def get(self, request):
@@ -81,16 +147,6 @@ def login_view(request):
 #
 #        # Do something with the id
 #        return HttpResponse('some data')
-
-
-#class PoolView(object):
-#    model = Pool
-
-#class PoolListView(PoolView, generic.ListView):
-#    pass
-
-#class PoolDetailView(PoolView, generic.DetailView):
-#    slug_field = Pool.name
 
 
 #@csrf_exempt

@@ -1,116 +1,88 @@
 
-from django.core.cache import cache
-from django.conf import settings
-from storage.models import Pool, Filesystem, Volume
-import storage.target as target
-#import storage.cache
-import random
+import mongoengine.queryset
 
+def patch_queryset():
+    class QuerySet(mongoengine.queryset.QuerySet):
+        """ QuerySet wrapper that caches results
+        """
+        use_cache = None
 
-class ListQuerySet(list):
-    objects = None
+        def __init__(self, *args, **kwargs):
+            use_cache = kwargs.pop('use_cache', None)
+            if use_cache is not None:
+                self.use_cache = use_cache
+            return super(QuerySet, self).__init__(*args, **kwargs)
 
-    def __init__(self, document, init=True, fill=True, state=None):
-        if init:
-            self.objects = document.objects.clone()
-        if state:
-            self.__setstate__(state)
-        if fill:
-            self._fill()
+        def rewind(self):
+            self._cache = None
+            return super(QuerySet, self).rewind()
 
-    def _fill(self, data=None, clear=True):
-        if clear:
-            del self[:]
-        if not data:
-            data = list(self.objects.all())
-        self.extend(data)
+        #def next(self):
+        #    ret = super(QuerySet, self).next()
+        #    if self.use_cache and self._cache is not None:
+        #        self._cache.append(ret)
+        #    return ret
 
-    def __getitem__(self, key):
-        try:
-            ret = list.__getitem__(self, key)
-        except IndexError:
-            self._fill()
-            ret = list.__getitem__(self, key)
-        return ret
+        #def count(self):
+        #    if self.use_cache and self._cache is not None:
+        #        return len(self._cache)
 
-    def __getstate__(self):
-        ret = {}
+        def __iter__(self):
+            if self.use_cache:
+                hashes = {'dict': hash(self.__dict__),
+                          'query': hash(self._query), }
+                mhash = hash(hashes)
+                if self._cache and self._cache_mhash == mhash:
+                    return iter(self._cache)
+                else:
+                    self._cache = []
+                    self._cache_mhash = mhash
+            return super(QuerySet, self).__iter__()
 
-        # self
-        ret['self'] = self.__dict__.copy()
-        # objects
-        objects = ret['self'].pop('objects')
-        ret['objects'] = objects.__dict__.copy()
-        ret['objects'].pop('_collection_obj')
-        ret['objects'].pop('_cursor_obj')
-        # data
-        ret['data'] = list(self)
+        def __getstate__(self):
+            ret = self.__dict__.copy()
+            ret.pop('_collection_obj')
+            ret.pop('_cursor_obj')
+            return ret
 
-        return ret
+        def __setstate__(self, ret):
+            document = ret['_document']
+            self.__init__(document, document._collection)
+            #ret['_cursor_obj'] = self._cursor_obj
+            #ret['_collection_obj'] = self._collection_obj
+            self.__dict__.update(ret)
 
-    def __setstate__(self, ret):
-        # self
-        #self.__dict__ = ret['self']
-        self.__dict__.update(ret['self'])
+    if getattr(mongoengine.queryset.QuerySet, 'use_cache', True) is not None:
+        _old_QuerySet = mongoengine.queryset.QuerySet
+        mongoengine.queryset.QuerySet = QuerySet
 
-        # objects
-        document = ret['objects']['_document']
-        self.objects = document.objects.clone()
-        ret['objects']['_cursor_obj'] = self.objects._cursor_obj
-        ret['objects']['_collection_obj'] = self.objects._collection_obj
-        #self.objects.__dict__ = ret['objects']
-        self.objects.__dict__.update(ret['objects'])
+patch_queryset()
 
-        # data
-        self._fill(data=ret['data'])
+import rtslib
+import storage.models
 
+def patch_rtslib():
+    """ Monkeypatch RTSLib """
+    # StorageObject
+    cls = rtslib.tcm.StorageObject
+    if not getattr(cls, 'get_volume', None):
+        def get_volume(self):
+            """ Get Storage Volume for this object """
+            return storage.models.Volume.objects.get(backstore_wwn=self.wwn)
+        setattr(cls, 'get_volume', get_volume)
 
-def _timeout():
-    # One minute for dev, 5 minutes for prod
-    timeout = settings.DEBUG and 60 or 300
-    # Tack on a random few seconds to avoid thrashing, even though I doubt that will
-    # ever be an issue.
-    return timeout + random.randint(1, 10)
+    # Target
+    cls = rtslib.target.Target
+    if not getattr(cls, 'short_wwn', None):
+        def short_wwn(arg):
+            """ Shorten WWN string """
+            if not isinstance(arg, basestring):
+                arg = arg.wwn
+            return arg.split(':', 2)[1]
+        setattr(cls, 'short_wwn', short_wwn)
 
+        setattr(cls, 'type', 'target')
 
-def _model_cache(cls):
-    name = '%ss' % cls.__name__.lower()
+patch_rtslib()
 
-    objs = cache.get(name, None)
-    if objs is None:
-        objs = ListQuerySet(cls)
-        cache.set(name, objs, _timeout())
-
-    return objs
-
-
-class StorageObjects(object):
-    last_ret = None
-    last_req_hash = None
-
-    def __name__(self):
-        return 'storage_objects'
-
-    def __call__(self, request):
-        if self.last_req_hash == id(request):
-            return self.last_ret
-        ret = {}
-
-        pools = _model_cache(Pool)
-        filesystems = _model_cache(Filesystem)
-        volumes = _model_cache(Volume)
-
-        targets = cache.get('targets', None)
-        if targets is None:
-            targets = target.list()
-            cache.set('targets', targets, _timeout())
-
-        ret = {'pools': pools,
-               'filesystems': filesystems,
-               'volumes': volumes,
-               'targets': targets, }
-        self.last_req_hash = id(request)
-        self.last_ret = ret
-        return ret
-
-storage_objects = StorageObjects()
+from storage.cache import storage_objects

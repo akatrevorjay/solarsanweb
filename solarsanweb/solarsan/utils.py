@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from django.utils import simplejson
+#from django.utils import simplejson
 #from django.utils.encoding import force_unicode
 #from django.db.models.base import ModelBase
-import string, os, sys
-import logging, datetime, time
+#import string, os, sys
+import logging
+import time
 from django import http
 import inspect
 from decorator import decorator
@@ -13,8 +14,38 @@ from decorator import decorator
 ## django-braces -- Nice reusable MixIns
 ## http://django-braces.readthedocs.org/en/latest/index.html
 ##
-from braces.views import LoginRequiredMixin, PermissionRequiredMixin, SuperuserRequiredMixin #, UserFormKwargsMixin, UserKwargModelFormMixIn
-from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAndRedirectToEditView, SelectRelatedMixin
+#from braces.views import LoginRequiredMixin, PermissionRequiredMixin, SuperuserRequiredMixin #, UserFormKwargsMixin, UserKwargModelFormMixIn
+#from braces.views import SuccessURLRedirectListMixin, SetHeadlineMixin, CreateAndRedirectToEditView, SelectRelatedMixin
+
+"""
+DefaultDictCache/QuerySetCache
+"""
+
+from collections import defaultdict
+
+class DefaultDictCache(defaultdict):
+    def __missing__(self, key):
+        value = self.get_missing_key(key)
+        self[key] = value
+        return value
+
+class QuerySetCache(DefaultDictCache):
+    def __init__(self, *args, **kwargs):
+        for k in ['objects', 'document', 'query_kwarg']:
+            if k in kwargs:
+                v = kwargs.pop(k)
+                setattr(self, k, v)
+        if getattr(self, 'document', None):
+            self.objects = self.document.objects
+        self.query_kwarg = kwargs.pop('query_kwarg', 'name')
+        return super(QuerySetCache, self).__init__(*args, **kwargs)
+
+    def get_kwargs(self, key, **kwargs):
+        return {self.query_kwarg: key, }
+
+    def get_missing_key(self, key):
+        kwargs = self.get_kwargs(key)
+        return self.objects.get_or_create(**kwargs)[0]
 
 
 """
@@ -22,20 +53,122 @@ Singleton
 """
 
 
+class Borg:
+    __shared_state = {}
+
+    def __init__(self, *args, **kwargs):
+        self.__dict__ = self.__shared_state
+        super(Borg, self).__init__(self, *args, **kwargs)
+
+
 class Singleton:
     __single = None
-    def __init__( self ):
+
+    def __init__(self):
         if Singleton.__single:
             raise Singleton.__single
         Singleton.__single = self
 
+    @classmethod
+    def getinstance(cls, x=None):
+        if x is None:
+            x = cls
+        try:
+            single = x()
+        except Singleton, s:
+            single = s
+        return single
 
-def Handle(x=Singleton):
-    try:
-        single = x()
-    except Singleton, s:
-        single = s
-    return single
+
+class SingletonDecorator:
+    """
+    A non-thread-safe helper class to ease implementing singletons.
+    This should be used as a decorator -- not a metaclass -- to the
+    class that should be a singleton.
+
+    The decorated class can define one `__init__` function that
+    takes only the `self` argument. Other than that, there are
+    no restrictions that apply to the decorated class.
+
+    To get the singleton instance, use the `Instance` method. Trying
+    to use `__call__` will result in a `TypeError` being raised.
+
+    Limitations: The decorated class cannot be inherited from.
+
+    """
+
+    def __init__(self, decorated):
+        self._decorated = decorated
+
+    def Instance(self):
+        """
+        Returns the singleton instance. Upon its first call, it creates a
+        new instance of the decorated class and calls its `__init__` method.
+        On all subsequent calls, the already created instance is returned.
+
+        """
+        try:
+            return self._instance
+        except AttributeError:
+            self._instance = self._decorated()
+            return self._instance
+
+    def __call__(self):
+        raise TypeError('Singletons must be accessed through `Instance()`.')
+
+    def __instancecheck__(self, inst):
+        return isinstance(inst, self._decorated)
+
+
+class SingletonMeta(type):
+    """
+    Example:
+        class MyClass(object):
+            __metaclass__ = SingletonMeta
+    """
+    def __init__(cls, name, bases, dict):
+        super(Singleton, cls).__init__(name, bases, dict)
+        cls.instance = None
+
+    def __call__(cls, *args, **kw):
+        if cls.instance is None:
+            cls.instance = super(Singleton, cls).__call__(*args, **kw)
+        return cls.instance
+
+
+def singleton_pep318(cls):
+    instances = {}
+
+    def getinstance():
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance
+
+"""
+class NothingSpecial:
+    pass
+
+_the_one_and_only = None
+
+def TheOneAndOnly():
+    global _the_one_and_only
+    if not _the_one_and_only:
+        _the_one_and_only = NothingSpecial()
+    return _the_one_and_only
+"""
+
+
+"""
+def getSystemContext(contextObjList=[]):
+    if len( contextObjList ) == 0:
+        contextObjList.append( Context() )
+        pass
+    return contextObjList[0]
+
+class Context(object):
+    # Anything you want here
+"""
 
 
 """
@@ -44,10 +177,13 @@ Proxy
 
 
 class Proxy:
-    def __init__( self, subject ):
+    __subject = None
+
+    def __init__(self, subject):
         self.__subject = subject
-    def __getattr__( self, name ):
-        return getattr( self.__subject, name )
+
+    def __getattr__(self, name):
+        return getattr(self.__subject, name)
 
 
 """
@@ -59,9 +195,10 @@ class FormattedException(Exception):
     def __init__(self, *args):
         if args:
             logging.error(*args)
-            message = args.pop(0)
+            message = args[0]
+            args = args[1:]
             if args:
-                message = message % args
+                message = message % (args)
 
         # Call the base class constructor with the parameters it needs
         Exception.__init__(self, message)
@@ -136,20 +273,6 @@ class TrueDebug(object):
         return
 #debug = TrueDebug
 
-
-"""
-MixIns
-The kool-aid.
-"""
-
-class LoggedInMixin( object ):
-    """ A mixin requiring a user to be logged in. """
-    def dispatch( self, request, *args, **kwargs ):
-        if not request.user.is_authenticated():
-            raise http.Http404
-        return super( LoggedInMixin, self ).dispatch( request, *args, **kwargs )
-
-
 """
 Celery scheduler that runs tasks at startup immediately then continues with their
 original plan.
@@ -185,6 +308,77 @@ class conditional_decorator(object):
            # Return the function unchanged, not decorated.
            return func
        return self.decorator(func, *self.decorator_args[0], **self.decorator_args[1])
+
+
+def statelazyproperty(func):
+    """ A decorator for state-based lazy evaluation of properties """
+    cache = {}
+    def _get(self):
+        state = self.__getstate__()
+        try:
+            v = cache[state]
+            logging.debug("Cache hit %s", state)
+            return v
+        except KeyError:
+            logging.debug("Cache miss %s", state)
+            cache[state] = value = func( self )
+            return value
+    return property(_get)
+
+"""
+Cache
+"""
+
+class Memoize(object):
+    """
+    Cached function or property
+
+    >>> import random
+    >>> @CachedFunc( ttl=3 )
+    >>> def cachefunc_tester( *args, **kwargs ):
+    >>>     return random.randint( 0, 100 )
+
+    """
+    __name__ = "<unknown>"
+    def __init__( self, func=None, ttl=300 ):
+        self.ttl = ttl
+        self.__set_func( func )
+    def __set_func( self, func=None, doc=None ):
+        if not func:
+            return False
+        self.func = func
+        self.__doc__ = doc or self.func.__doc__
+        self.__name__ = self.func.__name__
+        self.__module__ = self.func.__module__
+    def __call__( self, func=None, doc=None, *args, **kwargs ):
+        if func:
+            self.__set_func( func, doc )
+            return self
+        now = time.time()
+        try:
+            value, last_update = self._cache
+            if self.ttl > 0 and now - last_update > self.ttl:
+                raise AttributeError
+        except ( KeyError, AttributeError ):
+            value = self.func( *args, **kwargs )
+            self._cache = ( value, now )
+        return value
+    def __get__( self, inst, owner ):
+        now = time.time()
+        try:
+            value, last_update = inst._cache[self.__name__]
+            if self.ttl > 0 and now - last_update > self.ttl:
+                raise AttributeError
+        except ( KeyError, AttributeError ):
+            value = self.func( inst )
+            try:
+                cache = inst._cache
+            except AttributeError:
+                cache = inst._cache = {}
+            cache[self.__name__] = ( value, now )
+        return value
+    def __repr__( self ):
+        return "<@CachedFunc: '%s'>" % self.__name__
 
 
 """
@@ -229,56 +423,6 @@ class FilterableDict( dict ):
         new = self.__new__( self.__class__, *list( items ) )
         return new
 
-class CachedFunc( object ):
-    __name__ = "<unknown>"
-    """ Cached function or property """
-    def __init__( self, func=None, ttl=300 ):
-        self.ttl = ttl
-        self.__set_func( func )
-    def __set_func( self, func=None, doc=None ):
-        if not func:
-            return False
-        self.func = func
-        self.__doc__ = doc or self.func.__doc__
-        self.__name__ = self.func.__name__
-        self.__module__ = self.func.__module__
-    def __call__( self, func=None, doc=None, *args, **kwargs ):
-        if func:
-            self.__set_func( func, doc )
-            return self
-        now = time.time()
-        try:
-            value, last_update = self._cache
-            if self.ttl > 0 and now - last_update > self.ttl:
-                raise AttributeError
-        except ( KeyError, AttributeError ):
-            value = self.func( *args, **kwargs )
-            self._cache = ( value, now )
-        return value
-    def __get__( self, inst, owner ):
-        now = time.time()
-        try:
-            value, last_update = inst._cache[self.__name__]
-            if self.ttl > 0 and now - last_update > self.ttl:
-                raise AttributeError
-        except ( KeyError, AttributeError ):
-            value = self.func( inst )
-            try:
-                cache = inst._cache
-            except AttributeError:
-                cache = inst._cache = {}
-            cache[self.__name__] = ( value, now )
-        return value
-    def __repr__( self ):
-        return "<@CachedFunc: '%s'>" % self.__name__
-
-
-import random
-@CachedFunc( ttl=3 )
-def cachefunc_tester( *args, **kwargs ):
-    return random.randint( 0, 100 )
-
-
 def convert_bytes_to_human( n ):
     """ Utility to convert bytes to human readable (K/M/G/etc) """
     SYMBOLS = ( 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y' )
@@ -307,6 +451,7 @@ def convert_human_to_bytes( s ):
     #TODO What if it's invalid data? How should that be handled?
     return '%.0f' % float( s )
 
+
 KEYNOTFOUND = '<KEYNOTFOUND>'       # KeyNotFound for dictDiff
 
 def dict_diff( first, second ):
@@ -328,6 +473,7 @@ def dict_diff( first, second ):
         if ( not first.has_key( key ) ):
             diff[key] = ( KEYNOTFOUND, second[key] )
     return diff
+
 
 #class LazyJSONEncoder(simplejson.JSONEncoder):
 #    """ a JSONEncoder subclass that handle querysets and models objects. Add
@@ -352,6 +498,7 @@ def dict_diff( first, second ):
 #
 #        return super(LazyJSONEncoder,self).default(obj)
 
+
 #def serialize_to_json(obj,*args,**kwargs):
 #    """ A wrapper for simplejson.dumps with defaults as:
 #
@@ -364,6 +511,7 @@ def dict_diff( first, second ):
 #
 #    return simplejson.dumps(obj,*args,**kwargs)
 
+
 def qdct_as_kwargs( qdct ):
     kwargs = {}
     for k, v in qdct.items():
@@ -371,19 +519,3 @@ def qdct_as_kwargs( qdct ):
     return kwargs
 
 
-def statelazyproperty( func ):
-    """A decorator for state-based lazy evaluation of properties
-    """
-    cache = {}
-    def _get( self ):
-        state = self.__getstate__()
-        try:
-            v = cache[state]
-            print "Cache hit %s" % str( state )
-            return v
-        except KeyError:
-            print "Cache miss %s" % str( state )
-            cache[state] = value = func( self )
-            return value
-
-    return property( _get )

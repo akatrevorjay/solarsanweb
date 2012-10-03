@@ -34,7 +34,7 @@ DATABASES = {
     #},
 }
 
-DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
+#DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
 
 ##
 ## MongoDB -- mongoengine
@@ -172,7 +172,7 @@ from django.conf import global_settings
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
-    'solarsanweb.solarsan.context_processors.pools',        # This always puts 'pools' list in context (for top nav)
+    'solarsanweb.storage.context_processors.storage_objects',        # This always puts 'pools' list in context (for top nav)
     #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
 )
 
@@ -197,13 +197,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Uncomment the next lines to enable the admin:
-    #'mongoadmin',
-    #'mongonaut',
-
     'django_mongoengine.auth',
     'django_mongoengine.admin.sites',
     'django_mongoengine.admin',
-
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
@@ -211,32 +207,28 @@ INSTALLED_APPS = (
     # Debug toolbar
     'debug_toolbar',
     #'debug_toolbar_user_panel',
-    #'cache_panel',
     'debug_toolbar_mongo',
-    #'debug_toolbar_htmltidy',
-    #'django_statsd',
     #'django_mongoengine.debug_toolbar',
 
     # Third party libs
     'djcelery',
-    #'djkombu.transport',
     'djcelery.transport',
     'django_extensions',
     'south',
-    #'django_utils',                     # this is django-utils2 in PyPi
+    'djsupervisor',
+
+    #'sentry',
+    #'raven.contrib.django',
+    'compressor',
 
     # For future use
-    'djsupervisor',
+    #'django_utils',                     # this is django-utils2 in PyPi
     #'crispy_forms',
     #'django_assets',
     #'kitsune',
     #'waffle',
     #'uwsgi_admin',
     #'sitetree',
-
-    #'sentry',
-    #'raven.contrib.django',
-    'compressor',
 )
 
 PROJECT_APPS = (
@@ -295,15 +287,13 @@ JINJA2_TEMPLATE_LOADERS = (
 
 JINJA2_DISABLED_TEMPLATES = (
     'debug_toolbar', 'debug_toolbar_user_panel',
-    #'cache_panel',
+    'mongo-panel.html',
+    'django_extensions',
     #'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
-    'mongo-panel.html', '_stats.html',
-    'django_statsd',
     #r'debug_toolbar/.*',
     #r'toolbar_statsd/statsd.html',
     #'toolbar_statsd',
     #r'debug_toolbar/base.html',
-    'django_extensions',
 
     'admin', 'registration',
     'uwsgi.html',
@@ -333,7 +323,7 @@ MIDDLEWARE_CLASSES = (
 
     #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
 
-    #'django.middleware.gzip.GZipMiddleware',                    # Compress output
+    'django.middleware.gzip.GZipMiddleware',                    # Compress output
     'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
 )
 

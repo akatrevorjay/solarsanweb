@@ -1,18 +1,25 @@
 
 
-from solarsan.utils import FormattedException, LoggedException
-import rtslib
-import rtslib.tcm
-from storage.models import Pool, Filesystem, Volume, Snapshot
-
 from django.core.cache import cache
+from solarsan.utils import FormattedException, LoggedException
+from storage.models import Pool, Filesystem, Volume, Snapshot
+import rtslib
+
+#from django.core.cache import cache
 from django.conf import settings
 
+CACHE_TIMEOUT = 600
 root = rtslib.RTSRoot()
 
 
-CACHE_TIMEOUT = 600
+class DoesNotExist(FormattedException):
+    pass
 
+
+#from solarsan.utils import DefaultDictCache
+#class targets(DefaultDictCache):
+#    def get_missing_key(self, key):
+#        return get(key)
 
 
 def group_by(iterable, group_by):
@@ -32,15 +39,9 @@ def get_fabric_module(name):
 def list(ret_type=None, shorten=False, cached=False):
     ret = None
     if cached:
-        ret = cache.get('targets')
-    if not cache or not ret:
+        ret = cache.get('targets', None)
+    if not cached or not ret:
         ret = [x for x in root.targets]
-        if cached:
-            cache.set('targets', ret, CACHE_TIMEOUT)
-    #else:
-    #    # Currently no cache for this as this isn't used at all atm.
-    #    fabric_module = get_fabric_module(fabric_module)
-    #    ret = fabric_module.targets
 
     if ret_type == dict:
         ret = group_by(ret, 'wwn')
@@ -59,22 +60,19 @@ def list(ret_type=None, shorten=False, cached=False):
 
     return ret
 
-def get_target(wwn, fabric_module=None):
+
+def get(wwn, fabric_module=None, cached=False):
     if fabric_module:
         fabric_module = get_fabric_module(fabric_module)
         return rtslib.Target(fabric_module, wwn=wwn, mode='lookup')
     else:
-        targets = list()
+        targets = list(cached=cached)
         if wwn in targets:
             return targets[wwn]
         else:
-            raise FormattedException("Target with wwn=%s does not exist", wwn)
+            raise DoesNotExist("Target with wwn=%s does not exist", wwn)
 
 
 def create_target(self, fabric_module, wwn=None):
     fabric_module = get_fabric_module(fabric_module)
     return rtslib.Target(fabric_module, wwn=wwn, mode='create')
-
-
-
-
