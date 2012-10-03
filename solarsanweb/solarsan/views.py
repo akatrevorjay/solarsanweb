@@ -56,6 +56,17 @@ class JsonMixIn(object):
         return http.HttpResponse(json.dumps(ret),
                                   mimetype="application/json", )
 
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests, instantiating a form instance with the passed
+        POST variables and then checked for validity.
+        """
+        self.object = self.get_object()
+        ret = self.post_json_data(*args, **kwargs)
+        return http.HttpResponse(json.dumps(ret),
+                                  mimetype="application/json", )
+
+
 
 class LoggedInMixin( object ):
     """ A mixin requiring a user to be logged in. """

@@ -130,27 +130,24 @@
         <tr>
             <td>
                 tpg{{ tpg.tag }}
+                {% if tpg.enable == 0 %}
+                <button class="btn btn-mini btn-inverse tpg-toggle" data-tag="{{ tpg.tag }}" data-enable="0">Off</button>
+                {% else %}
+                <button class="btn btn-mini btn-success tpg-toggle" data-tag="{{ tpg.tag }}" data-enable="1">On</button>
+                {% endif %}
             </td>
             <td>
                 lun{{ lun.lun }}
             </td>
             <td>
                 {% with lun_volume = lun.storage_object.get_volume() %}
-                <a href="/storage/volumes/detail/{{ lun_volume.name|urlize }}">
+                <a href="{{ lun_volume.get_absolute_url('detail') }}">
                     {{ lun_volume.name }}
                 </a>
                 {% endwith %}
             </td>
             <td>
-                tpg{{ tpg.tag }}
-                {% if tpg.enable == 1 %}
-                <button class="btn btn-mini btn-inverse">Off</button>
-                {% else %}
-                <button class="btn btn-mini btn-success">On</button>
-                {% endif %}
-            </td>
-            <td>
-                <span class="label-caps">{{ target.fabric_module.name }}</span>
+                <span class="label-caps">{{ object.fabric_module.name }}</span>
             </td>
             <td>
                 <button class="btn btn-mini btn-danger">x</button>
@@ -177,6 +174,39 @@
 </pre>
 </blockquote>
 
+<script>
+
+function tpg_toggle(event) {
+    var self = this;
+    var enable = 1;
+    if ($(this).data('enable') == 1)
+        enable = 0;
+
+    var tag = $(this).data('tag');
+    var data = {target_wwn: '{{ object.wwn }}',
+                tag: tag,
+                enable: enable,
+                };
+
+// send form data
+//$.post("test.php", $("#testform").serialize());
+
+    $.post(window.location.href+"/tpg/"+tag+"/update", data,
+        function(data) {
+            console.log(data);
+            $(self).toggleClass("btn-inverse")
+                .toggleClass("btn-success")
+                .data("enable", data.enable)
+            if (data.enable == 1)
+                $(self).html("On");
+            else
+                $(self).html("Off");
+        }, "json");
+}
+
+$('.tpg-toggle').on('click', tpg_toggle);
+
+</script>
 
 <script>
 //

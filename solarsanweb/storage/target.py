@@ -35,11 +35,12 @@ def get_fabric_module(name):
         name = rtslib.FabricModule(name)
     return name
 
+import storage.cache
 
-def list(ret_type=None, shorten=False, cached=False):
+def target_list(ret_type=None, shorten=False, cached=False):
     ret = None
     if cached:
-        ret = cache.get('targets', None)
+        ret = storage.cache.targets()
     if not cached or not ret:
         ret = [x for x in root.targets]
 
@@ -66,9 +67,10 @@ def get(wwn, fabric_module=None, cached=False):
         fabric_module = get_fabric_module(fabric_module)
         return rtslib.Target(fabric_module, wwn=wwn, mode='lookup')
     else:
-        targets = list(cached=cached)
-        if wwn in targets:
-            return targets[wwn]
+        targets = target_list(cached=cached)
+        for target in targets:
+            if target.wwn == wwn:
+                return target
         else:
             raise DoesNotExist("Target with wwn=%s does not exist", wwn)
 

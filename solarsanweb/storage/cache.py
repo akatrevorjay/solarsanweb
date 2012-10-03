@@ -1,24 +1,26 @@
 
-from solarsan.utils import DefaultDictCache, QuerySetCache
+#from solarsan.utils import DefaultDictCache, QuerySetCache
 from storage.models import Pool, Filesystem, Volume, Snapshot
+import logging
 
-
+"""
 class FilesystemCache(QuerySetCache):
     document = Filesystem
-Filesystem = FilesystemCache()
 
 class PoolCache(QuerySetCache):
     document = Pool
-Pool = PoolCache()
 
 class SnapshotCache(QuerySetCache):
     document = Snapshot
-Snapshot = SnapshotCache()
 
 class VolumeCache(QuerySetCache):
     document = Volume
-Volume = VolumeCache()
 
+Filesystem = FilesystemCache()
+Pool = PoolCache()
+Volume = VolumeCache()
+Snapshot = SnapshotCache()
+"""
 
 from django.core.cache import cache
 from django.conf import settings
@@ -46,12 +48,12 @@ class ListQuerySet(list):
         self.extend(data)
 
     def __getitem__(self, key):
-        try:
-            ret = list.__getitem__(self, key)
-        except IndexError:
-            self._fill()
-            ret = list.__getitem__(self, key)
-        return ret
+        if key not in self:
+            try:
+                self[key] = self.objects.get(name=key)
+            except:
+                pass
+        return list.__getitem__(self, key)
 
     def __getstate__(self):
         ret = {}
@@ -70,18 +72,13 @@ class ListQuerySet(list):
 
     def __setstate__(self, ret):
         # self
-        #self.__dict__ = ret['self']
         self.__dict__.update(ret['self'])
-
         # objects
         document = ret['objects']['_document']
         self.__init__(document, init=True, fill=False)
         ret['objects']['_cursor_obj'] = self.objects._cursor_obj
         ret['objects']['_collection_obj'] = self.objects._collection_obj
-
-        #self.objects.__dict__ = ret['objects']
         self.objects.__dict__.update(ret['objects'])
-
         # data
         self._fill(data=ret['data'])
 
@@ -96,46 +93,39 @@ def _timeout():
 
 def _model_cache(cls):
     name = '%ss' % cls.__name__.lower()
+    ret = cache.get(name, None)
+    if ret is None:
+        ret = ListQuerySet(cls)
+        cache.set(name, ret, _timeout())
+    return ret
 
-    objs = cache.get(name, None)
-    if objs is None:
-        objs = ListQuerySet(cls)
-        cache.set(name, objs, _timeout())
 
-    return objs
+def pools(*arg):
+    return _model_cache(Pool, *arg)
+
+
+def filesystems(*arg):
+    return _model_cache(Filesystem, *arg)
+
+
+def volumes(*arg):
+    return _model_cache(Volume, *arg)
 
 
 import storage.target
 
 
-class StorageObjects(object):
-    last_ret = None
-    last_req_id = None
-
-    def __name__(self):
-        return 'storage_objects'
-
-    def __call__(self, request):
-        if self.last_req_id == request:
-            return self.last_ret
-        ret = {}
-
-        pools = _model_cache(Pool)
-        filesystems = _model_cache(Filesystem)
-        volumes = _model_cache(Volume)
-
-        targets = cache.get('targets', None)
-        if targets is None:
-            targets = storage.target.list(cached=False)
-            cache.set('targets', targets, _timeout())
-
-        ret = {'pools': pools,
-               'filesystems': filesystems,
-               'volumes': volumes,
-               'targets': targets, }
-        self.last_req_id = request
-        self.last_ret = ret
-        return ret
+def targets(*args):
+    name = 'targets'
+    ret = cache.get(name, None)
+    if ret is None:
+        ret = storage.target.target_list()
+        cache.set(name, ret, _timeout())
+    return ret
 
 
-storage_objects = StorageObjects()
+def storage_objects(request):
+    return {'pools': pools(),
+             'filesystems': filesystems(),
+             'volumes': volumes(),
+             'targets': targets(), }

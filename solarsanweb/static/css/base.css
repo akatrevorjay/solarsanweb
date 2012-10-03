@@ -64,11 +64,12 @@ pre {
   text-decoration: none;
 }
 
-
+.object-detail-nav,
 .filesystem-detail-nav {
   margin-bottom: 5px;
 }
 
+#object-detail-content,
 #filesystem-detail-content {
   padding: 0px;
 }

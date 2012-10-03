@@ -745,4 +745,7 @@ try:
 except ImportError:
     pass
 
+import storage.patch
+storage.patch.patch_queryset()
+storage.patch.patch_rtslib()
 

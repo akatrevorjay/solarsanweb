@@ -141,6 +141,8 @@ class zfsBaseDocument(BaseMixIn, m.Document):
         #BaseMixIn.__init__()
         return super(zfsBaseDocument, self).__init__(**kwargs)
 
+    def get_absolute_url(self):
+        return '/storage/%s/'
 class zfsBase(zfs.objects.zfsBase):
     ZFS_TYPE_MAP = ZFS_TYPE_MAP
 
@@ -521,8 +523,13 @@ class VolumeDocument(DatasetDocument):
             self.save()
         return True
 
-
-
+    def get_absolute_url(self, *args):
+        """ Gets URL for object """
+        ret = '/storage/%ss' % self.type
+        if args:
+            ret += '/' + '/'.join(args)
+        ret += '/%s' % self.name
+        return ret
 
 class Volume(VolumeDocument, SnapshottableDatasetBase, zfs.objects.VolumeBase, DatasetBase, zfsBase):
     pass

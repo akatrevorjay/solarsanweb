@@ -23,7 +23,9 @@ urlpatterns = patterns('storage.views',
     (r'^volumes/health/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.VolumeHealthDetailView.as_view()),
     (r'^volumes/snapshots/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.VolumeSnapshotsView.as_view()),
 
-    (r'^targets/detail/(?P<slug>[A-z0-9_\-/\.:]+)$', storage.views.TargetDetailView.as_view()),
+    (r'^targets/detail/(?P<slug>[A-z0-9_\-\.:]+)$', storage.views.TargetDetailView.as_view()),
     #(r'^targets/health/(?P<slug>[A-z0-9_\-/\.]+)$', storage.views.TargetHealthView.as_view()),
+
+    (r'^targets/detail/(?P<slug>[A-z0-9_\-\.:]+)/tpg/(?P<tag>\d)/update$', storage.views.TargetTPGUpdateView.as_view()),
 )
 
