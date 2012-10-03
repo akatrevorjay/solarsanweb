@@ -1,14 +1,14 @@
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page
-from django.core.cache import cache
+#from django.shortcuts import render_to_response, get_object_or_404
+#from django.template import RequestContext
+#from django.contrib.auth.decorators import login_required
+#from django.utils.decorators import method_decorator
+#from django.views.decorators.csrf import csrf_exempt
+#from django.views.decorators.cache import cache_page
+#from django.core.cache import cache
 from django import http
 from django.views import generic
 
-from datetime import timedelta
+#from datetime import timedelta
 import json
 
 #from storage.models import zPool, zDataset
@@ -239,6 +239,8 @@ class TargetDetailView(generic.TemplateView):
                 target = t
         if not target:
             raise http.Http404
+
+#        v = Volume.objects.get(backstore_wwn
 
         context.update({
             'object': target,

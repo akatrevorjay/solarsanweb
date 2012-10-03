@@ -2,25 +2,17 @@
 
 from solarsan.utils import FormattedException, LoggedException
 import rtslib
+import rtslib.tcm
 from storage.models import Pool, Filesystem, Volume, Snapshot
 
 from django.core.cache import cache
 from django.conf import settings
-
 
 root = rtslib.RTSRoot()
 
 
 CACHE_TIMEOUT = 600
 
-
-def short_wwn(arg):
-    if isinstance(arg, rtslib.Target):
-        self = arg
-        arg = self.wwn
-    return arg.split(':', 2)[1]
-rtslib.target.Target.short_wwn = short_wwn
-rtslib.target.Target.type = 'target'
 
 
 def group_by(iterable, group_by):
