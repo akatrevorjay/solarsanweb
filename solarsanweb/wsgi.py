@@ -31,8 +31,8 @@ application = get_wsgi_application()
 # from helloworld.wsgi import HelloWorldApplication
 # application = HelloWorldApplication(application)
 
-## Apparently this is needed here?
-## http://celery.github.com/celery/django/first-steps-with-django.html#configuring-your-django-project-to-use-celery
+# Apparently this is needed here?
+# http://celery.github.com/celery/django/first-steps-with-django.html#configuring-your-django-project-to-use-celery
 import djcelery
 djcelery.setup_loader()
 
@@ -43,11 +43,6 @@ djcelery.setup_loader()
 try:
     import uwsgi
     from uwsgidecorators import timer
-    # from uwsgidecorators import *
-    # @timer(30, target='spooler')
-    # def hello_world(signum):
-    #        print("30 seconds elapsed")
-
     from django.utils import autoreload
     from django.conf import settings
 

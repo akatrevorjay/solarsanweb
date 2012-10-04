@@ -20,7 +20,7 @@
 {% block css_site %}
 {% with theme = "" %}
 {% for c in
-    'bootstrap/css/bootstrap'+theme+'.css',
+    'bootstrap/css/bootstrap%s.css' % theme,
     'bootstrap/css/bootstrap-responsive.css',
     '3rd/chosen/chosen/chosen.css',
     'css/nv.d3.css',

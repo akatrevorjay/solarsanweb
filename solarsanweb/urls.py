@@ -10,17 +10,6 @@ admin.autodiscover()
 from django_mongoengine.admin import site
 #from mongoadmin import site
 
-import time
-#from statsd import StatsClient
-#statsd = StatsClient()
-#from django_statsd.clients import statsd
-#start = time.time()
-#time.sleep(3)
-
-# You must convert to milliseconds:
-#dt = int((time.time() - start) * 1000)
-#statsd.timing('slept', dt)
-
 urlpatterns = patterns(
     '',
     #url(r'^$', 'solarsanweb.views.home', name='home'),
@@ -39,7 +28,6 @@ urlpatterns = patterns(
     url(r'^logs/', include('logs.urls')),
 
     url(r'^analytics/', include('analytics.urls')),
-    url(r'^services/timing/', include('django_statsd.urls')),
 
     #(r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
     (r'^admin/uwsgi/', include('uwsgi_admin.urls')),                        # uwsgi admin

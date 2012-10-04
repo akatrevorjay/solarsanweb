@@ -8,16 +8,14 @@ import zfs
 import zfs.objects
 import zfs.cmd
 
-import datetime
+import mongoengine as m
+from datetime import datetime
 #from django.utils import timezone
 
 
 """
 Mongo
 """
-
-import mongoengine as m
-#from datetime import datetime
 
 """
 Signal example

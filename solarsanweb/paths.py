@@ -18,6 +18,6 @@ TOP_DIR = _find_project(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_DIR = os.path.join(TOP_DIR, PROJECT_NAME)
 DATA_DIR = os.path.join(TOP_DIR, 'data')
 
-for i in [TOP_DIR, PROJECT_DIR, os.path.join(TOP_DIR, 'vendor-local')]:
-    sys.path.insert(0, i)
+#for i in [TOP_DIR, PROJECT_DIR, os.path.join(TOP_DIR, 'vendor-local')]:
+#    sys.path.insert(0, i)
 
