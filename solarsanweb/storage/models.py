@@ -1,6 +1,6 @@
 
-from django.db import models
-from jsonfield import JSONField
+#from django.db import models
+#from jsonfield import JSONField
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
@@ -9,7 +9,7 @@ import zfs.objects
 import zfs.cmd
 
 import datetime
-from django.utils import timezone
+#from django.utils import timezone
 
 
 """
@@ -17,7 +17,7 @@ Mongo
 """
 
 import mongoengine as m
-from datetime import datetime
+#from datetime import datetime
 
 """
 Signal example
@@ -48,8 +48,10 @@ class ReprMixIn(object):
             if name:
                 break
         return "<%s: %s>" % (self.__class__.__name__, name)
+
     def __unicode__(self):
         return self.name
+
 
 class BaseMixIn(ReprMixIn):
     pass
@@ -59,18 +61,9 @@ class BaseMixIn(ReprMixIn):
 
 
 """
-Volume
-"""
-
-
-
-
-
-
-
-"""
 Property
 """
+
 
 class PropertyDocument(BaseMixIn, m.EmbeddedDocument, zfs.objects.Property):
     meta = {'abstract': True, }
@@ -111,6 +104,7 @@ class PropertyDocument(BaseMixIn, m.EmbeddedDocument, zfs.objects.Property):
         elif value:
             return False
 
+
 class Property(PropertyDocument):
     pass
 
@@ -118,6 +112,7 @@ class Property(PropertyDocument):
 """
 Base
 """
+
 
 class zfsBaseDocument(BaseMixIn, m.Document):
     meta = {'abstract': True,
@@ -143,6 +138,8 @@ class zfsBaseDocument(BaseMixIn, m.Document):
 
     def get_absolute_url(self):
         return '/storage/%s/'
+
+
 class zfsBase(zfs.objects.zfsBase):
     ZFS_TYPE_MAP = ZFS_TYPE_MAP
 
@@ -175,6 +172,7 @@ class zfsBase(zfs.objects.zfsBase):
 VDevs
 """
 
+
 class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
     meta = {'abstract': True, }
             #'ordering': ['-created']}
@@ -189,6 +187,7 @@ class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
     ## TODO Override validation and ensure modified gets updated on modification
     modified = m.DateTimeField(default=datetime.now())
 
+
 class VDevRootDocument(VDevBaseDocument):
     meta = {'abstract': True, }
     #pool_guid = m.StringField()
@@ -196,9 +195,9 @@ class VDevRootDocument(VDevBaseDocument):
     state = m.IntField()
     txg = m.IntField()
 
+
 class VDevRoot(VDevRootDocument):
     pass
-
 
 
 class VDevPoolDocument(VDevBaseDocument):
@@ -212,11 +211,11 @@ class VDevPoolDocument(VDevBaseDocument):
     vdev_children = m.IntField()
     vdev_tree = m.MapField(m.EmbeddedDocumentField(VDevRoot))
 
+
 class VDevPool(VDevPoolDocument):
     #def children(self):
     #    pass
     pass
-
 
 
 class VDevChildDocument(VDevBaseDocument):
@@ -261,9 +260,11 @@ class VDevDiskDocument(VDevChildDocument):
 class VDevDisk(VDevDiskDocument):
     pass
 
+
 class VDevMirrorDocument(VDevChildDocument):
     meta = {'abstract': True, }
     children = m.ListField(m.EmbeddedDocumentField(VDevDisk))
+
 
 class VDevMirror(VDevMirrorDocument):
     pass
@@ -279,22 +280,27 @@ Pool
 """
 
 from analytics.cube import CubeAnalytics
-from pypercube.expression import EventExpression, MetricExpression, CompoundMetricExpression
-from pypercube.expression import Sum, Min, Max, Median, Distinct
+from pypercube.expression import EventExpression, Median  # MetricExpression, CompoundMetricExpression
+#from pypercube.expression import Sum, Min, Max, Median, Distinct
 
 
 class PoolAnalytics(CubeAnalytics):
     def __init__(self, pool):
         self.pool = pool
+
     def _get_event_expr(self, f, **kwargs):
         return EventExpression('pool_iostat', f).eq('pool', self.pool.name).gt(f, 0)
+
     def _get_metric_expr(self, f, **kwargs):
         e = kwargs.get('event_expr', self._get_event_expr(f, **kwargs))
         return Median(e)
+
     def iops(self, **kwargs):
         return self._render('iops_read', 'iops_write', **kwargs)
+
     def bandwidth(self, **kwargs):
         return self._render('bandwidth_read', 'bandwidth_write', **kwargs)
+
     def usage(self, **kwargs):
         return self._render('alloc', 'free', **kwargs)
 
@@ -313,6 +319,7 @@ class PoolDocument(zfsBaseDocument):
     VDEV_TYPE_MAP = VDEV_TYPE_MAP
 
     analytics = None
+
     def __init__(self, *args, **kwargs):
         self.analytics = PoolAnalytics(self)
         return super(PoolDocument, self).__init__(*args, **kwargs)
@@ -351,7 +358,7 @@ class PoolDocument(zfsBaseDocument):
         self.version = ret['version']
 
         # Just a count
-        vdev_children = ret['vdev_children']
+        #vdev_children = ret['vdev_children']
 
         # VDev parser
         self._parse_zdb_vdev_tree(ret['vdev_tree'])
@@ -393,6 +400,7 @@ class PoolDocument(zfsBaseDocument):
         else:
             raise Exception("Could not parse VDev tree")
 
+
 class Pool(PoolDocument, zfs.objects.PoolBase, zfsBase):
     pass
 
@@ -419,11 +427,14 @@ class DatasetDocument(zfsBaseDocument):
     #def children(self, **kwargs):
     #    return super(DatasetDocument, self).children(**kwargs)
 
+
 class DatasetBase(zfs.objects.DatasetBase):
     pass
 
+
 class Dataset(DatasetDocument, DatasetBase, zfsBase):
     pass
+
 
 class SnapshottableDatasetBase(zfs.objects.SnapshottableDatasetBase):
     def filesystems(self):
@@ -440,29 +451,27 @@ class FilesystemDocument(DatasetDocument):
     #meta = {'abstract': True,}
     pass
 
+
 class FilesystemBase(zfs.objects.FilesystemBase):
     pass
+
 
 class Filesystem(FilesystemDocument, FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase):
 #class Filesystem(FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase, FilesystemDocument):
     pass
 
+
 #class Filesystem(FilesystemDocument, SnapshottableDatasetBase, zfs.objects.FilesystemBase, DatasetBase, zfsBase):
 #    pass
-
-
-
 
 
 class SnapshotDocument(DatasetDocument):
     #meta = {'abstract': True,}
     pass
 
+
 class Snapshot(SnapshotDocument, zfs.objects.SnapshotBase, DatasetBase, zfsBase):
     pass
-
-
-
 
 
 """
@@ -471,7 +480,7 @@ Volumes / Targets
 
 import rtslib
 
-from solarsan.utils import FormattedException, LoggedException
+from solarsan.utils import FormattedException  # LoggedException
 
 
 class VolumeDocument(DatasetDocument):
@@ -482,10 +491,8 @@ class VolumeDocument(DatasetDocument):
     def device_path(self):
         return '/dev/zvol/%s' % self.name
 
-
     class DoesNotExist(FormattedException):
         pass
-
 
     def backstore(self):
         """ Returns backstore object """
@@ -531,12 +538,9 @@ class VolumeDocument(DatasetDocument):
         ret += '/%s' % self.name
         return ret
 
+
 class Volume(VolumeDocument, SnapshottableDatasetBase, zfs.objects.VolumeBase, DatasetBase, zfsBase):
     pass
-
-
-
-
 
 
 """
