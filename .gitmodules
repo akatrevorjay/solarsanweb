@@ -271,3 +271,6 @@
 [submodule "solarsanweb/static/3rd/bootstrap-toggle-buttons"]
 	path = solarsanweb/static/3rd/bootstrap-toggle-buttons
 	url = git://github.com/nostalgiaz/bootstrap-toggle-buttons.git
+[submodule "vendor-local/pkgs/celerymon"]
+	path = vendor-local/pkgs/celerymon
+	url = git://github.com/celery/celerymon.git

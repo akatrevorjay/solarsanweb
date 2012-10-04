@@ -209,7 +209,7 @@ d3.select("#graph_iops")
   .selectAll(".horizon")
     .data([
       {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.pool.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))').multiply(-1)},
       //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.pool.name }}"))').divide(step)},
       //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))').divide(step)},
     ])

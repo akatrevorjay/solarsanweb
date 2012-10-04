@@ -11,7 +11,7 @@ from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
 
 DEBUG = TEMPLATE_DEBUG = True
 
-ADMINS = (('LocSol', 'info@localhostsolutions.com'), )
+ADMINS = (('LocSol', 'crap@localhost'), )
 MANAGERS = ADMINS
 
 # Make this unique, and don't share it with anybody.
@@ -585,10 +585,10 @@ LOGGING = {
         #    'level': 'DEBUG',
         #    'class': 'raven.contrib.django.handlers.SentryHandler',
         #},
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-        },
+        #'mail_admins': {
+        #    'level': 'ERROR',
+        #    'class': 'django.utils.log.AdminEmailHandler',
+        #},
         'null': {
             'level': 'DEBUG',
             'class': 'django.utils.log.NullHandler',
