@@ -4,6 +4,7 @@
 import os
 #import sys
 from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
+from django.conf import global_settings as gs
 
 ##
 ## Project Common
@@ -28,29 +29,34 @@ DATABASES = {
         'HOST': '',                             # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                             # Set to empty string for default. Not used with sqlite3.
     },
-    #'mongodb': {
-    #    'ENGINE': 'django_mongokit.mongodb',
-    #    'NAME': PROJECT_NAME,
-    #},
 }
 
+
+##
+## MongoEngine
+##
+
+# DB Router
 #DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
 
-##
-## MongoDB -- mongoengine
-##
-
-## Use MongoDB for Auth
+# Auth
 #AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
 
-## Persistent sessions
+# Sessions
 #if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 #else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 #else:       SESSION_ENGINE = 'mongoengine.django.sessions'
-#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_ENGINE = 'mongoengine.django.sessions'
 #SESSION_ENGINE = 'django_mongoengine.django.sessions'
 SESSION_COOKIE_NAME = PROJECT_NAME + '_sess'
+
+MONGODB_DATABASES = {
+    'default': {'name': PROJECT_NAME}
+}
+DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
+
+# Use this if mongoadmin should override django.contrib.admin.site with mongoadmin.site
+#MONGOADMIN_OVERRIDE_ADMIN = True
 
 ##
 ## Django Common
@@ -153,8 +159,8 @@ COMPRESS_CSS_FILTERS = [
     #'compressor.filters.template.TemplateFilter',
 ]
 
-if DEBUG:
-    COMPRESS_DEBUG_TOGGLE = 'nocompress'
+#if DEBUG:
+#    COMPRESS_DEBUG_TOGGLE = 'nocompress'
 #COMPRESS_OFFLINE = True
 #COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
 COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
@@ -168,8 +174,7 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, "templates"),
 )
 
-from django.conf import global_settings
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+TEMPLATE_CONTEXT_PROCESSORS = gs.TEMPLATE_CONTEXT_PROCESSORS + (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
     'solarsanweb.storage.context_processors.storage_objects',        # This always puts 'pools' list in context (for top nav)
@@ -177,10 +182,10 @@ TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
 )
 
 ## Root URL routes
-ROOT_URLCONF = PROJECT_NAME + '.urls'
+ROOT_URLCONF = '%s.urls' % PROJECT_NAME
 
 ## Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = PROJECT_NAME + '.wsgi.application'
+WSGI_APPLICATION = '%s.wsgi.application' % PROJECT_NAME
 
 ##
 ## Apps/Includes/Meh
@@ -196,6 +201,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     # Uncomment the next lines to enable the admin:
     'django_mongoengine.auth',
     'django_mongoengine.admin.sites',
@@ -203,12 +209,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
-
-    # Debug toolbar
-    'debug_toolbar',
-    #'debug_toolbar_user_panel',
-    'debug_toolbar_mongo',
-    #'django_mongoengine.debug_toolbar',
 
     # Third party libs
     'djcelery',
@@ -244,36 +244,9 @@ PROJECT_APPS = (
 #PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
 INSTALLED_APPS += PROJECT_APPS
 
-## Enable some apps when debugging
-if DEBUG:
-    INSTALLED_APPS += (
-        'smuggler',         # DB fixture manager
-        #'speedtracer',
-    )
-
 ##
-## mongoengine
+## Jinja2
 ##
-
-MONGODB_DATABASES = {
-    'default': {'name': PROJECT_NAME}
-}
-DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
-
-## List of apps/models that should use mongo.
-MONGODB_MANAGED_APPS = (
-    'solarsan',
-    'status',
-    #'configure',
-    #'storage',        # TODO remove requirement on .id in Import_ZFS_Metadata
-    'analytics',       # TODO convert data to fixture
-)
-
-MONGODB_MANAGED_MODELS = (
-)
-
-## Use this if mongoadmin should override django.contrib.admin.site with mongoadmin.site
-#MONGOADMIN_OVERRIDE_ADMIN = True
 
 ## List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -286,21 +259,13 @@ JINJA2_TEMPLATE_LOADERS = (
 )
 
 JINJA2_DISABLED_TEMPLATES = (
-    'debug_toolbar', 'debug_toolbar_user_panel',
+    'debug_toolbar',
     'mongo-panel.html',
     'django_extensions',
-    #'debug_toolbar_mongo', r'mongo-[^/]+\.html', 'debug_toolbar_htmltidy',
-    #r'debug_toolbar/.*',
-    #r'toolbar_statsd/statsd.html',
-    #'toolbar_statsd',
-    #r'debug_toolbar/base.html',
-
-    'admin', 'registration',
+    'admin',
+    'registration',
     'uwsgi.html',
     'logs',
-    #'kitsune',
-    #'crispy_forms',
-    #'mongonaut',
     #'speedtracer',
 
     #r'[^/]+\.html',                           # All generic templates
@@ -314,86 +279,87 @@ JINJA2_DISABLED_TEMPLATES = (
 ##
 
 MIDDLEWARE_CLASSES = (
-    #'django_statsd.middleware.GraphiteRequestTimingMiddleware',
-    #'django_statsd.middleware.GraphiteMiddleware',
-
     #'waffle.middleware.WaffleMiddleware',                       # waffle
-) + global_settings.MIDDLEWARE_CLASSES + (
+) + gs.MIDDLEWARE_CLASSES + (
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
-
-    #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site
-
+    #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site, broken
     'django.middleware.gzip.GZipMiddleware',                    # Compress output
-    'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
 )
 
+##
+## Smuggler
+##   DB fixture manager
+##
+
+if DEBUG:
+    INSTALLED_APPS += ('smuggler', )
+
+##
+## SpeedTracer
+##
+
 #if DEBUG:
-#    MIDDLEWARE_CLASSES = (
-#            'debug_toolbar.panels.htmlvalidator.HTMLValidationDebugPanel',
-#        ) + MIDDLEWARE_CLASSES + (
-#            #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
-#        )
-
-## MongoNaut
-#MONGONAUT_JQUERY = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
-#MONGONAUT_TWITTER_BOOTSTRAP = "http://twitter.github.com/bootstrap/assets/css/bootstrap.css"
-#MONGONAUT_TWITTER_BOOTSTRAP_ALERT = http://twitter.github.com/bootstrap/assets/js/bootstrap-alert.js"
-
-##
-## django-supervisor
-##
-
-SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
+#    INSTALLED_APPS += ('speedtracer', )
+#    MIDDLEWARE_CLASSES += ('speedtracer.middleware.SpeedTracerMiddleware', )
 
 ##
 ## django-debug-toolbar
 ##
 
-DEBUG_TOOLBAR_PANELS = (
-    'debug_toolbar.panels.version.VersionDebugPanel',
-    'debug_toolbar.panels.timer.TimerDebugPanel',
-    'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
-    'debug_toolbar.panels.headers.HeaderDebugPanel',
-    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
-    'debug_toolbar.panels.template.TemplateDebugPanel',
-    'debug_toolbar.panels.sql.SQLDebugPanel',
-    'debug_toolbar.panels.signals.SignalDebugPanel',
-    'debug_toolbar.panels.logger.LoggingPanel',
-    'debug_toolbar.panels.cache.CacheDebugPanel',
-    #'django_mongoengine.debug_toolbar.panel.MongoDebugPanel',
+if DEBUG:
+    INSTALLED_APPS += (
+        'debug_toolbar',
+        'debug_toolbar_mongo',
+        #'django_mongoengine.debug_toolbar',  # Has some major speed problems, but is better at what it does.
+    )
+    MIDDLEWARE_CLASSES += (
+        'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
+        #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
+    )
 
-    #'debug_toolbar_user_panel.panels.UserPanel',
-    #'cache_panel.CachePanel',
-    'debug_toolbar_mongo.panel.MongoDebugPanel',
-    #'django_statsd.panel.StatsdPanel',
-    #'debug_toolbar_htmltidy.panels.HTMLTidyDebugPanel',
-)
+    #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
 
-#DEBUG_TOOLBAR_MONGO_STACKTRACES = False
+    DEBUG_TOOLBAR_PANELS = (
+        'debug_toolbar.panels.version.VersionDebugPanel',
+        'debug_toolbar.panels.timer.TimerDebugPanel',
+        'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
+        'debug_toolbar.panels.headers.HeaderDebugPanel',
+        'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
+        'debug_toolbar.panels.template.TemplateDebugPanel',
+        'debug_toolbar.panels.sql.SQLDebugPanel',
+        'debug_toolbar.panels.signals.SignalDebugPanel',
+        'debug_toolbar.panels.logger.LoggingPanel',
+        'debug_toolbar.panels.cache.CacheDebugPanel',
+        'debug_toolbar_mongo.panel.MongoDebugPanel',
+        #'django_mongoengine.debug_toolbar.panel.MongoDebugPanel',
+    )
 
-
-def custom_show_toolbar(request):
-    return True  # HACK
-    try:
-        if request.is_ajax():
+    def custom_show_toolbar(request):
+        return True  # HACK
+        try:
+            if request.is_ajax():
+                return False
+            #if DEBUG: return True              # Show if DEBUG; default == DEBUG and if source ip in INTERNAL_IPS
+            return request.user.is_superuser    # Show if logged in as a superuser
+        except:
             return False
-        #if DEBUG: return True              # Show if DEBUG; default == DEBUG and if source ip in INTERNAL_IPS
-        return request.user.is_superuser    # Show if logged in as a superuser
-    except:
-        return False
 
-DEBUG_TOOLBAR_CONFIG = {
-    'INTERCEPT_REDIRECTS': False,
-    #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
-    'HIDE_DJANGO_SQL': False,
-    #'TAG': 'div',
-    'ENABLE_STACKTRACES': True,
-    'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
-}
+    DEBUG_TOOLBAR_CONFIG = {
+        'INTERCEPT_REDIRECTS': False,
+        #'EXTRA_SIGNALS': ['myproject.signals.MySignal'],
+        'HIDE_DJANGO_SQL': False,
+        #'TAG': 'div',
+        'ENABLE_STACKTRACES': True,
+        'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
+    }
 
-INTERNAL_IPS = ['127.0.0.1']
+    INTERNAL_IPS = ['127.0.0.1']
 
-## Password Hash Priority (and what's allowed)
+##
+## Auth
+##
+
+# Password hash priority (and what's allowed)
 PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.BCryptPasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -403,8 +369,14 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.CryptPasswordHasher',
 )
 
-## User Profile Class
+# User pofile class replacement
 #AUTH_PROFILE_MODULE = 'solarsan.models.UserProfile'
+
+##
+## django-supervisor
+##
+
+SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
 
 ##
 ## Get server name
@@ -418,6 +390,7 @@ SERVER_NAME = socket.gethostname()
 ##
 
 CACHES = {
+    #'default_mem': {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': PROJECT_NAME,
@@ -431,7 +404,6 @@ CACHES = {
     #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
     #},
     #'default_mongodb': {
-    #'default': {
     #    #'BACKEND': 'django_mongodb_cache.MongoDBCache',
     #    'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
     #    'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
@@ -447,10 +419,10 @@ CACHES = {
 ##
 ## Jinja2/Coffin Templates
 ##
-#
+
 #JINJA2_FILTERS = (
 #)
-#
+
 #JINJA2_TESTS = {
 #    #'test_name': 'path.to.mytest',
 #}
@@ -476,6 +448,7 @@ if not hasattr(safestring, '__html__'):
 ##
 ## Celery (async tasks)
 ##
+
 from kombu import Exchange, Queue
 from kombu.common import Broadcast
 import djcelery
@@ -537,11 +510,7 @@ if DEBUG:
 
 ## Extra task modules (def = [INSTALLED_APPS].tasks)
 CELERY_IMPORTS = (
-    #"solarsan.tasks.locsol_backup",
-    #"solarsan.tasks.cluster",
-
-    ## Enable HTTP dispatch task (http://celery.github.com/celery/userguide/remote-tasks.html)
-    'celery.task.http',
+    'celery.task.http',  # Enable HTTP dispatch task (http://celery.github.com/celery/userguide/remote-tasks.html)
 )
 
 ##
@@ -578,9 +547,6 @@ LOGGING = {
         },
     },
     'handlers': {
-        #'test_statsd_handler': {
-        #    'class': 'django_statsd.loggers.errors.StatsdHandler',
-        #},
         #'sentry': {
         #    'level': 'DEBUG',
         #    'class': 'raven.contrib.django.handlers.SentryHandler',
@@ -744,6 +710,11 @@ try:
     from settings_local import *  # IGNORE:W0614
 except ImportError:
     pass
+
+##
+## Monkey patch storage classes.
+##   (Yes, I'm aware how bad of a location for this this is.)
+##
 
 import storage.patch
 storage.patch.patch_queryset()
