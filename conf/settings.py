@@ -79,9 +79,6 @@ MONGODB_DATABASES = {
 }
 DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
 
-# Use this if mongoadmin should override django.contrib.admin.site with mongoadmin.site
-#MONGOADMIN_OVERRIDE_ADMIN = True
-
 ##
 ## Django Common
 ##

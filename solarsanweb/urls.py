@@ -8,8 +8,6 @@ from django.contrib import admin
 admin.autodiscover()
 
 from django_mongoengine.admin import site
-#from mongoadmin import site
-
 
 urlpatterns = patterns('',
 
