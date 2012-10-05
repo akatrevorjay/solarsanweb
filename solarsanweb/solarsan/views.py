@@ -12,6 +12,8 @@ from django.views import generic
 from storage.models import Pool, Dataset, Filesystem, Snapshot
 from django.contrib.auth import authenticate, login
 import mongogeneric
+import json
+
 
 """
 Auth

@@ -3,19 +3,23 @@
 {% block object_detail %}
 
 <!-- Pool Analytics -->
-{% set pool_path = pool.path() %}
 <select data-placeholder="Change graph" id="graph-select" class="chosen-select">
     <option value="{{ graph }}">{{ graph }}</option>
-    {% for opt in graph_list %}
-    {% if not opt == graph %}
-    <option value="{{ opt }}">{{ opt }}</option>
+    {% for v in graph_list %}
+    {% if not v == graph %}
+    <option value="{{ v }}">{{ v }}</option>
     {% endif %}
     {% endfor %}
 </select>
 
 <select data-placeholder="Time window" id="time-window-select" class="chosen-select">
-    <option value="{{ time_window }}">{{ time_window_list[time_window] }}</option>
-    {% for k,v in time_window_list.items() %}
+    {% for k,v in time_window_list.items %}
+    {% if k == time_window %}
+    <option value="{{ k }}">{{ v }}</option>
+    {% endif %}
+    {% endfor %}
+
+    {% for k,v in time_window_list.items %}
     {% if not k == time_window %}
     <option value="{{ k }}">{{ v }}</option>
     {% endif %}
@@ -35,8 +39,9 @@ $('.chosen-select').chosen().change(chart_select);;
 function chart_select(chart_name, time_window) {
     var chart_name = $('#graph-select').val(),
         time_window = $('#time-window-select').val();
-    url = '/storage/pools/analytics/{{ object.name }}/' + chart_name;
-    if (time_window) url += '/' + time_window;
+    url = '{% url pool-analytics slug=object.name name="graph_name" time_window="999" %}';
+    url = url.replace("graph_name", chart_name);
+    url = url.replace("999", time_window);
     window.location.href = url;
 }
 
@@ -90,8 +95,8 @@ nv.addGraph(function() {
       , eat_data);
   */
 
-  d3.json('/storage/pools/analytics/{{ object.name }}/{{ graph }}/{{ time_window }}'
-    + '/render?start=' + start
+  d3.json('{% url pool-analytics-render slug=object.name name=graph time_window=time_window %}'
+    + '?start=' + start
     , eat_data);
 
   //TODO: Figure out a good way to do this automatically

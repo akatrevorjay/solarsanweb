@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 #from datetime import timedelta
 import mongogeneric
 import logging
+import json
 
 from solarsan.views import JsonMixIn, KwargsMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
@@ -72,10 +73,10 @@ class PoolAnalyticsDetailView(PoolView, mongogeneric.DetailView):
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
         obj = self.object
-        time_window = int( kwargs.get( 'time_window', 86400 ) );
+        time_window = int( self.kwargs.get( 'time_window', 86400 ) );
         if not time_window in time_window_list:
             raise http.Http404
-        name = kwargs.get( 'name', 'iops' )
+        name = self.kwargs.get( 'name', 'iops' )
         if not name in self.charts:
             raise http.Http404
 
@@ -93,9 +94,9 @@ pool_analytics = PoolAnalyticsDetailView.as_view()
 class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
     def get_json_data(self, **kwargs):
         ctx = self.get_context_data(**kwargs)
-        obj = kwargs['object']
+        obj = self.object
         render_func = getattr(obj.analytics, ctx['graph'])
-        kwargs['start'] = kwargs['request'].GET.get('start')
+        kwargs['start'] = self.request.GET.get('start')
         kwargs['format'] = 'nvd3'
         ret = render_func(**kwargs)
         return ret
@@ -210,7 +211,6 @@ target_detail = TargetDetailView.as_view()
 
 
 ##
-import json
 from django.http import HttpResponse
 from django.views.generic.edit import CreateView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin

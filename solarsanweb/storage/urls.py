@@ -12,10 +12,10 @@ re_storage_object = '[\w\d_\-/\.:]+'
 
 
 pool_analytics_patterns = patterns('storage.views',
-    url(r'^(?:/(?P<name>[\w\d_\-]+))?(?:/(?P<time_window>\d+))?$',
+    url(r'^$',
         'pool_analytics',
         name='pool-analytics'),
-    url(r'^(?:/(?P<name>[\w\d_\-]+))?(?:/(?P<time_window>\d+))?/render$',
+    url(r'^render$',
         'pool_analytics_render',
         name='pool-analytics-render'),
 )
@@ -24,6 +24,8 @@ pool_patterns = patterns('storage.views',
     url(r'^$', 'pool_health', name='pool'),
     url(r'^health/', 'pool_health', name='pool-health'),
     url(r'^analytics/', include(pool_analytics_patterns)),
+    url(r'^analytics/(?P<name>[\w_]+)(?:/(?P<time_window>\d+))?/',
+        include(pool_analytics_patterns)),
 )
 
 
