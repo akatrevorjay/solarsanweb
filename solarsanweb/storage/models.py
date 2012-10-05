@@ -12,6 +12,8 @@ import mongoengine as m
 from datetime import datetime
 #from django.utils import timezone
 
+from django.core.urlresolvers import reverse
+
 
 """
 Mongo
@@ -103,6 +105,8 @@ class PropertyDocument(BaseMixIn, m.EmbeddedDocument, zfs.objects.Property):
         elif value:
             return False
 
+    def __call__(self):
+        return self.__unicode__()
 
 class Property(PropertyDocument):
     pass
@@ -135,21 +139,21 @@ class zfsBaseDocument(BaseMixIn, m.Document):
         #BaseMixIn.__init__()
         return super(zfsBaseDocument, self).__init__(**kwargs)
 
-    def get_absolute_url(self, *args):
-        """ Gets URL for object """
-        ret = '/storage/%ss' % self.type
-        if args:
-            ret += '/' + '/'.join(args)
-        ret += '/%s' % self.name
-        return ret
+    #def get_absolute_url(self, *args):
+    #    """ Gets URL for object """
+    #    ret = '/storage/%ss' % self.type
+    #    if args:
+    #        ret += '/' + '/'.join(args)
+    #    ret += '/%s' % self.name
+    #    return ret
 
     def get_absolute_url(self, *args):
         """ Gets URL for object """
-        ret = '/storage/%ss' % self.type
-        if args:
-            ret += '/' + '/'.join(args)
-        ret += '/%s' % self.name
-        return ret
+        name = getattr(self, 'name', None)
+        type = getattr(self, 'type', None)
+        assert name
+        assert type
+        return reverse(type, None, None, {'slug': name, }, )
 
     def dumps(self):
         return self.__dict__

@@ -186,7 +186,7 @@
   {% mustachejs "main" %}
 
   <script>
-    $(document).ready(function() {
+    //$(document).ready(function() {
 
       var $area = $('#dynamic-area')
         , template;
@@ -194,15 +194,15 @@
       // Either render by accessing the TEMPLATES object
       // directly...
 
-      $area.html(Mustache.to_html(Mustache.TEMPLATES.main));
+      //$area.html(Mustache.to_html(Mustache.TEMPLATES.main));
 
       // ...or render by using a cached template object
       // (requires django.mustache.js)
 
       template = Mustache.template('main');
-      $area.html(template.render());
+      $area.html(template.render({name: 'test'}));
 
-    });
+    //});
   </script>
 
 

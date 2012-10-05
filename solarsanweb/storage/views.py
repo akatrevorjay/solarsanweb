@@ -7,6 +7,9 @@
 #from django.core.cache import cache
 from django import http
 from django.views import generic
+#from django.core.urlresolvers import reverse, resolve, is_valid_path, iri_to_uri
+from django.core.urlresolvers import reverse
+
 
 #from datetime import timedelta
 import mongogeneric
@@ -17,22 +20,53 @@ from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
 """
+Bases
+"""
+
+class CrumbMixin(object):
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(CrumbMixin, self).get_context_data(*args, **kwargs)
+        obj = ctx.get('object')
+        if not obj:
+            return ctx
+        #path = getattr(self, 'breadcrumbs', None)
+        path = None
+        func = getattr(self, 'func', None)
+        if not func:
+            return ctx
+        for p in func():
+            if not path:
+                path = p
+            else:
+                path += '/%s' % p
+            obj_type = getattr(obj, 'type', None)
+            if obj_type:
+                url = reverse(obj_type, None, None, {'slug': path})
+                self.request.breadcrumbs(p, url)
+        return ctx
+
+
+class BaseView(CrumbMixin, KwargsMixIn):
+    pass
+
+
+"""
 Pools
 """
 
-class PoolView(object):
+class PoolView(BaseView):
     document = Pool
     slug_field = 'name'
     context_object_name = 'pool'
 
 
-class PoolHealthView(PoolView, KwargsMixIn, mongogeneric.DetailView):
+class PoolHealthView(PoolView, mongogeneric.DetailView):
     template_name = 'storage/pool_health.html'
 
 pool_health = PoolHealthView.as_view()
 
 
-class PoolAnalyticsDetailView(PoolView, KwargsMixIn, mongogeneric.DetailView):
+class PoolAnalyticsDetailView(PoolView, mongogeneric.DetailView):
     template_name = 'storage/pool_analytics.html'
     charts = ['iops', 'bandwidth', 'usage']
     def get_context_data(self, **kwargs):
@@ -73,24 +107,21 @@ pool_analytics_render = PoolAnalyticsRenderView.as_view()
 Datasets
 """
 
-class DatasetView(object):
-    document = Filesystem
+class DatasetView(BaseView):
+    document = Dataset
     slug_field = 'name'
     context_object_name = 'dataset'
     def get_context_data(self, **kwargs):
-        try:
-            ctx = super(DatasetView, self).get_context_data(**kwargs)
-        except:
-            ctx = {}
+        ctx = super(DatasetView, self).get_context_data(**kwargs)
         ctx['pool'] = ctx[self.context_object_name].pool
         return ctx
 
 
-class DatasetCreateView(DatasetView, mongogeneric.DetailView):
+class DatasetCreateView(object):
     template_name = 'storage/dataset_create.html'
 
 
-class DatasetDeleteView(DatasetView, mongogeneric.DetailView):
+class DatasetDeleteView(object):
     template_name = 'storage/dataset_delete.html'
 
 
@@ -113,14 +144,12 @@ class FilesystemView(DatasetView):
 
 class FilesystemHealthView(FilesystemView, DatasetHealthView, mongogeneric.DetailView):
     template_name = 'storage/filesystem_health.html'
-    pass
 
 filesystem_health = FilesystemHealthView.as_view()
 
 
 class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric.DetailView):
     template_name = 'storage/filesystem_snapshots.html'
-    pass
 
 filesystem_snapshots = FilesystemSnapshotsView.as_view()
 
@@ -166,7 +195,7 @@ import storage.cache
 
 fabric = storage.target.get_fabric_module('iscsi')
 
-class TargetDetailView(KwargsMixIn, generic.DetailView):
+class TargetDetailView(BaseView, generic.DetailView):
     template_name = 'storage/target_detail.html'
 
     def get_object(self, queryset=None):

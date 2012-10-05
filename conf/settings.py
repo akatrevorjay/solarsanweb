@@ -40,7 +40,31 @@ DATABASES = {
 #DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
 
 # Auth
-#AUTHENTICATION_BACKENDS = ( 'mongoengine.django.auth.MongoEngineBackend', )
+AUTHENTICATION_BACKENDS = (
+    #'mongoengine.django.auth.MongoEngineBackend',
+    # Needed to login by username in Django admin, regardless of `allauth`
+    "django.contrib.auth.backends.ModelBackend",
+    # `allauth` specific authentication methods, such as login by e-mail
+    "allauth.account.auth_backends.AuthenticationBackend",
+)
+
+SOCIALACCOUNT_PROVIDERS = {
+    #'google':
+        #{ 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
+    #'openid':
+        #{ 'SERVERS':
+            #[dict(id='yahoo',
+                  #name='Yahoo',
+                  #openid_url='http://me.yahoo.com'),
+             #dict(id='hyves',
+                  #name='Hyves',
+                  #openid_url='http://hyves.nl'),
+             #dict(id='google',
+                  #name='Google',
+                  #openid_url='https://www.google.com/accounts/o8/id')]},
+    'persona':
+        { 'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console' } },
+    }
 
 # Sessions
 #if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -159,8 +183,8 @@ COMPRESS_CSS_FILTERS = [
     #'compressor.filters.template.TemplateFilter',
 ]
 
-#if DEBUG:
-#    COMPRESS_DEBUG_TOGGLE = 'nocompress'
+if DEBUG:
+    COMPRESS_DEBUG_TOGGLE = 'nocompress'
 #COMPRESS_OFFLINE = True
 #COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
 COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
@@ -180,6 +204,8 @@ TEMPLATE_CONTEXT_PROCESSORS = gs.TEMPLATE_CONTEXT_PROCESSORS + (
     'solarsanweb.storage.context_processors.storage_objects',  # Cause we need em, always.
     'solarsanweb.solarsan.context_processors.site_styles',   # CSS and JS includes
     #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
+    'allauth.account.context_processors.account',
+    'allauth.socialaccount.context_processors.socialaccount',
 )
 
 ## Root URL routes
@@ -232,6 +258,17 @@ INSTALLED_APPS = (
 
     'backbone_tastypie',
 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.linkedin',
+    'allauth.socialaccount.providers.openid',
+    'allauth.socialaccount.providers.persona',
+    'allauth.socialaccount.providers.soundcloud',
+    'allauth.socialaccount.providers.twitter',
 
     # For future use
     #'django_utils',                     # this is django-utils2 in PyPi
@@ -416,7 +453,7 @@ CACHES = {
 
 
 ##
-## Jinja2/Coffin Templates
+## Template related
 ##
 
 # List of callables that know how to import templates from various sources.

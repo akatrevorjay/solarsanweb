@@ -12,14 +12,16 @@ from django_mongoengine.admin import site
 
 
 urlpatterns = patterns('',
-    url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='account-login'),
-    url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
-    url(r'^accounts/', include('django.contrib.auth.urls'), name='account'),
-    url(r'^admin/password_reset/$', 'django.contrib.auth.views.password_reset', name='admin_password_reset'),
-    url(r'^admin/password_reset/$', 'django.contrib.auth.views.password_reset', name='account-reset-password'),
-    (r'^admin/password_reset/done/$', 'django.contrib.auth.views.password_reset_done'),
-    (r'^reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'django.contrib.auth.views.password_reset_confirm'),
-    (r'^reset/done/$', 'django.contrib.auth.views.password_reset_complete'),
+
+    (r'^accounts/', include('allauth.urls')),
+    #url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='account-login'),
+    #url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
+    #url(r'^accounts/', include('django.contrib.auth.urls'), name='account'),
+    #url(r'^admin/password_reset/$', 'django.contrib.auth.views.password_reset', name='admin_password_reset'),
+    #url(r'^admin/password_reset/$', 'django.contrib.auth.views.password_reset', name='account-reset-password'),
+    #(r'^admin/password_reset/done/$', 'django.contrib.auth.views.password_reset_done'),
+    #(r'^reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'django.contrib.auth.views.password_reset_confirm'),
+    #(r'^reset/done/$', 'django.contrib.auth.views.password_reset_complete'),
 
     url(r'^$', include('status.urls')),
     url(r'^analytics/', include('analytics.urls')),

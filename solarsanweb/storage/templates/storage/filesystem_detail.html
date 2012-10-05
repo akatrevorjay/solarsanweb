@@ -3,7 +3,6 @@
 {% block object_content %}
 
 <!-- Dataset Detail -->
-{% with object_path as object.path %}
 <div class="row" style="margin-bottom: 0px;">
     <div class="navbar object-detail-nav object-detail-list">
         <div class="navbar-inner">
@@ -15,9 +14,9 @@
                 </a>
 
                 <a class="brand" href="#">
-                    {{ object_path|first }}
-                    {% if object_path|length > 1 %}
-                        {% for d in object_path|slice:"1:" %}/{{ d }}{% endfor %}
+                    {{ object.path|first }}
+                    {% if object.path|length > 1 %}
+                        {% for d in object.path|slice:"1:" %}/{{ d }}{% endfor %}
                     {% endif %}
                 </a>
 
@@ -52,16 +51,10 @@
         </div><!-- /navbar-inner -->
     </div><!-- /navbar -->
 </div>
-{% endwith %}
 
 <div class="row">
     <div id="filesystem-detail-content" class="well">
         {% block object_detail %}
-            {% if object.name == pool.name %}
-                {% include 'storage/pool_health.html' %}
-            {% else %}
-                {% include 'storage/filesystem_health.html' %}
-            {% endif %}
         {% endblock %}
     </div>
 </div>

@@ -1,8 +1,8 @@
-{% for path in object.path %}
-    <li class="{% if object.type == 'filesystem' and forloop.first %}pool {% else %}{{ object.type }}{% endif %}{% if forloop.last %}active {% endif %}">
-        <a href="{{ object.get_absolute_url }}>{{ path }}</a>
-        {% if not forloop.last %}
-        <span class="divider">&raquo;</span>
-        {% endif %}
-    </li>
+{% for breadcrumb in request.breadcrumbs %}
+<li class="{% if forloop.last %}active {% endif %}">
+    <a href="{{ breadcrumb.url }}">{{ breadcrumb.name }}</a>
+    {% if not forloop.last %}
+    <span class="divider">&raquo;</span>
+    {% endif %}
+</li>
 {% endfor %}

@@ -4,9 +4,9 @@
 <table class="table table-striped">
     <tr>
         <td colspan="1">
-            {% if object.props.health.value == 'ONLINE' %}
+            {% if object.props.health == 'ONLINE' %}
             <button class="btn btn-large btn-block btn-primary">
-            {% elif object.props.health.value == 'DEGRADED' %}
+            {% elif object.props.health == 'DEGRADED' %}
             <div class="alert alert-warning">This object is in a <strong>DEGRADED</strong> state.</div>
             <button class="btn btn-large btn-block btn-warning">
             {% else %}
@@ -23,7 +23,7 @@
     </tr>
 
     <tr>
-        <td>Usage: {{ object.props.capacity }} ({{ object.props.allocated }})</td>
+        <td>Usage: {{ object.props.capacity|default:"0b" }} ({{ object.props.allocated }})</td>
         <td>Free: {{ object.props.free }}</td>
         <td>Total: {{ object.props.size }}</td>
     </tr>

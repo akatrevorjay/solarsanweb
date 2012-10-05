@@ -26,32 +26,32 @@ pool_patterns = patterns('storage.views',
     url(r'^analytics/', include(pool_analytics_patterns)),
 )
 
+
+filesystem_patterns = patterns('storage.views',
+    url(r'^$', 'filesystem_health', name='filesystem'),
+    url(r'^health$', 'filesystem_health', name='filesystem-health'),
+    url(r'^snapshots$', 'filesystem_snapshots', name='filesystem-snapshots'),
+)
+
+volume_patterns = patterns('storage.views',
+    url(r'^$', 'volume_health', name='volume'),
+    url(r'^health$', 'volume_health', name='volume-health'),
+    url(r'^snapshots$', 'volume_snapshots', name='volume-snapshots'),
+)
+
+target_patterns = patterns('storage.views',
+    url(r'^$', 'target_detail', name='target'),
+    url(r'^tpg/(?P<tag>\d)/update$',
+        'target_tpg_update',
+        name='target_tpg_update'),
+)
+
 urlpatterns = patterns('storage.views',
     url(r'^pools/(?P<slug>[A-z0-9]+)/', include(pool_patterns)),
+    url(r'^filesystem/(?P<slug>[A-z0-9\/\-\.]+)/', include(filesystem_patterns)),
+    url(r'^volumes/(?P<slug>[A-z0-9\/\-\.]+)/', include(volume_patterns)),
+    url(r'^targets/(?P<slug>[A-z0-9\/\-\.:]+)/', include(target_patterns)),
 
-    url(r'^filesystems/(?P<slug>%s)$' % re_storage_object,
-        'filesystem_health',
-        name='filesystem-health'),
-    url(r'^filesystems/(?P<slug>%s)/snapshots$' % re_storage_object,
-        'filesystem_snapshots',
-        name='filesystem-snapshots'),
-
-    url(r'^volumes/(?P<slug>%s)$' % re_storage_object,
-        'volume_health',
-        name='volume-health'),
-    url(r'^volumes/(?P<slug>%s)/snapshots$' % re_storage_object,
-        'volume_snapshots',
-        name='volume-snapshots'),
-
-
-    url(r'^targets/(?P<slug>%s)/$' % re_storage_object,
-        'target_detail',
-        name='target'),
-    url(r'^targets/(?P<slug>%s)/tpg/(?P<tag>\d)/update$' % re_storage_object,
-        'target_tpg_update',
-        name='target-tpg-update'),
-
-    # API
     url(r'^api/', include(pool_resource.urls), name='storage-api'),
 )
 
