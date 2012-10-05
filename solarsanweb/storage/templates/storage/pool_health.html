@@ -4,38 +4,38 @@
 <table class="table table-striped">
     <tr>
         <td colspan="1">
-            {% if pool.props.health.value == 'ONLINE' %}
+            {% if object.props.health.value == 'ONLINE' %}
             <button class="btn btn-large btn-block btn-primary">
-            {% elif pool.props.health.value == 'DEGRADED' %}
-            <div class="alert alert-warning">This pool is in a <strong>DEGRADED</strong> state.</div>
+            {% elif object.props.health.value == 'DEGRADED' %}
+            <div class="alert alert-warning">This object is in a <strong>DEGRADED</strong> state.</div>
             <button class="btn btn-large btn-block btn-warning">
             {% else %}
-            <div class="alert alert-error"><strong>ERROR</strong> This pool is in an errored state.</div>
+            <div class="alert alert-error"><strong>ERROR</strong> This object is in an errored state.</div>
             <button class="btn btn-large btn-block btn-error">
             {% endif %}
                 <span class="label-caps">
-                    <small>pool</small>
+                    <small>object</small>
                 </span>
-                {{ pool.name }}
+                {{ object.name }}
             </button>
         </td>
         <td colspan="5"><div id="graph_iops"></div></td>
     </tr>
 
     <tr>
-        <td>Usage: {{ pool.props.capacity }} ({{ pool.props.allocated }})</td>
-        <td>Free: {{ pool.props.free }}</td>
-        <td>Total: {{ pool.props.size }}</td>
+        <td>Usage: {{ object.props.capacity }} ({{ object.props.allocated }})</td>
+        <td>Free: {{ object.props.free }}</td>
+        <td>Total: {{ object.props.size }}</td>
     </tr>
     <tr>
-        <td>Dedup Ratio: {{ pool.props.dedupratio }} ({{ pool.filesystem.props.dedup }} at pool level)</td>
-        <td>Upon device hardware error routine: {{ pool.props.failmode }}</td>
-        <td>Replace faulty device automatically? {{ pool.props.autoreplace }}</td>
+        <td>Dedup Ratio: {{ object.props.dedupratio }} ({{ object.filesystem.props.dedup }} at object level)</td>
+        <td>Upon device hardware error routine: {{ object.props.failmode }}</td>
+        <td>Replace faulty device automatically? {{ object.props.autoreplace }}</td>
     </tr>
     <tr>
-        <td>Grow pool with device? {{ pool.props.autoexpand }}</td>
-        <td>Compression Ratio: {{ pool.filesystem.props.compressratio }} ({{ pool.filesystem.props.compression }} at pool level)</td>
-        <td>Record size: {{ pool.filesystem.props.recordsize }}</td>
+        <td>Grow object with device? {{ object.props.autoexpand }}</td>
+        <td>Compression Ratio: {{ object.filesystem.props.compressratio }} ({{ object.filesystem.props.compression }} at object level)</td>
+        <td>Record size: {{ object.filesystem.props.recordsize }}</td>
     </tr>
 </table>
 
@@ -50,7 +50,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for vdev in pool.vdevs %}
+        {% for vdev in object.vdevs %}
         <tr>
             {% if vdev.type == 'mirror' %}
             <td rowspan="2">
@@ -63,12 +63,11 @@
                 {{ vdev.path_pretty }} | {{ vdev.vdev_id }} | {{ vdev.asize_pretty }}
             </td>
             <td>
-                <a href="/storage/pools/{{ pool.name }}/vdev/{{ vdev.guid }}/health">
+                <a href="{{ vdev.get_absolute_url }}">
                     <button class="btn btn-mini btn-success">{{ vdev.health }}</button>
                 </a>
             </td>
             <td>
-                <!-- <a href="/storage/pools/{{ pool.name }}/vdev/{{ vdev.guid }}/health"><button class="btn btn-mini">SMART</button> -->
                 {% if vdev.type == 'mirror' %}
                 <button class="btn btn-mini btn-danger">Remove</button>
                 {% endif %}
@@ -117,7 +116,7 @@
 
 <blockquote>
     <pre>
-        Pool: {{ pool.__dict__|pprint }}
+        Pool: {{ object.dumps|pprint }}
     </pre>
 </blockquote>
 
@@ -153,10 +152,10 @@ d3.select("#graph_iops").append("div")
 d3.select("#graph_iops")
   .selectAll(".horizon")
     .data([
-      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ pool.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ pool.name }}"))').multiply(-1)},
-      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ pool.name }}"))').divide(step)},
-      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ pool.name }}"))').divide(step)},
+      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.name }}"))').multiply(-1)},
+      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.name }}"))').divide(step)},
+      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.name }}"))').divide(step)},
     ])
   .enter().append("div")
     .attr("class", "horizon")

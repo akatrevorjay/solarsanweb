@@ -8,7 +8,7 @@
                 <span class="label-caps">
                     <small>filesystem</small>
                 </span>
-                {{ filesystem.name }}
+                {{ object.name }}
             </button>
         </td>
         <td colspan="5"><div id="graph_iops"></div></td>
@@ -19,14 +19,14 @@
             <small>usage:</small>
         </td>
         <td>
-            <button class="btn btn-mini" >{{ filesystem.props.used }}/{{ filesystem.pool.props.capacity }}</button>
+            <button class="btn btn-mini" >{{ object.props.used.value }}/{{ object.pool.props.capacity.value }}</button>
         </td>
 
         <td>
             <i class="icon-resize-small"></i>
             <small>compression:</small>
 
-            {% if filesystem.props.compression %}
+            {% if object.props.compression.value == True %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
@@ -39,7 +39,7 @@
             <i class="icon-th"></i>
             <small>dedup:</small>
 
-            {% if filesystem.props.dedup %}
+            {% if object.props.dedup.value == True %}
             <button class="btn btn-mini btn-success">On</button>
             {% else %}
             <button class="btn btn-mini btn-inverse">Off</button>
@@ -55,21 +55,21 @@
             children:
         </small></td>
         <td><small>
-            {{ filesystem.props.usedbychildren }}
+            {{ object.props.usedbychildren.value }}
         </small></td>
         <td><small>
             &nbsp;&raquo;
             ratio:
         </small></td>
         <td><small>
-             {{ filesystem.props.compressratio }}
+             {{ object.props.compressratio }}
         </small></td>
         <td><small>
              &nbsp;&raquo;
             ratio:
         </small></td>
         <td><small>
-             {{ filesystem.pool.props.dedupratio }}
+             {{ object.pool.props.dedupratio }}
         </small></td>
      </tr>
     <tr>
@@ -78,21 +78,21 @@
             snapshots:
         </small></td>
         <td><small>
-             {{ filesystem.props.usedbysnapshots }}
+             {{ object.props.usedbysnapshots }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-             {{ filesystem.props.quota }}
+             {{ object.props.quota }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-             {{ filesystem.props.quota }}
+             {{ object.props.quota }}
         </small></td>
      </tr>
     <tr>
@@ -101,28 +101,28 @@
             ref:
         </small></td>
         <td><small>
-             {{ filesystem.props.usedbyrefreservation }}
+             {{ object.props.usedbyrefreservation }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-             {{ filesystem.props.quota }}
+             {{ object.props.quota }}
         </small></td>
         <td><small>
             <i class="icon-tint"></i>
             quota:
         </small></td>
         <td><small>
-            {{ filesystem.props.quota }}
+            {{ object.props.quota }}
         </small></td>
      </tr>
 </table>
 
 <blockquote>
 <pre>
-Filesystem: {{ filesystem.__dict__|pprint }}
+Filesystem: {{ object.dumps|pprint }}
 </pre>
 </blockquote>
 
@@ -155,10 +155,10 @@ d3.select("#graph_iops").append("div")
 d3.select("#graph_iops")
   .selectAll(".horizon")
     .data([
-      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))').multiply(-1)},
-      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
-      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ filesystem.pool.name }}"))').divide(step)},
+      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.pool.name }}"))')},
+      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))').multiply(-1)},
+      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.pool.name }}"))').divide(step)},
+      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.pool.name }}"))').divide(step)},
     ])
   .enter().append("div")
     .attr("class", "horizon")

@@ -3,27 +3,27 @@
 {% block title %}SolarSan Console{% endblock %}
 
 {% block navbar_links %}
-<a class="brand" href="/">SolarSan Console</a>
+<a class="brand" href="{% url index %}">SolarSan Console</a>
 <div>
     <ul class="nav">
         <li>
-            <a href="/status">status</a>
+            <a href="{% url status %}">status</a>
         </li>
         <li>
-            <a href="/configure">configure</a>
+            <a href="{% url configure %}">configure</a>
         </li>
         <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">pools<span class="caret"></span></a>
             <ul class="dropdown-menu">
                 {% for pool in pools %}
                 <li>
-                    <a href="/storage/pools/detail/{{ pool.name|urlize }}">{{ pool.name }}</a>
+                    <a href="{% url pool slug=pool.name %}">{{ pool.name }}</a>
                 </li>
                 {% endfor %}
             </ul>
         </li>
         <li>
-            <a href="/analytics">analytics</a>
+            <a href="{% url analytics %}">analytics</a>
         </li>
     </ul>
 
@@ -31,35 +31,35 @@
         <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">help<span class="caret"></span></a>
             <ul class="dropdown-menu">
-                {#
+                {% comment %}
                 <li>
                     <a href="#" onclick="graphs_toggle();">Tooltips Hide / Show</a>
                 </li>
                 <li class="divider"></li>
-                #}
+                {% endcomment %}
                 <li>
                     <a href="http://www.localhostsolutions.com">Support</a>
                 </li>
             </ul>
         </li>
 
-        {% if user and user.is_authenticated() %}
+        {% if user and user.is_authenticated %}
         <!-- Signed In -->
         <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#"> <i class="icon-user"></i> {{ user.username }} <span class="caret"></span> </a>
             <ul class="dropdown-menu">
-                {#
+                {% comment %}
                 <li>
-                    <a href="/user/profile">Profile</a>
+                    <a href="{% url account-profile %}">Account</a>
                 </li>
-                #}
                 <li>
-                    <a href="/user/changepassword">Change Password</a>
+                    <a href="{% url account-change-password %}">Change Password</a>
                 </li>
                 <li class="divider"></li>
                 <li>
-                    <a href="/user/signout">Sign Out</a>
+                    <a href="{% url account-logout %}">Logout</a>
                 </li>
+                {% endcomment %}
             </ul>
         </li>
         {% else %}

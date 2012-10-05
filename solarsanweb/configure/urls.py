@@ -5,10 +5,10 @@ import views
 #from configure.views import *
 
 urlpatterns = patterns('configure.views',
-    (r'^$', views.HomeListView.as_view()),
-    
+    url(r'^$', views.HomeListView.as_view(), name='configure'),
+
     #(r'^network$', NetworkDetailView.as_view()),
-    
+
     (r'^network/interfaces$', views.NetworkInterfaceListView.as_view(), {}, 'network-interface-list'),
     url(r'network/interfaces/(?P<slug>(eth|ib)\d)$', views.network_interface_config, name='network-interface-update'),
 

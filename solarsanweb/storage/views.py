@@ -26,8 +26,10 @@ class PoolView(object):
     context_object_name = 'pool'
 
 
-class PoolHealthDetailView(PoolView, KwargsMixIn, mongogeneric.DetailView):
+class PoolHealthView(PoolView, KwargsMixIn, mongogeneric.DetailView):
     template_name = 'storage/pool_health.html'
+
+pool_health = PoolHealthView.as_view()
 
 
 class PoolAnalyticsDetailView(PoolView, KwargsMixIn, mongogeneric.DetailView):
@@ -51,6 +53,8 @@ class PoolAnalyticsDetailView(PoolView, KwargsMixIn, mongogeneric.DetailView):
                     'graph': name, })
         return ctx
 
+pool_analytics = PoolAnalyticsDetailView.as_view()
+
 
 class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
     def get_json_data(self, **kwargs):
@@ -61,6 +65,8 @@ class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
         kwargs['format'] = 'nvd3'
         ret = render_func(**kwargs)
         return ret
+
+pool_analytics_render = PoolAnalyticsRenderView.as_view()
 
 
 """
@@ -79,23 +85,21 @@ class DatasetView(object):
         ctx['pool'] = ctx[self.context_object_name].pool
         return ctx
 
-#class DatasetListView(DatasetView, mongogeneric.ListView):
-#    context_object_name = 'datasets'
-#    template_name = 'solarsan/dataset_list.html'
 
-#class DatasetCreateView(DatasetView, mongogeneric.DetailView):
-#    pass
+class DatasetCreateView(DatasetView, mongogeneric.DetailView):
+    template_name = 'storage/dataset_create.html'
 
-#class DatasetDeleteView(DatasetView, mongogeneric.DetailView):
-#    pass
 
-class DatasetHealthDetailView(object):
+class DatasetDeleteView(DatasetView, mongogeneric.DetailView):
+    template_name = 'storage/dataset_delete.html'
+
+
+class DatasetHealthView(object):
     template_name = 'storage/dataset_health.html'
-    pass
+
 
 class DatasetSnapshotsView(object):
     template_name = 'storage/dataset_snapshots.html'
-    pass
 
 
 """
@@ -105,17 +109,20 @@ Filesystem
 
 class FilesystemView(DatasetView):
     document = Filesystem
-    context_object_name = 'filesystem'
 
 
-class FilesystemHealthDetailView(FilesystemView, DatasetHealthDetailView, mongogeneric.DetailView):
+class FilesystemHealthView(FilesystemView, DatasetHealthView, mongogeneric.DetailView):
     template_name = 'storage/filesystem_health.html'
     pass
+
+filesystem_health = FilesystemHealthView.as_view()
 
 
 class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric.DetailView):
     template_name = 'storage/filesystem_snapshots.html'
     pass
+
+filesystem_snapshots = FilesystemSnapshotsView.as_view()
 
 
 """
@@ -126,20 +133,28 @@ Volumes
 class VolumeView(DatasetView):
     document = Volume
 
+    def get_context_data(self, **kwargs):
+        context = super(VolumeView, self).get_context_data(**kwargs)
+        return context
 
-class VolumeHealthDetailView(VolumeView, DatasetHealthDetailView, mongogeneric.DetailView):
+
+class VolumeHealthView(VolumeView, DatasetHealthView, mongogeneric.DetailView):
     template_name = 'storage/volume_health.html'
 
     def get_context_data(self, **kwargs):
-        context = super(VolumeHealthDetailView, self).get_context_data(**kwargs)
+        context = super(VolumeHealthView, self).get_context_data(**kwargs)
         #context['targets'] = storage.target.target_list(fabric_module=fabric)
         targets = context['targets'] = storage.target.target_list(cached=True)
         return context
+
+volume_health = VolumeHealthView.as_view()
 
 
 class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailView):
     template_name = 'storage/volume_snapshots.html'
     pass
+
+volume_snapshots = VolumeSnapshotsView.as_view()
 
 
 """
@@ -151,8 +166,6 @@ import storage.cache
 
 fabric = storage.target.get_fabric_module('iscsi')
 
-a = mongogeneric.DetailView
-
 class TargetDetailView(KwargsMixIn, generic.DetailView):
     template_name = 'storage/target_detail.html'
 
@@ -163,6 +176,8 @@ class TargetDetailView(KwargsMixIn, generic.DetailView):
         except storage.target.DoesNotExist:
             raise http.Http404
         return obj
+
+target_detail = TargetDetailView.as_view()
 
 
 ##
@@ -198,8 +213,6 @@ class AjaxableResponseMixin(object):
 ##
 
 
-a = generic.edit.FormView
-
 import storage.forms as forms
 
 class TargetUpdateView(generic.edit.FormView):
@@ -210,6 +223,8 @@ class TargetUpdateView(generic.edit.FormView):
         # It should return an HttpResponse.
         logger.debug('form=%s', form)
         return super(ContactView, self).form_valid(form)
+
+target_update = TargetUpdateView.as_view()
 
 
 class TargetTPGUpdateView(AjaxableResponseMixin, generic.edit.FormView):
@@ -222,6 +237,8 @@ class TargetTPGUpdateView(AjaxableResponseMixin, generic.edit.FormView):
         form.save()
         ret = form.cleaned_data
         return self.render_to_json_response(ret)
+
+target_tpg_update = TargetTPGUpdateView.as_view()
 
 
 from django.shortcuts import render

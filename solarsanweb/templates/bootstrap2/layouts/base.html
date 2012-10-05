@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="{% block html_lang %}en{% endblock %}">
 <head>
-{% from "bootstrap2/macros.html" import debugmin %}
 {% block head %}
     <title>{% block title %}App Name{% endblock %}</title>
     {% block meta %}
@@ -12,10 +11,10 @@
     {% endblock %}
 
     {% block css_bootstrap %}
-        <link href="{{ STATIC_URL }}css/bootstrap{{ debugmin() }}.css" rel="stylesheet">
+        <link href="{{ STATIC_URL }}css/bootstrap{{ debugmin }}.css" rel="stylesheet">
     {% endblock %}
     {% block css_bootstrap_responsive %}
-        <link href="{{ STATIC_URL }}css/bootstrap-responsive{{ debugmin() }}.css" rel="stylesheet">
+        <link href="{{ STATIC_URL }}css/bootstrap-responsive{{ debugmin }}.css" rel="stylesheet">
     {% endblock %}
     {% block css_site %}
     {% endblock %}
@@ -28,10 +27,10 @@
         <![endif]-->
     {% endblock %}
 
-    {#{% compress js %}#}
+    {# compress js #}
     {% block js_head %}
     {% endblock %}
-    {#{% endcompress %}#}
+    {# endcompress #}
 {% endblock %}
 </head>
 
@@ -50,7 +49,7 @@
             {% block container %}
 
                 {% block messages %}
-                    {% include "bootstrap2/includes/messages.html" %}
+                    {# include "bootstrap2/includes/messages.html" #}
                 {% endblock %}
 
                 {% block pre_content %}
@@ -72,18 +71,21 @@
     {% endblock %}
 
     {% block js_jquery %}
+        {% comment %}
         {# Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline #}
-        {#<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/jquery-1.7.2.js"><\/script>');</script>#}
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/jquery-1.7.2.js"><\/script>');</script>
+        {% endcomment %}
     {% endblock %}
 
-    {#{% compress js %}#}
+    {# compress js #}
     {% block js_bootstrap %}
         <script src="{{ STATIC_URL }}js/bootstrap.js"></script>
     {% endblock %}
-    {#{% block js_analytics %}#}
+    {% block js_analytics %}
+        {% comment %}
         {# Via HTML5BP. Asynchronous Google Analytics snippet. mathiasbynens.be/notes/async-analytics-snippet #}
-        {#<script>
+        <script>
             {% block google_analytics %}
                 {% if not DEBUG %}
                     var _gaq=[['_setAccount','{% block google_analytics_id %}UA-XXXXX-X{% endblock %}'],['_trackPageview']];
@@ -93,11 +95,12 @@
                 {% endif %}
             {% endblock %}
         </script>
-    {% endblock %}#}
+        {% endcomment %}
+    {% endblock %}
     {% block js_footer %}
         {# Add your javascript here #}
     {% endblock %}
-    {#{% endcompress %}#}
+    {# endcompress #}
 {% endblock %}
 </body>
 </html>

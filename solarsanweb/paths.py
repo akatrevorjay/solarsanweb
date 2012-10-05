@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 
 def _find_project(try_dir=None, max_depth=5):
     if not try_dir or max_depth == 0:

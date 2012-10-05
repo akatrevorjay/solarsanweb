@@ -17,8 +17,9 @@ framework.
 
 """
 
-import os
-execfile(os.path.join(os.path.dirname(__file__), 'paths.py'))
+#import os
+#execfile(os.path.join(os.path.dirname(__file__), 'paths.py'))
+from django.conf import settings
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
@@ -53,3 +54,5 @@ try:
                 uwsgi.reload()
 except:
     pass
+
+

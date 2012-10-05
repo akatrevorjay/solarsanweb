@@ -177,7 +177,8 @@ TEMPLATE_DIRS = (
 TEMPLATE_CONTEXT_PROCESSORS = gs.TEMPLATE_CONTEXT_PROCESSORS + (
     "django.contrib.messages.context_processors.messages",  # Is this default or not?
     'django.core.context_processors.request',               # Puts 'request' in context, also required by waffle
-    'solarsanweb.storage.context_processors.storage_objects',        # This always puts 'pools' list in context (for top nav)
+    'solarsanweb.storage.context_processors.storage_objects',  # Cause we need em, always.
+    'solarsanweb.solarsan.context_processors.site_styles',   # CSS and JS includes
     #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
 )
 
@@ -220,6 +221,17 @@ INSTALLED_APPS = (
     #'sentry',
     #'raven.contrib.django',
     'compressor',
+    'breadcrumbs',
+
+    'tastypie',
+    'tastypie_mongoengine',
+
+    'djangorestframework',
+
+    'jstemplate',
+
+    'backbone_tastypie',
+
 
     # For future use
     #'django_utils',                     # this is django-utils2 in PyPi
@@ -245,46 +257,25 @@ PROJECT_APPS = (
 INSTALLED_APPS += PROJECT_APPS
 
 ##
-## Jinja2
-##
-
-## List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'coffin.template.loaders.Loader',
-)
-
-JINJA2_TEMPLATE_LOADERS = (
-    'django.template.loaders.app_directories.Loader',
-    'django.template.loaders.filesystem.Loader',
-)
-
-JINJA2_DISABLED_TEMPLATES = (
-    'debug_toolbar',
-    'mongo-panel.html',
-    'django_extensions',
-    'admin',
-    'registration',
-    'uwsgi.html',
-    'logs',
-    #'speedtracer',
-
-    #r'[^/]+\.html',                           # All generic templates
-    #r'myapp/(registration|photos|calendar)/', # The three apps in the myapp package
-    #r'auth/',                                 # All auth templates
-    #r'(cms|menu|admin|admin_doc)/',           # The templates of these 4 apps
-)
-
-##
 ## Middleware
 ##
 
 MIDDLEWARE_CLASSES = (
     #'waffle.middleware.WaffleMiddleware',                       # waffle
 ) + gs.MIDDLEWARE_CLASSES + (
+    'breadcrumbs.middleware.BreadcrumbsMiddleware',             # Breadcrumbs
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
     #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site, broken
     'django.middleware.gzip.GZipMiddleware',                    # Compress output
 )
+
+##
+## django-pdb
+##
+
+if DEBUG:
+    INSTALLED_APPS += ('django_pdb', )
+    MIDDLEWARE_CLASSES += ('django_pdb.middleware.PdbMiddleware', )
 
 ##
 ## Smuggler
@@ -298,9 +289,10 @@ if DEBUG:
 ## SpeedTracer
 ##
 
-#if DEBUG:
-#    INSTALLED_APPS += ('speedtracer', )
-#    MIDDLEWARE_CLASSES += ('speedtracer.middleware.SpeedTracerMiddleware', )
+if DEBUG:
+    #INSTALLED_APPS += ('speedtracer', )
+    #MIDDLEWARE_CLASSES += ('speedtracer.middleware.SpeedTracerMiddleware', )
+    pass
 
 ##
 ## django-debug-toolbar
@@ -314,7 +306,6 @@ if DEBUG:
     )
     MIDDLEWARE_CLASSES += (
         'debug_toolbar.middleware.DebugToolbarMiddleware',          # Enable django-debug-toolbar
-        #'speedtracer.middleware.SpeedTracerMiddleware',             # SpeedTracer
     )
 
     #DEBUG_TOOLBAR_MONGO_STACKTRACES = False
@@ -385,6 +376,14 @@ SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
 import socket
 SERVER_NAME = socket.gethostname()
 
+#
+# jstemplate
+#
+
+JSTEMPLATE_DIRS = (
+    os.path.join(PROJECT_DIR, "templates", "jstemplates"),
+)
+
 ##
 ## Cache backend
 ##
@@ -420,6 +419,12 @@ CACHES = {
 ## Jinja2/Coffin Templates
 ##
 
+# List of callables that know how to import templates from various sources.
+TEMPLATE_LOADERS = (
+    'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.Loader',
+)
+
 #JINJA2_FILTERS = (
 #)
 
@@ -429,7 +434,8 @@ CACHES = {
 
 JINJA2_EXTENSIONS = (
     'jinja2.ext.do', 'jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols',
-    'compressor.contrib.jinja2ext.CompressorExtension',
+    #'compressor.contrib.jinja2ext.CompressorExtension',
+    #'solarsan.helpers.mustachejs',
 )
 
 #from jinja2 import StrictUndefined

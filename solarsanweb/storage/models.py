@@ -48,7 +48,8 @@ class ReprMixIn(object):
         return "<%s: %s>" % (self.__class__.__name__, name)
 
     def __unicode__(self):
-        return self.name
+        name = getattr(self, 'name', self.__repr__())
+        return name
 
 
 class BaseMixIn(ReprMixIn):
@@ -134,8 +135,24 @@ class zfsBaseDocument(BaseMixIn, m.Document):
         #BaseMixIn.__init__()
         return super(zfsBaseDocument, self).__init__(**kwargs)
 
-    def get_absolute_url(self):
-        return '/storage/%s/'
+    def get_absolute_url(self, *args):
+        """ Gets URL for object """
+        ret = '/storage/%ss' % self.type
+        if args:
+            ret += '/' + '/'.join(args)
+        ret += '/%s' % self.name
+        return ret
+
+    def get_absolute_url(self, *args):
+        """ Gets URL for object """
+        ret = '/storage/%ss' % self.type
+        if args:
+            ret += '/' + '/'.join(args)
+        ret += '/%s' % self.name
+        return ret
+
+    def dumps(self):
+        return self.__dict__
 
 
 class zfsBase(zfs.objects.zfsBase):
@@ -165,6 +182,8 @@ class zfsBase(zfs.objects.zfsBase):
     #                    v.reload()
     #    return ret
     #    return zfs.objects.zfsBase.exists(self)
+
+
 
 """
 VDevs
@@ -527,14 +546,6 @@ class VolumeDocument(DatasetDocument):
         if self.pk:
             self.save()
         return True
-
-    def get_absolute_url(self, *args):
-        """ Gets URL for object """
-        ret = '/storage/%ss' % self.type
-        if args:
-            ret += '/' + '/'.join(args)
-        ret += '/%s' % self.name
-        return ret
 
 
 class Volume(VolumeDocument, SnapshottableDatasetBase, zfs.objects.VolumeBase, DatasetBase, zfsBase):

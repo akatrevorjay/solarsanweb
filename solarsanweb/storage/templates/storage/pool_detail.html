@@ -1,6 +1,4 @@
 {% extends "base_site.html" %}
-{% from "bootstrap/macros.html" import alert  %}
-{% from "bootstrap/forms/macros.html" import field, input  %}
 
 {% block css_extra %}
 <style></style>
@@ -21,7 +19,7 @@
                 <a href="#">pools</a>
                 <span class="divider">&raquo;</span>
             </li>
-            {% include 'storage/pool_breadcrumb.html' %}
+            {# include 'storage/pool_breadcrumb.html' #}
         </ul>
     </div>
 </div>
@@ -46,7 +44,7 @@
                             {% else %}
                             <li>
                             {% endif %}
-                                <a href="/storage/pools/detail/{{ obj.name|urlize }}">
+                                <a href="{{ obj.get_absolute_url }}">
                                     <small><span class="muted">POOL</span></small>&nbsp;
                                     {{ obj.name }}
                                 </a>
@@ -72,13 +70,13 @@
                 <div id="collapse-sidebar-nav-accordion2" class="accordion-body collapse">
                     <div class="accordion-inner">
                         <ul class="nav nav-pills nav-stacked">
-                            {% for obj in filesystems|sort(attribute='name') %}
+                            {% for obj in filesystems|dictsort:"name" %}
                             {% if object.type == obj.type and object.name == obj.name %}
                             <li class="active">
                             {% else %}
                             <li>
                             {% endif %}
-                                <a href="/storage/filesystems/detail/{{ obj.name|urlize }}">
+                                <a href="{{ obj.get_absolute_url }}">
                                     <small><span class="muted">FS&nbsp;&nbsp;</span></small>&nbsp;
                                     {{ obj.name }}
                                 </a>
@@ -104,13 +102,13 @@
                 <div id="collapse-sidebar-nav-accordion3" class="accordion-body collapse">
                     <div class="accordion-inner">
                         <ul class="nav nav-pills nav-stacked">
-                            {% for obj in volumes|sort(attribute='name') %}
+                            {% for obj in volumes|dictsort:"name" %}
                             {% if object.type == obj.type and object.name == obj.name %}
                             <li class="active">
                             {% else %}
                             <li>
                             {% endif %}
-                                <a href="/storage/volumes/detail/{{ obj.name|urlize }}">
+                                <a href="{{ obj.get_absolute_url }}">
                                     <small><span class="muted">VOL&nbsp;</span></small>&nbsp;
                                     {{ obj.name }}
                                 </a>
@@ -142,10 +140,10 @@
                             {% else %}
                             <li>
                             {% endif %}
-                                <a href="/storage/targets/detail/{{ obj.wwn|urlize }}">
+                                <a href="{% url target slug=obj.wwn %}">
                                     <small><span class="muted">TGT&nbsp;</span></small>&nbsp;
                                     <span class="label-caps">{{ obj.fabric_module.name }}</span> &nbsp;
-                                    {{ obj.short_wwn() }}
+                                    {{ obj.short_wwn }}
                                 </a>
                             </li>
                             {% endfor %}
@@ -166,10 +164,6 @@
     <div class="span9">
         <div id="filesystem-info" style="padding-left: 10px">
             {% block object_content %}
-                {% if pool and not filesystem %}
-                {% set filesystem = pool.filesystem %}
-                {% endif %}
-                {% include 'storage/pool_detail.html' %}
             {% endblock %}
         </div>
     </div>

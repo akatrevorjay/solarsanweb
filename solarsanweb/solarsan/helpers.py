@@ -1,5 +1,13 @@
+"""
+Helper functions to be used with Django and Jingo
+"""
+from django.utils.safestring import mark_safe
+import re
 import jinja2
 from jingo import register
+#from coffin import template
+register = template.Library()
+
 
 @register.filter
 def flotjson(graph, container, **kwargs):
@@ -20,4 +28,3 @@ def flotjson(graph, container, **kwargs):
         out.append('</script>')
 
     return jinja2.Markup("\n".join(out))
-

@@ -274,3 +274,12 @@
 [submodule "vendor-local/pkgs/celerymon"]
 	path = vendor-local/pkgs/celerymon
 	url = git://github.com/celery/celerymon.git
+[submodule "solarsanweb/static/3rd/backbone"]
+	path = solarsanweb/static/3rd/backbone
+	url = git://github.com/documentcloud/backbone.git
+[submodule "solarsanweb/static/3rd/underscore"]
+	path = solarsanweb/static/3rd/underscore
+	url = git://github.com/documentcloud/underscore.git
+[submodule "solarsanweb/static/3rd/backbone-relational"]
+	path = solarsanweb/static/3rd/backbone-relational
+	url = git://github.com/PaulUithol/Backbone-relational.git

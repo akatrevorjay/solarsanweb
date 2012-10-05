@@ -1,41 +1,8 @@
-{% with %}
-
-{% if filesystem %}
-    {% set object = filesystem %}
-    {% set object_type = 'filesystem' %}
-    {% set object_class = 'filesystem-select' %}
-{% elif pool %}
-    {% set object = pool %}
-    {% set object_type = 'pool' %}
-{% endif %}
-
-{% if object.type in ['pool', 'filesystem'] %}
-
-{% set object_path = object.path() %}
-
-{% for path in object_additional %}
-    {% set object_path = object_path.append(path) %}
-{% endfor %}
-
-{% for path in object_path %}
-    {% with %}
-        {% if object_type == 'filesystem' %}
-            {% if loop.first %}
-                {% set object_type = 'pool' %}
-                {% set object_class = Null %}
-            {% endif %}
+{% for path in object.path %}
+    <li class="{% if object.type == 'filesystem' and forloop.first %}pool {% else %}{{ object.type }}{% endif %}{% if forloop.last %}active {% endif %}">
+        <a href="{{ object.get_absolute_url }}>{{ path }}</a>
+        {% if not forloop.last %}
+        <span class="divider">&raquo;</span>
         {% endif %}
-
-        <li class="{{ object_class|default(object_type) }}{% if loop.last %} active{% endif %}">
-            <a href="/{{ object_type }}s/detail/{{ object_path[0:loop.index]|join('/')|urlize }}">{{ path }}</a>
-            {% if not loop.last %}
-            <span class="divider">{% if object_type == 'filesystem' %}/{% else %}&raquo;{% endif %}</span>
-            {% endif %}
-        </li>
-    {% endwith %}
+    </li>
 {% endfor %}
-
-{% endif %}
-
-{% endwith %}
-
