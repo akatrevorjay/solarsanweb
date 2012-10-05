@@ -2,9 +2,56 @@
 
 {% block object_content %}
 
+<!-- Target Detail -->
+<div class="row" style="margin-bottom: 0px;">
+    <div class="navbar object-detail-nav object-detail-list">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto;">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".object-detail-nav .nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+
+                <a class="brand" href="#">
+                    {{ object.wwn }}
+                </a>
+
+                <div class="nav-collapse">
+                    <ul class="nav">
+                        {% comment %}
+                         <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{% url pool-health slug=pool.name %}">Health</a></li>
+                                <li><a href="{% url pool-analytics slug=pool.name %}">Analytics</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="{% url filesystem-health slug=object.name %}">Health</a></li>
+                        <li><a href="{% url filesystem-snapshots slug=object.name %}">Snapshots</a></li>
+                        {% endcomment %}
+                    </ul>
+
+                    <ul class="nav pull-right">
+                         <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                {% comment %}
+                                <li><a href="{% url filesystem-snapshot slug=object.name %}">Snapshot</a></li>
+                                <li><a href="{% url filesystem-clone slug=object.name %}">Clone</a></li>
+                                <li class="divider"></li>
+                                <li><a href="{% url filesystem-destroy slug=object.name %}">Destroy</a></li>
+                                {% endcomment %}
+                            </ul>
+                        </li>
+                   </ul>
+                </div><!-- /.nav-collapse -->
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
+</div>
 
 <!-- Target Detail -->
-
 <div class="row">
     <div id="object-detail-content" class="well">
         {% block object_detail %}

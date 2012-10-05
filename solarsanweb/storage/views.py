@@ -32,7 +32,7 @@ class CrumbMixin(object):
         #path = getattr(self, 'breadcrumbs', None)
         path = None
         func = getattr(obj, 'path', None)
-        if not func:
+        if not func or isinstance(func, basestring):
             return ctx
         for p in func():
             if not path:
