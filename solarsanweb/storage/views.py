@@ -31,7 +31,7 @@ class CrumbMixin(object):
             return ctx
         #path = getattr(self, 'breadcrumbs', None)
         path = None
-        func = getattr(self, 'func', None)
+        func = getattr(obj, 'path', None)
         if not func:
             return ctx
         for p in func():
