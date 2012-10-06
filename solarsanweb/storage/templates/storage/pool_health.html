@@ -11,13 +11,15 @@
             <button class="btn btn-large btn-block btn-warning">
             {% else %}
             <div class="alert alert-error"><strong>ERROR</strong> This object is in an errored state.</div>
-            <button class="btn btn-large btn-block btn-error">
-            {% endif %}
-                <span class="label-caps">
-                    <small>object</small>
-                </span>
-                {{ object.name }}
-            </button>
+            <a href="{{ object.get_absolute_uri }}">
+                <button class="btn btn-large btn-block btn-error">
+                {% endif %}
+                    <span class="label-caps">
+                        <small>pool</small>
+                    </span>
+                    {{ object.name }}
+                </button>
+            </a>
         </td>
         <td colspan="5"><div id="graph_iops"></div></td>
     </tr>
@@ -120,52 +122,14 @@
     </pre>
 </blockquote>
 
-
-
-
 <script>
-//
-var step = +cubism.option("step", 3e5);
+require(['pool/analytics'], function(pool_analytics) {
 
-//
-var context = cubism.context()
-    .step(step)
-    .size(470);
+// Analytics using Cubism
+pool_analytics.pool = '{{ object.name }}';
+pool_analytics.small_stats();
 
-//
-var cube = context.cube("http://localhost:1081");
-
-/*
-// Add top and bottom axes to display the time.
-d3.select("#graph_iops").selectAll(".axis")
-    .data(["top", "bottom"])
-  .enter().append("div")
-    .attr("class", function(d) { return d + " axis"; })
-    .each(function(d) { d3.select(this).call(context.axis().ticks(12).orient(d)); });
-
-// Add a mouseover rule.
-d3.select("#graph_iops").append("div")
-    .attr("class", "rule")
-    .call(context.rule());
-*/
-
-d3.select("#graph_iops")
-  .selectAll(".horizon")
-    .data([
-      {title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.name }}"))')},
-      {title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.name }}"))').multiply(-1)},
-      //{title: "iops", metric: cube.metric('sum(pool_iostat(iops_read + iops_write).eq(pool,"{{ object.name }}"))').divide(step)},
-      //{title: "bandwidth", metric: cube.metric('sum(pool_iostat(bandwidth_read + bandwidth_write).eq(pool,"{{ object.name }}"))').divide(step)},
-    ])
-  .enter().append("div")
-    .attr("class", "horizon")
-  .call(context.horizon()
-    .title(function(d) { return d.title; })
-    .metric(function(d) { return d.metric; })
-    .height(20)
-  );
-
+});
 </script>
-
 
 {% endblock %}

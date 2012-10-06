@@ -283,3 +283,15 @@
 [submodule "solarsanweb/static/3rd/backbone-relational"]
 	path = solarsanweb/static/3rd/backbone-relational
 	url = git://github.com/PaulUithol/Backbone-relational.git
+[submodule "vendor"]
+	path = vendor
+	url = gitosis@git.localhostsolutions.com:solarsan/solarsanweb/vendor.git
+[submodule "static/3rd/less.js"]
+	path = static/3rd/less.js
+	url = git://github.com/cloudhead/less.js.git
+[submodule "static/3rd/requirejs"]
+	path = static/3rd/requirejs
+	url = git://github.com/jrburke/requirejs.git
+[submodule "solarsanweb/static/3rd/requirecs"]
+	path = solarsanweb/static/3rd/requirecs
+	url = git://github.com/jrburke/require-cs.git

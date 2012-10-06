@@ -9,11 +9,11 @@ def raven_dsn(request):
 def site_styles(request):
     ctx = {}
 
-    theme = ''
-
     ctx['css_site'] = [
-        'bootstrap/css/bootstrap%s.css' % theme,
+        # Can also be loaded by less.js from bootstrap's less files directly.
+        'bootstrap/css/bootstrap.css',
         'bootstrap/css/bootstrap-responsive.css',
+
         '3rd/chosen/chosen/chosen.css',
         'css/nv.d3.css',
         '3rd/gritter/css/jquery.gritter.css',
@@ -23,30 +23,12 @@ def site_styles(request):
         'css/base.css',
     ]
 
+    # Now using require.js, but this can be used in a pinch if testing something out.
     ctx['js_site'] = [
-        'js/jquery-1.8.0.js',
-        'bootstrap/js/bootstrap.js',
-        '3rd/d3/d3.v2.js',
-        '3rd/cubism/cubism.v1.js',
-        '3rd/nvd3/nv.d3.js',
-        '3rd/gritter/js/jquery.gritter.js',
-        '3rd/chosen/chosen/chosen.jquery.js',
-        '3rd/raven-js/dist/raven-0.6pre.js',
-        '3rd/bootbox/bootbox.js',
-        'js/jquery.animate-colors-min.js',
-        '3rd/underscore/underscore.js',
-        '3rd/backbone/backbone.js',
-        '3rd/backbone-relational/backbone-relational.js',
-        'mustache/js/mustache-0.4.0-dev.js',
-        'mustache/js/django.mustache.js',
-        'js/backbone-tastypie.js',
-        'js/base.js',
-        #'js/chosen.jquery.js',
-        #'3rd/flot/jquery.flot.js',
-        #'3rd/flot/jquery.flot.time.js',
-        #'3rd/flot/jquery.flot.crosshair.js',
-        #'stick.js',
-        #'js/jquery.toggle.buttons.js',
+        # for now jQuery is handled without require-jquery
+        'js/jquery.js',
+        #'bootstrap/js/bootstrap.js',
+
     ]
 
     return ctx

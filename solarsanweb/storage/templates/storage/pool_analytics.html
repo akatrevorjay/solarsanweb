@@ -33,10 +33,11 @@
 </div>
 
 <script>
+require(['jquery', 'pool/analytics', 'd3', 'chosen.jquery'], function($, pool_analytics) {
 
-$('.chosen-select').chosen().change(chart_select);;
 
-function chart_select(chart_name, time_window) {
+// Change page URL upon changing chosen dropdown
+function chart_select() {
     var chart_name = $('#graph-select').val(),
         time_window = $('#time-window-select').val();
     url = '{% url pool-analytics slug=object.name name="graph_name" time_window="999" %}';
@@ -44,68 +45,27 @@ function chart_select(chart_name, time_window) {
     url = url.replace("999", time_window);
     window.location.href = url;
 }
+$('.chosen-select').chosen().change(chart_select);
 
-draw_graph('{{ graph }}');
+//
+// Analytics using nv.d3
+//
+pool_analytics.pool = '{{ object.name }}';
 
-function draw_graph(chart_name) {
-// Wrapping in nv.addGraph allows for '0 timeout render', stors rendered charts in nv.graphs, and may do more in the future... it's NOT required
-nv.addGraph(function() {
+// Needed vars for say, the render URL ;)
+var time_window = {{ time_window }};
+var start = Math.round(new Date() / 1000);
+start = start - time_window;
 
-  //if (nv.graphs.length)
-    //nv.graphs[0] = chart;
-    //var chart = nv.graphs[0];
-  //else
-    var chart = nv.models.stackedAreaChart().clipEdge(true);
-    //var chart = nv.models.lineChart();
-
-  // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the partent chart, so need to chain separately
-  chart.xAxis
-    .axisLabel('when')
-    .tickSize(5,5,5)
-    //.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
-    //.tickPadding(20)
-    .tickFormat(function(d) { return d3.time.format('%m/%e %I:%M%p')(new Date(d)) });
-    //.rotateLabels(-45);
-
-  chart.yAxis
-    .axisLabel(chart_name)
-    .tickFormat(d3.format(',.3s'));
-
-  var start = Math.round(new Date() / 1000);
-  start = start - {{ time_window }};
-
-  function eat_data(data) {
-    if (!data) return false;
-
-    data = data.map(function(series) {
-      series.values = series.values.map(function(d) {
-        return { x: d[0], y: d[1] }
-      });
-      return series;
+// Nab JSON, send to the graph factory
+d3.json('{% url pool-analytics-render slug=object.name name=graph time_window=time_window %}'
+    + '?start=' + start
+    , function(data) {
+        return pool_analytics.graph('{{ graph }}', {{ time_window }}, data);
     });
 
-    d3.select('#chart svg')
-      .datum(data)
-      .transition().duration(1000).call(chart);
-  }
 
-  /*
-  d3.json(window.location.href + "/render"
-      + "?start=" + start
-      , eat_data);
-  */
-
-  d3.json('{% url pool-analytics-render slug=object.name name=graph time_window=time_window %}'
-    + '?start=' + start
-    , eat_data);
-
-  //TODO: Figure out a good way to do this automatically
-  nv.utils.windowResize(chart.update);
-
-  return chart;
 });
-}
-
 </script>
 
 {% endblock %}

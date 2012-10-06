@@ -216,8 +216,10 @@ WSGI_APPLICATION = '%s.wsgi.application' % PROJECT_NAME
 ##
 
 INSTALLED_APPS = (
-    'bootstrap',
-    'coffin',
+    #'bootstrap',
+    #'coffin',
+
+    'bootstrap_toolkit',
 
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -289,6 +291,19 @@ PROJECT_APPS = (
 
 #PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
 INSTALLED_APPS += PROJECT_APPS
+
+##
+## django-bootstrap-toolkit
+##
+
+# django-bootstrap-toolkit
+BOOTSTRAP_BASE_URL      = '/static/bootstrap/'
+BOOTSTRAP_CSS_BASE_URL  = BOOTSTRAP_BASE_URL + 'css/'
+BOOTSTRAP_CSS_URL       = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
+BOOTSTRAP_JS_BASE_URL   = BOOTSTRAP_BASE_URL + 'js/'
+# Enable for single bootstrap.js file
+BOOTSTRAP_JS_URL        = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
+
 
 ##
 ## Middleware

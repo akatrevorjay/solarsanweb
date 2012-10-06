@@ -2,14 +2,16 @@
 /* _______
  * base.js
  */
-!function ($) {
+
+require(['jquery', 'cubism', 'bootstrap/bootstrap'], function ($, cubism, bootstrap) {
+//!function ($) {
 // jQuery(function($) {
 
 //
 // Include Django CSRF token in ajax requests
 //
 
-jQuery(document).ajaxSend(function(event, xhr, settings) {
+$(document).ajaxSend(function(event, xhr, settings) {
     function getCookie(name) {
         var cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -67,7 +69,23 @@ function readableFileSize(size) {
 /* We'll probably have to add more options here, perhaps with .tooltip-left etc */
 $("a[rel='tooltip']").tooltip({placement: 'right'});
 
+
+
+//
+// Open up the right accordion panel (left nav) automagically
+//
+$("#sidebar-nav-accordion")
+    .find("li.active")
+    .parent()
+    .parent()
+    .parent()
+    .addClass('in')
+    .prev()
+    .addClass('active');
+
+
 //});
-}(window.jQuery);
+//}(window.jQuery);
+});
 
 

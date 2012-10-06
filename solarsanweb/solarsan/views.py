@@ -1,4 +1,4 @@
-#from django.template import RequestContext
+from django.template import RequestContext
 #from django.utils.decorators import method_decorator
 #from django.views.decorators.csrf import csrf_exempt
 #from django.views.decorators.cache import cache_page, never_cache, patch_cache_control, patch_vary_headers, cache_control
@@ -13,6 +13,17 @@ from storage.models import Pool, Dataset, Filesystem, Snapshot
 from django.contrib.auth import authenticate, login
 import mongogeneric
 import json
+
+"""
+Base
+"""
+
+def base_site_js(request):
+    """ Returns base.js, rendered with site wide js includes """
+    ctxt = {}
+    return render_to_response('base_site.js',
+                              ctxt, context_instance=RequestContext(request))
+
 
 
 """

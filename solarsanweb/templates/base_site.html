@@ -6,31 +6,32 @@
 {# compress css #}
 
 {% block css_bootstrap %}
-    <link href="{{ STATIC_URL }}3rd/bootstrap/less/bootstrap.less" rel="stylesheet" type="text/less" charset="utf-8">
+    {#<link href="{{ STATIC_URL }}3rd/bootstrap/less/bootstrap.less" rel="stylesheet" type="text/less" charset="utf-8">#}
 {% endblock %}
+
 {% block css_bootstrap_responsive %}
-    <link href="{{ STATIC_URL }}3rd/bootstrap/less/responsive.less" rel="stylesheet" type="text/less" charset="utf-8">
+    {#<link href="{{ STATIC_URL }}3rd/bootstrap/less/responsive.less" rel="stylesheet" type="text/less" charset="utf-8">#}
 {% endblock %}
 
 {% block css_site %}
-{% for c in css_site %}
-<link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" charset="utf-8"/>
-{% endfor %}
-{# <link type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700" rel="stylesheet" /> #}
+    {% for c in css_site %}
+        <link type="text/css" href="{{ STATIC_URL }}{{ c }}" rel="stylesheet" charset="utf-8"/>
+    {% endfor %}
 {% endblock %}
+
 {# endcompress #}
 
 {# compress js #}
+
 {% block js_head %}
+
+<!-- static js -->
 {% for j in js_site %}
 <script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>
 {% endfor %}
-<script type="text/javascript">
-jQuery(function($) {
-    Raven.config('{{ raven_dsn }}');
-    //stick.send('/services/timing/record');
-});
-</script>
+
+<!-- require.js -->
+<script data-main="{{ STATIC_URL }}/js/main" src="{{ STATIC_URL }}js/require.js"></script>
 {% endblock %}
 
 {% block js_jquery %}
