@@ -25,13 +25,10 @@
 
 {% block js_head %}
 
-<!-- static js -->
 {% for j in js_site %}
-<script type="text/javascript" src="{{ STATIC_URL }}{{ j }}"></script>
+<script type="text/javascript" src="{{ j }}"></script>
 {% endfor %}
 
-<!-- require.js -->
-<script data-main="{{ STATIC_URL }}/js/main" src="{{ STATIC_URL }}js/require.js"></script>
 {% endblock %}
 
 {% block js_jquery %}

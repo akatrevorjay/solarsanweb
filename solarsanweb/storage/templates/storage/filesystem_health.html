@@ -127,13 +127,9 @@ Filesystem: {{ object.dumps|pprint }}
 </blockquote>
 
 <script>
-require(['pool/analytics'], function(pool_analytics) {
-
 // Analytics using Cubism
 pool_analytics.pool = '{{ object.pool.name }}';
 pool_analytics.small_stats();
-
-});
 </script>
 
 {% endblock %}

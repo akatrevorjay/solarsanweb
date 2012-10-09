@@ -1,12 +1,15 @@
 from django import forms
 from django.forms.widgets import Input
 
+
 class EmailInput(Input):
     input_type = 'email'
+
 
 class LoginForm(forms.Form):
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput())
+
 
 class InlineForm(forms.Form):
     username = forms.CharField()
@@ -32,9 +35,11 @@ class FancyForm(forms.Form):
 
 #class DatasetCronForm(forms.Form):
 
+
 class DatasetServiceForm(forms.Form):
     enabled = forms.BooleanField(label="Enable", help_text="Whether you want the service to run globally")
     crontab = forms.CharField()
+
 
 class DatasetCronForm(DatasetServiceForm):
     auto_snapshot_enabled = forms.BooleanField(label="Enable", help_text="Whether you want the service to run globally")

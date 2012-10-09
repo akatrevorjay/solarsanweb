@@ -6,9 +6,9 @@ import os
 from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
 from django.conf import global_settings as gs
 
-##
-## Project Common
-##
+#
+# Project Common
+#
 
 DEBUG = TEMPLATE_DEBUG = True
 
@@ -19,8 +19,8 @@ MANAGERS = ADMINS
 SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
 DATABASES = {
-    ## TODO If MongoDB is the method moving forward, then this may want to be changed to sqlite for non-compat apps, then use a DatabaseRouter to selectively
-    ##   route queries to the proper db.
+    # TODO If MongoDB is the method moving forward, then this may want to be changed to sqlite for non-compat apps, then use a DatabaseRouter to selectively
+    #   route queries to the proper db.
     'default': {
         'ENGINE': 'django.db.backends.mysql',   # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': PROJECT_NAME,                   # Or path to database file if using sqlite3.
@@ -32,39 +32,40 @@ DATABASES = {
 }
 
 
-##
-## MongoEngine
-##
+#
+# MongoEngine
+#
 
 # DB Router
 #DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
 
 # Auth
 AUTHENTICATION_BACKENDS = (
-    #'mongoengine.django.auth.MongoEngineBackend',
+    'mongoengine.django.auth.MongoEngineBackend',
     # Needed to login by username in Django admin, regardless of `allauth`
     "django.contrib.auth.backends.ModelBackend",
     # `allauth` specific authentication methods, such as login by e-mail
-    "allauth.account.auth_backends.AuthenticationBackend",
+    #"allauth.account.auth_backends.AuthenticationBackend",
 )
 
 SOCIALACCOUNT_PROVIDERS = {
     #'google':
-        #{ 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
+    #    { 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
     #'openid':
-        #{ 'SERVERS':
-            #[dict(id='yahoo',
-                  #name='Yahoo',
-                  #openid_url='http://me.yahoo.com'),
-             #dict(id='hyves',
-                  #name='Hyves',
-                  #openid_url='http://hyves.nl'),
-             #dict(id='google',
-                  #name='Google',
-                  #openid_url='https://www.google.com/accounts/o8/id')]},
-    'persona':
-        { 'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console' } },
-    }
+    #    { 'SERVERS':
+    #        [dict(id='yahoo',
+    #              name='Yahoo',
+    #              openid_url='http://me.yahoo.com'),
+    #         dict(id='hyves',
+    #              name='Hyves',
+    #              openid_url='http://hyves.nl'),
+    #         dict(id='google',
+    #              name='Google',
+    #              openid_url='https://www.google.com/accounts/o8/id')]},
+    'persona': {
+        'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console'},
+    },
+}
 
 # Sessions
 #if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -79,9 +80,9 @@ MONGODB_DATABASES = {
 }
 DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
 
-##
-## Django Common
-##
+#
+# Django Common
+#
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -201,19 +202,19 @@ TEMPLATE_CONTEXT_PROCESSORS = gs.TEMPLATE_CONTEXT_PROCESSORS + (
     'solarsanweb.storage.context_processors.storage_objects',  # Cause we need em, always.
     'solarsanweb.solarsan.context_processors.site_styles',   # CSS and JS includes
     #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
-    'allauth.account.context_processors.account',
-    'allauth.socialaccount.context_processors.socialaccount',
+    #'allauth.account.context_processors.account',
+    #'allauth.socialaccount.context_processors.socialaccount',
 )
 
-## Root URL routes
+# Root URL routes
 ROOT_URLCONF = '%s.urls' % PROJECT_NAME
 
-## Python dotted path to the WSGI application used by Django's runserver.
+# Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = '%s.wsgi.application' % PROJECT_NAME
 
-##
-## Apps/Includes/Meh
-##
+#
+# Apps/Includes/Meh
+#
 
 INSTALLED_APPS = (
     #'bootstrap',
@@ -257,21 +258,21 @@ INSTALLED_APPS = (
 
     'backbone_tastypie',
 
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
-    'allauth.socialaccount.providers.linkedin',
-    'allauth.socialaccount.providers.openid',
-    'allauth.socialaccount.providers.persona',
-    'allauth.socialaccount.providers.soundcloud',
-    'allauth.socialaccount.providers.twitter',
+    #'allauth',
+    #'allauth.account',
+    #'allauth.socialaccount',
+    #'allauth.socialaccount.providers.facebook',
+    #'allauth.socialaccount.providers.google',
+    #'allauth.socialaccount.providers.github',
+    #'allauth.socialaccount.providers.linkedin',
+    #'allauth.socialaccount.providers.openid',
+    #'allauth.socialaccount.providers.persona',
+    #'allauth.socialaccount.providers.soundcloud',
+    #'allauth.socialaccount.providers.twitter',
 
     # For future use
     #'django_utils',                     # this is django-utils2 in PyPi
-    #'crispy_forms',
+    'crispy_forms',
     #'django_assets',
     #'kitsune',
     #'waffle',
@@ -292,22 +293,22 @@ PROJECT_APPS = (
 #PROJECT_APPS = tuple(map(lambda x: 'solarsanweb.'+x, PROJECT_APPS))
 INSTALLED_APPS += PROJECT_APPS
 
-##
-## django-bootstrap-toolkit
-##
+#
+# django-bootstrap-toolkit
+#
 
 # django-bootstrap-toolkit
-BOOTSTRAP_BASE_URL      = '/static/bootstrap/'
-BOOTSTRAP_CSS_BASE_URL  = BOOTSTRAP_BASE_URL + 'css/'
-BOOTSTRAP_CSS_URL       = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
-BOOTSTRAP_JS_BASE_URL   = BOOTSTRAP_BASE_URL + 'js/'
+BOOTSTRAP_BASE_URL = '/static/bootstrap/'
+BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
+BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
+BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
 # Enable for single bootstrap.js file
-BOOTSTRAP_JS_URL        = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
+BOOTSTRAP_JS_URL = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
 
 
-##
-## Middleware
-##
+#
+# Middleware
+#
 
 MIDDLEWARE_CLASSES = (
     #'waffle.middleware.WaffleMiddleware',                       # waffle
@@ -318,34 +319,34 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',                    # Compress output
 )
 
-##
-## django-pdb
-##
+#
+# django-pdb
+#
 
 if DEBUG:
     INSTALLED_APPS += ('django_pdb', )
     MIDDLEWARE_CLASSES += ('django_pdb.middleware.PdbMiddleware', )
 
-##
-## Smuggler
-##   DB fixture manager
-##
+#
+# Smuggler
+#   DB fixture manager
+#
 
 if DEBUG:
     INSTALLED_APPS += ('smuggler', )
 
-##
-## SpeedTracer
-##
+#
+# SpeedTracer
+#
 
 if DEBUG:
     #INSTALLED_APPS += ('speedtracer', )
     #MIDDLEWARE_CLASSES += ('speedtracer.middleware.SpeedTracerMiddleware', )
     pass
 
-##
-## django-debug-toolbar
-##
+#
+# django-debug-toolbar
+#
 
 if DEBUG:
     INSTALLED_APPS += (
@@ -395,9 +396,9 @@ if DEBUG:
 
     INTERNAL_IPS = ['127.0.0.1']
 
-##
-## Auth
-##
+#
+# Auth
+#
 
 # Password hash priority (and what's allowed)
 PASSWORD_HASHERS = (
@@ -412,15 +413,15 @@ PASSWORD_HASHERS = (
 # User pofile class replacement
 #AUTH_PROFILE_MODULE = 'solarsan.models.UserProfile'
 
-##
-## django-supervisor
-##
+#
+# django-supervisor
+#
 
 SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
 
-##
-## Get server name
-##
+#
+# Get server name
+#
 
 import socket
 SERVER_NAME = socket.gethostname()
@@ -433,9 +434,12 @@ JSTEMPLATE_DIRS = (
     os.path.join(PROJECT_DIR, "templates", "jstemplates"),
 )
 
-##
-## Cache backend
-##
+for x in PROJECT_APPS:
+    JSTEMPLATE_DIRS += (os.path.join(PROJECT_DIR, x, "templates", "jstemplates"), )
+
+#
+# Cache backend
+#
 
 CACHES = {
     #'default_mem': {
@@ -464,9 +468,9 @@ CACHES = {
 #CACHES['default'] = CACHES['default_mongodb']
 
 
-##
-## Template related
-##
+#
+# Template related
+#
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -500,9 +504,9 @@ if not hasattr(safestring, '__html__'):
     safestring.SafeString.__html__ = lambda self: str(self)
     safestring.SafeUnicode.__html__ = lambda self: unicode(self)
 
-##
-## Celery (async tasks)
-##
+#
+# Celery (async tasks)
+#
 
 from kombu import Exchange, Queue
 from kombu.common import Broadcast
@@ -513,7 +517,7 @@ djcelery.setup_loader()
 CELERY_TIMEZONE = TIME_ZONE
 #CELERYD_CONCURRENCY = 25
 
-## Celery broker
+# Celery broker
 BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_URL = "pyamqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
@@ -525,7 +529,7 @@ BROKER_CONNECTION_MAX_RETRIES = "50"  # 100
 #CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
 CELERYD_MAX_TASKS_PER_CHILD = "100"
 
-## Celery results
+# Celery results
 CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hrs
 #CELERY_RESULT_BACKEND = "amqp"
 CELERY_RESULT_BACKEND = "mongodb"
@@ -536,7 +540,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 #default_exchange = Exchange('default', type='direct')
 #media_exchange = Exchange('media', type='direct')
 
-## Celery extra opts
+# Celery extra opts
 CELERY_QUEUES = (
     #Queue('default', Exchange('default'), routing_key='default'),
     Queue('box_%s' % SERVER_NAME, Exchange('tasks'), durable=True, routing_key='box_%s' % SERVER_NAME, queue_arguments={'x-ha-policy': 'all'}),
@@ -557,20 +561,20 @@ CELERY_DEFAULT_ROUTING_KEY = 'box_%s' % SERVER_NAME
 #                 }}, )
 #CELERY_CREATE_MISSING_QUEUES
 
-## Send events when debugging
+# Send events when debugging
 if DEBUG:
     CELERY_SEND_EVENTS = True
     CELERY_SEND_TASK_SENT_EVENT = True
     CELERY_TRACK_STARTED = True
 
-## Extra task modules (def = [INSTALLED_APPS].tasks)
+# Extra task modules (def = [INSTALLED_APPS].tasks)
 CELERY_IMPORTS = (
     'celery.task.http',  # Enable HTTP dispatch task (http://celery.github.com/celery/userguide/remote-tasks.html)
 )
 
-##
-## Logging
-##
+#
+# Logging
+#
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -587,9 +591,10 @@ LOGGING = {
         #'level': 'WARNING',
         #'handlers': ['console', 'sentry'],
     },
+
     'formatters': {
         'standard': {
-            'format': '%(asctime)s %(levelname)s %(filename)s@%(funcName)s:%(lineno)d %(message)s',
+            'format': '%(asctime)s %(levelname)s %(name)s.%(module)s@%(funcName)s:%(lineno)d %(message)s',
             #'datefmt': '%d/%b/%Y %H:%M:%S',
         },
         'verbose': {
@@ -667,25 +672,25 @@ LOGGING = {
 }
 
 
-##
-## Sentry/Raven
-##
+#
+# Sentry/Raven
+#
 
 #RAVEN_CONFIG = {
 #    'dsn': 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2',
 #    'register_signals': True,
 #}
 
-##
-## Cube
-##
+#
+# Cube
+#
 
 CUBE_HOST = 'localhost'
 CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 
-##
-## TEMP GRAPHITE CHANGES
-##
+#
+# TEMP GRAPHITE CHANGES
+#
 
 #from raven.contrib.django.models import client
 #client.captureException()
@@ -696,16 +701,16 @@ CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 #    #'sentry.middleware.SentryMiddleware',
 #)
 
-## DSN of your Sentry server (https://github.com/dcramer/sentry)
-## For info on configuring Django to use Sentry, see
-## http://raven.readthedocs.org/en/latest/config/django.html
+# DSN of your Sentry server (https://github.com/dcramer/sentry)
+# For info on configuring Django to use Sentry, see
+# http://raven.readthedocs.org/en/latest/config/django.html
 #SENTRY_DSN = 'http://public:secret@example.com/1'
 
-## A sample logging configuration. The only tangible logging
-## performed by this configuration is to send an email to
-## the site admins on every HTTP 500 error.
-## See http://docs.djangoproject.com/en/dev/topics/logging for
-## more details on how to customize your logging configuration.
+# A sample logging configuration. The only tangible logging
+# performed by this configuration is to send an email to
+# the site admins on every HTTP 500 error.
+# See http://docs.djangoproject.com/en/dev/topics/logging for
+# more details on how to customize your logging configuration.
 #LOGGING = {
 #    'version': 1,
 #    'disable_existing_loggers': True,
@@ -732,9 +737,9 @@ CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 #    }
 #}
 
-##
-## SolarSan Log UI
-##
+#
+# SolarSan Log UI
+#
 
 # Logs to tail
 LOGTAIL_FILES = {
@@ -744,9 +749,9 @@ LOGTAIL_FILES = {
 }
 
 
-##
-## SolarSan Cluster
-##
+#
+# SolarSan Cluster
+#
 
 # TODO Make key configurable, put it in the DB and in the UI.
 SOLARSAN_CLUSTER = {
@@ -755,10 +760,10 @@ SOLARSAN_CLUSTER = {
     'discovery':    25,                 # Scan for other nodes each this many seconds
 }
 
-##
-## local_settings.py can be used to override environment-specific settings
-## like database and email that differ between development and production.
-##
+#
+# local_settings.py can be used to override environment-specific settings
+# like database and email that differ between development and production.
+#
 
 try:
     #pylint: disable-msg=W0401
@@ -766,12 +771,11 @@ try:
 except ImportError:
     pass
 
-##
-## Monkey patch storage classes.
-##   (Yes, I'm aware how bad of a location for this this is.)
-##
+#
+# Monkey patch storage classes.
+#   (Yes, I'm aware how bad of a location for this this is.)
+#
 
 import storage.patch
 storage.patch.patch_queryset()
 storage.patch.patch_rtslib()
-

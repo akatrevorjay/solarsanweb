@@ -1,15 +1,6 @@
-#from django.shortcuts import render_to_response, get_object_or_404
-#from django.template import RequestContext
-#from django.contrib.auth.decorators import login_required
-#from django.utils.decorators import method_decorator
-#from django.views.decorators.csrf import csrf_exempt
-#from django.views.decorators.cache import cache_page
-#from django.core.cache import cache
-from django import http
-from django.views import generic
-#from django.core.urlresolvers import reverse, resolve, is_valid_path, iri_to_uri
-from django.core.urlresolvers import reverse
 
+from dj import generic, http, reverse, HttpResponse, render
+import storage.forms as forms
 
 #from datetime import timedelta
 import mongogeneric
@@ -20,9 +11,38 @@ from solarsan.views import JsonMixIn, KwargsMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
+
+class AjaxableResponseMixin(object):
+    """
+    Mixin to add AJAX support to a form.
+    Must be used with an object-based FormView (e.g. generic.edit.CreateView)
+    """
+    def render_to_json_response(self, context, **response_kwargs):
+        data = json.dumps(context)
+        response_kwargs['content_type'] = 'application/json'
+        return HttpResponse(data, **response_kwargs)
+
+    def form_invalid(self, form):
+        if self.request.is_ajax():
+            return self.render_to_json_response(form.errors, status=400)
+        else:
+            return super(AjaxableResponseMixin, self).form_invalid(form)
+
+    def form_valid(self, form):
+        if self.request.is_ajax():
+            data = {
+                'pk': form.instance.pk,
+            }
+            return self.render_to_json_response(data)
+        else:
+            return super(AjaxableResponseMixin, self).form_valid(form)
+
+
+
 """
 Bases
 """
+
 
 class CrumbMixin(object):
     def get_context_data(self, *args, **kwargs):
@@ -55,6 +75,7 @@ class BaseView(CrumbMixin, KwargsMixIn):
 Pools
 """
 
+
 class PoolView(BaseView):
     document = Pool
     slug_field = 'name'
@@ -63,6 +84,7 @@ class PoolView(BaseView):
 
 class PoolHealthView(PoolView, mongogeneric.DetailView):
     template_name = 'storage/pool_health.html'
+    pass
 
 pool_health = PoolHealthView.as_view()
 
@@ -72,7 +94,6 @@ class PoolAnalyticsDetailView(PoolView, mongogeneric.DetailView):
     charts = ['iops', 'bandwidth', 'usage']
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
-        obj = self.object
         time_window = int( self.kwargs.get( 'time_window', 86400 ) );
         if not time_window in time_window_list:
             raise http.Http404
@@ -174,7 +195,9 @@ class VolumeHealthView(VolumeView, DatasetHealthView, mongogeneric.DetailView):
     def get_context_data(self, **kwargs):
         context = super(VolumeHealthView, self).get_context_data(**kwargs)
         #context['targets'] = storage.target.target_list(fabric_module=fabric)
-        targets = context['targets'] = storage.target.target_list(cached=True)
+        context['targets'] = storage.target.target_list(cached=True)
+        #context['backstore'] = backstore = self.object.backstore()
+        context['luns'] = list(context['object'].backstore().attached_luns)
         return context
 
 volume_health = VolumeHealthView.as_view()
@@ -210,74 +233,55 @@ class TargetDetailView(BaseView, generic.DetailView):
 target_detail = TargetDetailView.as_view()
 
 
-##
-from django.http import HttpResponse
-from django.views.generic.edit import CreateView
-from django.views.generic.detail import SingleObjectTemplateResponseMixin
-
-class AjaxableResponseMixin(object):
-    """
-    Mixin to add AJAX support to a form.
-    Must be used with an object-based FormView (e.g. CreateView)
-    """
-    def render_to_json_response(self, context, **response_kwargs):
-        data = json.dumps(context)
-        response_kwargs['content_type'] = 'application/json'
-        return HttpResponse(data, **response_kwargs)
-
-    def form_invalid(self, form):
-        if self.request.is_ajax():
-            return self.render_to_json_response(form.errors, status=400)
-        else:
-            return super(AjaxableResponseMixin, self).form_invalid(form)
-
-    def form_valid(self, form):
-        if self.request.is_ajax():
-            data = {
-                'pk': form.instance.pk,
-            }
-            return self.render_to_json_response(data)
-        else:
-            return super(AjaxableResponseMixin, self).form_valid(form)
-##
-
-
-import storage.forms as forms
-
-class TargetUpdateView(generic.edit.FormView):
-    template_name = 'storage/target_detail.html'
-    form_class = forms.TargetForm
+class TargetCreateView(generic.edit.FormView):
+    template_name = 'storage/target_create.html'
+    form_class = forms.TargetCreateForm
     def form_valid(self, form):
         # This method is called when valid form data has been POSTed.
         # It should return an HttpResponse.
-        logger.debug('form=%s', form)
-        return super(ContactView, self).form_valid(form)
+        logging.debug('form=%s', form)
+        return super(TargetCreateView, self).form_valid(form)
 
-target_update = TargetUpdateView.as_view()
+target_create = TargetCreateView.as_view()
 
 
-class TargetTPGUpdateView(AjaxableResponseMixin, generic.edit.FormView):
+class TargetPortalGroupUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.FormView):
     template_name = 'storage/target_detail.html'
-    form_class = forms.TargetTPGForm
+    form_class = forms.TargetPortalGroupUpdateForm
     def form_valid(self, form):
         # This method is called when valid form data has been POSTed.
         # It should return an HttpResponse.
         assert self.request.is_ajax()
-        form.save()
-        ret = form.cleaned_data
+        data = form.cleaned_data
+
+        target_wwn = self.kwargs['slug']
+        target = storage.target.get(target_wwn)
+
+        tag = int(self.kwargs['tag'])
+        tpg = target.get_tpg(tag)
+
+        if not tpg:
+            raise Exception("Could not find TPG with tag='%s' for Target with '%s'",  tag, target)
+
+        logging.info("Updating TPG: '%s'", data)
+
+        enable = int(data['enable'])
+        if enable == 1:
+            tpg.enable = 1
+        else:
+            tpg.enable = 0
+
+        ret = {'enable': tpg.enable}
         return self.render_to_json_response(ret)
 
-target_tpg_update = TargetTPGUpdateView.as_view()
+target_portal_group_update = TargetPortalGroupUpdateView.as_view()
 
 
-from django.shortcuts import render
-from django.http import HttpResponseRedirect
-
-def tpg_update(request, slug=None, tag=None):
-    if request.method == 'POST': # If the form has been submitted...
+def target_portal_group_update2(request, slug=None, tag=None):
+    if request.method == 'POST':  # If the form has been submitted...
         status = None
-        form = forms.TargetTPGForm(request.POST) # A form bound to the POST data
-        if form.is_valid(): # All validation rules pass
+        form = forms.TargetPortalGroupForm(request.POST)  # A form bound to the POST data
+        if form.is_valid():  # All validation rules pass
             # Process the data in form.cleaned_data
             form.save()
             ret = form.cleaned_data
@@ -289,9 +293,9 @@ def tpg_update(request, slug=None, tag=None):
                                   status=status)
 
     else:
-        form = forms.TargetTPGForm() # An unbound form
+        form = forms.TargetPortalGroupForm()   # An unbound form
         #form.target_wwn = target.wwn
-        #form.tag = tpg.tag
+        #form.tag = target_portal_group.tag
 
     context = {}
 
@@ -303,7 +307,7 @@ def tpg_update(request, slug=None, tag=None):
 
 class ContactView(generic.FormView):
     template_name = 'contact.html'
-#    form_class = ContactForm
+    #form_class = ContactForm
     success_url = '/thanks/'
 
     def form_valid(self, form):

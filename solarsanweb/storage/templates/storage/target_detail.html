@@ -131,16 +131,16 @@
             <td>
                 tpg{{ tpg.tag }}
                 {% if tpg.enable == 0 %}
-                <button class="btn btn-mini btn-inverse tpg-toggle" data-tag="{{ tpg.tag }}" data-enable="0">Off</button>
+                    <button class="btn btn-mini btn-inverse tpg-toggle" data-url="{% url target-pg-update slug=object.wwn tag=tpg.tag %}" data-enable="1">Off</button>
                 {% else %}
-                <button class="btn btn-mini btn-success tpg-toggle" data-tag="{{ tpg.tag }}" data-enable="1">On</button>
+                    <button class="btn btn-mini btn-success tpg-toggle" data-url="{% url target-pg-update slug=object.wwn tag=tpg.tag %}" data-enable="0">On</button>
                 {% endif %}
             </td>
             <td>
                 lun{{ lun.lun }}
             </td>
             <td>
-                {% with lun_volume as lun.storage_object.get_volume %}
+                {% with lun.storage_object.get_volume as lun_volume %}
                 <a href="{{ lun_volume.get_absolute_url }}">
                     {{ lun_volume.name }}
                 </a>
@@ -228,7 +228,7 @@
                     ×
                 </button>
                 <legend>
-                    Add new filesystem
+                    Add new target
                 </legend>
             </div>
             <div class="modal-body">
@@ -258,45 +258,26 @@ $('.chosen-select').chosen();
 
 function tpg_toggle(event) {
     var self = this;
-    var enable = 1;
-    if ($(this).data('enable') == 1)
-        enable = 0;
+    var url = $(this).data('url');
+    var data = {enable: $(this).data('enable')};
 
-    var tag = $(this).data('tag');
-    var data = {target_wwn: '{{ object.wwn }}',
-                tag: tag,
-                enable: enable,
-                };
+    // send form data
+    //$.post("test.php", $("#testform").serialize());
 
-// send form data
-//$.post("test.php", $("#testform").serialize());
-
-    $.post(window.location.href+"/tpg/"+tag+"/update", data,
+    console.log(data);
+    $.post(url, data,
         function(data) {
             console.log(data);
-            $(self).toggleClass("btn-inverse")
-                .toggleClass("btn-success")
-                .data("enable", data.enable)
-            if (data.enable == 1)
-                $(self).html("On");
+            enable = data['enable'];
+            if (enable == 1)
+                $(self).html("On").addClass('btn-success').removeClass('btn-inverse').data("enable", 0);
             else
-                $(self).html("Off");
+                $(self).html("Off").removeClass('btn-success').addClass('btn-inverse').data("enable", 1);;
         }, "json");
 }
 
 $('.tpg-toggle').on('click', tpg_toggle);
 
-</script>
-
-
-<script>
-require(['pool/analytics'], function(pool_analytics) {
-
-// Analytics using Cubism
-pool_analytics.pool = '{{ object.pool.name }}';
-pool_analytics.small_stats();
-
-});
 </script>
 
 {% endblock %}

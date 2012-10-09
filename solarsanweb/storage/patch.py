@@ -81,6 +81,14 @@ def patch_rtslib():
             return arg.split(':', 2)[1]
         setattr(cls, 'short_wwn', short_wwn)
 
+        def get_tpg(self, tag=0):
+            for x in self.tpgs:
+                if x.tag == tag:
+                    return x
+                    break
+            raise Exception("Could not find TPG with tag='%s' for Target with '%s'", tag, self)
+        setattr(cls, 'get_tpg', get_tpg)
+
         setattr(cls, 'type', 'target')
 
 patch_rtslib()

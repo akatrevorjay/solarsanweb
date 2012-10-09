@@ -129,22 +129,22 @@
             <th>tasks</th>
         </tr>
     </thead>
-    {% with backstore as object.backstore %}
-    {% for lun in backstore.attached_luns %}
-    {% with target as lun.parent_tpg.parent_target %}
+    {% for lun in luns %}
+    {% with lun.parent_tpg as tpg %}
+    {% with tpg.parent_target as target %}
     <tbody>
         <tr>
             <td>
                 lun{{ lun.lun }}
             </td>
             <td>
-                <a href="/storage/targets/detail/{{ target.wwn|urlize }}">
+                <a href="{% url target slug=target.wwn %}">
                     {{ target.wwn }}
                 </a>
             </td>
             <td>
-                tpg{{ lun.parent_tpg.tag }}
-                {% if lun.parent_tpg.enable == 1 %}
+                tpg{{ tpg.tag }}
+                {% if tpg.enable == 1 %}
                 <button class="btn btn-mini btn-inverse">Off</button>
                 {% else %}
                 <button class="btn btn-mini btn-success">On</button>
@@ -158,8 +158,8 @@
             </td>
         </tr>
     {% endwith %}
-    {% endfor %}
     {% endwith %}
+    {% endfor %}
     </tbody>
 </table>
 
@@ -175,46 +175,34 @@
 
 <blockquote>
 <pre>
-{{ object.type|capfirst }}: {{ object.dumps|pprint }}
+{{ object.type|capfirst }}: {{ object_dumps|pprint }}
 </pre>
 </blockquote>
 
 {% load jstemplate %}
 
-  <div id="dynamic-area"></div>
+<div id="dynamic-area"></div>
 
-  {% mustachejs "main" %}
-
-  <script>
-    //$(document).ready(function() {
-
-      var $area = $('#dynamic-area')
-        , template;
-
-      // Either render by accessing the TEMPLATES object
-      // directly...
-
-      //$area.html(Mustache.to_html(Mustache.TEMPLATES.main));
-
-      // ...or render by using a cached template object
-      // (requires django.mustache.js)
-
-      template = Mustache.template('main');
-      $area.html(template.render({name: 'test'}));
-
-    //});
-  </script>
-
-
+{% mustachejs "main" %}
 
 <script>
-require(['pool/analytics'], function(pool_analytics) {
+var $area = $('#dynamic-area')
+, template;
+
+// Either render by accessing the TEMPLATES object
+// directly...
+
+//$area.html(Mustache.to_html(Mustache.TEMPLATES.main));
+
+// ...or render by using a cached template object
+// (requires django.mustache.js)
+
+template = Mustache.template('main');
+$area.html(template.render({name: 'test'}));
 
 // Analytics using Cubism
 pool_analytics.pool = '{{ object.pool.name }}';
 pool_analytics.small_stats();
-
-});
 </script>
 
 

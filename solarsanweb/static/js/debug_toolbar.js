@@ -300,4 +300,4 @@ jQuery.cookie = function(name, value, options) {
 		djdt.init();
 	});
 	return djdt;
-}(window, document, jQuery.noConflict(true)));
+}(window, document, jQuery));
