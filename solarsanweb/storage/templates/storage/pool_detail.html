@@ -36,8 +36,16 @@
                     <div class="accordion-inner">
                         <ul class="nav nav-pills nav-stacked">
                             {% for obj in object_type_objects %}
-                            {% if object.type == obj.type and object.name == obj.name %}
+                            {% if object.type == obj.type %}
+                                {% if object.type == 'target' and obj.wwn == object.wwn %}
+                            <li class="active wwn">
+                                {% else %}
+                                    {% if object.type != 'target' and obj.name == object.name %}
                             <li class="active">
+                                    {% else %}
+                            <li>
+                                    {% endif %}
+                                {% endif %}
                             {% else %}
                             <li>
                             {% endif %}
