@@ -8,111 +8,11 @@
                 <span class="label-caps">
                     <small>{{ object.type }}</small>
                 </span>
-                {{ object.name }}
             </button>
         </td>
         <td colspan="5"><div id="graph_iops"></div></td>
     </tr>
-    <tr>
-        <td>
-            <i class="icon-adjust"></i>
-            <small>usage:</small>
-        </td>
-        <td>
-            <button class="btn btn-mini" >{{ object.props.used }}/{{ object.pool.props.capacity }}</button>
-        </td>
-        <td>
-            <i class="icon-resize-small"></i>
-            <small>compression:</small>
-        </td>
-        <td>
-            {% if object.props.compression %}
-            <button class="btn btn-mini btn-success">On</button>
-            {% else %}
-            <button class="btn btn-mini btn-inverse">Off</button>
-            {% endif %}
-        </td>
-        <td>
-            <i class="icon-th"></i>
-            <small>dedup:</small>
-        </td>
-        <td>
-            {% if object.props.dedup %}
-            <button class="btn btn-mini btn-success">On</button>
-            {% else %}
-            <button class="btn btn-mini btn-inverse">Off</button>
-            {% endif %}
-        </td>
-    </tr>
-    <tr>
-        <td><small>
-            &nbsp;&raquo;
-            children:
-        </small></td>
-        <td><small>
-            {{ object.props.usedbychildren }}
-        </small></td>
-        <td><small>
-            &nbsp;&raquo;
-            ratio:
-        </small></td>
-        <td><small>
-             {{ object.props.compressratio }}
-        </small></td>
-        <td><small>
-             &nbsp;&raquo;
-            ratio:
-        </small></td>
-        <td><small>
-             {{ object.pool.props.dedupratio }}
-        </small></td>
-     </tr>
-    <tr>
-        <td><small>
-            &nbsp;&raquo;
-            snapshots:
-        </small></td>
-        <td><small>
-             {{ object.props.usedbysnapshots }}
-        </small></td>
-        <td><small>
-            <i class="icon-tint"></i>
-            quota:
-        </small></td>
-        <td><small>
-             {{ object.props.quota }}
-        </small></td>
-        <td><small>
-            <i class="icon-tint"></i>
-            quota:
-        </small></td>
-        <td><small>
-             {{ object.props.quota }}
-        </small></td>
-     </tr>
-    <tr>
-        <td><small>
-            &nbsp;&raquo;
-            ref:
-        </small></td>
-        <td><small>
-             {{ object.props.usedbyrefreservation }}
-        </small></td>
-        <td><small>
-            <i class="icon-tint"></i>
-            quota:
-        </small></td>
-        <td><small>
-             {{ object.props.quota }}
-        </small></td>
-        <td><small>
-            <i class="icon-tint"></i>
-            quota:
-        </small></td>
-        <td><small>
-            {{ object.props.quota }}
-        </small></td>
-     </tr>
+    {# TODO Put the dataset info in an SSI template, use same for filesystem/volume #}
 </table>
 
 
