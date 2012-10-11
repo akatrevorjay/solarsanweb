@@ -28,6 +28,16 @@ vendor-local/pkgs/django-piston
 /.settings
 /*.komodoproject
 
+# TODO find which of these is the shared file, I forget at this point.
+/*.wpr
+/*.wpu
+
+omg
+/_*
+/conf/id_*
+_old
+/celerymon.pid
+
 .zfs
 tmp
 
