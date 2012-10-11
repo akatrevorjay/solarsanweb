@@ -231,19 +231,14 @@ class TargetCreateView(KwargsMixIn, generic.edit.FormView):
     form_class = forms.TargetCreateForm
 
     def form_valid(self, form):
-        form.dumps()
         fabric_name = form.cleaned_data['fabric_module']
         wwn = form.cleaned_data.get('wwn')
 
-        logging.info("Creating Target on fabric '%s' with wwn=%s", fabric_name, wwn)
+        logging.info("Creating Target with fabric='%s' wwn='%s'", fabric_name, wwn)
         obj = storage.target.create_target(fabric_name, wwn)
 
         self.success_url = reverse('target', kwargs={'slug': obj.wwn})
         return super(TargetCreateView, self).form_valid(form)
-
-    #def get_context_data(self, **kwargs):
-    #    context = super(VolumeHealthView, self).get_context_data(**kwargs)
-    #    return context
 
 target_create = TargetCreateView.as_view()
 
