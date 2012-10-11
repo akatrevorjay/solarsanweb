@@ -2,90 +2,92 @@
 import logging
 from dj import forms, User
 from mongodbforms import DocumentForm
-from bootstrap_toolkit.widgets import BootstrapDateInput
 
 import storage.target
-
-
-class TestForm(forms.Form):
-    title = forms.CharField(
-        max_length=100,
-        help_text=u'This is the standard text input',
-    )
-    disabled = forms.CharField(
-        max_length=100,
-        help_text=u'I am read only',
-        widget=forms.TextInput(attrs={
-            'disabled': 'disabled'
-        })
-    )
-    content = forms.ChoiceField(
-        choices=(
-            ("text", "Plain text"),
-            ("html", "HTML"),
-        ),
-        help_text=u'Pick your choice',
-    )
-    email = forms.EmailField()
-    like = forms.BooleanField(required=False)
-    fruits = forms.MultipleChoiceField(
-        widget=forms.CheckboxSelectMultiple,
-        choices=(
-            ("apple", "Apple"),
-            ("pear", "Pear"),
-        ),
-        help_text=u'As you can see, multiple checkboxes work too',
-    )
-    veggies = forms.MultipleChoiceField(
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'inline': True,
-        }),
-        choices=(
-            ("broccoli", "Broccoli"),
-            ("carrots", "Carrots"),
-            ("turnips", "Turnips"),
-        ),
-        help_text=u'And can be inline',
-    )
-    color = forms.ChoiceField(
-        widget=forms.RadioSelect,
-        choices=(
-            ("#f00", "red"),
-            ("#0f0", "green"),
-            ("#00f", "blue"),
-        ),
-        help_text=u'And we have <i>radiosets</i>',
-    )
-
-    def clean(self):
-        cleaned_data = super(TestForm, self).clean()
-        raise forms.ValidationError("This error was added to show the non field errors styling.")
-        return cleaned_data
-
-
-class TestModelForm(forms.ModelForm):
-    class Meta:
-        model = User
-
-
-class TestInlineForm(forms.Form):
-    query = forms.CharField(required=False, label="")
-    active = forms.ChoiceField(widget=forms.RadioSelect, label="", choices=(
-        ('all', 'all'),
-        ('active', 'active'),
-        ('inactive', 'inactive')
-        ), initial='all')
-    mine = forms.BooleanField(required=False, label='Mine only', initial=False)
-
-
-class WidgetsForm(forms.Form):
-    date = forms.DateField(widget=BootstrapDateInput)
-
-
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
+
+from storage.models import Pool, Dataset, Volume, Filesystem, Snapshot
+import storage.cache
+
+
+class VolumeCreateForm(forms.Form):
+    name = forms.CharField()
+    #parent = referencefield mongo somehow
+
+class TargetCreateForm(forms.Form):
+    fabric_module = forms.ChoiceField(
+        #widget = forms.RadioSelect,
+        choices=(
+            ("iscsi", "iSCSI"),
+            #("ib_srpt", "SRP"),
+            #("iser", "iSER"),
+            #("fc", "Fibre Channel"),
+        ),
+        initial = "iSCSI",
+        help_text=u"iSCSI is easy to maintain and use"
+    )
+
+    # For now all WWNs are automatic
+    #wwn_auto = forms.ChoiceField(
+    #    choices=(
+    #        ("Automatic", "Generate one"),
+    #        ("Manual", "Manual"), ), )
+    #wwn = forms.CharField(
+    #    max_length=100,
+    #    initial='Automatic',
+    #    help_text=u'WWN (unique identifier)', )
+
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_id = 'id-exampleForm'
+        self.helper.form_class = 'blueForms'
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'submit_survey'
+
+        self.helper.add_input(Submit('submit', 'Create Target'))
+
+        # oddness
+        self.instance = kwargs.pop('instance', None)
+
+        return super(TargetCreateForm, self).__init__(*args, **kwargs)
+
+    def dumps(self):
+        logging.debug('Creating Target instance=%s, form=%s', self.instance, self.__dict__)
+
+class TargetRefMixin(object):
+    target_wwn = forms.MultipleChoiceField(
+        choices = (x.wwn for x in storage.cache.targets()),
+        help_text=u'Target WWN (unique identifier)', )
+
+class TargetPgMixin(object):
+    tpg_tag = forms.IntegerField(
+        help_text=u'Target Portal Group Tag (ID number)', )
+
+class TargetPgCreateForm(TargetRefMixin, TargetPgMixin, forms.Form):
+    enable = forms.BooleanField(
+        help_text=u'Enabled', )
+
+class TargetPgLunAclCreateForm(TargetPgMixin, forms.Form):
+    allowed_wwns = forms.CharField(
+        widget = forms.Textarea(),
+        help_text=u'Allowed WWNs' )
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_id = 'id-exampleForm'
+        self.helper.form_class = 'blueForms'
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'submit_survey'
+
+        self.helper.add_input(Submit('submit', 'Submit'))
+        super(TargetPgLunAclCreateForm, self).__init__(*args, **kwargs)
+
+class AjaxTargetPgUpdateForm(forms.Form):
+    enable = forms.IntegerField()
+
+
 
 
 class MessageForm(forms.Form):
@@ -146,40 +148,12 @@ class MessageForm(forms.Form):
     )
 
 """ Template code for above:
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
+    {% extends 'base.html' %}
+    {% load crispy_forms_tags %}
 
 {% block content %}
-   {% crispy form %}
+{% crispy form %}
 {% endblock %}
 """
 
-class TargetCreateForm(forms.Form):
-    wwn = forms.CharField()
 
-    # TODO Once this is saved, don't allow modifications
-    fabric_module_name = forms.ChoiceField(
-        choices=(
-            ("iscsi", "ISCSI Target"),
-            ("srp", "Infiniband SRP Target"),
-        ),
-        help_text=u'Select the fabric you wish to use. SRP really screams performance while iSCSI is easy to use/maintain.'
-    )
-
-
-class TargetPortalGroupCreateForm(forms.Form):
-    target_wwn = forms.CharField(
-        max_length=100,
-        help_text=u'WWN (unique identifier)', )
-    tag = forms.IntegerField(
-        help_text=u'Target Portal Group Tag (ID number)', )
-    enable = forms.BooleanField(
-        help_text=u'Enabled', )
-
-
-class TargetPortalGroupUpdateForm(forms.Form):
-    enable = forms.IntegerField()
-
-
-class TargetPortalGroupLunAcl(forms.Form):
-    pass

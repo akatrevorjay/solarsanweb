@@ -1,6 +1,5 @@
 
 
-from django.core.cache import cache
 from solarsan.utils import FormattedException, LoggedException
 from storage.models import Pool, Filesystem, Volume, Snapshot
 import rtslib
@@ -8,18 +7,11 @@ import rtslib
 #from django.core.cache import cache
 from django.conf import settings
 
-CACHE_TIMEOUT = 600
 root = rtslib.RTSRoot()
 
 
 class DoesNotExist(FormattedException):
     pass
-
-
-#from solarsan.utils import DefaultDictCache
-#class targets(DefaultDictCache):
-#    def get_missing_key(self, key):
-#        return get(key)
 
 
 def group_by(iterable, group_by):
@@ -35,7 +27,9 @@ def get_fabric_module(name):
         name = rtslib.FabricModule(name)
     return name
 
+
 import storage.cache
+
 
 def target_list(ret_type=None, shorten=False, cached=False):
     ret = None
@@ -75,6 +69,9 @@ def get(wwn, fabric_module=None, cached=False):
             raise DoesNotExist("Target with wwn=%s does not exist", wwn)
 
 
-def create_target(self, fabric_module, wwn=None):
+def create_target(fabric_module, wwn=None):
     fabric_module = get_fabric_module(fabric_module)
-    return rtslib.Target(fabric_module, wwn=wwn, mode='create')
+    ret = rtslib.Target(fabric_module, wwn=wwn, mode='create')
+    # Create new targets cache
+    storage.cache.targets(force=True)
+    return ret

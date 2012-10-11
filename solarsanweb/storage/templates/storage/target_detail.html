@@ -49,6 +49,13 @@
     </tbody>
 </table>
 
+{% load crispy_forms_tags %}
+
+{% if object_create_form %}
+{% crispy object_create_form object_create_form.helper %}
+{% endif %}
+
+{% comment %}
 <div>
     <a href="#add-lun-mapping-modal" data-toggle="modal">
         <span class="label label-info" style="text-align: right;">
@@ -58,15 +65,25 @@
 </div>
 <br />
 
-
-<blockquote>
-<pre>
-{{ object.type|capfirst }}: {{ object.dumps|pprint }}
-</pre>
-</blockquote>
-
-
 <div class="modal fade hide" id="add-lun-mapping-modal">
+    <div class="modal-header">
+        <legend>
+            Add LUN Mapping
+        </legend>
+        <button type="button" class="close" data-dismiss="modal">
+            <i class="icon-close"></i>
+        </button>
+
+    </div>
+    <div class="modal-body">
+        meh
+    </div>
+    <div class="modal-footer">
+        <a href="#" data-dismiss="modal"><button class="btn">Close</button></a>
+    </div>
+</div>
+
+<div class="modal fade hide" id="add-lun-mapping-modal2">
     <form class="form-horizontal" method="POST">{% csrf_token %}
         <fieldset>
             <div class="modal-header">
@@ -109,8 +126,6 @@
     </form>
 </div>
 
-
-
 <div class="modal fade hide" id="add-target-modal">
     <form class="form-horizontal">
         <fieldset>
@@ -140,7 +155,13 @@
         <a href="#" class="btn btn-primary">Add</a>
     </div>
 </div>
+{% endcomment %}
 
+<blockquote>
+<pre>
+{{ object.type|capfirst }}: {{ object.dumps|pprint }}
+</pre>
+</blockquote>
 
 
 <script>

@@ -63,24 +63,34 @@ import storage.models
 
 def patch_rtslib():
     """ Monkeypatch RTSLib """
+    # Common
+    def dumps(self):
+        return self.__dict__
+    def __repr__(self):
+        name = getattr(self, 'wwn', None)
+        if not name:
+            return super(self.__class__, self).__repr__()
+        return '<%s %s>' % (self.__class__.__name__, name)
+
     # StorageObject
     cls = rtslib.tcm.StorageObject
-    if not getattr(cls, 'get_volume', None):
+    if not getattr(cls, 'dumps', None):
         def get_volume(self):
             """ Get Storage Volume for this object """
             return storage.models.Volume.objects.get(backstore_wwn=self.wwn)
         setattr(cls, 'get_volume', get_volume)
+        setattr(cls, 'dumps', dumps)
+        setattr(cls, '__repr__', __repr__)
 
     # Target
     cls = rtslib.target.Target
-    if not getattr(cls, 'short_wwn', None):
+    if not getattr(cls, 'dumps', None):
         def short_wwn(arg):
             """ Shorten WWN string """
             if not isinstance(arg, basestring):
                 arg = arg.wwn
             return arg.split(':', 2)[1]
         setattr(cls, 'short_wwn', short_wwn)
-
         def get_tpg(self, tag=0):
             for x in self.tpgs:
                 if x.tag == tag:
@@ -88,8 +98,24 @@ def patch_rtslib():
                     break
             raise Exception("Could not find TPG with tag='%s' for Target with '%s'", tag, self)
         setattr(cls, 'get_tpg', get_tpg)
-
+        setattr(cls, 'dumps', dumps)
         setattr(cls, 'type', 'target')
+        setattr(cls, '__repr__', __repr__)
+        #def get_absolute_url(self):
+        #    return reverse(self.__class__.__name__.lower(), kwargs={'slug': self.wwn})
+        #setattr(cls, 'get_absolute_url', get_absolute_url)
+
+    cls = rtslib.target.TPG
+    if not getattr(cls, 'dumps', None):
+        setattr(cls, 'dumps', dumps)
+        def __repr__(self):
+            target = getattr(self, 'parent_target', None)
+            if not target:
+                return super(self.__class__, self).__repr__()
+            tag = getattr(self, 'tag', None)
+            enable = getattr(self, 'enable', None)
+            return '<%s tag=%s, enabled=%s parent_target_wwn=%s>' % (self.__class__.__name__, tag, enable, target.wwn)
+        setattr(cls, '__repr__', __repr__)
 
 patch_rtslib()
 

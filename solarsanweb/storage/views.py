@@ -211,13 +211,43 @@ volume_snapshots = VolumeSnapshotsView.as_view()
 
 
 """
-Targets
+Target
 """
 
 import storage.target
 import storage.cache
 
 fabric = storage.target.get_fabric_module('iscsi')
+
+
+def target_create_form():
+    form = forms.TargetCreateForm()
+    form.helper.form_action = reverse('target-create')
+    return form
+
+
+class TargetCreateView(KwargsMixIn, generic.edit.FormView):
+    template_name = 'storage/target_create.html'
+    form_class = forms.TargetCreateForm
+
+    def form_valid(self, form):
+        form.dumps()
+        fabric_name = form.cleaned_data['fabric_module']
+        wwn = form.cleaned_data.get('wwn')
+
+        logging.info("Creating Target on fabric '%s' with wwn=%s", fabric_name, wwn)
+        obj = storage.target.create_target(fabric_name, wwn)
+
+        self.success_url = reverse('target', kwargs={'slug': obj.wwn})
+        return super(TargetCreateView, self).form_valid(form)
+
+    #def get_context_data(self, **kwargs):
+    #    context = super(VolumeHealthView, self).get_context_data(**kwargs)
+    #    return context
+
+target_create = TargetCreateView.as_view()
+
+
 
 class TargetDetailView(BaseView, generic.DetailView):
     template_name = 'storage/target_detail.html'
@@ -230,24 +260,32 @@ class TargetDetailView(BaseView, generic.DetailView):
             raise http.Http404
         return obj
 
+    def get_context_data(self, **kwargs):
+        context = super(TargetDetailView, self).get_context_data(**kwargs)
+        context['object_create_form'] = target_create_form()
+        return context
+
 target_detail = TargetDetailView.as_view()
 
 
-class TargetCreateView(generic.edit.FormView):
-    template_name = 'storage/target_create.html'
-    form_class = forms.TargetCreateForm
+
+"""
+Target Portal Group
+"""
+
+
+class TargetPgCreateView(KwargsMixIn, generic.edit.CreateView):
+    template_name = 'storage/target_pg_create.html'
+    form_class = forms.TargetPgCreateForm
     def form_valid(self, form):
-        # This method is called when valid form data has been POSTed.
-        # It should return an HttpResponse.
-        logging.debug('form=%s', form)
+        logging.debug('Creating TargetPg form=%s', form)
         return super(TargetCreateView, self).form_valid(form)
 
-target_create = TargetCreateView.as_view()
+target_pg_create = TargetPgCreateView.as_view()
 
 
-class TargetPortalGroupUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.FormView):
-    template_name = 'storage/target_detail.html'
-    form_class = forms.TargetPortalGroupUpdateForm
+class TargetPgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.FormView):
+    form_class = forms.AjaxTargetPgUpdateForm
     def form_valid(self, form):
         # This method is called when valid form data has been POSTed.
         # It should return an HttpResponse.
@@ -274,13 +312,26 @@ class TargetPortalGroupUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.ed
         ret = {'enable': tpg.enable}
         return self.render_to_json_response(ret)
 
-target_portal_group_update = TargetPortalGroupUpdateView.as_view()
+target_portal_group_update = TargetPgUpdateView.as_view()
+
+
+
+
+
+
+
+
+
+
+"""
+Examples
+"""
 
 
 def target_portal_group_update2(request, slug=None, tag=None):
     if request.method == 'POST':  # If the form has been submitted...
         status = None
-        form = forms.TargetPortalGroupForm(request.POST)  # A form bound to the POST data
+        form = forms.TargetPgForm(request.POST)  # A form bound to the POST data
         if form.is_valid():  # All validation rules pass
             # Process the data in form.cleaned_data
             form.save()
@@ -293,7 +344,7 @@ def target_portal_group_update2(request, slug=None, tag=None):
                                   status=status)
 
     else:
-        form = forms.TargetPortalGroupForm()   # An unbound form
+        form = forms.TargetPgForm()   # An unbound form
         #form.target_wwn = target.wwn
         #form.tag = target_portal_group.tag
 

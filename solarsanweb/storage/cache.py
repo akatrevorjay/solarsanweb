@@ -22,16 +22,19 @@ Volume = VolumeCache()
 Snapshot = SnapshotCache()
 """
 
-from django.core.cache import cache
 from django.conf import settings
 from storage.models import Pool, Filesystem, Volume, Snapshot
 #import storage.cache
 import random
 
-from solarsan.utils import DefaultDictCache, QuerySetCache
+#from solarsan.utils import DefaultDictCache, QuerySetCache
+from solarsan.utils import RandTimeoutRangeCacheDict
+
+cache = RandTimeoutRangeCacheDict()
+cache.prefix = 'storage.cache'
 
 
-class ListQuerySet(list):
+class ListQuerySetWrapper(list):
     objects = None
 
     def __init__(self, document, init=True, fill=True):
@@ -83,45 +86,42 @@ class ListQuerySet(list):
         self._fill(data=ret['data'])
 
 
-def _timeout():
-    # One minute for dev, 5 minutes for prod
-    timeout = settings.DEBUG and 60 or 300
-    # Tack on a random few seconds to avoid thrashing, even though I doubt that will
-    # ever be an issue.
-    return timeout + random.randint(1, 10)
-
-
-def _model_cache(cls):
-    name = '%ss' % cls.__name__.lower()
-    ret = cache.get(name, None)
+def _get_model_cache(cls, force=None):
+    name = cls.__name__.lower()
+    ret = None
+    if not force:
+        ret = cache.get(name)
     if ret is None:
-        ret = ListQuerySet(cls)
-        cache.set(name, ret, _timeout())
+        ret = ListQuerySetWrapper(cls)
+        cache.set(name, ret)
     return ret
 
 
 def pools(*arg):
-    return _model_cache(Pool, *arg)
+    return _get_model_cache(Pool, *arg)
 
 
 def filesystems(*arg):
-    return _model_cache(Filesystem, *arg)
+    return _get_model_cache(Filesystem, *arg)
 
 
 def volumes(*arg):
-    return _model_cache(Volume, *arg)
+    return _get_model_cache(Volume, *arg)
 
 
 import storage.target
 
 
-def targets(*args):
+def targets(force=None):
     name = 'targets'
-    ret = cache.get(name, None)
+    ret = None
+    if not force:
+        ret = cache.get(name)
     if ret is None:
         ret = storage.target.target_list()
-        cache.set(name, ret, _timeout())
+        cache.set(name, ret)
     return ret
+
 
 
 def storage_objects(request):

@@ -56,6 +56,8 @@ urlpatterns = patterns(
     url(r'^pools/(?P<slug>[\w]+)/', include(pool_patterns)),
     url(r'^filesystem/(?P<slug>[\w\/\-\.]+)/', include(filesystem_patterns)),
     url(r'^volumes/(?P<slug>[\w\/\-\.]+)/', include(volume_patterns)),
+
+    url(r'^target/create', 'target_create', name='target-create'),
     url(r'^targets/(?P<slug>[\w\/\-\.]+:[\w\.]+)/', include(target_patterns)),
 
     url(r'^api/', include(pool_resource.urls), name='storage-api'),

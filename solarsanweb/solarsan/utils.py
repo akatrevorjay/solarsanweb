@@ -231,17 +231,58 @@ def args_list(f, *args, **kwargs):
 """
 Cache Helpers
 """
+from django.core.cache import cache
+from django.conf import settings
+import random
 
-from django.core import cache
+
 class CacheDict(dict):
-    prefix = 'zfs_obj_tree'
-    ttl = 15
+    prefix = 'cachedict'
+    sep = '__'
+    timeout = 15
+
     def __getitem__(self, key):
-        print 'get key=%s' % key
-        return cache.get('%s__%s' % (self.prefix, key))
+        value = self.get(key)
+        if not value:
+            raise KeyError
+
     def __setitem__(self, key, value):
-        print 'set key=%s value=%s' % (key, value)
-        cache.set('%s__%s' % (self.prefix, key), value, self.ttl)
+        self.set(key, value)
+
+    def _prep_key(self, key):
+        return (self.prefix and self.prefix + self.sep or '') + key
+
+    def get(self, key, default_value=None, version=None):
+        key = self._prep_key(key)
+        return cache.get(key, default_value, version=version)
+
+    def set(self, key, value, timeout=None, version=None):
+        key = self._prep_key(key)
+        if not timeout:
+            timeout = self.timeout
+            if hasattr(timeout, '__call__'):
+                timeout = timeout(key)
+        cache.set(key, value, timeout=timeout, version=version)
+
+    def delete(self, key, version=None):
+        key = self._prep_key(key)
+        return cache.delete(key, version=version)
+
+    def incr_version(self, key):
+        key = self._prep_key(key)
+        return cache.incr_version(key)
+
+    def decr_version(self, key):
+        key = self._prep_key(key)
+        return cache.decr_version(key)
+
+
+
+class RandTimeoutRangeCacheDict(CacheDict):
+    # One minute for dev, 5 minutes for prod
+    timeout_min = settings.DEBUG and 60 or 300
+    timeout_rand_range = [1, 10]
+    timeout = lambda self, key: self.timeout_min + random.randint(self.timeout_rand_range[0], self.timeout_rand_range[1])
 
 
 """
