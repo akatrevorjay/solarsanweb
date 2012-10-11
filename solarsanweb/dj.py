@@ -18,5 +18,5 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
-from django.core.urlresolvers import reverse, resolve, is_valid_path, iri_to_uri
+from django.core.urlresolvers import reverse, resolve, is_valid_path, iri_to_uri, reverse_lazy
 

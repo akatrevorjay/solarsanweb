@@ -1,4 +1,5 @@
 
+from django.utils.datastructures import SortedDict
 #from solarsan.utils import DefaultDictCache, QuerySetCache
 from storage.models import Pool, Filesystem, Volume, Snapshot
 import logging
@@ -123,9 +124,10 @@ def targets(force=None):
     return ret
 
 
-
-def storage_objects(request):
-    return {'pools': pools(),
-             'filesystems': filesystems(),
-             'volumes': volumes(),
-             'targets': targets(), }
+def storage_objects(null=None):
+    return SortedDict([
+        ('pools', pools()),
+        ('filesystems', filesystems()),
+        ('volumes', volumes()),
+        ('targets', targets()),
+    ])

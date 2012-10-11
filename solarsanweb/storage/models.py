@@ -55,7 +55,16 @@ class ReprMixIn(object):
 
 
 class BaseMixIn(ReprMixIn):
-    pass
+    @property
+    def short_type(self):
+        if type == 'filesystem':
+            return 'FS'
+        elif type == 'pool':
+            return 'POOL'
+        elif type == 'volume':
+            return 'VOL'
+        else:
+            return 'TGT'
 
 #class BaseDocument(BaseMixIn, m.Document):
 #    meta = {'abstract': True,}

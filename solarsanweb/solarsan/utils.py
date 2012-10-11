@@ -245,12 +245,16 @@ class CacheDict(dict):
         value = self.get(key)
         if not value:
             raise KeyError
+        return value
 
     def __setitem__(self, key, value):
         self.set(key, value)
 
     def _prep_key(self, key):
-        return (self.prefix and self.prefix + self.sep or '') + key
+        sep = None
+        if self.prefix:
+            sep = self.sep
+        return self.prefix + sep + key
 
     def get(self, key, default_value=None, version=None):
         key = self._prep_key(key)

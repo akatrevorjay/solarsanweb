@@ -22,6 +22,7 @@ pool_analytics_patterns = patterns(
 pool_patterns = patterns(
     'storage.views',
     url(r'^$', 'pool_health', name='pool'),
+    url(r'^/delete$', 'pool_remove', name='pool-remove'),
     url(r'^health/', 'pool_health', name='pool-health'),
     url(r'^analytics/', include(pool_analytics_patterns)),
     url(r'^analytics/(?P<name>[\w_]+)(?:/(?P<time_window>\d+))?/',
@@ -32,6 +33,7 @@ pool_patterns = patterns(
 filesystem_patterns = patterns(
     'storage.views',
     url(r'^$', 'filesystem_health', name='filesystem'),
+    url(r'^/delete$', 'filesystem_remove', name='filesystem-remove'),
     url(r'^health$', 'filesystem_health', name='filesystem-health'),
     url(r'^snapshots$', 'filesystem_snapshots', name='filesystem-snapshots'),
 )
@@ -39,6 +41,7 @@ filesystem_patterns = patterns(
 volume_patterns = patterns(
     'storage.views',
     url(r'^$', 'volume_health', name='volume'),
+    url(r'^/delete$', 'volume_remove', name='volume-remove'),
     url(r'^health$', 'volume_health', name='volume-health'),
     url(r'^snapshots$', 'volume_snapshots', name='volume-snapshots'),
 )
@@ -46,15 +49,24 @@ volume_patterns = patterns(
 target_patterns = patterns(
     'storage.views',
     url(r'^$', 'target_detail', name='target'),
+    url(r'^/delete$', 'target_remove', name='target-remove'),
+    url(r'pg_lun_map$',
+        'target_pg_volume_lun_map',
+        name='target-pg-volume-lun-map'),
     url(r'pg/(?P<tag>\d+)$',
-        'target_portal_group_update',
+        'target_pg_update',
         name='target-pg-update'),
 )
 
 urlpatterns = patterns(
     'storage.views',
+    url(r'^pool/create', 'pool_create', name='pool-create'),
     url(r'^pools/(?P<slug>[\w]+)/', include(pool_patterns)),
+
+    url(r'^filesystem/create', 'filesystem_create', name='filesystem-create'),
     url(r'^filesystem/(?P<slug>[\w\/\-\.]+)/', include(filesystem_patterns)),
+
+    url(r'^volume/create', 'volume_create', name='volume-create'),
     url(r'^volumes/(?P<slug>[\w\/\-\.]+)/', include(volume_patterns)),
 
     url(r'^target/create', 'target_create', name='target-create'),

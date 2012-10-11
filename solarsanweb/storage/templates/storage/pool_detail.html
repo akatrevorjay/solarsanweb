@@ -25,134 +25,62 @@
     <div class="span3 sidebar-nav" style="max-width: 220px;">
         <div class="accordion" id="sidebar-nav-accordion">
 
+            {% for object_type, object_type_objects in object_types_objects.items %}
             <div class="accordion-group">
                 <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar-nav-accordion" href="#collapse-sidebar-nav-accordion1">
-                        Pools
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar-nav-accordion" href="#collapse-sidebar-nav-accordion{{ forloop.counter }}">
+                        {{ object_type|capfirst }}s
                     </a>
                 </div>
-                <div id="collapse-sidebar-nav-accordion1" class="accordion-body collapse">
+                <div id="collapse-sidebar-nav-accordion{{ forloop.counter }}" class="accordion-body collapse">
                     <div class="accordion-inner">
                         <ul class="nav nav-pills nav-stacked">
-                            {% for obj in pools %}
+                            {% for obj in object_type_objects %}
                             {% if object.type == obj.type and object.name == obj.name %}
                             <li class="active">
                             {% else %}
                             <li>
                             {% endif %}
-                                <a href="{{ obj.get_absolute_url }}">
-                                    <small><span class="muted">POOL</span></small>&nbsp;
-                                    {{ obj.name }}
-                                </a>
-                            </li>
-                            {% endfor %}
-
-                            <li style="text-align: center;">
-                                <a href="#add-pool-modal" data-toggle="modal">
-                                    <span class="label label-info">add pool</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar-nav-accordion" href="#collapse-sidebar-nav-accordion2">
-                        Filesystems (NAS)
-                    </a>
-                </div>
-                <div id="collapse-sidebar-nav-accordion2" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <ul class="nav nav-pills nav-stacked">
-                            {% for obj in filesystems|dictsort:"name" %}
-                            {% if object.type == obj.type and object.name == obj.name %}
-                            <li class="active">
-                            {% else %}
-                            <li>
-                            {% endif %}
-                                <a href="{{ obj.get_absolute_url }}">
-                                    <small><span class="muted">FS&nbsp;&nbsp;</span></small>&nbsp;
-                                    {{ obj.name }}
-                                </a>
-                            </li>
-                            {% endfor %}
-
-                            <li style="text-align: center;">
-                                <a href="#add-filesystem-modal" data-toggle="modal">
-                                    <span class="label label-info">add filesystem</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar-nav-accordion" href="#collapse-sidebar-nav-accordion3">
-                        Volumes (SAN)
-                    </a>
-                </div>
-                <div id="collapse-sidebar-nav-accordion3" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <ul class="nav nav-pills nav-stacked">
-                            {% for obj in volumes|dictsort:"name" %}
-                            {% if object.type == obj.type and object.name == obj.name %}
-                            <li class="active">
-                            {% else %}
-                            <li>
-                            {% endif %}
-                                <a href="{{ obj.get_absolute_url }}">
-                                    <small><span class="muted">VOL&nbsp;</span></small>&nbsp;
-                                    {{ obj.name }}
-                                </a>
-                            </li>
-                            {% endfor %}
-
-                            <li style="text-align: center;">
-                                <a href="#add-volume-modal" data-toggle="modal">
-                                    <span class="label label-info">add volume</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#sidebar-nav-accordion" href="#collapse-sidebar-nav-accordion4">
-                        Targets (SAN)
-                    </a>
-                </div>
-                <div id="collapse-sidebar-nav-accordion4" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <ul class="nav nav-pills nav-stacked">
-                            {% for obj in targets %}
-                            {% if object.type == obj.type and object.wwn == obj.wwn %}
-                            <li class="active">
-                            {% else %}
-                            <li>
-                            {% endif %}
+                                {% if obj.type == 'target' %}
                                 <a href="{% url target slug=obj.wwn %}">
-                                    <small><span class="muted">TGT&nbsp;</span></small>&nbsp;
-                                    <span class="label-caps">{{ obj.fabric_module.name }}</span> &nbsp;
-                                    {{ obj.short_wwn }}
+                                {% else %}
+                                <a href="{{ obj.get_absolute_url }}">
+                                {% endif %}
+                                    <small><span class="muted">
+                                            {% if obj.type == 'filesystem' %}
+                                                FS
+                                            {% endif %}
+                                            {% if obj.type == 'pool' %}
+                                                POOL
+                                            {% endif %}
+                                            {% if obj.type == 'volume' %}
+                                                VOL
+                                            {% endif %}
+                                            {% if obj.type == 'target' %}
+                                                TGT
+                                            {% endif %}
+                                    </span></small>&nbsp;
+                                    {% if obj.type == 'target' %}
+                                        {{ obj.short_wwn }}
+                                    {% else %}
+                                        {{ obj.name }}
+                                    {% endif %}
                                 </a>
                             </li>
                             {% endfor %}
 
                             <li style="text-align: center;">
-                                <a href="#add-target-modal" data-toggle="modal">
-                                    <span class="label label-info">add target</span>
+                                {#<a href="#add-{{ object_type }}-modal" data-toggle="modal">add {{ object_type }}</a>#}
+                                <a href="#" class="{{ object_type }}-create">
+                                    <span class="label label-info">add {{ object_type }}</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
+            {% endfor %}
+
 
         </div>
     </div>
@@ -165,6 +93,38 @@
     </div>
 </div>
 
+
+{% load crispy_forms_tags %}
+
+<div class="hide">
+    {% for object_type, object_type_forms in object_types_forms.items %}
+    {% for object_type_form_type, object_type_form in object_type_forms.items %}
+    <div id="{{ object_type }}-{{ object_type_form_type }}-form-container">
+        {% crispy object_type_form %}
+    </div>
+    {% endfor %}
+    {% endfor %}
+</div>
+
+{% load jsonify %}
+
+<script>
+{% for object_type, object_type_forms in object_types_forms.items %}
+{% for object_type_form_type, object_type_form in object_type_forms.items %}
+
+$('a.{{ object_type }}-{{ object_type_form_type }}').popover({
+    title: 'Create {{ object_type|capfirst }}',
+    placement: 'bottom',
+    content: $("#{{ object_type }}-{{ object_type_form_type }}-form-container").html(), });
+
+{% endfor %}
+{% endfor %}
+
+</script>
+
+
+
+{% comment %}
 <div class="modal fade hide" id="add-filesystem-modal">
     <form class="form-horizontal">
         <fieldset>
@@ -194,6 +154,7 @@
         <a href="#" class="btn btn-primary">Add</a>
     </div>
 </div>
+{% endcomment %}
 
 
 {% endblock %}

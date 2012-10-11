@@ -11,6 +11,14 @@ from solarsan.views import JsonMixIn, KwargsMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
+import storage.target
+import storage.cache
+
+
+"""
+Generic crap that should be moved from here
+"""
+
 
 class AjaxableResponseMixin(object):
     """
@@ -36,7 +44,6 @@ class AjaxableResponseMixin(object):
             return self.render_to_json_response(data)
         else:
             return super(AjaxableResponseMixin, self).form_valid(form)
-
 
 
 """
@@ -68,7 +75,42 @@ class CrumbMixin(object):
 
 
 class BaseView(CrumbMixin, KwargsMixIn):
-    pass
+    def get_context_data(self, **kwargs):
+        ctx = super(BaseView, self).get_context_data(**kwargs)
+        ctx['object_types_forms'] = get_object_forms()
+        object_types_objects = storage.cache.storage_objects()
+        ctx['object_types_objects'] = {}
+        for k,vs in object_types_objects.iteritems():
+            if k.endswith('s'):
+                k = k[:-1]
+            ctx['object_types_objects'][k] = vs
+        return ctx
+
+
+
+OBJECT_FORMS = {}
+
+def get_object_forms():
+    if 'pool' not in OBJECT_FORMS:
+        OBJECT_FORMS.update({
+            'pool': {
+                'create': forms.PoolCreateForm(),
+                #'remove': forms.PoolRemoveForm(),
+            },
+            'filesystem': {
+                'create': forms.FilesystemCreateForm(),
+                #'remove': forms.FilesystemRemoveForm(),
+            },
+            'volume': {
+                'create': forms.VolumeCreateForm(),
+                #'remove': forms.VolumeRemoveForm(),
+            },
+            'target': {
+                'create': forms.TargetCreateForm(),
+                'remove': forms.TargetRemoveForm(),
+            },
+        })
+    return OBJECT_FORMS
 
 
 """
@@ -80,6 +122,10 @@ class PoolView(BaseView):
     document = Pool
     slug_field = 'name'
     context_object_name = 'pool'
+
+    #def get_context_data(self, **kwargs):
+    #    ctx = super(PoolView, self).get_context_data(**kwargs)
+    #    return ctx
 
 
 class PoolHealthView(PoolView, mongogeneric.DetailView):
@@ -123,6 +169,18 @@ class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
         return ret
 
 pool_analytics_render = PoolAnalyticsRenderView.as_view()
+
+
+class PoolCreateView(PoolView, mongogeneric.CreateView):
+    template_name = 'storage/pool_create.html'
+
+pool_create = PoolCreateView.as_view()
+
+
+class PoolRemoveView(PoolView, mongogeneric.DeleteView):
+    template_name = 'storage/pool_remove.html'
+
+pool_remove = PoolRemoveView.as_view()
 
 
 """
@@ -176,6 +234,19 @@ class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric
 filesystem_snapshots = FilesystemSnapshotsView.as_view()
 
 
+class FilesystemCreateView(FilesystemView, DatasetCreateView, mongogeneric.CreateView):
+    template_name = 'storage/filesystem_create.html'
+
+filesystem_create = FilesystemCreateView.as_view()
+
+
+class FilesystemRemoveView(FilesystemView, DatasetDeleteView, mongogeneric.DeleteView):
+    template_name = 'storage/filesystem_remove.html'
+
+filesystem_remove = FilesystemRemoveView.as_view()
+
+
+
 """
 Volumes
 """
@@ -210,20 +281,22 @@ class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailV
 volume_snapshots = VolumeSnapshotsView.as_view()
 
 
+class VolumeCreateView(VolumeView, DatasetCreateView, mongogeneric.CreateView):
+    template_name = 'storage/filesystem_create.html'
+
+volume_create = VolumeCreateView.as_view()
+
+
+class VolumeRemoveView(VolumeView, DatasetDeleteView, mongogeneric.DeleteView):
+    template_name = 'storage/filesystem_remove.html'
+
+volume_remove = VolumeRemoveView.as_view()
+
+
+
 """
 Target
 """
-
-import storage.target
-import storage.cache
-
-fabric = storage.target.get_fabric_module('iscsi')
-
-
-def target_create_form():
-    form = forms.TargetCreateForm()
-    form.helper.form_action = reverse('target-create')
-    return form
 
 
 class TargetCreateView(KwargsMixIn, generic.edit.FormView):
@@ -232,7 +305,7 @@ class TargetCreateView(KwargsMixIn, generic.edit.FormView):
 
     def form_valid(self, form):
         fabric_name = form.cleaned_data['fabric_module']
-        wwn = form.cleaned_data.get('wwn')
+        wwn = form.cleaned_data.get('target_wwn')
 
         logging.info("Creating Target with fabric='%s' wwn='%s'", fabric_name, wwn)
         obj = storage.target.create_target(fabric_name, wwn)
@@ -242,6 +315,30 @@ class TargetCreateView(KwargsMixIn, generic.edit.FormView):
 
 target_create = TargetCreateView.as_view()
 
+
+class TargetRemoveView(KwargsMixIn, generic.edit.FormView):
+    template_name = 'storage/target_remove.html'
+    form_class = forms.TargetRemoveForm
+
+    def form_valid(self, form):
+        wwn = self.kwargs['slug']
+        logging.info("Deleting Target with wwn='%s'", wwn)
+
+        try:
+            obj = storage.target.get(wwn)
+            obj.delete()
+            # TODO This would probably be better as either part of a wrapper
+            # func (including deletion) in storage.target, or by altering
+            # Target's method to do this itself.
+            storage.cache.cache.delete('targets')
+        except storage.target.DoesNotExist:
+            raise http.Http404
+
+        #self.success_url = reverse('target-list')
+        self.success_url = reverse('status')
+        return super(TargetRemoveView, self).form_valid(form)
+
+target_remove = TargetRemoveView.as_view()
 
 
 class TargetDetailView(BaseView, generic.DetailView):
@@ -257,10 +354,15 @@ class TargetDetailView(BaseView, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(TargetDetailView, self).get_context_data(**kwargs)
-        context['object_create_form'] = target_create_form()
+
+        form = forms.TargetPgVolumeLunMapForm()
+        form.helper.form_action = reverse('target-pg-volume-lun-map', kwargs={'slug': self.object.wwn})
+        context['target_pg_volume_lun_map_form'] = form
+
         return context
 
 target_detail = TargetDetailView.as_view()
+
 
 
 
@@ -272,9 +374,10 @@ Target Portal Group
 class TargetPgCreateView(KwargsMixIn, generic.edit.CreateView):
     template_name = 'storage/target_pg_create.html'
     form_class = forms.TargetPgCreateForm
+
     def form_valid(self, form):
-        logging.debug('Creating TargetPg form=%s', form)
-        return super(TargetCreateView, self).form_valid(form)
+        logging.debug('Creating TargetPg from=%s', form)
+        return super(TargetPgCreateView, self).form_valid(form)
 
 target_pg_create = TargetPgCreateView.as_view()
 
@@ -307,7 +410,59 @@ class TargetPgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.FormVi
         ret = {'enable': tpg.enable}
         return self.render_to_json_response(ret)
 
-target_portal_group_update = TargetPgUpdateView.as_view()
+target_pg_update = TargetPgUpdateView.as_view()
+
+
+import rtslib
+
+
+class TargetPgVolumeLunMapView(BaseView, generic.edit.FormView):
+    template_name = 'storage/target_create.html'
+    form_class = forms.TargetPgVolumeLunMapForm
+    slug_url_kwarg = 'slug'
+
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg, None)
+        try:
+            obj = storage.target.get(wwn=slug)
+        except storage.target.DoesNotExist:
+            raise http.Http404
+        return obj
+
+    def form_valid(self, form):
+        wwn = form.cleaned_data.get('target_wwn')
+        volume = form.cleaned_data.get('volume')
+
+        if not volume:
+            raise http.HttpResponseBadRequest
+
+        target = self.get_object()
+        volume = Volume.objects.get(pk=volume)
+
+        tpg_tag = int(form.cleaned_data['tpg_tag'])
+        try:
+            tpg = target.get_tpg(tpg_tag)
+        except:
+            tpg = rtslib.TPG(target, tag=tpg_tag, mode='create')
+
+        try:
+            so = volume.backstore()
+        except Volume.DoesNotExist:
+            so = volume.create_backstore()
+            volume.save()
+
+        lun_id = form.cleaned_data['lun']
+
+        logging.info("Creating Target PG Lun Mapping with volume='%s' "
+                        + "wwn='%s' tpg='%s' lun='%s' so='%s'",
+                        volume, target, tpg_tag, lun_id, so)
+
+        lun = rtslib.LUN(tpg, lun=lun_id, storage_object=so)
+
+        self.success_url = reverse('target', kwargs={'slug': target.wwn})
+        return super(TargetPgVolumeLunMapView, self).form_valid(form)
+
+target_pg_volume_lun_map = TargetPgVolumeLunMapView.as_view()
 
 
 
@@ -320,8 +475,6 @@ target_portal_group_update = TargetPgUpdateView.as_view()
 
 """
 Examples
-"""
-
 
 def target_portal_group_update2(request, slug=None, tag=None):
     if request.method == 'POST':  # If the form has been submitted...
@@ -361,4 +514,4 @@ class ContactView(generic.FormView):
         # It should return an HttpResponse.
         form.send_email()
         return super(ContactView, self).form_valid(form)
-
+"""

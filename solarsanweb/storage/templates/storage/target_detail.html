@@ -15,6 +15,7 @@
     {# TODO Put the dataset info in an SSI template, use same for filesystem/volume #}
 </table>
 
+<p>
 
 <table class="table table-striped table-condensed">
     <caption>
@@ -63,11 +64,18 @@
     </tbody>
 </table>
 
-{% load crispy_forms_tags %}
+</p>
 
-{% if object_create_form %}
-{% crispy object_create_form object_create_form.helper %}
-{% endif %}
+<div>
+    <a href="#" class="target-lun-mapping-create">
+        <span class="label label-info" style="text-align: right;">
+            add lun mapping
+        </span>
+    </a>
+</div>
+<br />
+
+
 
 {% comment %}
 <div>
@@ -171,12 +179,22 @@
 </div>
 {% endcomment %}
 
+{% if debug %}
 <blockquote>
 <pre>
 {{ object.type|capfirst }}: {{ object.dumps|pprint }}
 </pre>
 </blockquote>
+{% endif %}
 
+
+{% load crispy_forms_tags %}
+
+<div class="hide">
+    <div id="target-pg-volume-lun-map-form-container">
+        {% crispy target_pg_volume_lun_map_form %}
+    </div>
+</div>
 
 <script>
 
@@ -203,6 +221,12 @@ function tpg_toggle(event) {
 }
 
 $('.tpg-toggle').on('click', tpg_toggle);
+
+
+$('a.target-lun-mapping-create').popover({
+    title: 'Create Lun Mapping',
+    placement: 'right',
+    content: $("#target-pg-volume-lun-map-form-container").html(), });
 
 </script>
 

@@ -201,6 +201,7 @@ INSTALLED_APPS = (
     #'sentry',
     #'raven.contrib.django',
     'breadcrumbs',
+    'jsonify',
 
     #'bootstrap_toolkit',
     'crispy_forms',
