@@ -1,9 +1,15 @@
 # Django settings for solarsanweb project.
 
+#
+# Basic setup
+#
+
 # Paths
 import os
-#import sys
 from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
+
+# Get default settings programattically so we can add to them instead of
+# blindly replacing them.
 from django.conf import global_settings as gs
 
 #
@@ -18,9 +24,14 @@ MANAGERS = ADMINS
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'jk$cr7u4$8@oj&u+n8&h*h_*g3j8@e3i&pm5k!@h77a8@#j@na'
 
+#
+# Databases
+#
+
 DATABASES = {
-    # TODO If MongoDB is the method moving forward, then this may want to be changed to sqlite for non-compat apps, then use a DatabaseRouter to selectively
-    #   route queries to the proper db.
+    # TODO If MongoDB is the method moving forward, then this may want to be
+    # changed to sqlite for non-compat apps, then use a DatabaseRouter to
+    # selectively route queries to the proper db.
     'default': {
         'ENGINE': 'django.db.backends.mysql',   # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': PROJECT_NAME,                   # Or path to database file if using sqlite3.
@@ -31,10 +42,15 @@ DATABASES = {
     },
 }
 
+#
+# MongoDB (MongoEngine)
+#
 
-#
-# MongoEngine
-#
+MONGODB_DATABASES = {
+    'default': {'name': PROJECT_NAME}
+}
+
+DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
 
 # DB Router
 #DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
@@ -42,43 +58,19 @@ DATABASES = {
 # Auth
 AUTHENTICATION_BACKENDS = (
     'mongoengine.django.auth.MongoEngineBackend',
-    # Needed to login by username in Django admin, regardless of `allauth`
-    "django.contrib.auth.backends.ModelBackend",
-    # `allauth` specific authentication methods, such as login by e-mail
-    #"allauth.account.auth_backends.AuthenticationBackend",
-)
+) + gs.AUTHENTICATION_BACKENDS
 
-SOCIALACCOUNT_PROVIDERS = {
-    #'google':
-    #    { 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
-    #'openid':
-    #    { 'SERVERS':
-    #        [dict(id='yahoo',
-    #              name='Yahoo',
-    #              openid_url='http://me.yahoo.com'),
-    #         dict(id='hyves',
-    #              name='Hyves',
-    #              openid_url='http://hyves.nl'),
-    #         dict(id='google',
-    #              name='Google',
-    #              openid_url='https://www.google.com/accounts/o8/id')]},
-    'persona': {
-        'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console'},
-    },
-}
-
-# Sessions
-#if DEBUG:   SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-#else:       SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-#else:       SESSION_ENGINE = 'mongoengine.django.sessions'
+# Session Engine
+# django.contrib.sessions.backends.cache
+# django.contrib.sessions.backends.cached_db
+# django_mongoengine.django.sessions
 SESSION_ENGINE = 'mongoengine.django.sessions'
-#SESSION_ENGINE = 'django_mongoengine.django.sessions'
-SESSION_COOKIE_NAME = PROJECT_NAME + '_sess'
 
-MONGODB_DATABASES = {
-    'default': {'name': PROJECT_NAME}
-}
-DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
+#
+# Sessions
+#
+
+SESSION_COOKIE_NAME = PROJECT_NAME + '_sess'
 
 #
 # Django Common
@@ -153,41 +145,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     #'django.contrib.staticfiles.finders.DefaultStorageFinder',
-    'compressor.finders.CompressorFinder',
 )
-
-COMPRESS_PRECOMPILERS = (
-    ('text/coffeescript', 'coffee --compile --stdio'),
-    #('text/less', 'lessc {infile} {outfile}'),
-    ('text/less', 'recess --compile {infile}'),
-    ('text/x-sass', 'sass {infile} {outfile}'),
-    ('text/x-scss', 'sass --scss {infile} {outfile}'),
-)
-
-COMPRESS_JS_FILTERS = [
-    'compressor.filters.jsmin.JSMinFilter',
-    #'compressor.filters.jsmin.SlimItFilter',
-    #'compressor.filters.closure.ClosureCompilerFilter',
-    #'compressor.filters.yui.YUIJSFilter',
-    #'compressor.filters.template.TemplateFilter',
-]
-
-COMPRESS_CSS_FILTERS = [
-    'compressor.filters.css_default.CssAbsoluteFilter',
-    #'compressor.filters.csstidy.CSSTidyFilter',
-    #'compressor.filters.datauri.CssDataUriFilter',
-    #'compressor.filters.yui.YUICSSFilter',
-    'compressor.filters.cssmin.CSSMinFilter',
-    #'compressor.filters.template.TemplateFilter',
-]
-
-if DEBUG:
-    COMPRESS_DEBUG_TOGGLE = 'nocompress'
-#COMPRESS_OFFLINE = True
-#COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
-COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
-#COMPRESS_CACHE_BACKEND = 'default'
-COMPRESS_ENABLED = True
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -202,8 +160,6 @@ TEMPLATE_CONTEXT_PROCESSORS = gs.TEMPLATE_CONTEXT_PROCESSORS + (
     'solarsanweb.storage.context_processors.storage_objects',  # Cause we need em, always.
     'solarsanweb.solarsan.context_processors.site_styles',   # CSS and JS includes
     #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
-    #'allauth.account.context_processors.account',
-    #'allauth.socialaccount.context_processors.socialaccount',
 )
 
 # Root URL routes
@@ -219,8 +175,6 @@ WSGI_APPLICATION = '%s.wsgi.application' % PROJECT_NAME
 INSTALLED_APPS = (
     #'bootstrap',
     #'coffin',
-
-    'bootstrap_toolkit',
 
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -246,39 +200,31 @@ INSTALLED_APPS = (
 
     #'sentry',
     #'raven.contrib.django',
-    'compressor',
     'breadcrumbs',
 
-    'tastypie',
-    'tastypie_mongoengine',
-
-    'djangorestframework',
+    #'bootstrap_toolkit',
+    'crispy_forms',
 
     'jstemplate',
 
-    'backbone_tastypie',
+    'djangorestframework',
 
-    #'allauth',
-    #'allauth.account',
-    #'allauth.socialaccount',
-    #'allauth.socialaccount.providers.facebook',
-    #'allauth.socialaccount.providers.google',
-    #'allauth.socialaccount.providers.github',
-    #'allauth.socialaccount.providers.linkedin',
-    #'allauth.socialaccount.providers.openid',
-    #'allauth.socialaccount.providers.persona',
-    #'allauth.socialaccount.providers.soundcloud',
-    #'allauth.socialaccount.providers.twitter',
+    #'tastypie',
+    #'tastypie_mongoengine',
+    #'backbone_tastypie',
 
     # For future use
     #'django_utils',                     # this is django-utils2 in PyPi
-    'crispy_forms',
     #'django_assets',
     #'kitsune',
     #'waffle',
     #'uwsgi_admin',
     #'sitetree',
 )
+
+#
+# Project Apps
+#
 
 PROJECT_APPS = (
     'solarsan',
@@ -294,19 +240,6 @@ PROJECT_APPS = (
 INSTALLED_APPS += PROJECT_APPS
 
 #
-# django-bootstrap-toolkit
-#
-
-# django-bootstrap-toolkit
-BOOTSTRAP_BASE_URL = '/static/bootstrap/'
-BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
-BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
-BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
-# Enable for single bootstrap.js file
-BOOTSTRAP_JS_URL = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
-
-
-#
 # Middleware
 #
 
@@ -316,8 +249,50 @@ MIDDLEWARE_CLASSES = (
     'breadcrumbs.middleware.BreadcrumbsMiddleware',             # Breadcrumbs
     'django.middleware.http.ConditionalGetMiddleware',          # Allows Vary, Last-Modified-Since, etc
     #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site, broken
-    'django.middleware.gzip.GZipMiddleware',                    # Compress output
+    #'django.middleware.gzip.GZipMiddleware',                    # Compress output
 )
+
+#
+# Get server name
+#
+
+import socket
+SERVER_NAME = socket.gethostname()
+
+#
+# SolarSan Log UI
+#
+
+# Logs to tail
+LOGTAIL_FILES = {
+    'syslog': '/var/log/syslog',
+    'solarvisor': DATA_DIR + '/log/supervisord.log',
+    # gluster
+}
+
+
+#
+# SolarSan Cluster
+#
+
+# TODO Make key configurable, put it in the DB and in the UI.
+SOLARSAN_CLUSTER = {
+    'port':         1787,               # Port = 1337 * 1.337
+    'key':          'solarsan-key0',    # Key
+    'discovery':    25,                 # Scan for other nodes each this many seconds
+}
+
+
+##
+## 3rd party addins and such
+##
+
+#
+# Cube
+#
+
+CUBE_HOST = 'localhost'
+CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 
 #
 # django-pdb
@@ -339,10 +314,9 @@ if DEBUG:
 # SpeedTracer
 #
 
-if DEBUG:
-    #INSTALLED_APPS += ('speedtracer', )
-    #MIDDLEWARE_CLASSES += ('speedtracer.middleware.SpeedTracerMiddleware', )
-    pass
+#if DEBUG:
+#    INSTALLED_APPS += ('speedtracer', )
+#    MIDDLEWARE_CLASSES += ('speedtracer.middleware.SpeedTracerMiddleware', )
 
 #
 # django-debug-toolbar
@@ -397,8 +371,32 @@ if DEBUG:
     INTERNAL_IPS = ['127.0.0.1']
 
 #
+# django-supervisor
+#
+
+SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
+
+#
+# jstemplate
+#
+
+JSTEMPLATE_DIRS = (
+    os.path.join(PROJECT_DIR, "templates", "jstemplates"),
+)
+
+for x in PROJECT_APPS:
+    JSTEMPLATE_DIRS += (os.path.join(PROJECT_DIR, x, "templates", "jstemplates"), )
+
+#
 # Auth
 #
+
+#AUTHENTICATION_BACKENDS += (
+#    # Needed to login by username in Django admin, regardless of `allauth`
+#    #"django.contrib.auth.backends.ModelBackend",
+#    # `allauth` specific authentication methods, such as login by e-mail
+#    #"allauth.account.auth_backends.AuthenticationBackend",
+#)
 
 # Password hash priority (and what's allowed)
 PASSWORD_HASHERS = (
@@ -414,36 +412,11 @@ PASSWORD_HASHERS = (
 #AUTH_PROFILE_MODULE = 'solarsan.models.UserProfile'
 
 #
-# django-supervisor
-#
-
-SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
-
-#
-# Get server name
-#
-
-import socket
-SERVER_NAME = socket.gethostname()
-
-#
-# jstemplate
-#
-
-JSTEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, "templates", "jstemplates"),
-)
-
-for x in PROJECT_APPS:
-    JSTEMPLATE_DIRS += (os.path.join(PROJECT_DIR, x, "templates", "jstemplates"), )
-
-#
 # Cache backend
 #
 
 CACHES = {
-    #'default_mem': {
-    'default': {
+    'default_mem': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': PROJECT_NAME,
     },
@@ -456,17 +429,13 @@ CACHES = {
     #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
     #},
     #'default_mongodb': {
-    #    #'BACKEND': 'django_mongodb_cache.MongoDBCache',
     #    'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
     #    'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
     #},
 }
 
-#if DEBUG:   CACHES['default'] = CACHES['default_mem']
-#else:       CACHES['default'] = CACHES['default_db']
-#else:       CACHES['default'] = CACHES['default_file']
+CACHES['default'] = CACHES['default_mem']
 #CACHES['default'] = CACHES['default_mongodb']
-
 
 #
 # Template related
@@ -478,31 +447,35 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
 )
 
-#JINJA2_FILTERS = (
+##
+## Jinja2 template related
+##
+#
+##JINJA2_FILTERS = (
+##)
+#
+##JINJA2_TESTS = {
+##    #'test_name': 'path.to.mytest',
+##}
+#
+#JINJA2_EXTENSIONS = (
+#    'jinja2.ext.do', 'jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols',
+#    #'compressor.contrib.jinja2ext.CompressorExtension',
+#    #'solarsan.helpers.mustachejs',
 #)
-
-#JINJA2_TESTS = {
-#    #'test_name': 'path.to.mytest',
-#}
-
-JINJA2_EXTENSIONS = (
-    'jinja2.ext.do', 'jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols',
-    #'compressor.contrib.jinja2ext.CompressorExtension',
-    #'solarsan.helpers.mustachejs',
-)
-
-#from jinja2 import StrictUndefined
-#JINJA2_ENVIRONMENT_OPTIONS = {
-#    #'autoescape': False,
-#    #'undefined': StrictUndefined,
-#    #'autoreload': True,                # Is this needed with coffin or just jingo?
-#}
-
-# Monkeypatch Django to mimic Jinja2 behaviour (related to autoescaped strings)
-from django.utils import safestring
-if not hasattr(safestring, '__html__'):
-    safestring.SafeString.__html__ = lambda self: str(self)
-    safestring.SafeUnicode.__html__ = lambda self: unicode(self)
+#
+##from jinja2 import StrictUndefined
+##JINJA2_ENVIRONMENT_OPTIONS = {
+##    #'autoescape': False,
+##    #'undefined': StrictUndefined,
+##    #'autoreload': True,                # Is this needed with coffin or just jingo?
+##}
+#
+## Monkeypatch Django to mimic Jinja2 behaviour (related to autoescaped strings)
+#from django.utils import safestring
+#if not hasattr(safestring, '__html__'):
+#    safestring.SafeString.__html__ = lambda self: str(self)
+#    safestring.SafeUnicode.__html__ = lambda self: unicode(self)
 
 #
 # Celery (async tasks)
@@ -671,103 +644,111 @@ LOGGING = {
     }
 }
 
-
 #
-# Sentry/Raven
+# allauth / social auth
 #
 
-#RAVEN_CONFIG = {
-#    'dsn': 'http://7774c7fd239647f290af254c36d6153c:796e31c848d74c4b9f9fab04abdf62a5@sentry.solarsan.local/2',
-#    'register_signals': True,
+#INSTALLED_APPS += (
+#    'allauth',
+#    'allauth.account',
+#    'allauth.socialaccount',
+#    'allauth.socialaccount.providers.facebook',
+#    'allauth.socialaccount.providers.google',
+#    'allauth.socialaccount.providers.github',
+#    'allauth.socialaccount.providers.linkedin',
+#    'allauth.socialaccount.providers.openid',
+#    'allauth.socialaccount.providers.persona',
+#    'allauth.socialaccount.providers.soundcloud',
+#    'allauth.socialaccount.providers.twitter',
+#)
+#
+#SOCIALACCOUNT_PROVIDERS = {
+#    #'google':
+#    #    { 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
+#    #'openid':
+#    #    { 'SERVERS':
+#    #        [dict(id='yahoo',
+#    #              name='Yahoo',
+#    #              openid_url='http://me.yahoo.com'),
+#    #         dict(id='hyves',
+#    #              name='Hyves',
+#    #              openid_url='http://hyves.nl'),
+#    #         dict(id='google',
+#    #              name='Google',
+#    #              openid_url='https://www.google.com/accounts/o8/id')]},
+#    'persona': {
+#        'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console'},
+#    },
 #}
-
 #
-# Cube
-#
-
-CUBE_HOST = 'localhost'
-CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
-
-#
-# TEMP GRAPHITE CHANGES
-#
-
-#from raven.contrib.django.models import client
-#client.captureException()
-
-#MIDDLEWARE_CLASSES += (
-#    'raven.contrib.django.middleware.Sentry404CatchMiddleware',         # Catch 404s
-#    'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',  # Catch Errors
-#    #'sentry.middleware.SentryMiddleware',
+#TEMPLATE_CONTEXT_PROCESSORS += (
+#    'allauth.account.context_processors.account',
+#    'allauth.socialaccount.context_processors.socialaccount',
 #)
 
-# DSN of your Sentry server (https://github.com/dcramer/sentry)
-# For info on configuring Django to use Sentry, see
-# http://raven.readthedocs.org/en/latest/config/django.html
-#SENTRY_DSN = 'http://public:secret@example.com/1'
-
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
-#LOGGING = {
-#    'version': 1,
-#    'disable_existing_loggers': True,
-#    'root': {
-#        'level': 'WARNING',
-#        'handlers': ['sentry'],
-#    },
-#    'handlers': {
-#        'sentry': {
-#            'level': 'WARNING',
-#            'class': 'raven.contrib.django.handlers.SentryHandler',
-#        },
-#        'mail_admins': {
-#            'level': 'ERROR',
-#            'class': 'django.utils.log.AdminEmailHandler',
-#        }
-#    },
-#    'loggers': {
-#        'django.request': {
-#            'handlers': ['mail_admins'],
-#            'level': 'ERROR',
-#            'propagate': True,
-#        },
-#    }
-#}
-
 #
-# SolarSan Log UI
+# django-compressor
 #
 
-# Logs to tail
-LOGTAIL_FILES = {
-    'syslog': '/var/log/syslog',
-    'solarvisor': DATA_DIR + '/log/supervisord.log',
-    # gluster
-}
+INSTALLED_APPS += ('compressor', )
 
+# List of finder classes that know how to find static files in
+# various locations.
+STATICFILES_FINDERS = (
+    'compressor.finders.CompressorFinder',
+) + STATICFILES_FINDERS
+
+COMPRESS_PRECOMPILERS = (
+    ('text/coffeescript', 'coffee --compile --stdio'),
+    #('text/less', 'lessc {infile} {outfile}'),
+    ('text/less', 'recess --compile {infile}'),
+    ('text/x-sass', 'sass {infile} {outfile}'),
+    ('text/x-scss', 'sass --scss {infile} {outfile}'),
+)
+
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.JSMinFilter',
+    #'compressor.filters.jsmin.SlimItFilter',
+    #'compressor.filters.closure.ClosureCompilerFilter',
+    #'compressor.filters.yui.YUIJSFilter',
+    #'compressor.filters.template.TemplateFilter',
+]
+
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    #'compressor.filters.csstidy.CSSTidyFilter',
+    #'compressor.filters.datauri.CssDataUriFilter',
+    #'compressor.filters.yui.YUICSSFilter',
+    'compressor.filters.cssmin.CSSMinFilter',
+    #'compressor.filters.template.TemplateFilter',
+]
+
+if DEBUG:
+    COMPRESS_DEBUG_TOGGLE = 'nocompress'
+#COMPRESS_OFFLINE = True
+#COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
+COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
+#COMPRESS_CACHE_BACKEND = 'default'
+COMPRESS_ENABLED = True
 
 #
-# SolarSan Cluster
+# django-bootstrap-toolkit
 #
 
-# TODO Make key configurable, put it in the DB and in the UI.
-SOLARSAN_CLUSTER = {
-    'port':         1787,               # Port = 1337 * 1.337
-    'key':          'solarsan-key0',    # Key
-    'discovery':    25,                 # Scan for other nodes each this many seconds
-}
+#BOOTSTRAP_BASE_URL = '/static/bootstrap/'
+#BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
+#BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
+#BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
+## Enable for single bootstrap.js file
+#BOOTSTRAP_JS_URL = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
 
-#
-# local_settings.py can be used to override environment-specific settings
-# like database and email that differ between development and production.
-#
+##
+## local_settings.py can be used to override environment-specific settings
+## like database and email that differ between development and production.
+##
 
 try:
-    #pylint: disable-msg=W0401
-    from settings_local import *  # IGNORE:W0614
+    from settings_local import *
 except ImportError:
     pass
 
