@@ -1,10 +1,12 @@
 from django.conf import settings
 
+
 def raven_dsn(request):
     try:
         return {'raven_dsn': settings.RAVEN_CONFIG['dsn']}
     except:
         return {}
+
 
 def site_styles(request):
     ctx = {}
@@ -13,7 +15,7 @@ def site_styles(request):
     # CSS
     #
 
-    ctx['css_site'] = css_site = [
+    ctx['css_site'] = [
         # Can also be loaded by less.js from bootstrap's less files directly.
         'bootstrap/css/bootstrap.css',
         'bootstrap/css/bootstrap-responsive.css',
@@ -24,6 +26,9 @@ def site_styles(request):
         'css/font-awesome.css',
         'css/animate.css',
         #'css/bootstrap-toggle-buttons.css',
+        'css/datepicker.css',
+        'css/bootstrap-editable.css',
+
         'css/base.css',
     ]
 
@@ -34,20 +39,22 @@ def site_styles(request):
     js_site_pre = [
         'jquery',
         'bootstrap',
+        'bootstrap-datepicker',
+        'bootstrap-editable',
         'chosen',
         'jquery.gritter',
-
-        'mustache',
-        'django.mustache',
-
-        'underscore',
-        'backbone',
-        'backbone-tastypie',
-        'backbone-relational',
 
         'd3',
         'cubism',
         'nvd3',
+
+        'mustache',
+        'django.mustache',
+
+        #'underscore',
+        #'backbone',
+        #'backbone-tastypie',
+        #'backbone-relational',
 
         'base',
         'pool/analytics',
@@ -69,7 +76,7 @@ def site_styles(request):
     for j in js_site_pre:
         k = '%(js)s'
         # bootstrap has a special path
-        if j.startswith('bootstrap'):
+        if j == 'bootstrap' or j.startswith('bootstrap/'):
             k = '%(bootstrap)s' + k
         # If relative, make absolute with default path
         elif not j.startswith('/'):
