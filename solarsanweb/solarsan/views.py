@@ -58,6 +58,12 @@ class KwargsMixIn(object):
         self.args = args
         self.kwargs = kwargs
         return super(KwargsMixIn, self).get(request, *args, **kwargs)
+    #def post(self, request, *args, **kwargs):
+    #    self.request = request
+    #    self.args = args
+    #    self.kwargs = kwargs
+    #    return super(KwargsMixIn, self).post(request, *args, **kwargs)
+
 
 
 class JsonMixIn(object):

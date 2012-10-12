@@ -107,7 +107,7 @@ def get_object_forms():
             },
             'target': {
                 'create': forms.TargetCreateForm(),
-                'remove': forms.TargetRemoveForm(),
+                #'remove': forms.TargetRemoveForm(),
             },
         })
     return OBJECT_FORMS
@@ -193,7 +193,6 @@ class DatasetView(BaseView):
     context_object_name = 'dataset'
     def get_context_data(self, **kwargs):
         ctx = super(DatasetView, self).get_context_data(**kwargs)
-        ctx['pool'] = ctx[self.context_object_name].pool
         return ctx
 
 
@@ -281,8 +280,27 @@ class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailV
 volume_snapshots = VolumeSnapshotsView.as_view()
 
 
-class VolumeCreateView(VolumeView, DatasetCreateView, mongogeneric.CreateView):
+class VolumeCreateView(VolumeView, DatasetCreateView, generic.edit.FormView):
     template_name = 'storage/filesystem_create.html'
+    form_class = forms.VolumeCreateForm
+
+    def form_valid(self, form):
+        parent = form.cleaned_data.get('parent')
+        basename = form.cleaned_data.get('name')
+        name = '%s/%s' % (parent, basename)
+        paths = name.split('/')
+
+        parent = Filesystem.objects.get(name=parent)
+        pool = parent.pool
+
+        logging.info("Creating Volume '%s' with parent='%s'", name, parent)
+        obj = Volume()
+        obj.pool = pool
+        obj.name = name
+        obj.save()
+
+        self.success_url = reverse(obj)
+        return super(VolumeCreateView, self).form_valid(form)
 
 volume_create = VolumeCreateView.as_view()
 
@@ -319,6 +337,30 @@ target_create = TargetCreateView.as_view()
 class TargetRemoveView(KwargsMixIn, generic.edit.FormView):
     template_name = 'storage/target_remove.html'
     form_class = forms.TargetRemoveForm
+    slug_urk_kwarg = 'slug'
+
+    #def post(self, request, *args, **kwargs):
+    #    self.request = request
+    #    self.args = args
+    #    self.kwargs = kwargs
+    #    return super(TargetRemoveView, self).post(request, *args, **kwargs)
+
+    #def get_object(self, queryset=None):
+    #    slug = self.kwargs.get(self.slug_url_kwarg, None)
+    #    try:
+    #        obj = storage.target.get(wwn=slug)
+    #    except storage.target.DoesNotExist:
+    #        raise http.Http404
+    #    return obj
+
+    #def get_form(self, form_class):
+    #    """
+    #    Returns an instance of the form to be used in this view.
+    #    """
+    #    self.object = self.get_object()
+    #    form = form_class(**self.get_form_kwargs())
+    #    form.helper.form_action = reverse('target-remove', kwargs={'slug': self.object.wwn})
+    #    return form
 
     def form_valid(self, form):
         wwn = self.kwargs['slug']
@@ -358,6 +400,10 @@ class TargetDetailView(BaseView, generic.DetailView):
         form = forms.TargetPgVolumeLunMapForm()
         form.helper.form_action = reverse('target-pg-volume-lun-map', kwargs={'slug': self.object.wwn})
         context['target_pg_volume_lun_map_form'] = form
+
+        form = forms.TargetRemoveForm()
+        form.helper.form_action = reverse('target-remove', kwargs={'slug': self.object.wwn})
+        context['target_remove_form'] = form
 
         return context
 

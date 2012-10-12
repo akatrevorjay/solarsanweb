@@ -52,7 +52,7 @@ class PoolCreateForm(BaseCreateForm):
 
     name = forms.CharField(
         initial='dpool',
-        help_text=u'Simple name. Recommended is dpool', )
+        help_text=u'Simple name', )
     vdevs_left = forms.MultipleChoiceField(
         choices=(
             ("sda", "sda"),
@@ -191,9 +191,10 @@ class TargetRefMixin(object):
 
 class TargetRemoveForm(TargetRefMixin, BaseForm):
     form_id = 'target-remove-form'
+
     def __init__(self, *args, **kwargs):
         super(TargetRemoveForm, self).__init__(*args, **kwargs)
-        self.helper.add_input(Submit('submit', 'Create Target'))
+        self.helper.add_input(Submit('submit', 'Delete Target', css_class="btn-danger"))
 
 
 class TargetPgMixin(object):

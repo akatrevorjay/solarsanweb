@@ -202,6 +202,7 @@ INSTALLED_APPS = (
     #'raven.contrib.django',
     'breadcrumbs',
     'jsonify',
+    'django_logtail',
 
     #'bootstrap_toolkit',
     'crispy_forms',
@@ -266,11 +267,15 @@ SERVER_NAME = socket.gethostname()
 
 # Logs to tail
 LOGTAIL_FILES = {
-    'syslog': '/var/log/syslog',
+    #'syslog': '/var/log/syslog',
     'solarvisor': DATA_DIR + '/log/supervisord.log',
-    # gluster
 }
 
+#
+# django-crispy-forms
+#
+
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 #
 # SolarSan Cluster
@@ -417,7 +422,8 @@ PASSWORD_HASHERS = (
 #
 
 CACHES = {
-    'default_mem': {
+    #'default_mem': {
+    'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': PROJECT_NAME,
     },
@@ -435,7 +441,7 @@ CACHES = {
     #},
 }
 
-CACHES['default'] = CACHES['default_mem']
+#CACHES['default'] = CACHES['default_mem']
 #CACHES['default'] = CACHES['default_mongodb']
 
 #

@@ -218,8 +218,9 @@ class Pool_IO_Stats(PeriodicTask):
 KStats
 """
 
-class KStats_Update(PeriodicTask):
-    run_every = timedelta(minutes=1)
+#class KStats_Update(PeriodicTask):
+    #run_every = timedelta(minutes=1)
+class KStats_Update(Task):
     data = None
     def run(self, *args, **kwargs):
         ks = kstats.get_tree()

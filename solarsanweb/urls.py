@@ -7,7 +7,11 @@ from django.conf.urls.defaults import patterns, include, url
 from django.contrib import admin
 admin.autodiscover()
 
-from django_mongoengine.admin import site
+site = admin.site
+#from django_mongoengine.admin import site
+
+from django_logtail import urls as logtail_urls
+
 
 urlpatterns = patterns('',
 
@@ -35,6 +39,7 @@ urlpatterns = patterns('',
 
     #url(r'^formtest/', include('formtest.urls')),
 
+    url(r'^admin/django_logtail/', include(logtail_urls)),
     #(r'^admin/', include('smuggler.urls')), # put it before admin url patterns (smuggler)
     #(r'^admin/uwsgi/', include('uwsgi_admin.urls')),                        # uwsgi admin
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),          # Admin docs

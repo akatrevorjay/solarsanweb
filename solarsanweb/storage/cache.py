@@ -88,7 +88,7 @@ class ListQuerySetWrapper(list):
 
 
 def _get_model_cache(cls, force=None):
-    name = cls.__name__.lower()
+    name = cls.__name__.lower() + 's'
     ret = None
     if not force:
         ret = cache.get(name)

@@ -191,6 +191,9 @@
 {% load crispy_forms_tags %}
 
 <div class="hide">
+    <div id="target-remove-form-container">
+        {% crispy target_remove_form %}
+    </div>
     <div id="target-pg-volume-lun-map-form-container">
         {% crispy target_pg_volume_lun_map_form %}
     </div>
@@ -222,11 +225,16 @@ function tpg_toggle(event) {
 
 $('.tpg-toggle').on('click', tpg_toggle);
 
+$('a.target-remove').popover({
+    title: 'Create Lun Mapping',
+    placement: 'bottom',
+    content: $("#target-remove-form-container").html(), });
 
 $('a.target-lun-mapping-create').popover({
     title: 'Create Lun Mapping',
     placement: 'right',
     content: $("#target-pg-volume-lun-map-form-container").html(), });
+
 
 </script>
 
