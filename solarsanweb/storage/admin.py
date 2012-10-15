@@ -1,20 +1,24 @@
 
 from django_mongoengine import admin
 
-from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
+from .models import Pool, Dataset, Filesystem, Volume, Snapshot
 
 
 class PoolAdmin(admin.DocumentAdmin):
     pass
 
+
 class DatasetAdmin(admin.DocumentAdmin):
     pass
+
 
 class FilesystemAdmin(admin.DocumentAdmin):
     pass
 
+
 class VolumeAdmin(admin.DocumentAdmin):
     pass
+
 
 class SnapshotAdmin(admin.DocumentAdmin):
     pass
