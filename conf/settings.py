@@ -202,7 +202,7 @@ INSTALLED_APPS = (
     #'raven.contrib.django',
     'breadcrumbs',
     'jsonify',
-    'django_logtail',
+    #'django_logtail',
 
     #'bootstrap_toolkit',
     'crispy_forms',
