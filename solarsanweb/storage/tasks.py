@@ -80,7 +80,14 @@ class Import_ZFS_Metadata(PeriodicTask):
             self.walk(pool, fs)
 
 
+def pool_reload(name):
+    pass
 
+def fs_reload(name):
+    pass
+
+def vol_reload(name):
+    pass
 
 
 """

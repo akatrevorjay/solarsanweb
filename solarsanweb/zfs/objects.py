@@ -20,67 +20,17 @@ from django.utils import timezone
 from django.core import cache
 from solarsan.utils import FilterableDict, CacheDict, convert_bytes_to_human, convert_human_to_bytes
 
-"""
-class Friendly(object):
-    def hello(self):
-        print 'Hello'
-
-class Person(object): pass
-
-# we can't change the original classes, so we replace them
-class newFriendly: pass
-newFriendly.__dict__ = dict(Friendly.__dict__)
-Friendly = newFriendly
-class newPerson: pass
-newPerson.__dict__ = dict(Person.__dict__)
-Person = newPerson
-
-p = Person()
-Person.__bases__ = (Friendly,)
-p.hello()  # prints "Hello"
-"""
 
 """
 Base
 """
 
 
-
-#OBJ_TREE = CacheDict()
-#OBJ_TREE = {}
-
-class SingletonMixIn(object):
-    """ Caches objects and re-use existing instances """
-    flags = {'obj_tree': False, }
-    def __new__(cls, *args, **kwargs):
-        name = kwargs.get('name', args and args[0] or None)
-        cls_name = cls.__name__
-
-        obj_tree = kwargs.get('obj_tree', cls.flags.get('obj_tree'))
-        if obj_tree and name:
-            if name in OBJ_TREE and cls.__name__ in OBJ_TREE[name]:
-                return OBJ_TREE[name][cls.__name__]
-
-        self = super(zfsBase, cls).__new__(cls, *args, **kwargs)
-
-        if obj_tree and name:
-            if not name in OBJ_TREE:
-                OBJ_TREE[name] = {}
-            OBJ_TREE[name][self.__class__.__name__] = self
-
-        return self
-
-
-class ReprMixIn(object):
+class BaseMixIn(object):
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, getattr(self, 'name', None))
     def __unicode__(self):
         return self.name
-
-
-#class BaseMixIn(ReprMixIn, SingletonMixIn):
-class BaseMixIn(ReprMixIn):
-    pass
 
 
 ZFS_TYPE_MAP = {}
