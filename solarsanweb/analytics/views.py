@@ -15,8 +15,8 @@ from storage.models import Pool, Dataset, Filesystem, Snapshot
 
 from datetime import datetime, timedelta
 #import time
-from pyrrd.rrd import RRD
-from pyrrd.backend import bindings
+#from pyrrd.rrd import RRD
+#from pyrrd.backend import bindings
 
 import logging
 # Get an instance of a logger
@@ -25,7 +25,7 @@ logger = logging.getLogger( __name__ )
 import json
 
 from django.conf import settings
-import pyflot
+#import pyflot
 import os, sys
 
 from django.shortcuts import render_to_response

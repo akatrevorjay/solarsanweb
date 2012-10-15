@@ -15,7 +15,7 @@ import zfs
 
 #from kstats import KStats as kstats
 import kstats
-from statsd import statsd
+#from statsd import statsd
 
 """
 Per-File IO Monitor
@@ -272,9 +272,9 @@ RRD Stats
 """
 
 
-from pyrrd.backend import bindings
-from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
-from pyrrd.rrd import DataSource, RRA, RRD
+#from pyrrd.backend import bindings
+#from pyrrd.graph import DEF, CDEF, VDEF, LINE, AREA, ColorAttributes, Graph
+#from pyrrd.rrd import DataSource, RRA, RRD
 
 #@periodic_task(run_every=timedelta(minutes=5))
 def rrd_update(*args, **kwargs):
