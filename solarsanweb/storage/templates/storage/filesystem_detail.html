@@ -25,8 +25,13 @@
                          <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="{% url pool-health slug=pool.name %}">Health</a></li>
+                                {% if pool %}
+                                <li><a href="{% url pool slug=pool.name %}">Health</a></li>
                                 <li><a href="{% url pool-analytics slug=pool.name %}">Analytics</a></li>
+                                {% else %}
+                                <li><a href="{% url pool slug=object.pool.name %}">Health</a></li>
+                                <li><a href="{% url pool-analytics slug=object.pool.name %}">Analytics</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         <li><a href="{% url filesystem-health slug=object.name %}">Health</a></li>
