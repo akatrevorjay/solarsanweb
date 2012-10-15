@@ -81,6 +81,8 @@ class BaseDatasetCreateForm(BaseCreateForm):
     parent = forms.ChoiceField(
         choices=DATASET_PARENT_CHOICES
     )
+    # TODO Validation against these to make sure they are merely [\w\d]
+    # seperated by forward slashes
     name = forms.CharField()
 
 
