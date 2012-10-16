@@ -609,47 +609,11 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['console'],
+        'django.db': {
             'propagate': True,
-            'level': 'DEBUG',
+            #'level': 'DEBUG',
+            'level': 'INFO',
         },
-        'django.db.backends': {
-            'handlers': ['console'],
-            'propagate': True,
-            'level': 'DEBUG',
-            #'level': 'INFO',
-        },
-        #'werkzeug': {
-        #    'handlers': ['console'],
-        #    'level': 'ERROR',
-        #    'propogate': False,
-        #},
-        'apps': {
-            'handlers': ['console', ],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'solarsanweb': {
-            'handlers': ['console', ],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        #'django.request': {
-        #    'handlers': ['mail_admins'],
-        #    'level': 'ERROR',
-        #    'propagate': True,
-        #},
-        #'raven': {
-        #    'level': 'WARNING',
-        #    'handlers': ['console'],
-        #    'propagate': False,
-        #},
-        #'sentry.errors': {
-        #    'level': 'DEBUG',
-        #    'handlers': ['console'],
-        #    'propagate': False,
-        #},
     }
 }
 
