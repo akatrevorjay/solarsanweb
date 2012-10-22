@@ -49,7 +49,7 @@ class Filesystem(_BaseDataset):
         return True
 
     def destroy(self):
-        """destroys storage filesystem.
+        """Destroys storage filesystem.
 
         filesystem = Filesystem('dpool/tmp/test0')
         filesystem.destroy()
@@ -99,7 +99,7 @@ class Volume(_BaseDataset):
         return True
 
     def destroy(self):
-        """destroys storage volume.
+        """Destroys storage volume.
 
         volume = Volume('dpool/tmp/test0')
         volume.destroy()
