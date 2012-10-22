@@ -10,6 +10,12 @@ class Pool(object):
         self.name = name
 
     def exists(self):
+        """Checks if pool exists.
+
+        pool = Pool('dpool')
+        pool.exists()
+
+        """
         try:
             rv = sh.zpool('list', self.name)
         except rv.ErrorReturnCode_1:
@@ -48,7 +54,7 @@ class Pool(object):
         """Grow pool by adding new device.
 
         pool = Pool('dpool')
-        pool.add('dpool',
+        pool.add(
             Disk('sda') + Disk('sdb'),
             )
 
@@ -69,7 +75,7 @@ class Pool(object):
         """Removes device from pool.
 
         pool = Pool('dpool')
-        pool.remove('dpool', Disk('sdc'))
+        pool.remove(Disk('sdc'))
 
         """
         cmd = sh.zpool.bake('remove', self.name)
@@ -85,7 +91,7 @@ class Pool(object):
         """Attaches new device to existing device, creating a device mirror.
 
         pool = Pool('dpool')
-        pool.attach('dpool', Disk('sdb'), Disk('sdc'))
+        pool.attach(Disk('sdb'), Disk('sdc'))
 
         """
         cmd = sh.zpool.bake('attach', self.name)
@@ -101,7 +107,7 @@ class Pool(object):
         """Detaches existing device from an existing device mirror.
 
         pool = Pool('dpool')
-        pool.detach('dpool', 'sdb')
+        pool.detach('sdb')
 
         """
         cmd = sh.zpool.bake('detach', self.name)
