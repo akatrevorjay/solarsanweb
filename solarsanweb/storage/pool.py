@@ -19,8 +19,8 @@ class Pool(object):
     def create(self, *devices):
         """Creates storage pool.
 
-        create('dpool',
-            Mirror(Disk('sda'), Disk('sdb')),
+        pool = Pool('dpool')
+        pool.create(Mirror(Disk('sda'), Disk('sdb')),
             Disk('sda') + Disk('sdb'),
             Log('sda') + Log('sdb'),
             Cache('sde'),
@@ -32,48 +32,83 @@ class Pool(object):
 
         args = []
         for dev in devices:
-            if getattr(dev, '_zpool_create_args'):
-                args.extend(dev._zpool_create_args())
+            if getattr(dev, '_zpool_args'):
+                args.extend(dev._zpool_args())
             else:
-                args.append(dev._zpool_create_arg())
+                args.append(dev._zpool_arg())
 
         # TODO Retval check, pool check, force a Zfs import scan in bg
         #try:
-        rv = cmd(*args)
+        cmd(*args)
         #except rv.ErrorReturnCode_1:
         #    return False
         return True
 
-    def add(pool, device):
+    def add(self, device):
         """Grow pool by adding new device.
 
-        add('dpool',
-            {'mirror': ['sdf', 'sdg']},
+        pool = Pool('dpool')
+        pool.add('dpool',
+            Disk('sda') + Disk('sdb'),
             )
 
         """
-        pass
+        cmd = sh.zpool.bake('add', self.name)
 
-    def remove(pool, device):
+        args = []
+        for dev in [device]:
+            if getattr(dev, '_zpool_args'):
+                args.extend(dev._zpool_args())
+            else:
+                args.append(dev._zpool_arg())
+
+        cmd(*args)
+        return True
+
+    def remove(self, device):
         """Removes device from pool.
 
-        remove('dpool', 'sdc')
+        pool = Pool('dpool')
+        pool.remove('dpool', Disk('sdc'))
 
         """
-        pass
+        cmd = sh.zpool.bake('remove', self.name)
 
-    def attach(pool, device, new_device):
+        args = []
+        for dev in [device]:
+            args.append(dev._zpool_arg())
+
+        cmd(*args)
+        return True
+
+    def attach(self, device, new_device):
         """Attaches new device to existing device, creating a device mirror.
 
-        attach('dpool', 'sdb', 'sdc')
+        pool = Pool('dpool')
+        pool.attach('dpool', Disk('sdb'), Disk('sdc'))
 
         """
-        pass
+        cmd = sh.zpool.bake('attach', self.name)
 
-    def detach(pool, device):
+        args = []
+        for dev in [device, new_device]:
+            args.append(dev._zpool_arg())
+
+        cmd(*args)
+        return True
+
+    def detach(self, device):
         """Detaches existing device from an existing device mirror.
 
-        detach('dpool', 'sdb')
+        pool = Pool('dpool')
+        pool.detach('dpool', 'sdb')
 
         """
-        pass
+        cmd = sh.zpool.bake('detach', self.name)
+
+        args = []
+        for dev in [device]:
+            args.append(dev._zpool_arg())
+
+        cmd(*args)
+        return True

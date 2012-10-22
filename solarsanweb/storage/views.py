@@ -80,15 +80,15 @@ class BaseView(CrumbMixin, KwargsMixIn):
         ctx['object_types_forms'] = get_object_forms()
         object_types_objects = storage.cache.storage_objects()
         ctx['object_types_objects'] = {}
-        for k,vs in object_types_objects.iteritems():
+        for k, vs in object_types_objects.iteritems():
             if k.endswith('s'):
                 k = k[:-1]
             ctx['object_types_objects'][k] = vs
         return ctx
 
 
-
 OBJECT_FORMS = {}
+
 
 def get_object_forms():
     if 'pool' not in OBJECT_FORMS:
@@ -288,11 +288,10 @@ class VolumeCreateView(VolumeView, DatasetCreateView, generic.edit.FormView):
         parent = form.cleaned_data.get('parent')
         basename = form.cleaned_data.get('name')
         name = '%s/%s' % (parent, basename)
-        paths = name.split('/')
+        #paths = name.split('/')
 
         parent = Filesystem.objects.get(name=parent)
         pool = parent.pool
-
 
         logging.info("Creating Volume '%s' with parent='%s'", name, parent)
         obj = Volume()
