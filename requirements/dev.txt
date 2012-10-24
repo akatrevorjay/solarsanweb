@@ -1,16 +1,27 @@
 #-r compiled.txt
 #-r prod.txt
 
-rope
-ropemode
-ropevim
-pysmell
-pyflakes
-pylint
-pep8
+#rope
+#ropemode
+#ropevim
+#pysmell
+#pyflakes
+#pylint
+#pep8
 
-graphite-web
-carbon
-whisper
-txamqp
-python-utils django-utils2
+#graphite-web
+#carbon
+#whisper
+#txamqp
+#python-utils django-utils2
+
+celery
+django-celery
+iterpipes
+south
+django-compressor
+smuggler
+django-jsonify
+supervisor
+django-supervisor
+
