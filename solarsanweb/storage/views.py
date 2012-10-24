@@ -279,6 +279,8 @@ class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailV
 
 volume_snapshots = VolumeSnapshotsView.as_view()
 
+import storage.dataset
+
 
 class VolumeCreateView(VolumeView, DatasetCreateView, generic.edit.FormView):
     template_name = 'storage/filesystem_create.html'
@@ -294,6 +296,11 @@ class VolumeCreateView(VolumeView, DatasetCreateView, generic.edit.FormView):
         pool = parent.pool
 
         logging.info("Creating Volume '%s' with parent='%s'", name, parent)
+
+        # Hackery
+        volume = storage.dataset.Volume(name)
+        volume.create()
+
         obj = Volume()
         obj.pool = pool
         obj.name = name

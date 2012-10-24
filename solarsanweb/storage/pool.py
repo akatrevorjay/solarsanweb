@@ -1,13 +1,53 @@
 
-#import logging
+import logging
 import sh
 #from collections import defaultdict
 #import storage.device
 
 
 class Pool(object):
+    """Storage Pool object
+    """
+
+    class Properties(object):
+        """Storage Pool Properties object
+        """
+
+        class Property(object):
+            """Storage Pool Property object
+            """
+            name = None
+            value = None
+            source = None
+
+            def __str__(self):
+                return self.value
+
+            def __unicode__(self):
+                return self.value
+
+            def __repr__(self):
+                return '<Property(name=%s, value=%s, source=%s)>' % (self.name, self.value, self.source)
+
+        def __init__(self, parent):
+            self.parent = parent
+
+        def __getitem__(self, k):
+            pass
+            #ret = self.Property()
+            #return ret
+
+        def __setitem__(self, k, v):
+            pass
+
+        def __iter__(self):
+            pass
+
+    name = None
+
     def __init__(self, name):
         self.name = name
+        self.properties = self.Properties(self)
 
     def exists(self):
         """Checks if pool exists.
@@ -118,3 +158,9 @@ class Pool(object):
 
         cmd(*args)
         return True
+
+    def status(self):
+        raise NotImplementedError
+
+    def iostat(self):
+        raise NotImplementedError

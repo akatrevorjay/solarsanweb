@@ -25,3 +25,8 @@ django-jsonify
 supervisor
 django-supervisor
 
+netbeacon
+piston-mini-client
+django-piston
+
+
