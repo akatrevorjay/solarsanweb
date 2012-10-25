@@ -6,7 +6,7 @@
 
 pool_analytics = {
     pool: null,
-    cube_url: 'http://localhost:1081',
+    cube_url: null,
 
     small_stats: function() {
         var pthis = this;

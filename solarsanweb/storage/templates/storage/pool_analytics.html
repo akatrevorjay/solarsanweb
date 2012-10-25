@@ -1,5 +1,8 @@
 {% extends 'storage/filesystem_detail.html' %}
 
+{% load url from future %}
+
+
 {% block object_detail %}
 
 <!-- Pool Analytics -->
@@ -39,7 +42,7 @@ jQuery(document).ready(function($) {
 function chart_select() {
     var chart_name = $('#graph-select').val(),
         time_window = $('#time-window-select').val();
-    url = '{% url pool-analytics slug=object.name name="graph_name" time_window="999" %}';
+    url = '{% url 'pool-analytics' slug=object.name name="graph_name" time_window="999" %}';
     url = url.replace("graph_name", chart_name);
     url = url.replace("999", time_window);
     window.location.href = url;
@@ -57,7 +60,7 @@ var start = Math.round(new Date() / 1000);
 start = start - time_window;
 
 // Nab JSON, send to the graph factory
-d3.json('{% url pool-analytics-render slug=object.name name=graph time_window=time_window %}'
+d3.json('{% url 'pool-analytics-render' slug=object.name name=graph time_window=time_window %}'
     + '?start=' + start
     , function(data) {
         return pool_analytics.graph('{{ graph }}', {{ time_window }}, data);

@@ -128,6 +128,7 @@ Filesystem: {{ object.dumps|pprint }}
 <script>
 // Analytics using Cubism
 pool_analytics.pool = '{{ object.pool.name }}';
+pool_analytics.cube_url = '{{ CUBE_URL }}';
 pool_analytics.small_stats();
 </script>
 

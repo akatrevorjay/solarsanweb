@@ -1,29 +1,32 @@
 {% extends "bootstrap2/layouts/base_navbar_responsive.html" %}
 
+{% load url from future %}
+
+
 {% block title %}SolarSan Console{% endblock %}
 
 {% block navbar_links %}
-<a class="brand" href="{% url index %}">SolarSan Console</a>
+<a class="brand" href="{% url 'index' %}">SolarSan Console</a>
 <div>
     <ul class="nav">
         <li>
-            <a href="{% url status %}">status</a>
+            <a href="{% url 'status' %}">status</a>
         </li>
         <li>
-            <a href="{% url configure %}">configure</a>
+            <a href="{% url 'configure' %}">configure</a>
         </li>
         <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">pools<span class="caret"></span></a>
             <ul class="dropdown-menu">
                 {% for pool in pools %}
                 <li>
-                    <a href="{% url pool slug=pool.name %}">{{ pool.name }}</a>
+                    <a href="{% url 'pool' slug=pool.name %}">{{ pool.name }}</a>
                 </li>
                 {% endfor %}
             </ul>
         </li>
         <li>
-            <a href="{% url analytics %}">analytics</a>
+            <a href="{% url 'analytics' %}">analytics</a>
         </li>
     </ul>
 
@@ -50,14 +53,14 @@
             <ul class="dropdown-menu">
                 {% comment %}
                 <li>
-                    <a href="{% url account-profile %}">Account</a>
+                    <a href="{% url 'account-profile' %}">Account</a>
                 </li>
                 <li>
-                    <a href="{% url account-change-password %}">Change Password</a>
+                    <a href="{% url 'account-change-password' %}">Change Password</a>
                 </li>
                 <li class="divider"></li>
                 <li>
-                    <a href="{% url account-logout %}">Logout</a>
+                    <a href="{% url 'account-logout' %}">Logout</a>
                 </li>
                 {% endcomment %}
             </ul>

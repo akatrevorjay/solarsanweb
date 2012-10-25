@@ -15,7 +15,7 @@ site = admin.site
 
 urlpatterns = patterns('',
 
-    (r'^accounts/', include('allauth.urls')),
+    #(r'^accounts/', include('allauth.urls')),
     #url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='account-login'),
     #url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
     #url(r'^accounts/', include('django.contrib.auth.urls'), name='account'),

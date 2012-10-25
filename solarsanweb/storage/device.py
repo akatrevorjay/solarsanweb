@@ -77,11 +77,6 @@ class Mirror(_QuerySet):
     """
     _mirrorable = True
 
-    def __init__(self, devices=None):
-        self.devices = []
-        for dev in devices:
-            self.append(dev)
-
     def _zpool_args(self):
         assert len(self) % 2 == 0
         modifiers = self._zpool_create_modifiers
@@ -122,12 +117,7 @@ class Mirror(_QuerySet):
         return super(Mirror, self).append(v)
 
     def __add__(self, other):
-        if not other._mirrorable:
-            raise ValueError
-        if isinstance(other, self.__class__):
-            return self.__class__(self + other)
-        else:
-            return self.__class__(self + [other])
+        return self.append(other)
 
 
 class _BaseDevice(object):
@@ -303,7 +293,7 @@ class _BaseDevice(object):
         return self._udisk_device.DeviceIsLinuxMdComponent
 
 
-class __mirrorableDeviceMixin(object):
+class __MirrorableDeviceMixin(object):
     """_mirrorable device mixin
     """
     _mirrorable = True
@@ -317,13 +307,13 @@ class Device(object):
     pass
 
 
-class Disk(__mirrorableDeviceMixin, _BaseDevice):
+class Disk(__MirrorableDeviceMixin, _BaseDevice):
     """Disk device object
     """
     pass
 
 
-class Cache(__mirrorableDeviceMixin, _BaseDevice):
+class Cache(__MirrorableDeviceMixin, _BaseDevice):
     """Cache device object
     """
     _zpool_create_modifier = 'cache'
@@ -335,7 +325,7 @@ class Spare(_BaseDevice):
     _zpool_create_modifier = 'spare'
 
 
-class Log(__mirrorableDeviceMixin, _BaseDevice):
+class Log(__MirrorableDeviceMixin, _BaseDevice):
     """Log device object
     """
     _zpool_create_modifier = 'log'

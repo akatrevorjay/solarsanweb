@@ -1,5 +1,8 @@
 {% extends 'storage/target_base.html' %}
 
+{% load url from future %}
+
+
 {% block object_detail %}
 
 <table class="table table-striped table-condensed">
@@ -37,9 +40,9 @@
             <td>
                 tpg{{ tpg.tag }}
                 {% if tpg.enable == 0 %}
-                    <button class="btn btn-mini btn-inverse tpg-toggle" data-url="{% url target-pg-update slug=object.wwn tag=tpg.tag %}" data-enable="1">Off</button>
+                    <button class="btn btn-mini btn-inverse tpg-toggle" data-url="{% url 'target-pg-update' slug=object.wwn tag=tpg.tag %}" data-enable="1">Off</button>
                 {% else %}
-                    <button class="btn btn-mini btn-success tpg-toggle" data-url="{% url target-pg-update slug=object.wwn tag=tpg.tag %}" data-enable="0">On</button>
+                    <button class="btn btn-mini btn-success tpg-toggle" data-url="{% url 'target-pg-update' slug=object.wwn tag=tpg.tag %}" data-enable="0">On</button>
                 {% endif %}
             </td>
             <td>

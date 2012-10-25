@@ -1,5 +1,8 @@
 {% extends 'storage/volume_base.html' %}
 
+{% load url from future %}
+
+
 {% block object_detail %}
 <table class="table table-striped table-condensed">
     <tr>
@@ -38,7 +41,7 @@
                 lun{{ lun.lun }}
             </td>
             <td>
-                <a href="{% url target slug=target.wwn %}">
+                <a href="{% url 'target' slug=target.wwn %}">
                     {{ target.wwn }}
                 </a>
             </td>
@@ -102,6 +105,7 @@ $area.html(template.render({name: 'test'}));
 
 // Analytics using Cubism
 pool_analytics.pool = '{{ object.pool.name }}';
+pool_analytics.cube_url = '{{ CUBE_URL }}';
 pool_analytics.small_stats();
 </script>
 

@@ -1,5 +1,8 @@
 {% extends "base_site.html" %}
 
+{% load url from future %}
+
+
 {% block css_extra %}
 <style></style>
 {% endblock %}
@@ -50,7 +53,7 @@
                             <li>
                             {% endif %}
                                 {% if obj.type == 'target' %}
-                                <a href="{% url target slug=obj.wwn %}">
+                                <a href="{% url 'target' slug=obj.wwn %}">
                                 {% else %}
                                 <a href="{{ obj.get_absolute_url }}">
                                 {% endif %}

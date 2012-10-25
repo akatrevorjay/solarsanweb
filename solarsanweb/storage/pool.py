@@ -57,8 +57,8 @@ class Pool(object):
 
         """
         try:
-            rv = sh.zpool('list', self.name)
-        except rv.ErrorReturnCode_1:
+            sh.zpool('list', self.name)
+        except sh.ErrorReturnCode_1:
             return False
         return True
 
@@ -88,6 +88,18 @@ class Pool(object):
         cmd(*args)
         #except rv.ErrorReturnCode_1:
         #    return False
+        return True
+
+    def destroy(self, confirm=False):
+        """Destroys storage pool.
+
+        pool = Pool('dpool')
+        pool.destroy()
+
+        """
+        if not confirm:
+            raise Exception('Destroy of storage pool requires confirm=True')
+        sh.zpool('destroy', self.name)
         return True
 
     def add(self, device):
