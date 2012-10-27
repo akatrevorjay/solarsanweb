@@ -1,24 +1,30 @@
 
 import logging
 import sh
-#from collections import defaultdict
+from collections import defaultdict
 #import storage.device
+#import re
+from solarsan.utils import LoggedException
+from datetime import datetime
+from django.utils import timezone
+from analytics.cube import CubeAnalytics
+from pypercube.expression import EventExpression, Median  # MetricExpression, CompoundMetricExpression
+#from pypercube.expression import Sum, Min, Max, Median, Distinct
 
+
+# TODO Enumerate devices on pool from status
 
 class Pool(object):
     """Storage Pool object
     """
 
-    class Properties(object):
-        """Storage Pool Properties object
+    class _Properties(object):
+        """Storage Pool _Properties object
         """
 
-        class Property(object):
-            """Storage Pool Property object
+        class _Property(object):
+            """Storage Pool _Property object
             """
-            name = None
-            value = None
-            source = None
 
             def __str__(self):
                 return self.value
@@ -27,27 +33,136 @@ class Pool(object):
                 return self.value
 
             def __repr__(self):
-                return '<Property(name=%s, value=%s, source=%s)>' % (self.name, self.value, self.source)
+                #return self.value
+                return "<Property('%s'='%s', source='%s')>" % (self.name,
+                                                               self.value,
+                                                               self.source)
+
+            def __init__(self, parent, name, value, source):
+                self._parent = parent
+                self.name = name
+                self.value = value
+                self.source = source
+
+            #def __get__(self, obj, objtype):
+            #    logging.debug('get self=%s obj=%s type=%s', self, obj, objtype)
+            #    return self.value
+
+            #def __set__(self, obj, val):
+            #    logging.debug('set self=%s obj=%s val=%s', self, obj, val)
+            #    self.value = val
+
+            #def __delete__(self, obj):
+            #    pass
+
+        #allocated = _Property(None, 'allocated', None, None)
 
         def __init__(self, parent):
-            self.parent = parent
+            self._parent = parent
 
         def __getitem__(self, k):
-            pass
-            #ret = self.Property()
-            #return ret
+            """Gets pool property.
+
+            pool = Pool('dpool')
+            pool.properties['alloc']
+
+            """
+            try:
+                return self._get(k)
+            except sh.ErrorReturnCode_1:
+                raise KeyError
 
         def __setitem__(self, k, v):
-            pass
+            """Sets pool property.
+
+            pool = Pool('dpool')
+            pool.properties['readonly'] = 'on'
+
+            """
+            try:
+                return self._set(k, v)
+            except sh.ErrorReturnCode_1:
+                raise ValueError
 
         def __iter__(self):
-            pass
+            # TODO yield
+            return iter(self._get('all'))
 
-    name = None
+        def _get(self, *props):
+            """Gets pool property.
+
+            pool = Pool('dpool')
+            pool.properties._get('alloc', 'free')
+            pool.properties._get('all')
+
+            """
+            assert props
+
+            ret = []
+            skip = 1
+            for line in sh.zpool('get', ','.join(props), self._parent.name):
+                if skip > 0:
+                    skip -= 1
+                    continue
+                line = line.rstrip("\n")
+                (obj_name, name, value, source) = line.split(None, 3)
+                ret.append(self._Property(self, name, value, source))
+
+            # If we only requested a single property from a single object that
+            # isn't the magic word 'all', just return the value.
+            if len(props) == 1 and len(ret) == len(props) and 'all' not in props:
+                ret = ret[0]
+            return ret
+
+        def _set(self, k, v):
+            """Sets pool property.
+
+            pool = Pool('dpool')
+            pool.properties._set('readonly', 'on')
+
+            """
+            if isinstance(v, self._Property):
+                v = v.value
+            sh.zpool('set', '%s=%s' % (k, v), self._parent.name)
+
+        #def __delitem__(self, k):
+        #    """Deletes pool property.
+        #    """
+        #    try:
+        #        return self._inherit(k)
+        #    except sh.ErrorReturnCode_1:
+        #        raise KeyError
+
+        #def _inherit(self, k):
+        #    """Inherits property from parents
+        #    """
+
+    class _Analytics(CubeAnalytics):
+        """Storage Pool Analytics object
+        """
+        def __init__(self, parent):
+            self._parent = parent
+
+        def _get_event_expr(self, f, **kwargs):
+            return EventExpression('pool_iostat', f).eq('pool', self._parent.name).gt(f, 0)
+
+        def _get_metric_expr(self, f, **kwargs):
+            e = kwargs.get('event_expr', self._get_event_expr(f, **kwargs))
+            return Median(e)
+
+        def iops(self, **kwargs):
+            return self._render('iops_read', 'iops_write', **kwargs)
+
+        def bandwidth(self, **kwargs):
+            return self._render('bandwidth_read', 'bandwidth_write', **kwargs)
+
+        def usage(self, **kwargs):
+            return self._render('alloc', 'free', **kwargs)
 
     def __init__(self, name):
         self.name = name
-        self.properties = self.Properties(self)
+        self.properties = self._Properties(self)
+        self.analytics = self._Analytics(self)
 
     def exists(self):
         """Checks if pool exists.
@@ -98,7 +213,7 @@ class Pool(object):
 
         """
         if not confirm:
-            raise Exception('Destroy of storage pool requires confirm=True')
+            raise LoggedException('Destroy of storage pool requires confirm=True')
         sh.zpool('destroy', self.name)
         return True
 
@@ -171,8 +286,175 @@ class Pool(object):
         cmd(*args)
         return True
 
-    def status(self):
-        raise NotImplementedError
+    def replace(self, device, new_device):
+        """Replacees device with new device.
 
-    def iostat(self):
-        raise NotImplementedError
+        pool = Pool('dpool')
+        pool.replace(Disk('sdb'), Disk('sdc'))
+
+        """
+        cmd = sh.zpool.bake('replace', self.name)
+
+        args = []
+        for dev in [device, new_device]:
+            args.append(dev._zpool_arg())
+
+        cmd(*args)
+        return True
+
+    def status(self):
+        """Returns status of storage pool.
+
+        pool = Pool('dpool')
+        pool.status()
+
+        """
+        ret = defaultdict(dict)
+        config = None
+        footer = None
+        skip = 1
+        for line in sh.zpool('status', self.name):
+            line = line.rstrip("\n")
+            if skip > 0:
+                skip -= 1
+                continue
+
+            if not config:
+                if line.startswith(' state:'):
+                    ret['state'] = line.strip().split(None, 1)[1]
+                elif line.startswith(' scan:'):
+                    ret['scan'] = line.strip().split(None, 1)[1]
+                elif line.startswith('config:'):
+                    skip = 2
+                    config = True
+
+            elif not footer:
+                line = line.strip("\t")
+                cols = line.strip().split(None, 4)
+                logging.debug('cols=%s', cols)
+
+                #config.update(dict(zip(['state', 'read', 'write', 'cksum'],
+                #                       cols[1:])))
+
+                if not line:
+                    footer = True
+
+            else:
+                if line.startswith('errors:'):
+                    ret['errors'] = line.split('errors: ', 1)[1]
+
+        return ret
+
+    def iostat(self, capture_length=30):
+        """Returns iostat of storage pool.
+
+        pool = Pool('dpool')
+        pool.iostat()
+
+        """
+        timestamp = False
+        skip_past_dashline = False
+        for line in sh.zpool('iostat', '-T', 'u', self.name, capture_length, 2):
+            line = line.rstrip("\n")
+
+            # Got a timestamp
+            if line.isdigit():
+                # If this is our first record, skip till we get the header seperator
+                if not timestamp:
+                    skip_past_dashline = True
+                # TZify the timestamp
+                timestamp = timezone.make_aware(
+                    datetime.fromtimestamp(int(line)),
+                    timezone.get_current_timezone())
+                continue
+
+            # If we haven't gotten the dashline yet, wait till the line after it
+            if skip_past_dashline:
+                if line.startswith('-----'):
+                    skip_past_dashline = False
+                continue
+            # Either way, let's not worry about them
+            if line.startswith('-----'):
+                continue
+
+            # If somehow we got here without a timestamp, something is probably wrong.
+            if not timestamp:
+                raise LoggedException("Got unexpected input from zpool iostat: %s", line)
+
+            # Parse iostats output
+            j = {}
+            (j['name'],
+             j['alloc'], j['free'],
+             j['iops_read'], j['iops_write'],
+             j['bandwidth_read'], j['bandwidth_write']) = line.strip().split()
+            j['timestamp'] = timestamp
+            j.pop('name')
+            return j
+
+    @classmethod
+    def list(cls, args=None, skip=None, props=None, ret=None):
+        """Lists storage pools.
+        """
+        if isinstance(args, basestring):
+            args = [args]
+        elif not args:
+            args = []
+        if not props:
+            props = ['name']
+        if not 'guid' in props:
+            props.append('guid')
+
+        ret_type = ret or dict
+        if ret_type == list:
+            ret = []
+        elif ret_type == dict:
+            ret = {}
+        else:
+            raise LoggedException("Invalid return object type '%s' specified", ret_type)
+
+        # Generate command and execute, parse output
+        cmd = sh.zpool.bake('list', '-o', ','.join(props))
+        header = None
+        for line in cmd(*args):
+            line = line.rstrip("\n")
+            if not header:
+                header = line.lower().split()
+                continue
+            cols = dict(zip(header, line.split()))
+            name = cols['name']
+
+            if skip and skip == name:
+                continue
+
+            ## FIXME This hsould be handled in __init__ of document subclass me thinks
+            obj = cls._get_obj(name=name, guid=cols['guid'], initial_props=cols)
+            # TODO Update props as well?
+
+            if ret_type == dict:
+                ret[name] = obj
+            elif ret_type == list:
+                ret.append(obj)
+
+        return ret
+
+    @classmethod
+    def _get_obj(cls, **kwargs):
+        return cls(kwargs['name'])
+
+    #@classmethod
+    #def _mongo_get_obj(cls, **kwargs):
+    #    obj, created = cls.objects.get_or_create(name=kwargs['name'],
+    #                                             guid=kwargs['guid'],
+    #                                             auto_save=False)
+    #    return obj
+
+    #def children(self, **kwargs):
+    #    kwargs['skip'] = None
+    #    return self.filesystem.children(**kwargs)
+
+    #@property
+    #def filesystem( self ):
+    #    """ Returns the matching Filesystem for this Pool """
+    #    return self._get_type('filesystem')(name=self.name)
+
+
