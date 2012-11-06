@@ -6,6 +6,22 @@ import logging
 import zfs
 import mongoengine as m
 
+"""
+Signal example
+
+# Register signal
+#import django.dispatch
+#pizza_done = django.dispatch.Signal(providing_args=["toppings", "size"])
+
+#class PizzaStore(object):
+#    def send_pizza(self, toppings, size):
+#        # Both send() and send_robust() return a list of tuple pairs [(receiver, response), ... ], representing the list of called receiver functions and their response values.
+#        # send() differs from send_robust() in how exceptions raised by receiver functions are handled. send() does not catch any exceptions raised by receivers; it simply allows errors to propagate. Thus not all receivers may be notified of a signal in the face of an error.
+#        # send_robust() catches all errors derived from Python's Exception class, and ensures all receivers are notified of the signal. If an error occurs, the error instance is returned in the tuple pair for the receiver that raised the error.
+#        pizza_done.send(sender=self, toppings=toppings, size=size)
+#        pizza_done.send_robust(sender=self, toppings=toppings, size=size)
+
+"""
 
 """
 Config

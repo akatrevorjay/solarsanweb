@@ -8,6 +8,7 @@ import zfs
 import zfs.objects
 import zfs.cmd
 import sh
+import yaml
 
 import mongoengine as m
 from datetime import datetime
@@ -17,30 +18,8 @@ from django.core.urlresolvers import reverse
 
 
 """
-Mongo
+Base
 """
-
-"""
-Signal example
-
-# Register signal
-#import django.dispatch
-#pizza_done = django.dispatch.Signal(providing_args=["toppings", "size"])
-
-#class PizzaStore(object):
-#    def send_pizza(self, toppings, size):
-#        # Both send() and send_robust() return a list of tuple pairs [(receiver, response), ... ], representing the list of called receiver functions and their response values.
-#        # send() differs from send_robust() in how exceptions raised by receiver functions are handled. send() does not catch any exceptions raised by receivers; it simply allows errors to propagate. Thus not all receivers may be notified of a signal in the face of an error.
-#        # send_robust() catches all errors derived from Python's Exception class, and ensures all receivers are notified of the signal. If an error occurs, the error instance is returned in the tuple pair for the receiver that raised the error.
-#        pizza_done.send(sender=self, toppings=toppings, size=size)
-#        pizza_done.send_robust(sender=self, toppings=toppings, size=size)
-
-"""
-
-# Start blank, add in defaults. At the bottom of this file customizations are done.
-ZFS_TYPE_MAP = {}
-ZFS_TYPE_MAP.update(zfs.objects.ZFS_TYPE_MAP)
-
 
 class ReprMixIn(object):
     def __repr__(self):
@@ -66,9 +45,6 @@ class BaseMixIn(ReprMixIn):
             return 'VOL'
         else:
             return 'TGT'
-
-#class BaseDocument(BaseMixIn, m.Document):
-#    meta = {'abstract': True,}
 
 
 """
@@ -128,14 +104,14 @@ Base
 """
 
 
-class zfsBaseDocument(BaseMixIn, m.Document):
+class _StorageBaseDocument(BaseMixIn, m.Document):
     meta = {'abstract': True,
             'ordering': ['-created']}
     name = m.StringField(required=True, unique=True)
     #type = m.StringField(required=True)
     #name = m.StringField()
     # TODO Need to make this store as a dict in parent too
-    props = m.MapField(m.EmbeddedDocumentField(Property))
+    #props = m.MapField(m.EmbeddedDocumentField(Property))
     #misc = m.DictField()
     importing = m.BooleanField()
 
@@ -148,7 +124,7 @@ class zfsBaseDocument(BaseMixIn, m.Document):
         # Apparently m.Document accepts no init *args
         # for cls in self.
         #BaseMixIn.__init__()
-        return super(zfsBaseDocument, self).__init__(**kwargs)
+        super(_StorageBaseDocument, self).__init__(**kwargs)
 
     #def get_absolute_url(self, *args):
     #    """ Gets URL for object """
@@ -168,35 +144,6 @@ class zfsBaseDocument(BaseMixIn, m.Document):
 
     def dumps(self):
         return self.__dict__
-
-
-class zfsBase(zfs.objects.zfsBase):
-    ZFS_TYPE_MAP = ZFS_TYPE_MAP
-
-    def exists(self, force_check=False):
-        """
-        Checks if object exists.
-        If force_check=True, don't assume existence if object is in DB; always check on the filesystem level.
-        """
-        if not force_check and getattr(self, 'id', None):
-            return True
-        else:
-            return super(zfsBase, self).exists()
-            #return zfs.objects.zfsBase.exists(self)
-
-    #@classmethod
-    #def _list_class(self, *args, **kwargs):
-    #    ######################################
-    #    #### FUCKIN HACKERY DONT DO THIS #####
-    #    ######################################
-    #    ret = super(zfsBase, self).list(*args, **kwargs)
-    #    if ret:
-    #        if isinstance(ret, list):
-    #            for v in ret:
-    #                if getattr(v, 'reload'):
-    #                    v.reload()
-    #    return ret
-    #    return zfs.objects.zfsBase.exists(self)
 
 
 """
@@ -219,20 +166,14 @@ class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
     modified = m.DateTimeField(default=datetime.now())
 
 
-class VDevRootDocument(VDevBaseDocument):
-    meta = {'abstract': True, }
+class VDevRoot(VDevBaseDocument):
     #pool_guid = m.StringField()
     #vdev_id = m.IntField()
     state = m.IntField()
     txg = m.IntField()
 
 
-class VDevRoot(VDevRootDocument):
-    pass
-
-
-class VDevPoolDocument(VDevBaseDocument):
-    meta = {'abstract': True, }
+class VDevPool(VDevBaseDocument):
     version = m.IntField()
     name = m.StringField()
     state = m.IntField()
@@ -242,15 +183,11 @@ class VDevPoolDocument(VDevBaseDocument):
     vdev_children = m.IntField()
     vdev_tree = m.MapField(m.EmbeddedDocumentField(VDevRoot))
 
-
-class VDevPool(VDevPoolDocument):
     #def children(self):
     #    pass
-    pass
 
 
 class VDevChildDocument(VDevBaseDocument):
-    meta = {'abstract': True, }
     ashift = m.IntField()
     asize = m.IntField()
     create_txg = m.IntField()
@@ -265,8 +202,7 @@ class VDevChildDocument(VDevBaseDocument):
 from solarsan.utils import convert_bytes_to_human
 
 
-class VDevDiskDocument(VDevChildDocument):
-    meta = {'abstract': True, }
+class VDevDisk(VDevChildDocument):
     path = m.StringField()
     whole_disk = m.IntField()
 
@@ -283,92 +219,65 @@ class VDevDiskDocument(VDevChildDocument):
         # TODO disk health
         return 'Good'
 
-    @property
-    def type(self):
-        return 'disk'
+    type = 'disk'
 
 
-class VDevDisk(VDevDiskDocument):
-    pass
-
-
-class VDevMirrorDocument(VDevChildDocument):
-    meta = {'abstract': True, }
+class VDevMirror(VDevChildDocument):
     children = m.ListField(m.EmbeddedDocumentField(VDevDisk))
 
-
-class VDevMirror(VDevMirrorDocument):
-    pass
+    type = 'mirror'
 
 
-VDEV_TYPE_MAP = {'root': None,
-                 'mirror': VDevMirror,
-                 'disk': VDevDisk, }
+_VDEV_TYPE_MAP = {'root': None,
+                  'mirror': VDevMirror,
+                  'disk': VDevDisk, }
 
 
 """
 Pool
 """
-
-from analytics.cube import CubeAnalytics
-from pypercube.expression import EventExpression, Median  # MetricExpression, CompoundMetricExpression
-#from pypercube.expression import Sum, Min, Max, Median, Distinct
+import storage.pool
 
 
-class PoolDocument(zfsBaseDocument):
+class Pool(_StorageBaseDocument, storage.pool.Pool):
     """Storage Pool Mongo Document
     """
-    meta = {'collection': 'pools',
-            'abstract': True, }
+    meta = {'collection': 'pools'}
     version = m.IntField()
     state = m.IntField()
     txg = m.IntField()
     #guid = m.StringField(unique=True, required=True, primary_key=True)
-    guid = m.StringField(unique=True)
+    #guid = m.StringField(unique=True)
+    guid = m.StringField(unique=True, required=False)
     hostname = m.StringField()
     vdevs = m.ListField(m.EmbeddedDocumentField(VDevChildDocument))
 
-    VDEV_TYPE_MAP = VDEV_TYPE_MAP
-
-    class Analytics(CubeAnalytics):
-        """Storage Pool Analytics object
-        """
-        def __init__(self, pool):
-            self.pool = pool
-
-        def _get_event_expr(self, f, **kwargs):
-            return EventExpression('pool_iostat', f).eq('pool', self.pool.name).gt(f, 0)
-
-        def _get_metric_expr(self, f, **kwargs):
-            e = kwargs.get('event_expr', self._get_event_expr(f, **kwargs))
-            return Median(e)
-
-        def iops(self, **kwargs):
-            return self._render('iops_read', 'iops_write', **kwargs)
-
-        def bandwidth(self, **kwargs):
-            return self._render('bandwidth_read', 'bandwidth_write', **kwargs)
-
-        def usage(self, **kwargs):
-            return self._render('alloc', 'free', **kwargs)
-
-    analytics = None
+    _VDEV_TYPE_MAP = _VDEV_TYPE_MAP
 
     def __init__(self, *args, **kwargs):
-        self.analytics = self.Analytics(self)
-        return super(PoolDocument, self).__init__(*args, **kwargs)
+        super(Pool, self).__init__(*args, **kwargs)
+        if getattr(self, '_init'):
+            self._init(*args, **kwargs)
+
+    @classmethod
+    def _get_obj(cls, **kwargs):
+        obj, created = cls.objects.get_or_create(name=kwargs['name'],
+                                                 auto_save=False)
+        if created:
+            logging.warning("Found unknown '%s'", obj)
+            obj.reload_zdb()
+            obj.save()
+        return obj
+
+    """
+    Children
+    """
 
     @property
     def filesystem(self):
         """Returns the matching Filesystem for this Pool
         """
-        assert self.name, "Cannot get filesystem for unnamed Pool"
-        #obj, created = self.ZFS_TYPE_MAP['filesystem'].objects.get_or_create(name=self.name, pool=self)
-        obj, created = self.ZFS_TYPE_MAP['filesystem'].objects.get_or_create(name=self.name, pool=self, auto_save=False)
-        if created:
-            obj.guid = obj.get('guid')['value']
-            obj.save()
-        return obj
+        return Filesystem._get_obj(name=self.name)
 
     def filesystems(self):
         return Filesystem.objects.filter(pool=self)
@@ -376,10 +285,17 @@ class PoolDocument(zfsBaseDocument):
     def volumes(self):
         return Volume.objects.filter(pool=self)
 
+    def children(self):
+        return list(self.filesystems()) + list(self.volumes())
+
+    """
+    Zdb Parsing
+    """
+
     def reload_zdb(self):
         """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
-        z = zfs.cmd.ZdbCommand('-C', '-v')
-        ret = z(ofilter=zfs.cmd.SafeYamlFilter)
+        zdb = sh.zdb('-C', '-v')
+        ret = yaml.safe_load(zdb.stdout)
         ret = ret[self.name]
         self._parse_zdb(ret)
 
@@ -391,15 +307,12 @@ class PoolDocument(zfsBaseDocument):
         self.state = ret['state']
         self.txg = ret['txg']
         self.version = ret['version']
-
         # Just a count
         #vdev_children = ret['vdev_children']
-
         # VDev parser
         self._parse_zdb_vdev_tree(ret['vdev_tree'])
 
     def _parse_zdb_vdev_tree(self, cur):
-
         def parse_vdev(cls, data):
             obj = {}
             data['vdev_id'] = data.pop('id', None)
@@ -411,7 +324,7 @@ class PoolDocument(zfsBaseDocument):
             return cls(**obj)
 
         obj_type = cur['type']
-        obj_cls = self.VDEV_TYPE_MAP[obj_type]
+        obj_cls = self._VDEV_TYPE_MAP[obj_type]
         if obj_cls:
             obj = parse_vdev(obj_cls, cur)
         else:
@@ -436,242 +349,96 @@ class PoolDocument(zfsBaseDocument):
             raise Exception("Could not parse VDev tree")
 
 
-class Pool(PoolDocument, zfs.objects.PoolBase, zfsBase):
-    ##
-    ## TODO Integrate these into DB
-    ##
-
-    def exists(self):
-        """Checks if pool exists.
-
-        pool = Pool('dpool')
-        pool.exists()
-
-        """
-        try:
-            rv = sh.zpool('list', self.name)
-        except rv.ErrorReturnCode_1:
-            return False
-        return True
-
-    def create(self, *devices):
-        """Creates storage pool.
-
-        pool = Pool('dpool')
-        pool.create(Mirror(Disk('sda'), Disk('sdb')),
-            Disk('sda') + Disk('sdb'),
-            Log('sda') + Log('sdb'),
-            Cache('sde'),
-            Cache('sdf'),
-            )
-
-        """
-        cmd = sh.zpool.bake('create', self.name)
-
-        args = []
-        for dev in devices:
-            if getattr(dev, '_zpool_args'):
-                args.extend(dev._zpool_args())
-            else:
-                args.append(dev._zpool_arg())
-
-        # TODO Retval check, pool check, force a Zfs import scan in bg
-        #try:
-        cmd(*args)
-        #except rv.ErrorReturnCode_1:
-        #    return False
-        return True
-
-    def add(self, device):
-        """Grow pool by adding new device.
-
-        pool = Pool('dpool')
-        pool.add(
-            Disk('sda') + Disk('sdb'),
-            )
-
-        """
-        cmd = sh.zpool.bake('add', self.name)
-
-        args = []
-        for dev in [device]:
-            if getattr(dev, '_zpool_args'):
-                args.extend(dev._zpool_args())
-            else:
-                args.append(dev._zpool_arg())
-
-        cmd(*args)
-        return True
-
-    def remove(self, device):
-        """Removes device from pool.
-
-        pool = Pool('dpool')
-        pool.remove(Disk('sdc'))
-
-        """
-        cmd = sh.zpool.bake('remove', self.name)
-
-        args = []
-        for dev in [device]:
-            args.append(dev._zpool_arg())
-
-        cmd(*args)
-        return True
-
-    def attach(self, device, new_device):
-        """Attaches new device to existing device, creating a device mirror.
-
-        pool = Pool('dpool')
-        pool.attach(Disk('sdb'), Disk('sdc'))
-
-        """
-        cmd = sh.zpool.bake('attach', self.name)
-
-        args = []
-        for dev in [device, new_device]:
-            args.append(dev._zpool_arg())
-
-        cmd(*args)
-        return True
-
-    def detach(self, device):
-        """Detaches existing device from an existing device mirror.
-
-        pool = Pool('dpool')
-        pool.detach('sdb')
-
-        """
-        cmd = sh.zpool.bake('detach', self.name)
-
-        args = []
-        for dev in [device]:
-            args.append(dev._zpool_arg())
-
-        cmd(*args)
-        return True
-
-    def status(self):
-        raise NotImplementedError
-
-    def iostat(self):
-        raise NotImplementedError
-
 """
 Dataset
 """
+import storage.dataset
 
 
-class DatasetDocument(zfsBaseDocument):
+class _DatasetBase(_StorageBaseDocument):
     meta = {'collection': 'datasets',
             'allow_inheritance': True, }
             #'abstract': True, }
     pool = m.ReferenceField(Pool,
                             reverse_delete_rule=m.CASCADE)
-    parent = m.GenericReferenceField()
-    #parent = m.ReferenceField(DatasetDocument,
+
+    #parent = m.ReferenceField(_DatasetBase,
     #                          reverse_delete_rule=m.CASCADE)
-    guid = m.StringField(unique=True)
+    parent = m.GenericReferenceField()
 
-    #def __init__(self, *args, **kwargs):
-    #    return super(DatasetDocument, self).__init__(*args, **kwargs)
+    #guid = m.StringField(unique=True)
+    guid = m.StringField()
 
-    #def children(self, **kwargs):
-    #    return super(DatasetDocument, self).children(**kwargs)
+    @classmethod
+    def _get_obj(cls, **kwargs):
+        obj, created = cls.objects.get_or_create(name=kwargs['name'],
+                                                 #pool=self,
+                                                 auto_save=False)
+        if created:
+            logging.error("Found unknown '%s'", obj)
+            obj.pool = Pool.objects.get(name=obj.pool_name)
+
+            if 'guid' in kwargs:
+                obj.guid = kwargs['guid']
+            else:
+                try:
+                    obj.guid = unicode(obj.properties['guid'])
+                except KeyError:
+                    pass
+
+            obj.save()
+        else:
+            if obj.importing:
+                logging.info("Found known '%s'", obj)
+                obj.update(unset__importing=True)
+                obj.save()
+        return obj
+
+    @classmethod
+    def _get_type(cls, objtype):
+        if objtype == 'filesystem':
+            cls = Filesystem
+        elif objtype == 'volume':
+            cls = Volume
+        elif objtype == 'snapshot':
+            cls = Snapshot
+        return cls
 
 
-class DatasetBase(zfs.objects.DatasetBase):
+class Dataset(_DatasetBase, storage.dataset.Dataset):
     pass
 
 
-class Dataset(DatasetDocument, DatasetBase, zfsBase):
-    pass
+class _SnapshottableDatasetMixin(object):
+    def snapshots(self):
+        return Snapshot.objects.filter(name__startswith='%s@' % self.name)
 
 
-class SnapshottableDatasetBase(zfs.objects.SnapshottableDatasetBase):
+class Filesystem(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Filesystem):
+    """Storage Filesystem object
+    """
+    def __init__(self, *args, **kwargs):
+        super(Filesystem, self).__init__(*args, **kwargs)
+        if getattr(self, '_init'):
+            self._init(*args, **kwargs)
+
     def filesystems(self):
-        return Filesystem.objects.filter(pool=self.pool, name__startswith='%s/' % self.name)
+        return Filesystem.objects.filter(name__startswith='%s/' % self.name)
 
     def volumes(self):
-        return Volume.objects.filter(pool=self.pool, name__startswith='%s/' % self.name)
+        return Volume.objects.filter(name__startswith='%s/' % self.name)
 
-    def snapshots(self):
-        return Snapshot.objects.filter(pool=self.pool, name__startswith='%s/' % self.name)
-
-
-class FilesystemDocument(DatasetDocument):
-    #meta = {'abstract': True,}
-    pass
+    def children(self):
+        return list(self.filesystems()) + list(self.volumes()) + list(self.snapshots())
 
 
-class FilesystemBase(zfs.objects.FilesystemBase):
-    pass
-
-
-class Filesystem(FilesystemDocument, FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase):
-#class Filesystem(FilesystemBase, SnapshottableDatasetBase, DatasetBase, zfsBase, FilesystemDocument):
-    ##
-    ## TODO Integrate these into DB
-    ##
-
-    def exists(self):
-        """Checks if filesystem exists.
-
-        filesystem = Filesystem('dpool/tmp/test0')
-        filesystem.exists()
-
-        """
-        try:
-            sh.zfs('list', '-t', 'filesystem', self.name)
-        except sh.ErrorReturnCode_1:
-            return False
-        return True
-
-    def create(self):
-        """Creates storage filesystem.
-
-        filesystem = Filesystem('dpool/tmp/test0')
-        filesystem.create()
-
-        """
-        try:
-            sh.zfs('create', self.name)
-        except sh.ErrorReturnCode_1:
-            # I'm not sure about this; the problem is if it creates the
-            # dataset, but fails to mount it for some reason, we're left with
-            # the pieces and a simple 1 retval...
-            #if self.exists():
-            #    self.destroy()
-            raise
-
-        # TODO Force scan of this in bg
-        return True
-
-    def destroy(self):
-        """Destroys storage filesystem.
-
-        filesystem = Filesystem('dpool/tmp/test0')
-        filesystem.destroy()
-
-        """
-        sh.zfs('destroy', self.name)
-        # TODO Force delete of this in bg
-        return True
-
-
-#class Filesystem(FilesystemDocument, SnapshottableDatasetBase, zfs.objects.FilesystemBase, DatasetBase, zfsBase):
-#    pass
-
-
-class SnapshotDocument(DatasetDocument):
-    #meta = {'abstract': True,}
-    pass
-
-
-class Snapshot(SnapshotDocument, zfs.objects.SnapshotBase, DatasetBase, zfsBase):
-    """Storage Dataset Snapshot object
+class Snapshot(_DatasetBase, storage.dataset.Snapshot):
+    """Storage Snapshot object
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        super(Snapshot, self).__init__(*args, **kwargs)
+        if getattr(self, '_init'):
+            self._init(*args, **kwargs)
 
 
 """
@@ -683,11 +450,16 @@ import rtslib
 from solarsan.utils import FormattedException  # LoggedException
 
 
-class VolumeDocument(DatasetDocument):
-    """Storage Volume Document
+class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
+    """Storage Volume object
     """
     #meta = {'abstract': True,}
     backstore_wwn = m.StringField()
+
+    def __init__(self, *args, **kwargs):
+        super(Volume, self).__init__(*args, **kwargs)
+        if getattr(self, '_init'):
+            self._init(*args, **kwargs)
 
     @property
     def device_path(self):
@@ -695,6 +467,12 @@ class VolumeDocument(DatasetDocument):
 
     class DoesNotExist(FormattedException):
         pass
+
+    def snapshots(self):
+        return Snapshot.objects.filter(name__startswith='%s@' % self.name)
+
+    def children(self):
+        return list(self.snapshots())
 
     def backstore(self):
         """ Returns backstore object """
@@ -732,72 +510,3 @@ class VolumeDocument(DatasetDocument):
             self.save()
         return True
 
-
-class Volume(VolumeDocument, SnapshottableDatasetBase, zfs.objects.VolumeBase, DatasetBase, zfsBase):
-    """Storage Volume object
-    """
-    ##
-    ## TODO Integrate these into DB
-    ##
-
-    def exists(self):
-        """Checks if volume exists.
-
-        volume = Volume('dpool/tmp/test0')
-        volume.exists()
-
-        """
-        try:
-            sh.zfs('list', '-t', 'volume', self.name)
-        except sh.ErrorReturnCode_1:
-            return False
-        # TODO Force scan of this in bg
-        return True
-
-    def create(self, size):
-        """Creates storage volume.
-
-        volume = Volume('dpool/tmp/test0')
-        volume.create()
-
-        """
-        # TODO Check size to make sure it's decent.
-
-        try:
-            # -V volume, -s sparse, -b blocksize, -o prop=val
-            # -p works like mkdir -p, creates non-existing parent datasets.
-            sh.zfs('create', '-V', size, self.name)
-        except sh.ErrorReturnCode_1:
-            # I'm not sure about this; the problem is if it creates the
-            # dataset, but fails to mount it for some reason, we're left with
-            # the pieces and a simple 1 retval...
-            #if self.exists():
-            #    self.destroy()
-            raise
-        # TODO Force scan of this in bg
-        return True
-
-    def destroy(self):
-        """Destroys storage volume.
-
-        volume = Volume('dpool/tmp/test0')
-        volume.destroy()
-
-        """
-        sh.zfs('destroy', self.name)
-        # TODO Force delete of this in bg
-
-
-"""
-ZFS Object Map
-"""
-
-ZFS_TYPE_MAP.update({
-    'pool': Pool,
-    'dataset': Dataset,
-    'filesystem': Filesystem,
-    'volume': Volume,
-    'snapshot': Snapshot,
-    #'properties': zfs.objects.Properties,
-    'property': Property,
-})

@@ -201,6 +201,8 @@ INSTALLED_APPS = (
     'south',
     'djsupervisor',
 
+    'devserver',
+
     #'sentry',
     #'raven.contrib.django',
     'breadcrumbs',
@@ -307,9 +309,9 @@ CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 # django-pdb
 #
 
-if DEBUG:
-    INSTALLED_APPS += ('django_pdb', )
-    MIDDLEWARE_CLASSES += ('django_pdb.middleware.PdbMiddleware', )
+#if DEBUG:
+#    INSTALLED_APPS += ('django_pdb', )
+#    MIDDLEWARE_CLASSES += ('django_pdb.middleware.PdbMiddleware', )
 
 #
 # Smuggler
@@ -318,6 +320,27 @@ if DEBUG:
 
 if DEBUG:
     INSTALLED_APPS += ('smuggler', )
+
+#
+# devserver
+#
+
+if DEBUG:
+    INSTALLED_APPS += ('devserver', )
+    MIDDLEWARE_CLASSES += ('devserver.middleware.DevServerMiddleware', )
+    DEVSERVER_MODULES = (
+        'devserver.modules.sql.SQLRealTimeModule',
+        'devserver.modules.sql.SQLSummaryModule',
+        'devserver.modules.profile.ProfileSummaryModule',
+
+        # Modules not enabled by default
+        'devserver.modules.ajax.AjaxDumpModule',
+        #'devserver.modules.profile.MemoryUseModule',
+        'devserver.modules.cache.CacheSummaryModule',
+        'devserver.modules.profile.LineProfilerModule',
+    )
+    #DEVSERVER_ARGS = ['--werkzeug', ]
+    #DEVSERVER_AUTO_PROFILE = True
 
 #
 # SpeedTracer

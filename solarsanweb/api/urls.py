@@ -52,7 +52,8 @@ urlpatterns = patterns('',
 
     #url(r'^pool(\.(?P<emitter_format>.+))$$', PoolResource),
     #url(r'^dataset(\.(?P<emitter_format>.+))$$', DatasetResource),
-    url(r'^cluster/probe(\.(?P<emitter_format>.+))$', ClusterProbeResource),
+
+    #url(r'^cluster/probe(\.(?P<emitter_format>.+))$', ClusterProbeResource),
 
     # django rest framework
     url(r'^pool/$', ListOrCreateModelView.as_view(resource=PoolResource)),
