@@ -1,0 +1,6 @@
+rabbitmqctl stop_app
+rabbitmqctl reset
+rabbitmqctl start_app
+rabbitmqctl add_user solarsan Thahnaifee1ichiu8hohv5boosaengai
+rabbitmqctl add_vhost solarsan
+rabbitmqctl set_permissions -p solarsan solarsan '.*' '.*' '.*'
