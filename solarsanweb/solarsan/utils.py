@@ -259,6 +259,7 @@ class CacheDict(dict):
     def get(self, key, default_value=None, version=None):
         key = self._prep_key(key)
         return cache.get(key, default_value, version=version)
+        #return cache.get(key, default_value)
 
     def set(self, key, value, timeout=None, version=None):
         key = self._prep_key(key)
@@ -267,10 +268,12 @@ class CacheDict(dict):
             if hasattr(timeout, '__call__'):
                 timeout = timeout(key)
         cache.set(key, value, timeout=timeout, version=version)
+        #cache.set(key, value, timeout=timeout)
 
     def delete(self, key, version=None):
         key = self._prep_key(key)
         return cache.delete(key, version=version)
+        #return cache.delete(key)
 
     def incr_version(self, key):
         key = self._prep_key(key)

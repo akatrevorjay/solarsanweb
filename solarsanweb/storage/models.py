@@ -4,22 +4,25 @@
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
-import zfs
-import zfs.objects
-import zfs.cmd
 import sh
 import yaml
 
 import mongoengine as m
 from datetime import datetime
 #from django.utils import timezone
-
 from django.core.urlresolvers import reverse
+
+import rtslib
+import storage.pool
+import storage.dataset
+from solarsan.utils import FormattedException  # LoggedException
+from solarsan.utils import convert_bytes_to_human
 
 
 """
 Base
 """
+
 
 class ReprMixIn(object):
     def __repr__(self):
@@ -45,58 +48,6 @@ class BaseMixIn(ReprMixIn):
             return 'VOL'
         else:
             return 'TGT'
-
-
-"""
-Property
-"""
-
-
-class PropertyDocument(BaseMixIn, m.EmbeddedDocument, zfs.objects.Property):
-    meta = {'abstract': True, }
-    name = m.StringField(required=True, unique=True)
-    value = m.StringField()
-    source = m.StringField()
-    #created = m.DateTimeField(default=datetime.now())
-    ## TODO Override validation and ensure modified gets updated on modification
-    #modified = m.DateTimeField(default=datetime.now())
-
-    def __repr__(self):
-        prefix = ''
-        source = ''
-        if self.source == '-':
-            prefix += 'Statistic'
-        elif self.source in ['default', 'local', 'received']:
-            prefix += self.source.capitalize()
-        elif self.source:
-            prefix += 'Inherited'
-            source = ' source=%s' % self.source
-
-        #if self.modified:
-        #    prefix += 'Unsaved'
-
-        name = prefix + self.__class__.__name__
-        return "%s(%s=%s%s)" % (name, self.name, self.value, source)
-
-    def __unicode__(self):
-        return unicode(self.value)
-
-    def __str__(self):
-        return str(self.value)
-
-    def __nonzero__(self):
-        value = self.value
-        if value == 'on':
-            return True
-        elif value:
-            return False
-
-    def __call__(self):
-        return self.__unicode__()
-
-
-class Property(PropertyDocument):
-    pass
 
 
 """
@@ -199,9 +150,6 @@ class VDevChildDocument(VDevBaseDocument):
     metaslab_shift = m.IntField()
 
 
-from solarsan.utils import convert_bytes_to_human
-
-
 class VDevDisk(VDevChildDocument):
     path = m.StringField()
     whole_disk = m.IntField()
@@ -236,7 +184,6 @@ _VDEV_TYPE_MAP = {'root': None,
 """
 Pool
 """
-import storage.pool
 
 
 class Pool(_StorageBaseDocument, storage.pool.Pool):
@@ -352,7 +299,6 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
 """
 Dataset
 """
-import storage.dataset
 
 
 class _DatasetBase(_StorageBaseDocument):
@@ -445,10 +391,6 @@ class Snapshot(_DatasetBase, storage.dataset.Snapshot):
 Volumes / Targets
 """
 
-import rtslib
-
-from solarsan.utils import FormattedException  # LoggedException
-
 
 class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
     """Storage Volume object
@@ -509,4 +451,3 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
         if self.pk:
             self.save()
         return True
-

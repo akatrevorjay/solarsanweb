@@ -448,8 +448,7 @@ PASSWORD_HASHERS = (
 #
 
 CACHES = {
-    #'default_mem': {
-    'default': {
+    'default_mem': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': PROJECT_NAME,
     },
@@ -463,12 +462,15 @@ CACHES = {
     #},
     #'default_mongodb': {
     #    'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
-    #    'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
+    #    'database': PROJECT_NAME,
+    #    #'LOCATION': '%s_django_db_cache__%s' % (PROJECT_NAME, SERVER_NAME),
+    #    'LOCATION': 'localhost',
     #},
 }
 
-#CACHES['default'] = CACHES['default_mem']
-#CACHES['default'] = CACHES['default_mongodb']
+CACHES['default'] = CACHES.pop('default_mem')
+#CACHES['default'] = CACHES.pop('default_mongodb')
+#CACHES['default'] = CACHES.pop('default_db')
 
 #
 # Template related
