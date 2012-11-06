@@ -1,11 +1,6 @@
 from tastypie import authorization
 from tastypie_mongoengine import resources, fields
-from .models import Pool, VDevDisk, Property
-
-
-class PropertyResource(resources.MongoEngineResource):
-    class Meta:
-        object_class = Property
+from .models import Pool, VDevDisk
 
 
 class VDevDiskResource(resources.MongoEngineResource):
@@ -22,7 +17,6 @@ class PoolResource(resources.MongoEngineResource):
     #customer = fields.EmbeddedDocumentField(embedded='test_project.test_app.api.resources.EmbeddedPersonResource', attribute='customer')
     #vdevs = fields.EmbeddedListField(of='test_project.test_app.api.resources.EmbeddedPersonResource', attribute='embeddedlist', full=True)
     vdevs = fields.EmbeddedListField(of='storage.api.VDevDiskResource', attribute='vdevs')
-    props = fields.EmbeddedListField(of='storage.api.PropertyResource', attribute='props')
 
 
 """

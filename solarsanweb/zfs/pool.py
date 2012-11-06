@@ -173,6 +173,9 @@ def iostat(*pools, **kwargs):
             if line.startswith('-----'):
                 skip_past_dashline = False
             continue
+        if line.startswith('-----'):
+            continue
+
 
         # If somehow we got here without a timestamp, something is probably wrong.
         if timestamp == False:
