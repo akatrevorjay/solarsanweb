@@ -421,7 +421,3 @@ class Snapshot(Dataset):
     #def filesystem(self):
     #    """ Returns the associated filesystem for this snapshot """
     #    return Filesystem(self.filesystem_name)
-
-
-#import storage.all
-#import storage.pool

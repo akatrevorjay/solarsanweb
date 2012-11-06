@@ -448,8 +448,3 @@ class Pool(storage.base.Base):
 
         cmd(*args)
         return True
-
-
-#import storage.all
-#import storage.dataset
-
