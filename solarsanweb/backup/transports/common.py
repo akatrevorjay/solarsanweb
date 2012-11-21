@@ -2,12 +2,14 @@
 
 from backup.util import run_command, progressbar, CalledProcessError
 from backup.transports.pylibssh2 import SSHRemoteClientNonBlocking
-from backup.backup_zfs import Dataset, Pool, PoolSet
+from backup.backup_zfs import PoolSet
 import os
-import time
 import subprocess
 import logging
 #import io
+
+## pipes are very, very slow using pbs/sh
+#import sh
 
 
 class ZFSConnection(object):
@@ -49,7 +51,7 @@ class ZFSConnection(object):
             return (stdout, stderr)
         else:
             self.ssh.open_channel()
-            cmd_ret = self.ssh.execute(*command)
+            self.ssh.execute(*command)
             stdout = self.ssh.read_channel_eof()
             rc = self.ssh.chan.exit_status()
             if rc == 0:
@@ -60,11 +62,11 @@ class ZFSConnection(object):
 
     def _get_poolset(self):
         if self._dirty:
-            (stdout, stderr) = self._cmd(self.command + ['list', '-r'
-                    , '-t', 'all', '-H'])
+            (stdout, stderr) = self._cmd(self.command + ['list', '-r', '-t',
+                                                         'all', '-H'])
             (stdout2, stderr2) = self._cmd(self.command + [
-                'get', '-r', '-o', 'name,value', 'creation', '-Hp'
-                ])
+                                           'get', '-r', '-o', 'name,value',
+                                           'creation', '-Hp'])
             self._poolset.parse_zfs_r_output(stdout, stdout2)
             self._dirty = False
         return self._poolset
@@ -72,8 +74,7 @@ class ZFSConnection(object):
     pools = property(_get_poolset)
 
     def create_dataset(self, name):
-        self._cmd(self.command + ['create', '-o', 'mountpoint=none',
-                    name])
+        self._cmd(self.command + ['create', '-o', 'mountpoint=none', name])
         self._dirty = True
         return self.pools.lookup(name)
 
@@ -83,28 +84,23 @@ class ZFSConnection(object):
 
     def snapshot_recursively(self, name, snapshotname):
         self._cmd(self.command + ['snapshot', '-r', '%s@%s' % (name,
-                    snapshotname)])
+                                                               snapshotname)])
         self._dirty = True
-
 
     def send(self, name, opts=None, bufsize=-1, compression=False):
         if not opts:
             opts = []
-        cmd = self.command
+        cmd = self.command + ['send'] + opts + [name]
         if not self.local:
             ssh_command = self.ssh_command
             if compression:
                 ssh_command.append('-C')
             cmd = ssh_command + cmd
-
-        cmd = cmd + ['send'] + opts + [name]
         logging.debug("Executing command '%s'", cmd)
 
-        #p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
         p = subprocess.Popen(cmd, stdin=file(os.devnull, 'r'),
                              stdout=subprocess.PIPE, bufsize=self.bufsize)
         return p
-
 
     def receive(self, name, pipe, opts=None, bufsize=-1, compression=False):
         if not opts:
@@ -126,9 +122,8 @@ class ZFSConnection(object):
                              bufsize=self.bufsize)
         return p
 
-
     def transfer(self, dest_conn, s, d, fromsnapshot=None, showprogress=False, bufsize=-1,
-                 send_opts=None, receive_opts=None, ratelimit=-1, compression=False):
+                 send_opts=None, receive_opts=None, ratelimit=-1, compression=True):
         src_conn = self
 
         if send_opts is None:
@@ -146,17 +141,19 @@ class ZFSConnection(object):
         if showprogress:
             try:
                 barprg = progressbar(pipe=sndprg.stdout,
-                        bufsize=self.bufsize, ratelimit=ratelimit)
-            except OSError, e:
+                                     bufsize=self.bufsize,
+                                     ratelimit=ratelimit)
+            except OSError:
                 os.kill(sndprg.pid, 15)
                 raise
         else:
             barprg = sndprg
 
         try:
-            rcvprg = dest_conn.receive(d, pipe=barprg.stdout, opts=['-Fu'
-                    ] + receive_opts, bufsize=self.bufsize,
-                    compression=compression)
+            rcvprg = dest_conn.receive(d, pipe=barprg.stdout,
+                                       opts=['-Fu'] + receive_opts,
+                                       bufsize=self.bufsize,
+                                       compression=compression)
         except OSError:
             os.kill(sndprg.pid, 15)
             if sndprg.pid != barprg.pid:
@@ -182,12 +179,41 @@ class ZFSConnection(object):
             if ret3:
                 raise CalledProcessError(ret3, ['clpbar'])
 
+    """ FAR TOO SLOW, sh/pbs EATS RAM/CPU FOR BREAKFAST
+    def transfer_sh(self, dest_conn,
+                 s, d,
+                 send_opts=None, receive_opts=None,
+                 bufsize=0):
+        if not send_opts:
+            send_opts = []
+        if not receive_opts:
+            receive_opts = []
 
+        zfs_send = sh.zfs.bake('send', '-Rv')
+        ssh_dest = sh.ssh.bake('root@192.168.122.167', '-i', '/opt/solarsanweb/conf/id_rsa', '-C', '--')
+        ssh_zfs_recv = ssh_dest.bake('zfs', 'receive', '-Fuv')
 
+        send_opts.append(s)
+        receive_opts.append(d)
 
+        dest_conn._dirty = True
 
-
-
+        for line in ssh_zfs_recv(zfs_send(*send_opts,
+                                          _piped=True,
+                                          #_out_bufsize=bufsize,
+                                          #_out_bufsize=512 * 1024,
+                                          _out_bufsize=0,
+                                          #_internal_bufsize=1,
+                                          _tty_out=False),
+                                 *receive_opts,
+                                 #_tty_in=False,
+                                 #_in_bufsize=512 * 1024,
+                                 #_out_bufsize=1,
+                                 #_internal_bufsize=1,
+                                 _iter=True):
+            line = line.rsplit("\n")[0]
+            logging.debug('repl: %s', line)
+    """
 
     #
     #def transfer(self, dest_conn, s, d, fromsnapshot=None, bufsize=-1, send_opts=None, receive_opts=None):

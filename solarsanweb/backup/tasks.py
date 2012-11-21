@@ -1,39 +1,142 @@
-from celery.schedules import crontab
-from celery.task import periodic_task, task, chord
-from celery.task.base import PeriodicTask, Task
-from celery.utils.log import get_task_logger
-from celery.task.sets import subtask
-logger = get_task_logger(__name__)
-#import logging as logger
-
-from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
-import datetime, time
-from datetime import timedelta, datetime
-from django.utils import timezone
+#from celery.task import periodic_task, task, chord
+#from celery.task.base import PeriodicTask, Task
+#from celery.task.sets import subtask
+#from datetime import timedelta, datetime
+#import time
+#from django.utils import timezone
 #from django.core.files.storage import Storage
+#from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+#import re
 
-import zfs as z
-#from zfs.objects import Pool, Dataset, Filesystem, Snapshot
-import re
+
+from celery.task import task, Task
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
+
+from django.conf import settings
 import os
 
 
+#from storage.models import Pool, Filesystem, Volume, Snapshot
+from solarsan.utils import FormattedException, LoggedException
 
-#class ReplicationScheduler(PeriodicTask):
-#    run_every=timedelta(hours=1)
-#    def run(self):
-#        pass
 
+from backup.util import optimize, recursive_replicate
+from backup.transports.common import ZFSConnection
 
 
 """
 Main
 """
 
+#BUFSIZE = 1048576
+BUFSIZE = 4096
+SSH_KEY = '/opt/solarsanweb/conf/id_rsa'
 
-from backup.util import optimize, recursive_replicate
-from backup.transports.common import ZFSConnection
 
+class DatasetDoesNotExist(LoggedException):
+    #def blah():
+    #    LoggedException("Source dataset '%s' does not exist" % dataset.name)
+    pass
+
+
+@task
+def replicate(source_dataset, dry_run=False):
+
+    # HACK LocSol Backup router should handle this.
+    dest_user = 'root'
+    dest_host = '192.168.122.167'
+    dest_port = 22
+    dest_base = 'dpool/dest'
+
+    src_dataset = source_dataset.name
+    dest_dataset = '%s/%s' % (dest_base, settings.SERVER_NAME)
+
+    src_conn = ZFSConnection(
+        host='localhost',
+        bufsize=BUFSIZE)
+    dest_conn = ZFSConnection(
+        username=dest_user,
+        hostname=dest_host,
+        port=dest_port,
+        password='',
+        private_key=SSH_KEY,
+        bufsize=BUFSIZE)
+
+    logger.info("Starting replication job: '%s' to '%s@%s:%s'",
+                src_dataset, dest_user, dest_host, dest_dataset)
+
+    # Check if source exists
+    logger.debug('Checking that source filesystem exists')
+    #if not source_dataset.exists():
+    #    raise DatasetDoesNotExist(source_dataset)
+    try:
+        source_dataset = src_conn.pools.lookup(src_dataset)
+    except KeyError:
+        logger.error("Source dataset '%s' does not exist.",
+                     src_dataset)
+        return False
+
+    # Check if dest exists
+    logger.debug('Checking that dest filesystem exists')
+    try:
+        destination_dataset = dest_conn.pools.lookup(dest_dataset)
+    except KeyError:
+        logger.error("Destination dataset '%s' does not exist.",
+                     dest_dataset)
+        return False
+
+    # Figure out our plan
+    operation_schedule = recursive_replicate(source_dataset,
+                                             destination_dataset)
+    # Optimize it
+    optimized_operation_schedule = optimize(operation_schedule)
+
+    # Build the send/receive initial args
+    send_opts = []
+    receive_opts = []
+    if dry_run:
+        receive_opts.append('-n')
+
+    # Run through schedule
+    for (op, src, dst, srcs, dsts) in optimized_operation_schedule:
+        logger.debug('op=%s src=%s dst=%s srcs=%s dsts=%s',
+                     op, src, dst, srcs, dsts)
+
+        source_dataset_path = src.get_path()
+        if srcs:
+            this_send_opts = ['-I', '@' + srcs.name]
+        else:
+            this_send_opts = []
+
+        if dst:
+            destination_dataset_path = dst.get_path()
+        else:
+            commonbase = os.path.commonprefix([src.get_path(),
+                                               source_dataset.get_path()])
+            remainder = src.get_path()[len(commonbase):]
+            destination_dataset_path = destination_dataset.get_path() + remainder
+        destination_snapshot_path = dsts.get_path()
+
+        logger.info("Replicating '%s' to '%s' with base=%s, target=%s",
+                    source_dataset_path, destination_dataset_path,
+                    srcs, dsts)
+
+        # finagle the send() part of transfer by
+        # manually selecting incremental sending of intermediate snapshots
+        # rather than sending of differential snapshots
+        # which would happen if we used the fromsnapshot= parameter to transfer()
+
+        src_conn.transfer(
+            dest_conn,
+            s=destination_snapshot_path,
+            d=destination_dataset_path,
+            bufsize=BUFSIZE,
+            send_opts=send_opts + this_send_opts,
+            receive_opts=receive_opts,
+        )
+
+    logger.info('Replication job complete.')
 
 
 class Backup(Task):
@@ -46,14 +149,14 @@ class Backup(Task):
         verbose = True
 
         # HACK Get this from LocSol backup router
-        dest_user = 'trevorj'
-        dest_host = '199.73.30.220'
-        dest_port = 4122
+        dest_user = 'root'
+        dest_host = '192.168.122.167'
+        dest_port = 22
         # HACK Get this from LocSol backup router
-        dest_base = 'dpool/backup/trevorj'
+        dest_base = 'dpool/dest'
 
         source_dataset = dataset.name
-        destination_dataset = '%s/%s' % (dest_base, 'fatbookho')
+        destination_dataset = '%s/%s' % (dest_base, settings.SERVER_NAME)
 
         src_conn = ZFSConnection(host='localhost', bufsize=bufsize)
         dest_conn = ZFSConnection(
@@ -63,7 +166,7 @@ class Backup(Task):
             password='',
             private_key='/opt/solarsanweb/conf/id_rsa',
             bufsize=bufsize,
-            )
+        )
 
         logger.info('Replicating %s to %s::%s', dataset.name, dest_host, dest_base)
 
@@ -78,11 +181,13 @@ class Backup(Task):
         try:
             destination_dataset = dest_conn.pools.lookup(destination_dataset)
         except KeyError:
+            import ipdb
+            ipdb.set_trace()
             logger.error('Destination dataset does not exist.')
             return False
 
         operation_schedule = recursive_replicate(source_dataset,
-                destination_dataset)
+                                                 destination_dataset)
 
         optimized_operation_schedule = optimize(operation_schedule)
 
@@ -108,14 +213,13 @@ class Backup(Task):
                 destination_dataset_path = dst.get_path()
             else:
                 commonbase = os.path.commonprefix([src.get_path(),
-                        source_dataset.get_path()])
+                                                   source_dataset.get_path()])
                 remainder = src.get_path()[len(commonbase):]
-                destination_dataset_path = destination_dataset.get_path() \
-                    + remainder
+                destination_dataset_path = destination_dataset.get_path() + remainder
             destination_snapshot_path = dsts.get_path()
 
-            logger.info('Recursively replicating %s to %s'
-                           % (source_dataset_path, destination_dataset_path))
+            logger.info('Recursively replicating %s to %s' % (
+                source_dataset_path, destination_dataset_path))
             logger.info('Base snapshot available in destination: %s' % srcs)
             logger.info('Target snapshot available in source:    %s' % dsts)
 
@@ -131,7 +235,7 @@ class Backup(Task):
                 bufsize=bufsize,
                 send_opts=send_opts + this_send_opts,
                 receive_opts=receive_opts,
-                )
+            )
 
         logger.info('Replication complete.')
 
