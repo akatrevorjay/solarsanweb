@@ -9,7 +9,7 @@
 #import re
 
 
-from celery.task import task, Task
+from celery.task import task
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
@@ -18,7 +18,7 @@ import os
 
 
 #from storage.models import Pool, Filesystem, Volume, Snapshot
-from solarsan.utils import FormattedException, LoggedException
+from solarsan.utils import LoggedException
 
 
 from backup.util import optimize, recursive_replicate
@@ -136,110 +136,11 @@ def replicate(source_dataset, dry_run=False):
             receive_opts=receive_opts,
         )
 
+    if optimized_operation_schedule and not dry_run:
+        logger.info("Rerunning replication as this run was not empty (next level)")
+        replicate.delay(source_dataset)
+
     logger.info('Replication job complete.')
-
-
-class Backup(Task):
-    def run(self, dataset, **kwargs):
-        if not dataset.exists():
-            raise Exception("Source dataset '%s' does not exist" % dataset.name)
-        #bufsize = 1048576
-        bufsize = 4096
-        dry_run = False
-        verbose = True
-
-        # HACK Get this from LocSol backup router
-        dest_user = 'root'
-        dest_host = '192.168.122.167'
-        dest_port = 22
-        # HACK Get this from LocSol backup router
-        dest_base = 'dpool/dest'
-
-        source_dataset = dataset.name
-        destination_dataset = '%s/%s' % (dest_base, settings.SERVER_NAME)
-
-        src_conn = ZFSConnection(host='localhost', bufsize=bufsize)
-        dest_conn = ZFSConnection(
-            username=dest_user,
-            hostname=dest_host,
-            port=dest_port,
-            password='',
-            private_key='/opt/solarsanweb/conf/id_rsa',
-            bufsize=bufsize,
-        )
-
-        logger.info('Replicating %s to %s::%s', dataset.name, dest_host, dest_base)
-
-        logger.debug('Checking that source filesystem exists')
-        try:
-            source_dataset = src_conn.pools.lookup(source_dataset)
-        except KeyError:
-            logger.error('Source dataset does not exist.')
-            return False
-
-        logger.debug('Checking that dest filesystem exists')
-        try:
-            destination_dataset = dest_conn.pools.lookup(destination_dataset)
-        except KeyError:
-            import ipdb
-            ipdb.set_trace()
-            logger.error('Destination dataset does not exist.')
-            return False
-
-        operation_schedule = recursive_replicate(source_dataset,
-                                                 destination_dataset)
-
-        optimized_operation_schedule = optimize(operation_schedule)
-
-        send_opts = ['-R']
-        receive_opts = []
-        if dry_run:
-            receive_opts.append('-n')
-        if verbose:
-            send_opts.append('-v')
-            receive_opts.append('-v')
-
-        for (op, src, dst, srcs, dsts) in optimized_operation_schedule:
-
-                # assert 0, (op,src,dst,srcs,dsts)
-
-            source_dataset_path = src.get_path()
-            if srcs:
-                this_send_opts = ['-I', '@' + srcs.name]
-            else:
-                this_send_opts = []
-
-            if dst:
-                destination_dataset_path = dst.get_path()
-            else:
-                commonbase = os.path.commonprefix([src.get_path(),
-                                                   source_dataset.get_path()])
-                remainder = src.get_path()[len(commonbase):]
-                destination_dataset_path = destination_dataset.get_path() + remainder
-            destination_snapshot_path = dsts.get_path()
-
-            logger.info('Recursively replicating %s to %s' % (
-                source_dataset_path, destination_dataset_path))
-            logger.info('Base snapshot available in destination: %s' % srcs)
-            logger.info('Target snapshot available in source:    %s' % dsts)
-
-            # finagle the send() part of transfer by
-            # manually selecting incremental sending of intermediate snapshots
-            # rather than sending of differential snapshots
-            # which would happen if we used the fromsnapshot= parameter to transfer()
-
-            src_conn.transfer(
-                dest_conn,
-                s=destination_snapshot_path,
-                d=destination_dataset_path,
-                bufsize=bufsize,
-                send_opts=send_opts + this_send_opts,
-                receive_opts=receive_opts,
-            )
-
-        logger.info('Replication complete.')
-
-
 
 
 #PROPS = {

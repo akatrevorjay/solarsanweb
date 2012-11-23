@@ -9,6 +9,7 @@ from spark import spark_string
 
 from pypercube import time_utils
 from datetime import timedelta, datetime
+from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -19,6 +20,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         #stop = time_utils.now()
         #start = time_utils.yesterday(stop)
+        #stop = datetime.now()
+        #stop = datetime.now() - timedelta(seconds=30)
         stop = datetime.now()
         #start = stop - timedelta(days=60)
         #step = time_utils.STEP_1_DAY
@@ -43,7 +46,7 @@ class Command(BaseCommand):
         for pool in Pool.objects.all():
         #for pool in [Pool.objects.get(name='sanweb')]:
             print ''
-            print '[pool: %s]' % pool.name
+            print '[pool: %s]  start=%s, step=%s' % (pool.name, start, step)
             for stats_func in [pool.analytics.iops,
                                pool.analytics.bandwidth,
                                pool.analytics.usage]:

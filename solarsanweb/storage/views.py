@@ -7,43 +7,13 @@ import mongogeneric
 import logging
 import json
 
+from solarsan.utils import AjaxableResponseMixin
 from solarsan.views import JsonMixIn, KwargsMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
 import storage.target
 import storage.cache
-
-
-"""
-Generic crap that should be moved from here
-"""
-
-
-class AjaxableResponseMixin(object):
-    """
-    Mixin to add AJAX support to a form.
-    Must be used with an object-based FormView (e.g. generic.edit.CreateView)
-    """
-    def render_to_json_response(self, context, **response_kwargs):
-        data = json.dumps(context)
-        response_kwargs['content_type'] = 'application/json'
-        return HttpResponse(data, **response_kwargs)
-
-    def form_invalid(self, form):
-        if self.request.is_ajax():
-            return self.render_to_json_response(form.errors, status=400)
-        else:
-            return super(AjaxableResponseMixin, self).form_invalid(form)
-
-    def form_valid(self, form):
-        if self.request.is_ajax():
-            data = {
-                'pk': form.instance.pk,
-            }
-            return self.render_to_json_response(data)
-        else:
-            return super(AjaxableResponseMixin, self).form_valid(form)
 
 
 """

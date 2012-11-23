@@ -7,8 +7,8 @@ from solarsan.utils import LoggedException
 from datetime import datetime
 from django.utils import timezone
 from analytics.cube import CubeAnalytics
-from pypercube.expression import EventExpression, Median  # MetricExpression, CompoundMetricExpression
-#from pypercube.expression import Sum, Min, Max, Median, Distinct
+from pypercube.expression import EventExpression, MetricExpression, CompoundMetricExpression
+from pypercube.expression import Sum, Min, Max, Median, Distinct
 
 import storage.base
 #import storage.device
@@ -21,11 +21,13 @@ class PoolAnalytics(CubeAnalytics):
         self._parent = parent
 
     def _get_event_expr(self, f, **kwargs):
-        return EventExpression('pool_iostat', f).eq('pool', self._parent.name).gt(f, 0)
+        #return EventExpression('pool_iostat', f).eq('pool', self._parent.name).gt(f, 0)
+        return EventExpression('pool_iostat', f).eq('pool', self._parent.name)
 
     def _get_metric_expr(self, f, **kwargs):
         e = kwargs.get('event_expr', self._get_event_expr(f, **kwargs))
         return Median(e)
+        #return Sum(e)
 
     def iops(self, **kwargs):
         return self._render('iops_read', 'iops_write', **kwargs)
