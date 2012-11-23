@@ -4,6 +4,9 @@ from django.core.management.base import BaseCommand, CommandError
 #import os
 #import re
 
+from storage.models import Pool
+
+
 class Command(BaseCommand):
     help = 'Run SolarSan Console Monitor'
     #args = 'tag'
@@ -11,39 +14,47 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # don't add django internal code
-        print "yupyup"
+        logo = ('                                                        ',
+                '               ""#                                      ',
+                '  mmm    mmm     #     mmm    m mm   mmm    mmm   m mm  ',
+                ' #   "  #" "#    #    "   #   #"  " #   "  "   #  #"  # ',
+                '  """m  #   #    #    m"""#   #      """m  m"""#  #   # ',
+                ' "mmm"  "#m#"    "mm  "mm"#   #     "mmm"  "mm"#  #   # ',
+                '                                                        ')
+        sep =  ('::::::::::::::::::::::::::::::::::::::::::::::  F L U X ',
+                )
 
+        for i in logo + sep:
+            print i
 
-from spark import spark_string
+        print ''
 
+        print ' Pool Health:'
+        for pool in Pool.objects.all():
+            alloc = pool.properties['alloc']
+            size = pool.properties['size']
+            capacity = pool.properties['capacity']
+            health = pool.properties['health']
+            print '%16s: %14s %22s' % (pool.name,
+                                         '%s/%s' % (alloc, size),
+                                         health)
 
+        crap = (
+                '',
+                ' Scheduler:                                     [  Y  ] ',
+                ' Web Interface:                                 [  Y  ] ',
+                ' Logging API:                                   [  Y  ] ',
+                ' Message Queue:                                 [  Y  ] ',
+                '',
+                ' Cluster:                                       [  Y  ] ',
+                ' - Replication: (1 x 2 = 2)                     [  Y  ] ',
+                ' - Volume Health:                               [  Y  ] ',
+                ' - Raging Data Eater:                           [  N  ] ',
+                '',
+                ' ------------------------------------------------------ ',
+                ' >> getty -> \n -> \l')
 
-logo = ('                                                        '
-        '               ""#                                      '
-        '  mmm    mmm     #     mmm    m mm   mmm    mmm   m mm  '
-        ' #   "  #" "#    #    "   #   #"  " #   "  "   #  #"  # '
-        '  """m  #   #    #    m"""#   #      """m  m"""#  #   # '
-        ' "mmm"  "#m#"    "mm  "mm"#   #     "mmm"  "mm"#  #   # '
-        '                                                        ')
-sep =  ('::::::::::::::::::::::::::::::::::::::::::::::  F L U X ')
-crap = (''
-        ' Pool Health:                                    [  Y  ] '
-        ' - dpool (59.7G/11.7T)                           [  Y  ] '
-        ' Filesystem Health:                              [  Y  ] '
-        ' - dpool/* (59.7G/11.7T)                         [  Y  ] '
-        ''
-        ' Scheduler:                                      [  Y  ] '
-        ' Web Interface:                                  [  Y  ] '
-        ' Logging API:                                    [  Y  ] '
-        ' Message Queue:                                  [  Y  ] '
-        ''
-        ' Cluster:                                        [  Y  ] '
-        ' - Replication: (1 x 2 = 2)                      [  Y  ] '
-        ' - Volume Health:                                [  Y  ] '
-        ' - Raging Data Eater:                            [  N  ] '
-        ''
-        ' ------------------------------------------------------- '
-        ' >> getty -> \n -> \l')
+        #for i in crap:
+        #    print i
 
-
-
+        print ''
