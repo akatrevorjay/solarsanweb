@@ -306,7 +306,8 @@ class _DatasetBase(_StorageBaseDocument):
             'allow_inheritance': True, }
             #'abstract': True, }
     pool = m.ReferenceField(Pool,
-                            reverse_delete_rule=m.CASCADE)
+                            reverse_delete_rule=m.CASCADE,
+                            dbref=False)
 
     #parent = m.ReferenceField(_DatasetBase,
     #                          reverse_delete_rule=m.CASCADE)
