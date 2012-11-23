@@ -46,7 +46,7 @@ class Command(BaseCommand):
         for pool in Pool.objects.all():
         #for pool in [Pool.objects.get(name='sanweb')]:
             print ''
-            print '[pool: %s]  start=%s, step=%s' % (pool.name, start, step)
+            print '[pool: %s]' % pool.name
             for stats_func in [pool.analytics.iops,
                                pool.analytics.bandwidth,
                                pool.analytics.usage]:
