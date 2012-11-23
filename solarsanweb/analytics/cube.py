@@ -29,8 +29,6 @@ class CubeAnalytics(AnalyticsBase):
         step = kwargs.get('step', None)
         if not step:
             step = time_utils.STEP_5_MIN
-        #else:
-        #    step = long(step) * 60 * 1000
         metrics = {}
         for f in args:
             m = self._get_metric_expr(f, **kwargs)
@@ -42,14 +40,18 @@ class CubeAnalytics(AnalyticsBase):
         metrics = self._get(*args, **kwargs)
         fmt = kwargs.get('format')
         if fmt == 'nvd3':
-            #for f in args:
-            #    metrics[f] = filter(lambda x: x.value, metrics[f])
             ret = [ {'key': key.replace('_', ' ').title(),
                      'values': map(lambda x: (int(x.time.strftime('%s')) * 1000, x.value or 0),
                                    metrics[key], ),
                      } for key in args ]
+        elif fmt == 'list' or fmt == list or fmt is None:
+            ret = [ {'key': key,
+                     'values': map(lambda x: (int(x.time.strftime('%s')), x.value or 0),
+                                   metrics[key], ),
+                     } for key in args ]
         else:
-            logging.warn("No such render format '%s'", fmt)
+            if fmt != 'metric':
+                logging.warn("No such render format '%s'", fmt)
             ret = metrics
         return ret
 
