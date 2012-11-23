@@ -37,9 +37,11 @@ class Command(BaseCommand):
                     continue
 
                 stat_values = stat['values']
+                stat_values.reverse()
                 #print '- %s: %s' % (stat_name, stat_values)
 
-                values = [v[1] for v in stat_values]
+                values = [v[1] for v in stat_values[:35]]
+                values.reverse()
                 #print '- %s:' % stat_name
                 print '%18s: %s' % (stat_name, spark_string(values))
 

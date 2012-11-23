@@ -29,13 +29,13 @@ class Command(BaseCommand):
 
         print ''
 
-        print ' Pool Health:'
+        print 'Pool Health:'
         for pool in Pool.objects.all():
             alloc = pool.properties['alloc']
             size = pool.properties['size']
             capacity = pool.properties['capacity']
             health = pool.properties['health']
-            print '%16s: %14s %22s' % (pool.name,
+            print '%18s: %14s %20s' % (pool.name,
                                          '%s/%s' % (alloc, size),
                                          health)
 
