@@ -62,9 +62,16 @@ def _populate_drives_choices():
         basepath = os.path.basename(path_by_id)
         if basepath.startswith('zd') or d.is_removable:
             continue
-        name = '%s parts=%s rotational=%s smart=%s' % (
-            path_by_id, d.is_partitioned, d.is_rotational, d.smart_status)
-        ret.append((name, basepath))
+
+        name = [basepath]
+        for k, v in {'label':  d.is_partitioned,
+                     'rot':    d.is_rotational,
+                     }.items():
+            if v is not None:
+                name.append(k)
+        name = '; '.join(name)
+
+        ret.append((path_by_id, name))
     return ret
 
 DRIVES_CHOICES = _populate_drives_choices()
@@ -83,7 +90,9 @@ class DeviceForm(BaseCreateForm):
             ('cache', 'Cache'),
             ('journal', 'Journal'),
         ),
-        help_text=u'Data adds to available space. Spares are used for initiating auto-replacement of a marked near-fail/failed device in a mirrored set. Cache and Journal are for performance and require very high-quality high-speed non-rotational media that has been installed and verified up-to-par at factory to ensure data reliability. Journal needs to be a redundant mirrored set as well.', )
+        help_text=u'Data adds to available space. Spares are used for initiating auto-replacement of a marked near-fail/failed device in a mirrored set.',
+        #Cache and Journal are for performance and require very selective non-rotational media to operate correctly. We always install a hefty amount stock. very high-speed non-rotational media that has been installed and verified up-to-par at factory to ensure data reliability. Journal needs to be a redundant mirrored set as well.',
+    )
 
     #def __init__(self, *args, **kwargs):
     #    super(DeviceSetForm, self).__init__(*args, **kwargs)
