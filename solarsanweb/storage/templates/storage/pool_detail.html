@@ -82,7 +82,13 @@
 
                             <li style="text-align: center;">
                                 {#<a href="#add-{{ object_type }}-modal" data-toggle="modal">add {{ object_type }}</a>#}
-                                <a href="#" class="{{ object_type }}-create">
+                                <a href="{% spaceless %}
+                                    {% if object_type == 'pool' %}
+                                        {% url 'pool-create' %}
+                                    {% else %}
+                                        #
+                                    {% endif %}
+                                    {% endspaceless %}" class="{{ object_type }}-create">
                                     <span class="label label-info">add {{ object_type }}</span>
                                 </a>
                             </li>

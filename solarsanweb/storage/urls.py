@@ -60,7 +60,7 @@ target_patterns = patterns(
 
 urlpatterns = patterns(
     'storage.views',
-    url(r'^pool/create', 'pool_create', name='pool-create'),
+    url(r'^pool/create', 'pool_create_wizard', name='pool-create'),
     url(r'^pools/(?P<slug>[\w]+)/', include(pool_patterns)),
 
     url(r'^filesystem/create', 'filesystem_create', name='filesystem-create'),

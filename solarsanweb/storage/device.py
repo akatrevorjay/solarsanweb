@@ -15,6 +15,7 @@ class _QuerySet(object):
 
     @property
     def devices(self):
+        ret = None
         if isinstance(self._devices, list):
             ret = copy(self._devices)
         if not ret:
@@ -27,17 +28,23 @@ class _QuerySet(object):
             self._devices = devices
         return devices
 
-    def __init__(self, devices=None):
+    def __init__(self, devices=None, base_filter=None, base_filter_replace=False):
         if devices:
             self._devices = devices
+        if base_filter:
+            if base_filter_replace:
+                self._base_filter = base_filter
+            else:
+                if not self._base_filter:
+                    self._base_filter = {}
+                self._base_filter.update(base_filter)
 
     def all(self):
-        return self.devices
+        return self.filter()
 
     def filter(self, **kwargs):
-        base_filter = self._base_filter
-        if base_filter:
-            kwargs.update(self.base_filter)
+        if self._base_filter:
+            kwargs.update(self._base_filter)
         return filter_by_attrs(self, **kwargs)
 
     def _device_check(self):
@@ -68,8 +75,28 @@ class _QuerySet(object):
         return reversed(self.devices)
 
 
-class Drives(_QuerySet):
-    _base_filter = {'is_drive': True}
+#class _Devices(_QuerySet):
+#    pass
+
+
+#class _Drives(_QuerySet):
+#    _base_filter = {'is_drive': True}
+
+
+Devices = _QuerySet()
+
+
+## TODO Drives should maybe not show volume devs?
+#path_by_id = d.path_by_id()
+#basepath = os.path.basename(path_by_id)
+#if basepath.startswith('zd'):
+#    continue
+
+Drives = _QuerySet(
+    base_filter={
+        'is_drive': True,
+    },
+)
 
 
 class Mirror(_QuerySet):
@@ -194,15 +221,27 @@ class _BaseDevice(object):
         return list(ret)
 
     def path_by_id(self, basename=False):
+        paths = self.paths()
         ret = None
 
-        paths = self.paths()
-        for path in paths:
-            if os.path.basename(path).startswith('scsi'):
-                ret = path
+        path_by_uuid = None
+        path_by_path = None
+        path_by_id = None
+        path_short = None
+        for x, path in enumerate(paths):
+            if path.startswith('/dev/disk/by-uuid/'):
+                path_by_uuid = path
+            elif path.startswith('/dev/disk/by-path/'):
+                path_by_path = path
+            elif path.startswith('/dev/disk/by-id/'):
+                path_by_id = path
+            if not path_short or len(path_short) > len(path):
+                path_short = path
+
+        for i in [path_by_uuid, path_by_id, path_short, path_by_path, paths[0]]:
+            if i:
+                ret = i
                 break
-        if not ret:
-            ret = paths[0]
 
         if basename:
             ret = os.path.basename(ret)
@@ -303,7 +342,7 @@ class __MirrorableDeviceMixin(object):
             return Mirror([self, other])
 
 
-class Device(object):
+class Device(_BaseDevice):
     pass
 
 

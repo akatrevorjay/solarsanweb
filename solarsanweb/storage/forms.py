@@ -1,21 +1,23 @@
 
+import os
 import logging
-from dj import forms, User
+from dj import forms, formsets, formset_factory, \
+               Form, BaseFormSet, \
+               User, \
+               reverse_lazy
 from mongodbforms import DocumentForm
-
-import storage.target
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 from storage.models import Pool, Dataset, Volume, Filesystem, Snapshot
+from storage.device import Drives, Devices
 import storage.cache
+import storage.target
 
-from dj import reverse_lazy
 
-
-class BaseForm(forms.Form):
+class BaseForm(Form):
     form_id = None
     form_class = None
     form_method = 'post'
@@ -41,37 +43,125 @@ class BaseForm(forms.Form):
 class BaseCreateForm(BaseForm):
     #form_class = 'form-horizontal'
     form_class = 'form-inline'
+
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         return super(BaseCreateForm, self).__init__(*args, **kwargs)
 
 
-class PoolCreateForm(BaseCreateForm):
+"""
+Devices
+"""
+
+
+def _populate_drives_choices():
+    ret = []
+    # TODO Check that device is not in use already
+    for d in sorted(Drives.all(), key=lambda x: x.path_by_id()):
+        path_by_id = d.path_by_id()
+        basepath = os.path.basename(path_by_id)
+        if basepath.startswith('zd') or d.is_removable:
+            continue
+        name = '%s parts=%s rotational=%s smart=%s' % (
+            path_by_id, d.is_partitioned, d.is_rotational, d.smart_status)
+        ret.append((name, basepath))
+    return ret
+
+DRIVES_CHOICES = _populate_drives_choices()
+
+
+class DeviceForm(BaseCreateForm):
+    paths = forms.MultipleChoiceField(
+        choices=DRIVES_CHOICES,
+        help_text=u'Select which connected storage devices to use for this mirrored/fault tolerant unit.', )
+
+    use_as = forms.ChoiceField(
+        choices=(
+            ('data', 'Data'),
+            #(If a storage device in a mirrored set shows signs of near-failure or fails, if a spare is available, automatically initiate disk replacement.)', 'spare'),
+            ('spare', 'Spare'),
+            ('cache', 'Cache'),
+            ('journal', 'Journal'),
+        ),
+        help_text=u'Data adds to available space. Spares are used for initiating auto-replacement of a marked near-fail/failed device in a mirrored set. Cache and Journal are for performance and require very high-quality high-speed non-rotational media that has been installed and verified up-to-par at factory to ensure data reliability. Journal needs to be a redundant mirrored set as well.', )
+
+    #def __init__(self, *args, **kwargs):
+    #    super(DeviceSetForm, self).__init__(*args, **kwargs)
+    #    self.helper.add_input(Submit('submit', 'Done'))
+
+
+class BaseDeviceFormSet(BaseFormSet):
+    def clean(self):
+        """Checks that no two devices are the same."""
+        if any(self.errors) or self.total_form_count() < 1:
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+
+        paths = []
+        for i in range(0, self.total_form_count()):
+            form = self.forms[i]
+            form_paths = form.cleaned_data['paths']
+            for path in form_paths:
+                if path in paths:
+                    raise forms.ValidationError("Devices cannot be used multiple times.")
+            titles.append(title)
+
+
+DeviceFormSet = formset_factory(
+    DeviceForm,
+    formset=BaseDeviceFormSet,
+    #can_order=True,
+    can_delete=True,
+    #extra=2,
+)
+
+
+#class ExampleBaseArticleFormSet(BaseFormSet):
+#    def clean(self):
+#        """Checks that no two articles have the same title."""
+#        if any(self.errors):
+#            # Don't bother validating the formset unless each form is valid on its own
+#            return
+#        titles = []
+#        for i in range(0, self.total_form_count()):
+#            form = self.forms[i]
+#            title = form.cleaned_data['title']
+#            if title in titles:
+#                raise forms.ValidationError("Articles in a set must have distinct titles.")
+#            titles.append(title)
+#
+#    def add_fields(self, form, index):
+#        super(ExampleBaseArticleFormSet, self).add_fields(form, index)
+#        form.fields["my_field"] = forms.CharField()
+
+
+"""
+Pools
+"""
+
+
+class PoolCreateInitialForm(BaseCreateForm):
     form_id = 'pool-create-form'
     form_action = reverse_lazy('pool-create')
 
     name = forms.CharField(
-        initial='dpool',
+        #initial='dpool',
         help_text=u'Simple name', )
-    vdevs_left = forms.MultipleChoiceField(
-        choices=(
-            ("sda", "sda"),
-            ("sdb", "sdb"),
-            ("null", "Empty"),
-        ),
-        help_text=u'Disk devices to use', )
-    vdevs_right = forms.MultipleChoiceField(
-        choices=(
-            ("sda", "sda"),
-            ("sdb", "sdb"),
-            ("null", "Empty"),
-        ),
-        help_text=u'Disk devices to use', )
-    vdevs_types = forms.MultiValueField()
 
-    def __init__(self, *args, **kwargs):
-        super(PoolCreateForm, self).__init__(*args, **kwargs)
-        self.helper.add_input(Submit('submit', 'Create Pool'))
+    redundancy_type = forms.ChoiceField(
+        choices=(
+            # Recommended, IOPs, Read,Write=Fast, Failure Tolerance:
+            # <mirrorCount>, 100%/<mirrorCount> usable)
+            ("1+0", "Striped over mirrored sets [1+0]"),
+
+            # Decent Read, Slow Write, 3*Redundant, 2*Redundant N-2 usable)
+            #("6", "Parity with two layers of failure tolerance [6]"),
+        ),
+        help_text=u'Similar to "raid level".', )
+
+    #def __init__(self, *args, **kwargs):
+    #    super(PoolCreateInitialForm, self).__init__(*args, **kwargs)
+    #    #self.helper.add_input(Submit('submit', 'Create Pool'))
 
 
 DATASET_PARENT_CHOICES = ((x.name, x.name) for x in sorted(storage.cache.filesystems(), key=lambda x: x.name))
@@ -225,13 +315,13 @@ class TargetPgLunAclCreateForm(TargetPgMixin, BaseForm):
         super(TargetPgLunAclCreateForm, self).__init__(*args, **kwargs)
 
 
-class AjaxTargetPgUpdateForm(forms.Form):
+class AjaxTargetPgUpdateForm(Form):
     enable = forms.IntegerField()
 
 
 
 
-class MessageForm(forms.Form):
+class MessageForm(Form):
     text_input = forms.CharField()
 
     textarea = forms.CharField(

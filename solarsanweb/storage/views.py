@@ -1,17 +1,18 @@
 
-from dj import generic, http, reverse, HttpResponse, render
-import storage.forms as forms
-
 #from datetime import timedelta
 import mongogeneric
 import logging
-import json
+#import json
+
+from dj import generic, http, reverse, render, SessionWizardView
+#from dj import HttpReponse
 
 from solarsan.utils import AjaxableResponseMixin
 from solarsan.views import JsonMixIn, KwargsMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
+import storage.forms as forms
 import storage.target
 import storage.cache
 
@@ -64,7 +65,7 @@ def get_object_forms():
     if 'pool' not in OBJECT_FORMS:
         OBJECT_FORMS.update({
             'pool': {
-                'create': forms.PoolCreateForm(),
+                'create': forms.PoolCreateInitialForm(),
                 #'remove': forms.PoolRemoveForm(),
             },
             'filesystem': {
@@ -108,12 +109,13 @@ pool_health = PoolHealthView.as_view()
 class PoolAnalyticsDetailView(PoolView, mongogeneric.DetailView):
     template_name = 'storage/pool_analytics.html'
     charts = ['iops', 'bandwidth', 'usage']
+
     def get_context_data(self, **kwargs):
         ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
-        time_window = int( self.kwargs.get( 'time_window', 86400 ) );
+        time_window = int(self.kwargs.get('time_window', 86400))
         if not time_window in time_window_list:
             raise http.Http404
-        name = self.kwargs.get( 'name', 'iops' )
+        name = self.kwargs.get('name', 'iops')
         if not name in self.charts:
             raise http.Http404
 
@@ -144,7 +146,7 @@ pool_analytics_render = PoolAnalyticsRenderView.as_view()
 class PoolCreateView(PoolView, mongogeneric.CreateView):
     template_name = 'storage/pool_create.html'
 
-pool_create = PoolCreateView.as_view()
+#pool_create = PoolCreateView.as_view()
 
 
 class PoolRemoveView(PoolView, mongogeneric.DeleteView):
@@ -153,14 +155,66 @@ class PoolRemoveView(PoolView, mongogeneric.DeleteView):
 pool_remove = PoolRemoveView.as_view()
 
 
+''' Form Wizard Example
+from django.http import HttpResponseRedirect
+from django.contrib.formtools.wizard.views import SessionWizardView
+
+FORMS = [("address", myapp.forms.AddressForm),
+         ("paytype", myapp.forms.PaymentChoiceForm),
+         ("cc", myapp.forms.CreditCardForm),
+         ("confirmation", myapp.forms.OrderForm)]
+
+TEMPLATES = {"address": "checkout/billingaddress.html",
+             "paytype": "checkout/paymentmethod.html",
+             "cc": "checkout/creditcard.html",
+             "confirmation": "checkout/confirmation.html"}
+
+def pay_by_credit_card(wizard):
+    """Return true if user opts to pay by credit card"""
+    # Get cleaned data from payment step
+    cleaned_data = wizard.get_cleaned_data_for_step('paytype') or {'method': 'none'}
+    # Return true if the user selected credit card
+    return cleaned_data['method'] == 'cc'
+
+
+class OrderWizard(SessionWizardView):
+    def get_template_names(self):
+        return [TEMPLATES[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        do_something_with_the_form_data(form_list)
+        return HttpResponseRedirect('/page-to-redirect-to-when-done/')
+'''
+
+
+class PoolCreateWizardView(SessionWizardView):
+    template_name = 'storage/pool_create_wizard.html'
+
+    #def done(self, form_list, **kwargs):
+    #    #do_something_with_the_form_data(form_list)
+    #
+    #    #return render_to_response('done.html', {
+    #    #    'form_data': [form.cleaned_data for form in form_list],
+    #    #})
+    #
+    #    #redirect_url = reverse(obj)
+    #    redirect_url = reverse('home')
+    #    return http.HttpResponseRedirect(redirect_url)
+
+pool_create_wizard = PoolCreateWizardView.as_view([forms.PoolCreateInitialForm,
+                                                   forms.DeviceFormSet])
+
+
 """
 Datasets
 """
+
 
 class DatasetView(BaseView):
     document = Dataset
     slug_field = 'name'
     context_object_name = 'dataset'
+
     def get_context_data(self, **kwargs):
         ctx = super(DatasetView, self).get_context_data(**kwargs)
         return ctx

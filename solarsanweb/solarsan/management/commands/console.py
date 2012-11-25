@@ -56,5 +56,3 @@ class Command(BaseCommand):
 
         #for i in crap:
         #    print i
-
-        print ''
