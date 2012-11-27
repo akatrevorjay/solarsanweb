@@ -57,7 +57,7 @@ Devices
 def _populate_drives_choices():
     ret = []
     # TODO Check that device is not in use already
-    for d in sorted(Drives.all(), key=lambda x: x.path_by_id()):
+    for d in sorted(Drives.filter(), key=lambda x: x.path_by_id()):
         path_by_id = d.path_by_id()
         basepath = os.path.basename(path_by_id)
         if basepath.startswith('zd') or d.is_removable:
@@ -67,7 +67,7 @@ def _populate_drives_choices():
         for k, v in {'label':  d.is_partitioned,
                      'rot':    d.is_rotational,
                      }.items():
-            if v is not None:
+            if v:
                 name.append(k)
         name = '; '.join(name)
 

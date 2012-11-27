@@ -3,77 +3,96 @@
 {% block object_detail %}
 <table class="table table-striped">
     <tr>
-        <td colspan="1">
-            {% if object.props.health == 'ONLINE' %}
-            <button class="btn btn-large btn-block btn-primary">
-            {% elif object.props.health == 'DEGRADED' %}
-            <div class="alert alert-warning">This object is in a <strong>DEGRADED</strong> state.</div>
-            <button class="btn btn-large btn-block btn-warning">
-            {% else %}
-            <div class="alert alert-error"><strong>ERROR</strong> This object is in an errored state.</div>
-            <a href="{{ object.get_absolute_uri }}">
-                <button class="btn btn-large btn-block btn-error">
-                {% endif %}
-                    <span class="label-caps">
-                        <small>pool</small>
-                    </span>
-                </button>
-            </a>
+        <td>
+            <a href="#"><button class="btn btn-large btn-block btn-{{ object.health_state_str }}">
+                <span class="label-caps">
+                    <small>pool</small>
+                    {{ object.properties.health }}
+                </span>
+            </button></a>
         </td>
-        <td colspan="5"><div id="graph_iops"></div></td>
+        <td colspan="5">
+            <div id="graph_iops"></div>
+        </td>
     </tr>
 
-    <tr>
-        <td>Usage: {{ object.props.capacity|default:"0b" }} ({{ object.props.allocated }})</td>
-        <td>Free: {{ object.props.free }}</td>
-        <td>Total: {{ object.props.size }}</td>
+    <tr class="definitions">
+        <td>Usage: <span>{{ object.properties.allocated }}</span> ({{ object.properties.capacity }})</td>
+        <td>Free: <span>{{ object.properties.free }}</span></td>
+        <td>Total: <span>{{ object.properties.size }}</span></td>
     </tr>
-    <tr>
-        <td>Dedup Ratio: {{ object.props.dedupratio }} ({{ object.filesystem.props.dedup }} at object level)</td>
-        <td>Upon device hardware error routine: {{ object.props.failmode }}</td>
-        <td>Replace faulty device automatically? {{ object.props.autoreplace }}</td>
-    </tr>
-    <tr>
-        <td>Grow object with device? {{ object.props.autoexpand }}</td>
-        <td>Compression Ratio: {{ object.filesystem.props.compressratio }} ({{ object.filesystem.props.compression }} at object level)</td>
-        <td>Record size: {{ object.filesystem.props.recordsize }}</td>
+    <tr class="definitions">
+        <td>Dedup Ratio: <span>{{ object.properties.dedupratio }}</span>
+            <!-- TODO bring up dedup config popover -->
+            <!--<button class="btn btn-mini btn-inverse">{{ object.properties.dedupditto }}</button>-->
+            <button class="btn btn-mini btn-inverse">{{ object.filesystem.properties.dedup }}</button>
+        </td>
+        <td>Compression Ratio: <span>{{ object.filesystem.properties.compressratio }}</span>
+            <button class="btn btn-mini btn-success">{{ object.filesystem.properties.compress }}</button>
+        </td>
+        <td>Txg: <span title="Created: {{ object.created }}; Last Updated: {{ object.modified }}">{{ object.txg }}</span>
+        </td>
     </tr>
 </table>
 
 <table class="table table-striped">
-    <caption>Device summary and status</caption>
+    <!--<caption>Device summary and status</caption>-->
     <thead>
         <tr>
             <th>Type</th>
-            <th>Device ID(s)</th>
+            <th></th>
+            <th>Device</th>
+            <th>Size</th>
             <th>Health</th>
-            <th>Tasks</th>
+            <!--<th>SMART</th>-->
+            <!--<th>Tasks</th>-->
         </tr>
     </thead>
     <tbody>
-        {% for vdev in object.vdevs %}
+        {% for pvdev in object.vdevs %}
+        {% with children=pvdev.children %}{% with rowspan=children|length %}
+        {% for vdev in children %}
+
         <tr>
-            {% if vdev.type == 'mirror' %}
-            <td rowspan="2">
-            {% else %}
-            <td>
+            {% if forloop.first %}
+            <td rowspan="{{ rowspan }}">
+                <!--<button class="btn btn-mini">-->
+                {{ pvdev.type }}
+                <!--</button>-->
+            </td>
             {% endif %}
-                {{ vdev.type }}
-            </td>
+
             <td>
-                {{ vdev.path_pretty }} | {{ vdev.vdev_id }} | {{ vdev.asize_pretty }}
+                {% if pvdev.is_parent %}
+                <!--<button class="btn btn-mini">-->
+                    {{ vdev.type }}
+                <!--</button>-->
+                {% endif %}
             </td>
+
+            <td width="80%">
+                <!-- Popover on click with device tasks, detach/attach/remove/replace, etc -->
+                <a href="#">
+                    <!--<button class="btn btn-mini {% if vdev.resilvering %}btn-warning{% else %}btn-link{% endif %}">-->
+                        {{ vdev.path_pretty }}
+                    <!--</button>-->
+                </a>
+            </td>
+
             <td>
-                <a href="{{ vdev.get_absolute_url }}">
+                {{ vdev.asize_pretty }}
+            </td>
+
+            <td>
+                <!-- Popover on click oh health status, do smart scan, etc -->
+                <a href="#">
                     <button class="btn btn-mini btn-success">{{ vdev.health }}</button>
                 </a>
             </td>
-            <td>
-                {% if vdev.type == 'mirror' %}
-                <button class="btn btn-mini btn-danger">Remove</button>
-                {% endif %}
-            </td>
         </tr>
+
+        {% endfor %}
+        {% endwith %}{% endwith %}
         {% endfor %}
 
         {% comment %}
@@ -113,8 +132,84 @@
             </td>
         </tr>
         {% endcomment %}
-   </tbody>
+    </tbody>
+
+    <!--<caption>Device summary and status</caption>-->
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th></th>
+            <th>Volume Name</th>
+            <th>Size</th>
+            <th>Health</th>
+            <!--<th>SMART</th>-->
+            <!--<th>Tasks</th>-->
+        </tr> 
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in pool.volumes %}
+        <tr>
+            <td colspan="2">volume</td>
+
+            <td width="90%">
+                <a href="{{ obj.get_absolute_url }}">
+                    {{ obj.name }}
+                </a>
+            </td>
+
+            <td>{{ obj.properties.used }}</td>
+
+            <td>
+                <!-- Popover on click oh health status, do smart scan, etc -->
+                <a href="#">
+                    <button class="btn btn-mini btn-error">Unavail</button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+    <!--<caption>Device summary and status</caption>-->
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th></th>
+            <th>Filesystem Name</th>
+            <th>Size</th>
+            <th>Health</th>
+            <!--<th>SMART</th>-->
+            <!--<th>Tasks</th>-->
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in pool.filesystems %}
+        <tr>
+            <td colspan="2">filesystem</td>
+
+            <td width="90%">
+                <a href="{{ obj.get_absolute_url }}">
+                    {{ obj.name }}
+                </a>
+            </td>
+
+            <td>{{ obj.properties.used }}</td>
+
+            <td>
+                <!-- Popover on click oh health status, do smart scan, etc -->
+                <a href="#">
+                    <button class="btn btn-mini btn-warning">Warn</button>
+                    <!--<button class="btn btn-mini btn-warning">Degraded</button>-->
+                    <!--<button class="btn btn-mini btn-danger">Del</button>-->
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
+
+
+
 
 <blockquote>
     <pre>

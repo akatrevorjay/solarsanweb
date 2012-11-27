@@ -153,6 +153,15 @@ class VDevChildDocument(VDevBaseDocument):
 class VDevDisk(VDevChildDocument):
     path = m.StringField()
     whole_disk = m.IntField()
+    type = 'disk'
+
+    @property
+    def children(self):
+        return [self]
+
+    @property
+    def is_parent(self):
+        return False
 
     @property
     def path_pretty(self):
@@ -167,13 +176,22 @@ class VDevDisk(VDevChildDocument):
         # TODO disk health
         return 'Good'
 
-    type = 'disk'
-
 
 class VDevMirror(VDevChildDocument):
     children = m.ListField(m.EmbeddedDocumentField(VDevDisk))
-
     type = 'mirror'
+
+    @property
+    def is_parent(self):
+        return True
+
+    @property
+    def asize_pretty(self):
+        return max([x.asize_pretty for x in self.children])
+
+    #@property
+    #def id(self):
+    #    return self.vdev_id
 
 
 _VDEV_TYPE_MAP = {'root': None,
@@ -227,10 +245,12 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
         return Filesystem._get_obj(name=self.name)
 
     def filesystems(self):
-        return Filesystem.objects.filter(pool=self)
+        #return Filesystem.objects.filter(pool=self)
+        return self.filesystem.filesystems()
 
     def volumes(self):
-        return Volume.objects.filter(pool=self)
+        #return Volume.objects.filter(pool=self)
+        return self.filesystem.volumes()
 
     def children(self):
         return list(self.filesystems()) + list(self.volumes())

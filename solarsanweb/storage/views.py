@@ -64,10 +64,10 @@ OBJECT_FORMS = {}
 def get_object_forms():
     if 'pool' not in OBJECT_FORMS:
         OBJECT_FORMS.update({
-            'pool': {
-                'create': forms.PoolCreateInitialForm(),
-                #'remove': forms.PoolRemoveForm(),
-            },
+            #'pool': {
+            #    'create': forms.PoolCreateInitialForm(),
+            #    #'remove': forms.PoolRemoveForm(),
+            #},
             'filesystem': {
                 'create': forms.FilesystemCreateForm(),
                 #'remove': forms.FilesystemRemoveForm(),
@@ -217,6 +217,8 @@ class DatasetView(BaseView):
 
     def get_context_data(self, **kwargs):
         ctx = super(DatasetView, self).get_context_data(**kwargs)
+        if 'object' in ctx:
+            ctx['pool'] = ctx['object'].pool
         return ctx
 
 

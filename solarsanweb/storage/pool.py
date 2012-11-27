@@ -180,8 +180,20 @@ class Pool(storage.base.Base):
             return False
         return True
 
-    def health_check(self):
+    def is_healthy(self):
         return unicode(self.properties['health']) == u'ONLINE'
+
+    def is_degraded(self):
+        return unicode(self.properties['health']) == u'DEGRADED'
+
+    #@property
+    def health_state_str(self):
+        if self.is_healthy:
+            return 'success'
+        elif self.is_degraded:
+            return 'warning'
+        else:
+            return 'error'
 
     def create(self, *devices):
         """Creates storage pool.

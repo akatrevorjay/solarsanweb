@@ -84,6 +84,21 @@ pre {
 */
 
 
+.definitions td span {
+    font-weight: bold;
+}
+
+td.defs_val {
+    text-align: right;
+    padding-right: 1em;
+    vertical-align: middle;
+}
+
+
+div.container-primary div.row {
+    margin-left: -20px;
+}
+
 
 .animated:hover {
 	-webkit-animation-duration: 1s;
