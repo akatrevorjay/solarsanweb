@@ -287,7 +287,7 @@ class Filesystem(Dataset):
         # TODO Force scan of this in bg
         return True
 
-    def destroy(self, confirm=False):
+    def destroy(self, confirm=False, recursive=False):
         """Destroys storage filesystem.
 
         filesystem = Filesystem('dpool/tmp/test0')
@@ -296,7 +296,11 @@ class Filesystem(Dataset):
         """
         if not confirm:
             raise LoggedException('Destroy of storage filesystem requires confirm=True')
-        sh.zfs('destroy', self.name)
+        opts = ['destroy']
+        if recursive:
+            opts.append('-r')
+        opts.append(self.name)
+        sh.zfs(*opts)
         # TODO Force delete of this in bg (with '-d')
         return True
 
@@ -318,7 +322,7 @@ class Volume(Dataset):
         # TODO Force scan of this in bg
         return True
 
-    def create(self, size):
+    def create(self, size, sparse=False, block_size=None, mkparent=False):
         """Creates storage volume.
 
         volume = Volume('dpool/tmp/test0')
@@ -330,7 +334,16 @@ class Volume(Dataset):
         try:
             # -V volume, -s sparse, -b blocksize, -o prop=val
             # -p works like mkdir -p, creates non-existing parent datasets.
-            sh.zfs('create', '-V', size, self.name)
+            opts = ['create']
+            if sparse:
+                opts.append('-s')
+            if block_size:
+                opts.extend(['-b', block_size])
+            if mkparent:
+                opts.append('-p')
+            opts.extend(['-V', size, self.name])
+
+            sh.zfs(*opts)
         except sh.ErrorReturnCode_1:
             # I'm not sure about this; the problem is if it creates the
             # dataset, but fails to mount it for some reason, we're left with
@@ -341,7 +354,7 @@ class Volume(Dataset):
         # TODO Force scan of this in bg
         return True
 
-    def destroy(self, confirm=False):
+    def destroy(self, confirm=False, recursive=False):
         """Destroys storage volume.
 
         volume = Volume('dpool/tmp/test0')
@@ -350,7 +363,11 @@ class Volume(Dataset):
         """
         if not confirm:
             raise LoggedException('Destroy of storage volume requires confirm=True')
-        sh.zfs('destroy', self.name)
+        opts = ['destroy']
+        if recursive:
+            opts.append('-r')
+        opts.append(self.name)
+        sh.zfs(*opts)
         # TODO Force delete of this in bg
         return True
 
@@ -394,7 +411,7 @@ class Snapshot(Dataset):
         # TODO Force scan of this in bg
         return True
 
-    def destroy(self, confirm=False):
+    def destroy(self, confirm=False, recursive=False):
         """Destroys storage snapshot.
 
         snapshot = Snapshot('dpool/tmp/test0@whoa-snap-0')
@@ -403,7 +420,11 @@ class Snapshot(Dataset):
         """
         if not confirm:
             raise LoggedException('Destroy of storage snapshot requires confirm=True')
-        sh.zfs('destroy', self.name)
+        opts = ['destroy']
+        if recursive:
+            opts.append('-r')
+        opts.append(self.name)
+        sh.zfs(*opts)
         # TODO Force delete of this in bg
         return True
 

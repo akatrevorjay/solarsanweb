@@ -437,20 +437,40 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
     def children(self):
         return list(self.snapshots())
 
+    @property
     def backstore(self):
         """ Returns backstore object """
         if not self.backstore_wwn:
-            raise self.DoesNotExist("Could not get backstore for Volume '%s' as it has no backstore_wwn attribute", self.name)
+            #raise self.DoesNotExist("Could not get backstore for Volume '%s' as it has no backstore_wwn attribute", self.name)
+            self._create_backstore()
+
         root = rtslib.RTSRoot()
         for so in root.storage_objects:
             if so.wwn == self.backstore_wwn:
                 return so
-        #raise LoggedException("Could not get block backstore for Volume '%s' specified as wwn=%s as it does not exist", self.name, self.backstore_wwn or None)
-        return None
 
-    def create_backstore(self, **kwargs):
+        logging.error("Could not get block backstore for Volume '%s' specified as wwn=%s as it does not exist.. " +
+                      "Trying to create new one instead.", self.name, self.backstore_wwn or None)
+        orig_wwn = self.backstore_wwn
+        try:
+            #return self._create_backstore(wwn=orig_wwn)
+            return self._create_backstore()
+        except rtslib.RTSLibError:
+            try:
+                self.backstore_wwn = orig_wwn
+                if self.pk:
+                    self.save()
+            finally:
+                logging.error("Could not create a new block backstore for Volume '%s', giving up..", self.name)
+                return None
+
+        #logging.error("Created a new block backstore for Volume '%s' specified as wwn=%s.", self.name, self.backstore_wwn or None)
+        #return None
+
+    def _create_backstore(self, **kwargs):
         """ Creates a backing storage object for target usage """
-        assert not self.backstore_wwn
+        if not 'wwn' in kwargs or kwargs.get('wwn') != self.backstore_wwn:
+            assert not self.backstore_wwn
         if not 'name' in kwargs:
             kwargs['name'] = self.name.replace('/', '_')
         name = kwargs.pop('name')
@@ -463,9 +483,9 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
             self.save()
         return backstore
 
-    def delete_backstore(self):
+    def _delete_backstore(self):
         """ Delete a backing storage object """
-        backstore = self.backstore()
+        backstore = self.backstore
         logging.info("Deleting block backstore for volume '%s' specified as wwn=%s", self, backstore.wwn)
         backstore.delete()
         self.backstore_wwn = None

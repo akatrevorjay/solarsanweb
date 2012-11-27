@@ -7,7 +7,7 @@ import logging
 from dj import generic, http, reverse, render, SessionWizardView
 #from dj import HttpReponse
 
-from solarsan.utils import AjaxableResponseMixin
+from solarsan.utils import AjaxableResponseMixin, convert_human_to_bytes, convert_bytes_to_human
 from solarsan.views import JsonMixIn, KwargsMixIn
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
@@ -271,7 +271,6 @@ class FilesystemRemoveView(FilesystemView, DatasetDeleteView, mongogeneric.Delet
 filesystem_remove = FilesystemRemoveView.as_view()
 
 
-
 """
 Volumes
 """
@@ -292,8 +291,14 @@ class VolumeHealthView(VolumeView, DatasetHealthView, mongogeneric.DetailView):
         context = super(VolumeHealthView, self).get_context_data(**kwargs)
         #context['targets'] = storage.target.target_list(fabric_module=fabric)
         context['targets'] = storage.target.target_list(cached=True)
-        #context['backstore'] = backstore = self.object.backstore()
-        context['luns'] = list(context['object'].backstore().attached_luns)
+        #context['backstore'] = backstore = self.object.backstore
+        context['backstore'] = context['object'].backstore
+        if context['backstore']:
+            context['luns'] = list(context['backstore'].attached_luns)
+        else:
+            # Flash a warning through django's session flash
+            pass
+
         return context
 
 volume_health = VolumeHealthView.as_view()
@@ -316,23 +321,24 @@ class VolumeCreateView(VolumeView, DatasetCreateView, generic.edit.FormView):
         parent = form.cleaned_data.get('parent')
         basename = form.cleaned_data.get('name')
         name = '%s/%s' % (parent, basename)
-        #paths = name.split('/')
+
+        # Make sure size is given in correct and safe format
+        size = form.cleaned_data.get('size')
+        size = int(convert_human_to_bytes(size))
+        size = convert_bytes_to_human(size)
 
         parent = Filesystem.objects.get(name=parent)
         pool = parent.pool
 
         logging.info("Creating Volume '%s' with parent='%s'", name, parent)
 
-        # Hackery
-        volume = storage.dataset.Volume(name)
-        volume.create()
-
         obj = Volume()
         obj.pool = pool
         obj.name = name
+        obj.create(size)
         obj.save()
 
-        self.success_url = reverse(obj)
+        self.success_url = obj.get_absolute_url()
         return super(VolumeCreateView, self).form_valid(form)
 
 volume_create = VolumeCreateView.as_view()
@@ -342,7 +348,6 @@ class VolumeRemoveView(VolumeView, DatasetDeleteView, mongogeneric.DeleteView):
     template_name = 'storage/filesystem_remove.html'
 
 volume_remove = VolumeRemoveView.as_view()
-
 
 
 """
@@ -462,7 +467,9 @@ target_pg_create = TargetPgCreateView.as_view()
 
 
 class TargetPgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.FormView):
+    #template_name = 'base_site.html'
     form_class = forms.AjaxTargetPgUpdateForm
+
     def form_valid(self, form):
         # This method is called when valid form data has been POSTed.
         # It should return an HttpResponse.
@@ -525,9 +532,8 @@ class TargetPgVolumeLunMapView(BaseView, generic.edit.FormView):
             tpg = rtslib.TPG(target, tag=tpg_tag, mode='create')
 
         try:
-            so = volume.backstore()
+            so = volume.backstore
         except Volume.DoesNotExist:
-            so = volume.create_backstore()
             volume.save()
 
         lun_id = form.cleaned_data['lun']

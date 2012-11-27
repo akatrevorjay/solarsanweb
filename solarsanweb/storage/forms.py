@@ -198,6 +198,9 @@ class VolumeCreateForm(BaseDatasetCreateForm):
     form_id = 'volume-create-form'
     form_action = reverse_lazy('volume-create')
 
+    size = forms.CharField(
+        help_text=u'Amount of space to designate to the volume. Please use T,G,M,K.', )
+
     def __init__(self, *args, **kwargs):
         super(VolumeCreateForm, self).__init__(*args, **kwargs)
         self.helper.add_input(Submit('submit', 'Create Volume'))
