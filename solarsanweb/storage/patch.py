@@ -139,11 +139,15 @@ def patch_rtslib():
             target = getattr(tpg, 'parent_target', None)
             if not target or not tpg:
                 return super(self.__class__, self).__repr__()
-            tag = getattr(tpg, 'tag', None)
-            node_wwn = getattr(self, 'node_wwn', None)
-            auth_target = getattr(self, 'authenticate_target', None)
-            luns = list(getattr(self, 'mapped_luns', []))
-            sessions = getattr(self, 'session', None)
+            tag = getattr(tpg, 'tag', 'None')
+            node_wwn = getattr(self, 'node_wwn', 'None')
+            auth_target = getattr(self, 'authenticate_target', 'null')
+            luns = list(getattr(self, 'mapped_luns', 'null'))
+            sessions = getattr(self, 'session', 'null')
+            if not  sessions: sessions = ['carp']
+            if not  luns: luns = ['carp']
+
+
             return '<%s node_wwn=%s, auth_target=%s, luns=%s, sessions=%s tpg_tag=%s, target_wwn=%s>' % \
                 (self.__class__.__name__, node_wwn, auth_target, len(luns), len(sessions), tag, target.wwn)
         setattr(cls, '__repr__', __repr__)
