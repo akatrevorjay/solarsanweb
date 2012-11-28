@@ -145,7 +145,7 @@ def patch_rtslib():
             luns = list(getattr(self, 'mapped_luns', []))
             sessions = getattr(self, 'session', None)
             return '<%s node_wwn=%s, auth_target=%s, luns=%s, sessions=%s tpg_tag=%s, target_wwn=%s>' % \
-                (self.__class__.__name__, node_wwn, auth_target, len(luns), len(session), tag, target.wwn)
+                (self.__class__.__name__, node_wwn, auth_target, len(luns), len(sessions), tag, target.wwn)
         setattr(cls, '__repr__', __repr__)
 
 patch_rtslib()
