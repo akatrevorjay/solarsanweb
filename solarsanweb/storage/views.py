@@ -7,14 +7,16 @@ import logging
 from dj import generic, http, reverse, render, SessionWizardView
 #from dj import HttpReponse
 
-from solarsan.utils import AjaxableResponseMixin, convert_human_to_bytes, convert_bytes_to_human
-from solarsan.views import JsonMixIn, KwargsMixIn
+from solarsan.utils import convert_human_to_bytes, convert_bytes_to_human
+from solarsan.views import JsonMixIn, KwargsMixIn, AjaxableResponseMixin
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
 import storage.forms as forms
 import storage.target
 import storage.cache
+
+import rtslib
 
 
 """
@@ -99,19 +101,19 @@ class PoolView(BaseView):
     #    return ctx
 
 
-class PoolHealthView(PoolView, mongogeneric.DetailView):
+class PoolDetailView(PoolView, mongogeneric.DetailView):
     template_name = 'storage/pool_health.html'
     pass
 
-pool_health = PoolHealthView.as_view()
+pool_health = PoolDetailView.as_view()
 
 
-class PoolAnalyticsDetailView(PoolView, mongogeneric.DetailView):
+class PoolAnalyticsView(PoolView, mongogeneric.DetailView):
     template_name = 'storage/pool_analytics.html'
     charts = ['iops', 'bandwidth', 'usage']
 
     def get_context_data(self, **kwargs):
-        ctx = super(PoolAnalyticsDetailView, self).get_context_data(**kwargs)
+        ctx = super(PoolAnalyticsView, self).get_context_data(**kwargs)
         time_window = int(self.kwargs.get('time_window', 86400))
         if not time_window in time_window_list:
             raise http.Http404
@@ -127,10 +129,10 @@ class PoolAnalyticsDetailView(PoolView, mongogeneric.DetailView):
                     'graph': name, })
         return ctx
 
-pool_analytics = PoolAnalyticsDetailView.as_view()
+pool_analytics = PoolAnalyticsView.as_view()
 
 
-class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
+class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsView):
     def get_json_data(self, **kwargs):
         ctx = self.get_context_data(**kwargs)
         obj = self.object
@@ -143,6 +145,7 @@ class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsDetailView):
 pool_analytics_render = PoolAnalyticsRenderView.as_view()
 
 
+""" TODO
 class PoolCreateView(PoolView, mongogeneric.CreateView):
     template_name = 'storage/pool_create.html'
 
@@ -153,38 +156,7 @@ class PoolRemoveView(PoolView, mongogeneric.DeleteView):
     template_name = 'storage/pool_remove.html'
 
 pool_remove = PoolRemoveView.as_view()
-
-
-''' Form Wizard Example
-from django.http import HttpResponseRedirect
-from django.contrib.formtools.wizard.views import SessionWizardView
-
-FORMS = [("address", myapp.forms.AddressForm),
-         ("paytype", myapp.forms.PaymentChoiceForm),
-         ("cc", myapp.forms.CreditCardForm),
-         ("confirmation", myapp.forms.OrderForm)]
-
-TEMPLATES = {"address": "checkout/billingaddress.html",
-             "paytype": "checkout/paymentmethod.html",
-             "cc": "checkout/creditcard.html",
-             "confirmation": "checkout/confirmation.html"}
-
-def pay_by_credit_card(wizard):
-    """Return true if user opts to pay by credit card"""
-    # Get cleaned data from payment step
-    cleaned_data = wizard.get_cleaned_data_for_step('paytype') or {'method': 'none'}
-    # Return true if the user selected credit card
-    return cleaned_data['method'] == 'cc'
-
-
-class OrderWizard(SessionWizardView):
-    def get_template_names(self):
-        return [TEMPLATES[self.steps.current]]
-
-    def done(self, form_list, **kwargs):
-        do_something_with_the_form_data(form_list)
-        return HttpResponseRedirect('/page-to-redirect-to-when-done/')
-'''
+"""
 
 
 class PoolCreateWizardView(SessionWizardView):
@@ -230,7 +202,7 @@ class DatasetDeleteView(object):
     template_name = 'storage/dataset_delete.html'
 
 
-class DatasetHealthView(object):
+class DatasetDetailView(object):
     template_name = 'storage/dataset_health.html'
 
 
@@ -247,10 +219,10 @@ class FilesystemView(DatasetView):
     document = Filesystem
 
 
-class FilesystemHealthView(FilesystemView, DatasetHealthView, mongogeneric.DetailView):
+class FilesystemDetailView(FilesystemView, DatasetDetailView, mongogeneric.DetailView):
     template_name = 'storage/filesystem_health.html'
 
-filesystem_health = FilesystemHealthView.as_view()
+filesystem_health = FilesystemDetailView.as_view()
 
 
 class FilesystemSnapshotsView(FilesystemView, DatasetSnapshotsView, mongogeneric.DetailView):
@@ -284,11 +256,11 @@ class VolumeView(DatasetView):
         return context
 
 
-class VolumeHealthView(VolumeView, DatasetHealthView, mongogeneric.DetailView):
+class VolumeDetailView(VolumeView, DatasetDetailView, mongogeneric.DetailView):
     template_name = 'storage/volume_health.html'
 
     def get_context_data(self, **kwargs):
-        context = super(VolumeHealthView, self).get_context_data(**kwargs)
+        context = super(VolumeDetailView, self).get_context_data(**kwargs)
         #context['targets'] = storage.target.target_list(fabric_module=fabric)
         context['targets'] = storage.target.target_list(cached=True)
         #context['backstore'] = backstore = self.object.backstore
@@ -301,7 +273,7 @@ class VolumeHealthView(VolumeView, DatasetHealthView, mongogeneric.DetailView):
 
         return context
 
-volume_health = VolumeHealthView.as_view()
+volume_health = VolumeDetailView.as_view()
 
 
 class VolumeSnapshotsView(VolumeView, DatasetSnapshotsView, mongogeneric.DetailView):
@@ -435,7 +407,7 @@ class TargetDetailView(BaseView, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(TargetDetailView, self).get_context_data(**kwargs)
 
-        form = forms.TargetPgVolumeLunMapForm()
+        form = forms.TpgVolumeLunMapForm()
         form.helper.form_action = reverse('target-pg-volume-lun-map', kwargs={'slug': self.object.wwn})
         context['target_pg_volume_lun_map_form'] = form
 
@@ -443,11 +415,23 @@ class TargetDetailView(BaseView, generic.DetailView):
         form.helper.form_action = reverse('target-remove', kwargs={'slug': self.object.wwn})
         context['target_remove_form'] = form
 
+        root = rtslib.RTSRoot()
+        context.update(dict(
+            rtslib_config_dump=root.dump(),
+            rtslib_targets=list(root.targets),
+            rtslib_tpgs=list(root.tpgs),
+            rtslib_luns=list(root.luns),
+            rtslib_node_acls=list(root.node_acls),
+            network_portals=list(root.network_portals),
+            rtslib_sessions=list(root.sessions),
+            rtslib_fabric_modules=list(root.fabric_modules),
+            rtslib_path=root.path,
+            rtslib_storage_objects=list(root.storage_objects),
+            ))
+
         return context
 
 target_detail = TargetDetailView.as_view()
-
-
 
 
 """
@@ -455,56 +439,61 @@ Target Portal Group
 """
 
 
-class TargetPgCreateView(KwargsMixIn, generic.edit.CreateView):
+class TpgCreateView(KwargsMixIn, generic.edit.CreateView):
     template_name = 'storage/target_pg_create.html'
-    form_class = forms.TargetPgCreateForm
+    form_class = forms.TpgCreateForm
 
     def form_valid(self, form):
-        logging.debug('Creating TargetPg from=%s', form)
-        return super(TargetPgCreateView, self).form_valid(form)
+        logging.debug('Creating Tpg from=%s', form)
+        return super(TpgCreateView, self).form_valid(form)
 
-target_pg_create = TargetPgCreateView.as_view()
+target_pg_create = TpgCreateView.as_view()
 
 
-class TargetPgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.FormView):
-    #template_name = 'base_site.html'
-    form_class = forms.AjaxTargetPgUpdateForm
+class TpgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.BaseFormView):
+    form_class = forms.AjaxTpgUpdateForm
+
+    target_wwn = None
+    target = None
+    tag = None
+    tpg = None
+
+    def render_to_response(self, ctx, **kwargs):
+        #assert not self.request.is_ajax()
+        if self.request.is_ajax():
+            ctx.pop('form')
+            return self.render_to_json_response(ctx, **kwargs)
+
+    def get_object(self):
+        self.target_wwn = self.kwargs['slug']
+        self.target = storage.target.get(self.target_wwn)
+
+        self.tag = int(self.kwargs['tag'])
+        self.tpg = self.target.get_tpg(self.tag)
+        return self.tpg
 
     def form_valid(self, form):
-        # This method is called when valid form data has been POSTed.
-        # It should return an HttpResponse.
-        assert self.request.is_ajax()
         data = form.cleaned_data
-
-        target_wwn = self.kwargs['slug']
-        target = storage.target.get(target_wwn)
-
-        tag = int(self.kwargs['tag'])
-        tpg = target.get_tpg(tag)
-
+        tpg = self.get_object()
         if not tpg:
-            raise Exception("Could not find TPG with tag='%s' for Target with '%s'",  tag, target)
+            raise Exception("Could not find tpg%d for Target '%s'",
+                            self.tag, self.target)
 
         logging.info("Updating TPG: '%s'", data)
-
         enable = int(data['enable'])
         if enable == 1:
             tpg.enable = 1
         else:
             tpg.enable = 0
 
-        ret = {'enable': tpg.enable}
-        return self.render_to_json_response(ret)
+        return self.render_to_response(dict(enable=tpg.enable))
 
-target_pg_update = TargetPgUpdateView.as_view()
-
-
-import rtslib
+target_pg_update = TpgUpdateView.as_view()
 
 
-class TargetPgVolumeLunMapView(BaseView, generic.edit.FormView):
+class TpgVolumeLunMapView(BaseView, generic.edit.FormView):
     template_name = 'storage/target_create.html'
-    form_class = forms.TargetPgVolumeLunMapForm
+    form_class = forms.TpgVolumeLunMapForm
     slug_url_kwarg = 'slug'
 
     def get_object(self, queryset=None):
@@ -525,11 +514,11 @@ class TargetPgVolumeLunMapView(BaseView, generic.edit.FormView):
         target = self.get_object()
         volume = Volume.objects.get(pk=volume)
 
-        tpg_tag = int(form.cleaned_data['tpg_tag'])
+        tag = int(form.cleaned_data['tag'])
         try:
-            tpg = target.get_tpg(tpg_tag)
+            tpg = target.get_tpg(tag)
         except:
-            tpg = rtslib.TPG(target, tag=tpg_tag, mode='create')
+            tpg = rtslib.TPG(target, tag=tag, mode='create')
 
         try:
             so = volume.backstore
@@ -538,16 +527,37 @@ class TargetPgVolumeLunMapView(BaseView, generic.edit.FormView):
 
         lun_id = form.cleaned_data['lun']
 
-        logging.info("Creating Target PG Lun Mapping with volume='%s' "
-                        + "wwn='%s' tpg='%s' lun='%s' so='%s'",
-                        volume, target, tpg_tag, lun_id, so)
+        logging.info("Creating Target PG Lun Mapping with volume='%s' " +
+                     "wwn='%s' tpg='%s' lun='%s' so='%s'",
+                     volume, target, tag, lun_id, so)
 
         lun = rtslib.LUN(tpg, lun=lun_id, storage_object=so)
 
         self.success_url = reverse('target', kwargs={'slug': target.wwn})
-        return super(TargetPgVolumeLunMapView, self).form_valid(form)
+        return super(TpgVolumeLunMapView, self).form_valid(form)
 
-target_pg_volume_lun_map = TargetPgVolumeLunMapView.as_view()
+target_pg_volume_lun_map = TpgVolumeLunMapView.as_view()
+
+
+class TargetCreateWizardView(SessionWizardView):
+    template_name = 'storage/target_create_wizard.html'
+
+    #def done(self, form_list, **kwargs):
+    #    #do_something_with_the_form_data(form_list)
+    #
+    #    #return render_to_response('done.html', {
+    #    #    'form_data': [form.cleaned_data for form in form_list],
+    #    #})
+    #
+    #    #redirect_url = reverse(obj)
+    #    redirect_url = reverse('home')
+    #    return http.HttpResponseRedirect(redirect_url)
+
+target_create_wizard = TargetCreateWizardView.as_view([forms.TargetCreateForm,
+                                                       forms.TpgCreateForm,
+                                                       forms.VolumeLunMapInitialForm,
+                                                       forms.TpgLunAclCreateForm,
+                                                       ])
 
 
 
@@ -564,7 +574,7 @@ Examples
 def target_portal_group_update2(request, slug=None, tag=None):
     if request.method == 'POST':  # If the form has been submitted...
         status = None
-        form = forms.TargetPgForm(request.POST)  # A form bound to the POST data
+        form = forms.TpgForm(request.POST)  # A form bound to the POST data
         if form.is_valid():  # All validation rules pass
             # Process the data in form.cleaned_data
             form.save()
@@ -577,7 +587,7 @@ def target_portal_group_update2(request, slug=None, tag=None):
                                   status=status)
 
     else:
-        form = forms.TargetPgForm()   # An unbound form
+        form = forms.TpgForm()   # An unbound form
         #form.target_wwn = target.wwn
         #form.tag = target_portal_group.tag
 
@@ -600,3 +610,36 @@ class ContactView(generic.FormView):
         form.send_email()
         return super(ContactView, self).form_valid(form)
 """
+
+
+
+''' Form Wizard Example
+from django.http import HttpResponseRedirect
+from django.contrib.formtools.wizard.views import SessionWizardView
+
+FORMS = [("address", myapp.forms.AddressForm),
+         ("paytype", myapp.forms.PaymentChoiceForm),
+         ("cc", myapp.forms.CreditCardForm),
+         ("confirmation", myapp.forms.OrderForm)]
+
+TEMPLATES = {"address": "checkout/billingaddress.html",
+             "paytype": "checkout/paymentmethod.html",
+             "cc": "checkout/creditcard.html",
+             "confirmation": "checkout/confirmation.html"}
+
+def pay_by_credit_card(wizard):
+    """Return true if user opts to pay by credit card"""
+    # Get cleaned data from payment step
+    cleaned_data = wizard.get_cleaned_data_for_step('paytype') or {'method': 'none'}
+    # Return true if the user selected credit card
+    return cleaned_data['method'] == 'cc'
+
+
+class OrderWizard(SessionWizardView):
+    def get_template_names(self):
+        return [TEMPLATES[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        do_something_with_the_form_data(form_list)
+        return HttpResponseRedirect('/page-to-redirect-to-when-done/')
+'''

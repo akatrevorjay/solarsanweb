@@ -22,7 +22,7 @@ pool_analytics_patterns = patterns(
 pool_patterns = patterns(
     'storage.views',
     url(r'^$', 'pool_health', name='pool'),
-    url(r'^/delete$', 'pool_remove', name='pool-remove'),
+    #url(r'^/delete$', 'pool_remove', name='pool-remove'),
     url(r'^health/', 'pool_health', name='pool-health'),
     url(r'^analytics/', include(pool_analytics_patterns)),
     url(r'^analytics/(?P<name>[\w_]+)(?:/(?P<time_window>\d+))?/',

@@ -58,12 +58,37 @@ class KwargsMixIn(object):
         self.args = args
         self.kwargs = kwargs
         return super(KwargsMixIn, self).get(request, *args, **kwargs)
-    #def post(self, request, *args, **kwargs):
-    #    self.request = request
-    #    self.args = args
-    #    self.kwargs = kwargs
-    #    return super(KwargsMixIn, self).post(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        return super(KwargsMixIn, self).post(request, *args, **kwargs)
 
+
+class AjaxableResponseMixin(object):
+    """
+    Mixin to add AJAX support to a form.
+    Must be used with an object-based FormView (e.g. generic.edit.CreateView)
+    """
+    def render_to_json_response(self, context, **response_kwargs):
+        data = json.dumps(context)
+        response_kwargs['content_type'] = 'application/json'
+        return http.HttpResponse(data, **response_kwargs)
+
+    def form_invalid(self, form):
+        if self.request.is_ajax():
+            return self.render_to_json_response(form.errors, status=400)
+        else:
+            return super(AjaxableResponseMixin, self).form_invalid(form)
+
+    def form_valid(self, form):
+        if self.request.is_ajax():
+            data = {
+                'pk': form.instance.pk,
+            }
+            return self.render_to_json_response(data)
+        else:
+            return super(AjaxableResponseMixin, self).form_valid(form)
 
 
 class JsonMixIn(object):

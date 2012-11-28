@@ -85,18 +85,26 @@ pre {
 
 
 .definitions td span {
-    font-weight: bold;
+    /*font-weight: bold;*/
+}
+
+table.no-vertical-padding {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
 
 td.defs_val {
     text-align: right;
     padding-right: 1em;
     vertical-align: middle;
+    width: 3em;
 }
 
-
-div.container-primary div.row {
+div.container-primary > div.row {
     margin-left: -20px;
+    padding-top: 10px;
 }
 
 

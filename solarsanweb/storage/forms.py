@@ -199,7 +199,7 @@ class VolumeCreateForm(BaseDatasetCreateForm):
     form_action = reverse_lazy('volume-create')
 
     size = forms.CharField(
-        help_text=u'Amount of space to designate to the volume. Please use T,G,M,K.', )
+        help_text=u'Amount of space to designate to the volume. Suffixes are supported, ie 2T, 100G.', )
 
     def __init__(self, *args, **kwargs):
         super(VolumeCreateForm, self).__init__(*args, **kwargs)
@@ -210,50 +210,54 @@ TARGET_CHOICES = tuple((x.wwn, x.short_wwn()) for x in storage.cache.targets())
 VOLUME_CHOICES = tuple((x.pk, x.name) for x in storage.cache.volumes())
 
 
-class TargetPgVolumeLunMapForm(BaseCreateForm):
+class VolumeLunMapInitialForm(BaseCreateForm):
+    target_wwn = forms.ChoiceField(
+        choices=TARGET_CHOICES,
+        help_text=u'Identifier of existing target.', )
+
+
+# FIXME Generate choices list, but this should be gotten via ajax
+LUN_CHOICES = []
+for x in xrange(0, 9):
+    LUN_CHOICES.append(('%d' % x, 'lun%d' % x))
+
+
+class LunForm(BaseCreateForm):
+    lun = forms.ChoiceField(
+        choices=LUN_CHOICES,
+        help_text=u'Logical Unit Number', )
+
+    def __init__(self, *args, **kwargs):
+        super(LunForm, self).__init__(*args, **kwargs)
+        #luns = LUN_CHOICES
+        #self.fields['lun'].choices.extend(luns)
+
+
+# FIXME Generate choices list, but this should be gotten via ajax
+TPG_TAG_CHOICES = []
+for x in xrange(1, 10):
+    TPG_TAG_CHOICES.append(('%d' % x, 'tpg%d' % x))
+
+
+class TpgForm(BaseCreateForm):
+    tag = forms.ChoiceField(
+        choices=TPG_TAG_CHOICES,
+        help_text=u'Target Portal Group', )
+
+    def __init__(self, *args, **kwargs):
+        super(TpgForm, self).__init__(*args, **kwargs)
+        #tags = TPG_TAG_CHOICES
+        #self.fields['tag'].choices.extend(tags)
+
+
+class TpgVolumeLunMapForm(TpgForm, LunForm):
     volume = forms.ChoiceField(
         choices=VOLUME_CHOICES,
         help_text=u'Volume', )
-    tpg_tag = forms.ChoiceField(
-        choices=(
-            ('1', 'tpg1'),
-            #('2', 'tpg2'),
-            #('3', 'tpg3'),
-        ),
-        help_text=u'Target Portal Group Tag', )
-    lun = forms.ChoiceField(
-        choices=(
-            ('0', 'lun0'),
-            #('1', 'lun1'),
-            #('2', 'lun2'),
-            #('3', 'lun3'),
-        ),
-        help_text=u'Lun', )
 
     def __init__(self, *args, **kwargs):
-        super(TargetPgVolumeLunMapForm, self).__init__(*args, **kwargs)
+        super(TpgVolumeLunMapForm, self).__init__(*args, **kwargs)
         self.helper.add_input(Submit('submit', 'Map Volume to Lun'))
-
-
-class VolumeTargetPgLunMappingCreateForm(BaseCreateForm):
-    target_wwn = forms.ChoiceField(
-        choices=TARGET_CHOICES,
-        help_text=u'Target WWN', )
-    tpg_tag = forms.ChoiceField(
-        choices=(
-            ('1', 'tpg1'),
-            #('2', 'tpg2'),
-            #('3', 'tpg3'),
-        ),
-        help_text=u'Target Portal Group Tag', )
-    lun = forms.ChoiceField(
-        choices=(
-            ('0', 'lun0'),
-            #('1', 'lun1'),
-            #('2', 'lun2'),
-            #('3', 'lun3'),
-        ),
-        help_text=u'Lun', )
 
 
 class TargetCreateForm(BaseCreateForm):
@@ -301,17 +305,17 @@ class TargetRemoveForm(TargetRefMixin, BaseForm):
         self.helper.add_input(Submit('submit', 'Delete Target', css_class="btn-danger"))
 
 
-class TargetPgMixin(object):
-    tpg_tag = forms.IntegerField(
+class TpgMixin(object):
+    tag = forms.IntegerField(
         help_text=u'Target Portal Group Tag (ID number)', )
 
 
-class TargetPgCreateForm(TargetRefMixin, TargetPgMixin, BaseForm):
+class TpgCreateForm(TargetRefMixin, TpgMixin, BaseForm):
     enable = forms.BooleanField(
         help_text=u'Enabled', )
 
 
-class TargetPgLunAclCreateForm(TargetPgMixin, BaseForm):
+class TpgLunAclCreateForm(TpgMixin, BaseForm):
     allowed_wwns = forms.CharField(
         widget = forms.Textarea(),
         help_text=u'Allowed WWNs' )
@@ -324,15 +328,15 @@ class TargetPgLunAclCreateForm(TargetPgMixin, BaseForm):
         self.helper.form_action = 'submit_survey'
 
         self.helper.add_input(Submit('submit', 'Submit'))
-        super(TargetPgLunAclCreateForm, self).__init__(*args, **kwargs)
+        super(TpgLunAclCreateForm, self).__init__(*args, **kwargs)
 
 
-class AjaxTargetPgUpdateForm(Form):
+class AjaxTpgUpdateForm(Form):
     enable = forms.IntegerField()
 
 
 
-
+'''
 class MessageForm(Form):
     text_input = forms.CharField()
 
@@ -398,5 +402,4 @@ class MessageForm(Form):
 {% crispy form %}
 {% endblock %}
 """
-
-
+'''

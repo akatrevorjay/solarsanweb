@@ -16,40 +16,25 @@
                     <span class="icon-bar"></span>
                 </a>
 
-                <a class="brand" href="#">
-                    {{ object.short_wwn }}
-                </a>
-
                 <div class="nav-collapse">
                     <ul class="nav">
-                        {% comment %}
-                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Pool<b class="caret"></b></a>
+                        <li class="dropdown">
+                            <a href="#" class="brand dropdown-toggle" data-toggle="dropdown">
+                                {{ object.short_wwn }}
+                                <b class="caret"></b>
+                            </a>
+
                             <ul class="dropdown-menu">
-                                <li><a href="{% url 'pool-health' slug=pool.name %}">Health</a></li>
-                                <li><a href="{% url 'pool-analytics' slug=pool.name %}">Analytics</a></li>
+                                <li><a href="#" class="target-detail">Target Detail</a></li>
                             </ul>
                         </li>
-                        <li><a href="{% url 'filesystem-health' slug=object.name %}">Health</a></li>
-                        <li><a href="{% url 'filesystem-snapshots' slug=object.name %}">Snapshots</a></li>
-                        {% endcomment %}
                     </ul>
 
                     <ul class="nav pull-right">
                          <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tasks <b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li>
-                                    <a href="#" class="target-remove">
-                                        Delete
-                                    </a>
-                                </li>
-                                {% comment %}
-                                <li><a href="{% url 'filesystem-snapshot' slug=object.name %}">Snapshot</a></li>
-                                <li><a href="{% url 'filesystem-clone' slug=object.name %}">Clone</a></li>
-                                <li class="divider"></li>
-                                <li><a href="{% url 'filesystem-destroy' slug=object.name %}">Destroy</a></li>
-                                {% endcomment %}
+                                <li><a href="#" class="target-remove">del</a></li>
                             </ul>
                         </li>
                    </ul>
@@ -58,6 +43,7 @@
         </div><!-- /navbar-inner -->
     </div><!-- /navbar -->
 </div>
+
 
 <!-- Target Detail -->
 <div class="row">

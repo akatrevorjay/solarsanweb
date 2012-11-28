@@ -9,25 +9,97 @@
 <a class="brand" href="{% url 'index' %}">SolarSan Console</a>
 <div>
     <ul class="nav">
-        <li>
-            <a href="{% url 'status' %}">status</a>
-        </li>
-        <li>
-            <a href="{% url 'configure' %}">configure</a>
-        </li>
+        <li class="divider-vertical"></li>
+
         <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">pools<span class="caret"></span></a>
+            <a class="dropdown-toggle" data-toggle="dropdown" href="{% url 'configure' %}">configure<span class="caret"></span></a>
             <ul class="dropdown-menu">
-                {% for pool in pools %}
-                <li>
-                    <a href="{% url 'pool' slug=pool.name %}">{{ pool.name }}</a>
-                </li>
-                {% endfor %}
+                <li><a href="#">networking</a></li>
             </ul>
         </li>
-        <li>
-            <a href="{% url 'analytics' %}">analytics</a>
+
+
+        <!-- Drop it -->
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">storage<span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                {% comment %}
+                <!-- Drop it -->
+                <li class="dropdown-submenu">
+                    <a tabindex="-1" href="#">pools</a>
+                    <ul class="dropdown-menu">
+                        <!-- Drop it -->
+                        {% for pool in pools %}
+                        <li class="dropdown-submenu">
+                            <a tabindex="-2" href="{% url 'pool' slug=pool.name %}"><i class="icon-cog"></i> {{ pool.name }}</a>
+                            <!--<ul class="dropdown-menu">                                                                                             -->
+                            <!--    <li><a href="{% url 'filesystem' slug=pool.filesystem.name %}"><i class="icon-adjust"></i> {{ pool.name }}</a></li>-->
+                            <!--</ul>                                                                                                                  -->
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endcomment %}
+
+                {% for curpool in pools|dictsort:"name" %}
+                <!-- Drop it -->
+                <li class="dropdown-submenu">
+                    <a tabindex="-1" href="{% url 'pool' slug=curpool.name %}">{{ curpool.name }}</a>
+                    <ul class="dropdown-menu">
+
+                        {% comment %}
+
+                        <!-- Drop it -->
+                        {% with curpoolfss=curpool.filesystems|dictsort:"path" %}
+                        {% for filesystem in curpoolfss|dictsort:"path" %}
+
+                        {% ifchanged filesystem.path|length %}
+                            
+                        {% endifchanged %}
+
+                        {% if filesystem.path|length < 3 %}
+                        {% if filesystem.path|length == forloop.parentcounter|add:"10" and filesystem.name|slice:"" %}
+                        <li class="dropdown-submenu">
+                            <a tabindex="-2" href="{% url 'filesystem' slug=filesystem.name %}"><i class="icon-cog"></i> {{ filesystem.name }}</a>
+                            <ul class="dropdown-menu">
+                                <caption>&nbsp;pool {{ filesystem.pool.name }}</caption>
+
+                                <li><a href="{% url 'filesystem' slug=filesystem.name %}"><i class="icon-adjust"></i> Overview</a></li>
+                                <li><a href="{% url 'filesystem' slug=filesystem.name %}"><i class="icon-adjust"></i> Analytics</a></li>
+
+                                <li class="divider"></li>
+                                <caption>&nbsp;filesystems</caption>
+
+                                {% for fs in filesystem.filesystems %}
+                                <li class="dropdown-submenu">
+                                    <a tabindex="-3" href="{% url fs.type slug=fs.name %}"><i class="icon-adjust"></i> {{ fs.name }}</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="{% url 'filesystem' slug=fs.name %}"><i class="icon-adjust"></i> Overview</a></li>
+
+                                        <li class="divider"></li>
+
+                                        <!-- and so on -->
+                                    </ul>
+                                </li>
+                                {% endfor %}
+
+                            </ul>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+
+                        {% endcomment %}
+
+                    </ul>
+                </li>
+                {% endfor %}
+
+                <!-- End droppin it -->
+            </ul>
         </li>
+        <!-- End droppin it -->
+
     </ul>
 
     <ul class="nav pull-right">

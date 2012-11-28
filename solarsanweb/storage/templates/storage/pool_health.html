@@ -1,9 +1,9 @@
 {% extends 'storage/filesystem_detail.html' %}
 
 {% block object_detail %}
-<table class="table table-striped">
+<table class="table table-striped no-vertical-padding">
     <tr>
-        <td>
+        <td colspan="2">
             <a href="#"><button class="btn btn-large btn-block btn-{{ object.health_state_str }}">
                 <span class="label-caps">
                     <small>pool</small>
@@ -11,26 +11,65 @@
                 </span>
             </button></a>
         </td>
-        <td colspan="5">
+        <td colspan="4">
             <div id="graph_iops"></div>
         </td>
     </tr>
+</table>
 
-    <tr class="definitions">
-        <td>Usage: <span>{{ object.properties.allocated }}</span> ({{ object.properties.capacity }})</td>
-        <td>Free: <span>{{ object.properties.free }}</span></td>
-        <td>Total: <span>{{ object.properties.size }}</span></td>
+<table class="table table-striped no-vertical-padding">
+    <tr>
+        <td>
+            <i class="icon-adjust"></i>
+            <small>usage:</small>
+        </td>
+        <td class="defs_val">
+            <button class="btn btn-mini">{{ object.properties.allocated }}/{{ object.properties.capacity }}</button>
+        </td>
+
+        <td>
+            <i class="icon-adjust"></i>
+            <small>free:</small>
+        </td>
+        <td class="defs_val">
+            <button class="btn btn-mini">{{ object.properties.free }}</button>
+        </td>
+
+        <td>
+            <i class="icon-adjust"></i>
+            <small>total:</small>
+        </td>
+        <td class="defs_val">
+            <button class="btn btn-mini">{{ object.properties.size }}</button>
+        </td>
     </tr>
-    <tr class="definitions">
-        <td>Dedup Ratio: <span>{{ object.properties.dedupratio }}</span>
+
+    <tr>
+        <td>
+            <i class="icon-cog"></i>
+            <small>dedup:</small>
+        </td>
+        <td class="defs_val">
             <!-- TODO bring up dedup config popover -->
             <!--<button class="btn btn-mini btn-inverse">{{ object.properties.dedupditto }}</button>-->
-            <button class="btn btn-mini btn-inverse">{{ object.filesystem.properties.dedup }}</button>
+            <!--<button class="btn btn-mini btn-link">{{ object.properties.dedupratio }}</button>-->
+            <button class="btn btn-mini btn-inverse">{{ object.properties.dedupratio }}/{{ object.filesystem.properties.dedup }}</button>
         </td>
-        <td>Compression Ratio: <span>{{ object.filesystem.properties.compressratio }}</span>
-            <button class="btn btn-mini btn-success">{{ object.filesystem.properties.compress }}</button>
+
+        <td>
+            <i class="icon-cog"></i>
+            <small>compression:</small>
         </td>
-        <td>Txg: <span title="Created: {{ object.created }}; Last Updated: {{ object.modified }}">{{ object.txg }}</span>
+        <td class="defs_val">
+            <button class="btn btn-mini btn-inverse">{{ object.filesystem.properties.compressratio }}/{{ object.filesystem.properties.compress }}</button>
+        </td>
+
+        <td>
+            <i class="icon-cog"></i>
+            <small>Txg:</small>
+        </td>
+        <td class="defs_val">
+            <button class="btn btn-mini" title="Created: {{ object.created }}; Last Updated: {{ object.modified }}">{{ object.txg }}</button>
         </td>
     </tr>
 </table>
