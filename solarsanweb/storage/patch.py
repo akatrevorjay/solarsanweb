@@ -1,5 +1,12 @@
+"""
+What file? Oh THIS file you say?
+For the record, I have no idea what you're talking about. ;)
+  ~trevorj
+"""
+
 
 import mongoengine.queryset
+
 
 def patch_queryset():
     class QuerySet(mongoengine.queryset.QuerySet):
@@ -61,11 +68,13 @@ patch_queryset()
 import rtslib
 import storage.models
 
+
 def patch_rtslib():
     """ Monkeypatch RTSLib """
     # Common
     def dumps(self):
         return self.__dict__
+
     def __repr__(self):
         name = getattr(self, 'wwn', None)
         if not name:
@@ -91,6 +100,7 @@ def patch_rtslib():
                 arg = arg.wwn
             return arg.split(':', 2)[1]
         setattr(cls, 'short_wwn', short_wwn)
+
         def get_tpg(self, tag=0):
             for x in self.tpgs:
                 if x.tag == tag:
@@ -105,9 +115,11 @@ def patch_rtslib():
         #    return reverse(self.__class__.__name__.lower(), kwargs={'slug': self.wwn})
         #setattr(cls, 'get_absolute_url', get_absolute_url)
 
+    # TPG
     cls = rtslib.target.TPG
     if not getattr(cls, 'dumps', None):
         setattr(cls, 'dumps', dumps)
+
         def __repr__(self):
             target = getattr(self, 'parent_target', None)
             if not target:
@@ -115,6 +127,25 @@ def patch_rtslib():
             tag = getattr(self, 'tag', None)
             enable = getattr(self, 'enable', None)
             return '<%s tag=%s, enabled=%s parent_target_wwn=%s>' % (self.__class__.__name__, tag, enable, target.wwn)
+        setattr(cls, '__repr__', __repr__)
+
+    # NodeACL
+    cls = rtslib.target.NodeACL
+    if not getattr(cls, 'dumps', None):
+        setattr(cls, 'dumps', dumps)
+
+        def __repr__(self):
+            tpg = getattr(self, 'parent_tpg', None)
+            target = getattr(tpg, 'parent_target', None)
+            if not target or not tpg:
+                return super(self.__class__, self).__repr__()
+            tag = getattr(tpg, 'tag', None)
+            node_wwn = getattr(self, 'node_wwn', None)
+            auth_target = getattr(self, 'authenticate_target', None)
+            luns = list(getattr(self, 'mapped_luns', []))
+            sessions = getattr(self, 'session', None)
+            return '<%s node_wwn=%s, auth_target=%s, luns=%s, sessions=%s tpg_tag=%s, target_wwn=%s>' % \
+                (self.__class__.__name__, node_wwn, auth_target, len(luns), len(session), tag, target.wwn)
         setattr(cls, '__repr__', __repr__)
 
 patch_rtslib()

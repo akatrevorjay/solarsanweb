@@ -75,3 +75,7 @@ def create_target(fabric_module, wwn=None):
     # Create new targets cache
     storage.cache.targets(force=True)
     return ret
+
+
+def get_sessions():
+    return list(root.sessions)

@@ -100,6 +100,19 @@
         </span>
     </a>&nbsp;
 
+    <a href="#">
+        <span class="label label-info" style="text-align: right;">
+            add acl
+        </span>
+    </a>&nbsp;
+
+    <a href="#">
+        <span class="label label-info" style="text-align: right;">
+            add portal
+        </span>
+    </a>&nbsp;
+
+
     <a href="#" class="target-lun-mapping-create">
         <span class="label label-info" style="text-align: right;">
             add lun
@@ -114,7 +127,32 @@
 <blockquote>
 <pre>
 -- Target Obj
-{{ object.type|capfirst }}: {{ object.dumps|pprint }}
+{{ object.dumps|pprint }}
+
+-- TPG Obj
+{% for tpg in rtslib_tpgs %}
+{{ tpg.dump|pprint }}
+{% endfor %}
+
+-- LUN Obj
+{% for lun in rtslib_luns %}
+{{ lun.dump|pprint }}
+{% endfor %}
+
+-- Session Obj
+{% for session in rtslib_sessions %}
+{{ session.dump|pprint }}
+{% endfor %}
+
+-- Node ACL Objs
+{% for nacl in rtslib_node_acls %}
+{{ nacl|pprint }}
+{% endfor %}
+
+-- Fabric Objs
+{% for fm in rtslib_fabric_modules %}
+{{ fm|pprint }}
+{% endfor %}
 
 -- JSON Config
 {{ rtslib_config_dump|pprint }}

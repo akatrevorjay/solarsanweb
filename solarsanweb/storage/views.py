@@ -6,6 +6,7 @@ import logging
 
 from dj import generic, http, reverse, render, SessionWizardView
 #from dj import HttpReponse
+from django.conf import settings
 
 from solarsan.utils import convert_human_to_bytes, convert_bytes_to_human
 from solarsan.views import JsonMixIn, KwargsMixIn, AjaxableResponseMixin
@@ -15,8 +16,8 @@ from analytics.views import time_window_list
 import storage.forms as forms
 import storage.target
 import storage.cache
-
 import rtslib
+import storage.target
 
 
 """
@@ -145,7 +146,6 @@ class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsView):
 pool_analytics_render = PoolAnalyticsRenderView.as_view()
 
 
-""" TODO
 class PoolCreateView(PoolView, mongogeneric.CreateView):
     template_name = 'storage/pool_create.html'
 
@@ -156,7 +156,6 @@ class PoolRemoveView(PoolView, mongogeneric.DeleteView):
     template_name = 'storage/pool_remove.html'
 
 pool_remove = PoolRemoveView.as_view()
-"""
 
 
 class PoolCreateWizardView(SessionWizardView):
@@ -415,7 +414,8 @@ class TargetDetailView(BaseView, generic.DetailView):
         form.helper.form_action = reverse('target-remove', kwargs={'slug': self.object.wwn})
         context['target_remove_form'] = form
 
-        root = rtslib.RTSRoot()
+        if settings.DEBUG:
+            root = storage.target.root
         context.update(dict(
             rtslib_config_dump=root.dump(),
             rtslib_targets=list(root.targets),
@@ -427,7 +427,7 @@ class TargetDetailView(BaseView, generic.DetailView):
             rtslib_fabric_modules=list(root.fabric_modules),
             rtslib_path=root.path,
             rtslib_storage_objects=list(root.storage_objects),
-            ))
+        ))
 
         return context
 
@@ -479,12 +479,16 @@ class TpgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.BaseFormVie
             raise Exception("Could not find tpg%d for Target '%s'",
                             self.tag, self.target)
 
-        logging.info("Updating TPG: '%s'", data)
-        enable = int(data['enable'])
-        if enable == 1:
-            tpg.enable = 1
-        else:
-            tpg.enable = 0
+        if 'enable' in data:
+            logging.info("Updating TPG: '%s'", data)
+            enable = int(data['enable'])
+            if enable == 1:
+                tpg.enable = 1
+            else:
+                tpg.enable = 0
+
+        if 'node_acl' in data:
+            pass
 
         return self.render_to_response(dict(enable=tpg.enable))
 

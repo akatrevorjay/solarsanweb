@@ -13,7 +13,7 @@ pool_analytics = {
         var step = +cubism.option("step", 3e5);
         var context = cubism.context()
             .step(step)
-            .size(470);
+            .size(780);
 
         if (!pthis.pool)
             console.log('No pool specified');

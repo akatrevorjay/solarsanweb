@@ -1,7 +1,9 @@
 {% extends "base_site.html" %}
 
 {% load url from future %}
-
+{% load cache %}
+{% load crispy_forms_tags %}
+{% load jsonify %}
 
 {% block css_extra %}
 <style></style>
@@ -25,7 +27,8 @@
 </div>
 {% endcomment %}
 
-<!-- Pool Detail -->
+{# cache 15 storage-side-nav #}
+<!-- Storage Sidenav -->
 <div class="row">
     <div class="span3 sidebar-nav" style="max-width: 220px;">
         <div class="accordion" id="sidebar-nav-accordion">
@@ -111,10 +114,9 @@
         </div>
     </div>
 </div>
+{# endcache #}
 
-
-{% load crispy_forms_tags %}
-
+<!-- FIXME HTML hackery for modal popover creation forms -->
 <div class="hide">
     {% for object_type, object_type_forms in object_types_forms.items %}
     {% for object_type_form_type, object_type_form in object_type_forms.items %}
@@ -125,8 +127,7 @@
     {% endfor %}
 </div>
 
-{% load jsonify %}
-
+<!-- FIXME Javascript hackery for modal popover creation forms -->
 <script>
 {% for object_type, object_type_forms in object_types_forms.items %}
 {% for object_type_form_type, object_type_form in object_type_forms.items %}
@@ -138,7 +139,6 @@ $('a.{{ object_type }}-{{ object_type_form_type }}').popover({
 
 {% endfor %}
 {% endfor %}
-
 </script>
 
 
