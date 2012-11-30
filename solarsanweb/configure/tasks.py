@@ -57,15 +57,15 @@ class Cluster_Node_Query(Task):
             logger.error( 'Cluster discovery (probe \'%s\'): Failed.', host)
             return False
         logger.debug( "Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
+        #logger.debug("Probe=%s", probe)
 
         # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we should do it a layer above.
-        cnode = ClusterNode.objects.get(hostname=probe['hostname'])
-        if cnode == None:
-            cnode = self.col.ClusterNode()
-        cnode.update(probe)
+        cnode, created = ClusterNode.objects.get_or_create(hostname=probe['hostname'])
+        cnode.interfaces = dict(probe['interfaces'])
         cnode['last_seen'] = timezone.now()
         cnode.save()
 
+        return True
 
 class Cluster_Node_Beacon( Task ):
     """ Controls cluster beacon service """
@@ -95,8 +95,9 @@ class Cluster_Node_Discover( PeriodicTask ):
                 cache.set('ClusterBeaconStartedTS', timezone.now(), 300)
 
         # Call Query task for each host to probe their API
-        #for node_ip in nodes:
-        #    Cluster_Node_Query.delay(host=node_ip)
+        for node_ip in nodes:
+            logger.debug("node_ip=%s", node_ip)
+            Cluster_Node_Query.delay(host=node_ip)
         #s = group([Cluster_Node_Query.subtask(host=node_ip) for node_ip in nodes])
         #s.apply_async()
 

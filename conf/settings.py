@@ -528,8 +528,9 @@ CELERY_TIMEZONE = TIME_ZONE
 #CELERYD_CONCURRENCY = 25
 
 # Celery broker
-BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
+#BROKER_URL = "amqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_URL = "pyamqp://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
+BROKER_URL = "librabbitmq://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:5672/solarsan"
 #BROKER_USE_SSL = True
 #CELERY_DEFAULT_RATE_LIMIT = "50/s"  # 100/s
 CELERY_DISABLE_RATE_LIMIT = True

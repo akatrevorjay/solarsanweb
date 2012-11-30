@@ -23,9 +23,9 @@ class ClusterNode(m.Document):
     meta = {'collection': 'cluster_nodes'}
     hostname = m.StringField(required=True, unique=True)
     # TODO Make this an embedded document
-    interfaces = m.DictField()
     last_seen = m.DateTimeField()
     first_seen = m.DateTimeField()
+    interfaces = m.DictField()
 
 
 """
