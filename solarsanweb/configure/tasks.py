@@ -41,7 +41,7 @@ class ClusterAPI(PistonAPI):
 
     @returns_json
     def probe(self):
-        return self._get('cluster/probe.json')
+        return self._get('cluster/probe/.json')
 
 
 class Cluster_Node_Query(Task):

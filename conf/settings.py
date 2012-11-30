@@ -215,7 +215,8 @@ INSTALLED_APPS = (
 
     'jstemplate',
 
-    'djangorestframework',
+    'rest_framework',
+    'rest_framework.authtoken',
 
     #'tastypie',
     #'tastypie_mongoengine',

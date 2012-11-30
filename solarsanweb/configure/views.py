@@ -6,10 +6,21 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_page
 from django import http
 from django.views import generic
+import mongogeneric
 
 from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
 from solarsan.models import Config
+from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
+from django.core.cache import cache
+import gluster
+from configure.models import ClusterNode
 
+#from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
+from django.core.urlresolvers import reverse_lazy
+from django.forms.models import modelformset_factory
+from django.contrib import messages
+import forms
+from configure.models import NetworkInterface
 
 class HomeListView(generic.TemplateView):
     template_name = 'configure/home_list.html'
@@ -23,13 +34,9 @@ Cluster
 """
 
 
-from django.core.cache import cache
-import gluster
-from configure.models import ClusterNode
-
-
 class ClusterPeerListView(generic.TemplateView):
     template_name = 'configure/cluster/peer_list.html'
+
     def get(self, request, *args, **kwargs):
         peers = gluster.peer.status()
         #discovered_peers = cache.get('RecentlyDiscoveredClusterNodes')
@@ -41,41 +48,36 @@ class ClusterPeerListView(generic.TemplateView):
             pass
 
         context = {
-                'peers': peers['host'],
-                'discovered_peers': discovered_peers,
-                'peer_count': peers['peers'],
-                }
+            'peers': peers['host'],
+            'discovered_peers': discovered_peers,
+            'peer_count': peers['peers'],
+        }
         return self.render_to_response(context)
 
 
 class ClusterPeerDetailView(generic.TemplateView):
     template_name = 'configure/cluster/peer_detail.html'
+
     def get(self, request, *args, **kwargs):
         peers = gluster.peer.status()
 
         peer_host = kwargs.get('peer')
-        if not peer_host in peers['host'].keys(): raise http.Http404
+        if not peer_host in peers['host'].keys():
+            raise http.Http404
 
         peer = {peer_host: peers['host'][peer_host]}
 
         context = {
-                'peers': peers['host'],
-                'peer': peer,
-                'peer_count': peers['peers'],
-               }
+            'peers': peers['host'],
+            'peer': peer,
+            'peer_count': peers['peers'],
+        }
         return self.render_to_response(context)
 
 
 """
 Network
 """
-
-#from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
-from django.core.urlresolvers import reverse_lazy
-from django.forms.models import modelformset_factory
-from django.contrib import messages
-import forms
-from configure.models import NetworkInterface
 
 
 class NetworkInterfaceListView(generic.TemplateView):
@@ -86,65 +88,36 @@ class NetworkInterfaceListView(generic.TemplateView):
         return self.render_to_response(context)
 
 
-class NetworkInterfaceConfigView(generic.FormView):
+class NetworkInterfaceConfigView(KwargsMixin, mongogeneric.UpdateView):
     template_name = 'configure/network/interfaces.html'
-    model = NetworkInterface
+    document = NetworkInterface
     form_class = forms.NetworkInterfaceForm
-
-    def get(self, request, *args, **kwargs):
-        self.name = kwargs['slug']
-        # If we don't have the interface in question, then don't proceed.
-        try:
-            self.interface = NetworkInterface(self.name)
-        except:
-            raise http.Http404
-        return super(NetworkInterfaceConfigView, self).get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        self.name = kwargs['slug']
-        # If we don't have the interface in question, then don't proceed.
-        try:
-            self.interface = NetworkInterface(self.name)
-        except:
-            raise http.Http404
-        return super(NetworkInterfaceConfigView, self).post(request, *args, **kwargs)
+    slug_field = 'name'
 
     def get_context_data(self, **kwargs):
-        context = {}
-        context.update(kwargs,
-                    interface=self.name,
-                    interfaces=NetworkInterfaceList(),)
-        return super(NetworkInterfaceConfigView, self).get_context_data(**context)
+        context = super(NetworkInterfaceConfigView, self).get_context_data(**kwargs)
+        obj = self.get_object()
 
-    def get_initial(self):
-        #initial = {}
-        initial = self.interface.config.__dict__
-        return initial
+        context.update(dict(
+            interface=obj,
+            interfaces=NetworkInterface.list(),
+        ))
 
-#    def get_form(self, form_class):
-#        return form_class(
-#            initial=self.get_initial(),
-#       )
+        return context
+
+    #def get_initial(self):
+    #    obj = self.get_object()
+    #    return
+
+    #def get_form(self, form_class):
+    #    return form_class(
+    #        initial=self.get_initial(),
+    #   )
 
     def get_success_url(self):
         # Redirect to previous url
         return self.request.META.get('HTTP_REFERER', None)
 
-    def form_valid(self, form):
-        form.instance.name = self.name
-        form.save()
-        messages.info(
-            self.request,
-            "Save successful!"
-       )
-        return super(NetworkInterfaceConfigView, self).form_valid(form)
-
-    def form_invalid(self, form):
-        messages.error(
-            self.request,
-            "Something didn't seem quite right, so we didn't save. Take a gander below and see if you can spot what's up."
-       )
-        return super(NetworkInterfaceConfigView, self).form_invalid(form)
 
 network_interface_config = NetworkInterfaceConfigView.as_view()
 

@@ -12,33 +12,33 @@
 auto lo
 iface lo inet loopback
 
-{% for iface in interfaces %}
+{% for iface in interfaces.values %}
 
-{% if not iface.config.proto == 'none' %}
+{% if not iface.proto == 'none' %}
 ##
 ## {{ iface.name }} / {{ iface.type }}
 ##
 auto {{ iface.name }}
-iface {{ iface.name }} inet {{ iface.config.proto }}
-    {% if not iface.config.proto == 'dhcp' %}
+iface {{ iface.name }} inet {{ iface.proto }}
+    {% if not iface.proto == 'dhcp' %}
 
-    address {{ iface.config.ipaddr }}
-    netmask {{ iface.config.netmask }}
-    {% if iface.config.gateway %}
-    gateway {{ iface.config.gateway }}
+    address {{ iface.ipaddr }}
+    netmask {{ iface.netmask }}
+    {% if iface.gateway %}
+    gateway {{ iface.gateway }}
     {% endif %}
-    {% if iface.config.dns.servers %}
-    dns-nameservers {{ iface.config.dns.servers|join:' ' }}
+    {% if iface.dns.servers %}
+    dns-nameservers {{ iface.dns.servers|join:' ' }}
     {% endif %}
-    {% if iface.config.dns.search %}
-    dns-search {{ iface.config.dns.search|join:' ' }}
+    {% if iface.dns.search %}
+    dns-search {{ iface.dns.search|join:' ' }}
     {% endif %}
 
     {% endif %}
 
     {% if iface.type == 'ethernet' %}
-    {% if iface.config.mtu %}
-    mtu {{ iface.config.mtu }}
+    {% if iface.mtu %}
+    mtu {{ iface.mtu }}
     {% endif %}
     {% elif iface.type == 'infiniband' %}
     ## Infiniband in connected mode vs datagram supports MTUs of 64k, but disables multicast packets.

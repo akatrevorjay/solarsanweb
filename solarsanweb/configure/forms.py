@@ -1,23 +1,49 @@
-# forms.py
-from django import forms
-#from models import NetworkInterfaceConfig, ConfigEntry
-import models
 
-from django_mongoengine.forms import EmbeddedDocumentForm
+import os
+import logging
+from dj import forms, formsets, formset_factory, \
+               Form, BaseFormSet, \
+               User, \
+               reverse_lazy
+from mongodbforms import DocumentForm
 
-#class CommentForm(EmbeddedDocumentForm):
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
-#    class Meta:
-#        document = Comment
-#        embedded_field_name = 'comments'
-#        exclude = ('created_at',)
+from solarsan.forms import BaseForm, BaseCreateForm
+
+import configure.models
 
 
-
-class NetworkInterfaceForm(EmbeddedDocumentForm):
+class NetworkInterfaceForm(DocumentForm):
     class Meta:
-        document = models.NetworkInterface
+        document = configure.models.NetworkInterface
         #exclude = ('name', 'created', 'modified')
+
+    form_id = None
+    form_class = None
+    form_method = 'post'
+    form_action = None
+    help_text_inline = None
+
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        if self.form_id:
+            self.helper.form_id = self.form_id
+        if self.form_class:
+            self.helper.form_class = self.form_class
+        if self.form_method:
+            self.helper.form_method = self.form_method
+        if self.form_action:
+            self.helper.form_action = self.form_action
+        if self.help_text_inline:
+            self.helper.help_text_inline = self.help_text_inline
+
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Save'))
+        return super(NetworkInterfaceForm, self).__init__(*args, **kwargs)
+
 
 
 #class ConfigEntry(forms.ModelForm):

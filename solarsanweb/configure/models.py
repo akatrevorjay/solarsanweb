@@ -92,25 +92,23 @@ class NetworkInterface(m.Document):
     mtu = m.IntField()
     modified = m.DateTimeField()
     created = m.DateTimeField()
-    config = m.fields.DictField()
 
     def __init__(self, name=None, **kwargs):
         if name:
             kwargs['name'] = name
         super(NetworkInterface, self).__init__(**kwargs)
 
-        if not self.config:
+        if not self.pk and self.name:
             # Get starting config from the first AF_INET address on the device (if it exists)
-            config = {'name': name}
             addrs = self.addrs
             if 'AF_INET' in addrs:
                 addr = addrs['AF_INET'][0]
-                config['ipaddr'] = addr['addr']
-                config['cidr'] = int(ipcalc.Network('1.1.1.1/%s' % addr['netmask']).mask)
-            else:
-                # If no IPs are on this interface, start with a /24 subnet mask
-                config['cidr'] = 24
-            self.config = config
+                if not self.ipaddr:
+                    self.ipaddr = addr['addr']
+                if not self.cidr:
+                    self.cidr = int(ipcalc.Network('1.1.1.1/%s' % addr['netmask']).mask)
+                if not self.proto:
+                    self.proto = 'dhcp'
 
         # TODO Populate DNS information
         #self.dns = self.config.dns
