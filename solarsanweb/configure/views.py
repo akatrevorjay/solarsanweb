@@ -38,7 +38,7 @@ class ClusterPeerListView(generic.TemplateView):
     template_name = 'configure/cluster/peer_list.html'
 
     def get(self, request, *args, **kwargs):
-        peers = gluster.peer.status()
+        #peers = gluster.peer.status()
         #discovered_peers = cache.get('RecentlyDiscoveredClusterNodes')
         discovered_peers = ClusterNode.objects.all()
         if discovered_peers:
@@ -48,9 +48,9 @@ class ClusterPeerListView(generic.TemplateView):
             pass
 
         context = {
-            'peers': peers['host'],
+            #'peers': peers['host'],
             'discovered_peers': discovered_peers,
-            'peer_count': peers['peers'],
+            #'peer_count': peers['peers'],
         }
         return self.render_to_response(context)
 
@@ -59,7 +59,7 @@ class ClusterPeerDetailView(generic.TemplateView):
     template_name = 'configure/cluster/peer_detail.html'
 
     def get(self, request, *args, **kwargs):
-        peers = gluster.peer.status()
+        #peers = gluster.peer.status()
 
         peer_host = kwargs.get('peer')
         if not peer_host in peers['host'].keys():
@@ -68,9 +68,9 @@ class ClusterPeerDetailView(generic.TemplateView):
         peer = {peer_host: peers['host'][peer_host]}
 
         context = {
-            'peers': peers['host'],
-            'peer': peer,
-            'peer_count': peers['peers'],
+            #'peers': peers['host'],
+            #'peer': peer,
+            #'peer_count': peers['peers'],
         }
         return self.render_to_response(context)
 

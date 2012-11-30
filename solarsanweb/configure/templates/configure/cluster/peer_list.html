@@ -21,7 +21,7 @@
 
 {% block page_content_sidenav %}
     {% for peer in peers %}
-        <li class="page-content-select"><a href="/configure/cluster/peers/detail/{{ peer|urlize }}" rel="tooltip" title="{{ peers[peer]['state']|urlize }}">
+        <li class="page-content-select"><a href="/configure/cluster/peers/detail/{{ peer|urlize }}" rel="tooltip" title="{{ peers.peer.state|urlize }}">
             {{ peer }}
         </a></li>
     {% endfor %}
@@ -31,8 +31,8 @@
     <li class="nav-header">SolarSan Discovered Peers</li>
     {% for peer in discovered_peers %}
         {% if not 'CHANGEME_BACK_TO_peer' in peers %}
-        <li class="page-content-select"><a href="/configure/cluster/peers/add/{{ peer['hostname']|urlize }}" rel="tooltip" title="Not in cluster. {{ peer['interfaces']|urlize }}">
-            {{ peer['hostname'] }}
+        <li class="page-content-select"><a href="/configure/cluster/peers/add/{{ peer.hostname|urlize }}" rel="tooltip" title="Not in cluster. {{ peer.interfaces|urlize }}">
+            {{ peer.hostname }}
         </a></li>
         {% endif %}
     {% endfor %}
@@ -40,9 +40,9 @@
 {% endblock %}
 
 {% block page_content %}
-    {% with peer = {peers.keys()[0]: peers[peers.keys()[0]]} %}
+    {# with peer=peers.keys()[0]: peers[peers.keys()[0]]} #}
         {% include 'configure/cluster/peer_detail.html' %}
-    {% endwith %}
+    {# endwith #}
 {% endblock %}
 
 {% block page_container_post %}
