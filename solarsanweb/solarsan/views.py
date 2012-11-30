@@ -18,6 +18,7 @@ import json
 Base
 """
 
+
 def base_site_js(request):
     """ Returns base.js, rendered with site wide js includes """
     ctxt = {}
@@ -25,10 +26,10 @@ def base_site_js(request):
                               ctxt, context_instance=RequestContext(request))
 
 
-
 """
 Auth
 """
+
 
 def login_view(request):
     """ Authenticates user """
@@ -51,18 +52,20 @@ MixIns
 The kool-aid.
 """
 
-class KwargsMixIn(object):
+
+class KwargsMixin(object):
     """ Adds request and kwargs to object """
     def get(self, request, *args, **kwargs):
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        return super(KwargsMixIn, self).get(request, *args, **kwargs)
+        return super(KwargsMixin, self).get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        return super(KwargsMixIn, self).post(request, *args, **kwargs)
+        return super(KwargsMixin, self).post(request, *args, **kwargs)
 
 
 class AjaxableResponseMixin(object):
@@ -91,7 +94,7 @@ class AjaxableResponseMixin(object):
             return super(AjaxableResponseMixin, self).form_valid(form)
 
 
-class JsonMixIn(object):
+class JsonMixin(object):
     """ Outputs self.get_json_data() as json"""
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()

@@ -9,7 +9,7 @@ from dj import generic, http, reverse, render, SessionWizardView
 from django.conf import settings
 
 from solarsan.utils import convert_human_to_bytes, convert_bytes_to_human
-from solarsan.views import JsonMixIn, KwargsMixIn, AjaxableResponseMixin
+from solarsan.views import JsonMixin, KwargsMixin, AjaxableResponseMixin
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
 
@@ -48,7 +48,7 @@ class CrumbMixin(object):
         return ctx
 
 
-class BaseView(CrumbMixin, KwargsMixIn):
+class BaseView(CrumbMixin, KwargsMixin):
     def get_context_data(self, **kwargs):
         ctx = super(BaseView, self).get_context_data(**kwargs)
         ctx['object_types_forms'] = get_object_forms()
@@ -133,7 +133,7 @@ class PoolAnalyticsView(PoolView, mongogeneric.DetailView):
 pool_analytics = PoolAnalyticsView.as_view()
 
 
-class PoolAnalyticsRenderView(JsonMixIn, PoolAnalyticsView):
+class PoolAnalyticsRenderView(JsonMixin, PoolAnalyticsView):
     def get_json_data(self, **kwargs):
         ctx = self.get_context_data(**kwargs)
         obj = self.object
@@ -326,7 +326,7 @@ Target
 """
 
 
-class TargetCreateView(KwargsMixIn, generic.edit.FormView):
+class TargetCreateView(KwargsMixin, generic.edit.FormView):
     template_name = 'storage/target_create.html'
     form_class = forms.TargetCreateForm
 
@@ -343,7 +343,7 @@ class TargetCreateView(KwargsMixIn, generic.edit.FormView):
 target_create = TargetCreateView.as_view()
 
 
-class TargetRemoveView(KwargsMixIn, generic.edit.FormView):
+class TargetRemoveView(KwargsMixin, generic.edit.FormView):
     template_name = 'storage/target_remove.html'
     form_class = forms.TargetRemoveForm
     slug_urk_kwarg = 'slug'
@@ -445,18 +445,32 @@ Target Portal Group
 """
 
 
-class TpgCreateView(KwargsMixIn, generic.edit.CreateView):
+class TpgCreateView(KwargsMixin, generic.edit.CreateView):
     template_name = 'storage/target_pg_create.html'
     form_class = forms.TpgCreateForm
 
+    def get_success_url(self):
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(TpgCreateView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        self.target_wwn = self.kwargs['slug']
+        self.target = storage.target.get(self.target_wwn)
+        return self.target
+
     def form_valid(self, form):
-        logging.debug('Creating Tpg from=%s', form)
+        form.target = self.get_object()
         return super(TpgCreateView, self).form_valid(form)
 
 target_pg_create = TpgCreateView.as_view()
 
 
-class TpgUpdateView(AjaxableResponseMixin, KwargsMixIn, generic.edit.BaseFormView):
+class TpgUpdateView(AjaxableResponseMixin, KwargsMixin, generic.edit.BaseFormView):
     form_class = forms.AjaxTpgUpdateForm
 
     target_wwn = None

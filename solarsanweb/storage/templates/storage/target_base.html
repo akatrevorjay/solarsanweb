@@ -5,7 +5,7 @@
 
 {% block object_content %}
 
-<!-- Target Detail -->
+<!-- Target Base Nav -->
 <div class="row" style="margin-bottom: 0px;">
     <div class="navbar object-detail-nav object-detail-list">
         <div class="navbar-inner">
@@ -49,13 +49,16 @@
 </div>
 
 
-<!-- Target Detail -->
+{% block object_detail_container %}
+<!-- Target Base Detail Container -->
 <div class="row">
     <div id="object-detail-content" class="well">
         {% block object_detail %}
         {% endblock %}
     </div>
 </div>
+{% endblock %}
+
 
 {% endblock %}
 

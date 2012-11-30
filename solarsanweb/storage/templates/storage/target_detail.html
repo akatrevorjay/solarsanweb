@@ -1,31 +1,93 @@
 {% extends 'storage/target_base.html' %}
 
 {% load url from future %}
+{% load crispy_forms_tags %}
+{% load to_list %}
+
+{% block object_detail_container %}
+<!-- Target Detail Container -->
+<div class="row">
+    <!--<div id="object-detail-content" class="well">-->
+    <div id="object-detail-content">
 
 
 {% block object_detail %}
 
+<div class="row" style="margin-left: 0px;">
+    <!--<div class="well">-->
+    <!--<div>-->
+
+<div class="tabbable tabs-left"> <!-- Only required for left/right tabs -->
+  <ul class="nav nav-tabs">
+    {% for tpg in object.tpgs reversed %}
+    <li class="{% if forloop.first %}active{% endif %}">
+        <a href="#tabs-tpgs-{{ tpg.tag }}" data-toggle="tab">
+            <div class="btn-group">
+                <button class="btn btn-mini">
+                    portal group {{ tpg.tag }}
+                </button>
+                <button class="btn btn-mini {% if tpg.enable == 0 %}btn-inverse{% else %}btn-success{% endif %} tpg-toggle"
+                    data-url="{% url 'target-pg-update' slug=object.wwn tag=tpg.tag %}"
+                    data-enable="{% if tpg.enable == 0 %}1{% else %}0{% endif %}">
+                    {% if tpg.enable == 0 %}off{% else %}on{% endif %}
+                </button>
+            </div>
+        </a>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="tab-content">
+
+
+<!--<div class="accordion" id="accordion-tpgs">-->
+
+
+
+{% for tpg in object.tpgs reversed %}
+{% with luns=tpg.luns|to_list %}
+
+
+    <div class="tab-pane{% if forloop.first %} active{% endif %}" id="tabs-tpgs-{{ tpg.tag }}">
+
+{% comment %}
+  <div class="accordion-group">                                                                                                
+    <div class="accordion-heading">                                                                                            
+      <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-tpgs" href="#collapse-tpgs-{{ tpg.tag }}">    
+                <div class="btn-group">                                                                                        
+                    <button class="btn btn-mini">                                                                              
+                        portal group {{ tpg.tag }}                                                                             
+                    </button>                                                                                                  
+                    <button class="btn btn-mini {% if tpg.enable == 0 %}btn-inverse{% else %}btn-success{% endif %} tpg-toggle"
+                        data-url="{% url 'target-pg-update' slug=object.wwn tag=tpg.tag %}"                                    
+                        data-enable="{% if tpg.enable == 0 %}1{% else %}0{% endif %}">                                         
+                        {% if tpg.enable == 0 %}off{% else %}on{% endif %}                                                     
+                    </button>                                                                                                  
+                </div>                                                                                                         
+
+      </a>                                                                                                                     
+    </div>                                                                                                                     
+
+    <div id="collapse-tpgs-{{ tpg.tag }}" class="accordion-body collapse{% if forloop.first %} in{% endif %}">                 
+      <div class="accordion-inner">                                                                                            
+{% endcomment %}
 
 <table class="table table-striped no-vertical-padding">
-    <!--<caption>              -->
-    <!--    Target LUN Mapping:-->
-    <!--</caption>             -->
+    {% comment %}
     <thead>
         <tr>
             <th>tpg</th>
-            <th>lun</th>
-            <th>backstore</th>
-            <th>tasks</th>
+            <th></th>
         </tr>
     </thead>
+    {% endcomment %}
     <tbody>
-        {% for tpg in object.tpgs %}
-        {% for lun in tpg.luns %}
         <tr>
+            <!--<td rowspan="{{ luns|length }}">-->
             <td>
                 <div class="btn-group">
                     <button class="btn btn-mini">
-                        tpg{{ tpg.tag }}
+                        portal group {{ tpg.tag }}
                     </button>
                     <button class="btn btn-mini {% if tpg.enable == 0 %}btn-inverse{% else %}btn-success{% endif %} tpg-toggle"
                         data-url="{% url 'target-pg-update' slug=object.wwn tag=tpg.tag %}"
@@ -34,12 +96,32 @@
                     </button>
                 </div>
             </td>
+        </tr>
+        <tr>
+            <td>
 
+<!-- Tpg Luns -->
+<blockquote>
+<table class="table table-striped no-vertical-padding">
+    <!--<caption>              -->
+    <!--    Target LUN Mapping:-->
+    <!--</caption>             -->
+    <thead>
+        <tr>
+            <th>lun</th>
+            <th>backstore</th>
+            <th></th>
+            <th style="text-align: right;">tasks</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lun in luns %}
+        <tr>
             <td>
                 lun{{ lun.lun }}
             </td>
 
-            <td width="60%">
+            <td width="60%" colspan="2">
                 {% with lun.storage_object.get_volume as lun_volume %}
                 <a href="{{ lun_volume.get_absolute_url }}">
                     {{ lun_volume.name }}
@@ -47,75 +129,177 @@
                 {% endwith %}
             </td>
 
-            <td>
+            <td style="text-align: right;">
                 <button class="btn btn-mini btn-danger">del</button>
             </td>
         </tr>
-        {% endfor %}
-        {% endfor %}
-    </tbody>
-
-    <thead>
+        {% empty %}
         <tr>
-            <th>tpg</th>
-            <th></th>
-            <th>portal ip:port</th>
-            <th>dump</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for portal in network_portals %}
-        <tr>
-            <td>
-                tpg{{ portal.parent_tpg.tag }}
-            </td>
-
-            <td>
-            </td>
-
-            <td>
-                {{ portal.ip_address }}:{{ portal.port }}
-            </td>
-
-            <td>
-                {{ portal.dump }}
+            <td colspan="4">
+                <span class="muted"><i>(none)</i></span>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</blockquote>
+
+<!-- Tpg Portals -->
+<blockquote>
+<table class="table table-striped no-vertical-padding">
+    <thead>
+        <tr>
+            <th>portal ip:port</th>
+            <th>dump</th>
+            <th></th>
+            <th style="text-align: right;">tasks</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for portal in tpg.network_portals|to_list %}
+        <tr>
+            <td>
+                {{ portal.ip_address }}:{{ portal.port }}
+            </td>
+
+            <td colspan="2">
+                {{ portal.dump }}
+            </td>
+
+            <td style="text-align: right;">
+                <button class="btn btn-mini btn-danger">del</button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">
+                <span class="muted"><i>(none)</i></span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</blockquote>
+
+<!-- Tpg ACLs -->
+<blockquote>
+<table class="table table-striped no-vertical-padding">
+    <thead>
+        <tr>
+            <th>node wwn</th>
+            <th>dump</th>
+            <th></th>
+            <th style="text-align: right;">tasks</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for acl in tpg.node_acls|to_list %}
+        <tr>
+            <td>
+                {{ acl.node_wwn }}
+            </td>
+
+            <td colspan="2">
+                {{ acl.dump|pprint }}
+            </td>
+
+            <td style="text-align: right;">
+                <button class="btn btn-mini btn-danger">del</button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">
+                <span class="muted"><i>(none)</i></span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</blockquote>
+
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <a href="#">
+                    <span class="label label-info" style="text-align: right;">
+                        add acl
+                    </span>
+                </a>&nbsp;
+
+                <a href="#">
+                    <span class="label label-info" style="text-align: right;">
+                        add portal
+                    </span>
+                </a>&nbsp;
+
+                <a href="#" class="target-lun-mapping-create">
+                    <span class="label label-info" style="text-align: right;">
+                        add lun
+                    </span>
+                </a>&nbsp;
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+{% comment %}
+      </div>
+    </div>
+  </div>
+{% endcomment %}
+
+
+<!--</div>-->
+
+
+  </div>
+
+{% endwith %}
+{% endfor %}
+
+</div>
+
+  </div>
+</div>
+
+
+
+<!--<script>                   -->
+<!--$(".accordion").collapse();-->
+<!--</script>                  -->
+
 
 <br />
 <div>
-    <a data-toggle="modal" data-target="#modal" href="{% url 'target-pg-create' slug=object.wwn %}">
+    <a href="{% url 'target-pg-create' slug=object.wwn %}" data-target="#myModal" data-toggle="modal">
         <span class="label label-info" style="text-align: right;">
             add tpg
         </span>
     </a>&nbsp;
 
-    <a href="#">
-        <span class="label label-info" style="text-align: right;">
-            add acl
-        </span>
-    </a>&nbsp;
-
-    <a href="#">
-        <span class="label label-info" style="text-align: right;">
-            add portal
-        </span>
-    </a>&nbsp;
-
-
-    <a href="#" class="target-lun-mapping-create">
-        <span class="label label-info" style="text-align: right;">
-            add lun
-        </span>
-    </a>&nbsp;
 </div>
 <br />
 <br />
 
-<div id="modal" style="modal fade hide">Hidden Modal Div</div>
+<!-- Modal -->
+<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Modal Test Header</h3>
+  </div>
+  <div class="modal-body">
+    <p>One fine body…</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    <button class="btn btn-primary">Save changes</button>
+  </div>
+</div>
+
 
 {% if debug %}
 <blockquote>
@@ -154,8 +338,6 @@
 </blockquote>
 {% endif %}
 
-
-{% load crispy_forms_tags %}
 
 <div class="hide">
     <div id="target-remove-form-container">
@@ -206,3 +388,12 @@ $('a.target-lun-mapping-create').popover({
 </script>
 
 {% endblock %}
+
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+

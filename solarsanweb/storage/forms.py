@@ -16,6 +16,8 @@ from storage.device import Drives, Devices
 import storage.cache
 import storage.target
 
+import rtslib
+
 
 class BaseForm(Form):
     form_id = None
@@ -242,12 +244,29 @@ for x in xrange(1, 10):
 class TpgForm(BaseCreateForm):
     tag = forms.ChoiceField(
         choices=TPG_TAG_CHOICES,
-        help_text=u'Target Portal Group', )
+        help_text=u'Portal Group Tag', )
 
     def __init__(self, *args, **kwargs):
         super(TpgForm, self).__init__(*args, **kwargs)
+
+        # TODO Only show available tpg tags
         #tags = TPG_TAG_CHOICES
         #self.fields['tag'].choices.extend(tags)
+
+
+class TpgCreateForm(BaseCreateForm):
+    def __init__(self, *args, **kwargs):
+        super(TpgCreateForm, self).__init__(*args, **kwargs)
+
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Add'))
+
+    def save(self):
+        logging.debug('Creating TPG target=%s', self.target)
+        tpg = rtslib.TPG(self.target, mode='create')
+        tpg.enable = 1
+        logging.info("Created TPG '%s'", tpg)
+        return tpg
 
 
 class TpgVolumeLunMapForm(TpgForm, LunForm):
@@ -310,9 +329,9 @@ class TpgMixin(object):
         help_text=u'Target Portal Group Tag (ID number)', )
 
 
-class TpgCreateForm(TargetRefMixin, TpgMixin, BaseForm):
-    enable = forms.BooleanField(
-        help_text=u'Enabled', )
+#class TpgCreateForm(TargetRefMixin, TpgMixin, BaseForm):
+#    enable = forms.BooleanField(
+#        help_text=u'Enabled', )
 
 
 class TpgLunAclCreateForm(TpgMixin, BaseForm):
