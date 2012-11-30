@@ -49,7 +49,7 @@ volume_patterns = patterns(
 target_patterns = patterns(
     'storage.views',
     url(r'^$', 'target_detail', name='target'),
-    url(r'^delete$', 'target_remove', name='target-remove'),
+    url(r'^delete$', 'target_delete', name='target-delete'),
 
     url(r'pg/create$',
         'target_pg_create',

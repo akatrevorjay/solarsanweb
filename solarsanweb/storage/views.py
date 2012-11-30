@@ -342,33 +342,23 @@ class TargetCreateView(KwargsMixin, generic.edit.FormView):
 target_create = TargetCreateView.as_view()
 
 
-class TargetRemoveView(KwargsMixin, generic.edit.FormView):
-    template_name = 'storage/target_remove.html'
-    form_class = forms.TargetRemoveForm
-    slug_urk_kwarg = 'slug'
+class TargetDeleteView(KwargsMixin, generic.edit.FormView):
+    template_name = 'storage/target_delete.html'
+    form_class = forms.TargetDeleteForm
 
-    #def post(self, request, *args, **kwargs):
-    #    self.request = request
-    #    self.args = args
-    #    self.kwargs = kwargs
-    #    return super(TargetRemoveView, self).post(request, *args, **kwargs)
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg, None)
+        try:
+            obj = storage.target.get(wwn=slug)
+        except storage.target.DoesNotExist:
+            raise http.Http404
+        return obj
 
-    #def get_object(self, queryset=None):
-    #    slug = self.kwargs.get(self.slug_url_kwarg, None)
-    #    try:
-    #        obj = storage.target.get(wwn=slug)
-    #    except storage.target.DoesNotExist:
-    #        raise http.Http404
-    #    return obj
-
-    #def get_form(self, form_class):
-    #    """
-    #    Returns an instance of the form to be used in this view.
-    #    """
-    #    self.object = self.get_object()
-    #    form = form_class(**self.get_form_kwargs())
-    #    form.helper.form_action = reverse('target-remove', kwargs={'slug': self.object.wwn})
-    #    return form
+    def get_form(self, form_class):
+        self.object = self.get_object()
+        form = form_class(**self.get_form_kwargs())
+        form.helper.form_action = reverse('target-delete', kwargs={'slug': self.object.wwn})
+        return form
 
     def form_valid(self, form):
         wwn = self.kwargs['slug']
@@ -386,9 +376,9 @@ class TargetRemoveView(KwargsMixin, generic.edit.FormView):
 
         #self.success_url = reverse('target-list')
         self.success_url = reverse('status')
-        return super(TargetRemoveView, self).form_valid(form)
+        return super(TargetDeleteView, self).form_valid(form)
 
-target_remove = TargetRemoveView.as_view()
+target_delete = TargetDeleteView.as_view()
 
 
 class TargetDetailView(BaseView, generic.DetailView):
@@ -413,18 +403,18 @@ class TargetDetailView(BaseView, generic.DetailView):
 
         if settings.DEBUG:
             root = storage.target.root
-        context.update(dict(
-            rtslib_config_dump=root.dump(),
-            rtslib_targets=list(root.targets),
-            rtslib_tpgs=list(root.tpgs),
-            rtslib_luns=list(root.luns),
-            rtslib_node_acls=list(root.node_acls),
-            network_portals=list(root.network_portals),
-            rtslib_sessions=list(root.sessions),
-            rtslib_fabric_modules=list(root.fabric_modules),
-            rtslib_path=root.path,
-            rtslib_storage_objects=list(root.storage_objects),
-        ))
+            context.update(dict(
+                rtslib_config_dump=root.dump(),
+                rtslib_targets=list(root.targets),
+                rtslib_tpgs=list(root.tpgs),
+                rtslib_luns=list(root.luns),
+                rtslib_node_acls=list(root.node_acls),
+                network_portals=list(root.network_portals),
+                rtslib_sessions=list(root.sessions),
+                rtslib_fabric_modules=list(root.fabric_modules),
+                rtslib_path=root.path,
+                rtslib_storage_objects=list(root.storage_objects),
+            ))
 
         return context
 
@@ -522,6 +512,11 @@ class TpgDeleteView(KwargsMixin, generic.edit.UpdateView):
 target_pg_delete = TpgDeleteView.as_view()
 
 
+"""
+Target Portal Group Lun
+"""
+
+
 class LunCreateView(KwargsMixin, generic.edit.UpdateView):
     template_name = 'modal_form.html'
     form_class = forms.LunCreateForm
@@ -588,6 +583,11 @@ class LunDeleteView(KwargsMixin, generic.edit.UpdateView):
 lun_delete = LunDeleteView.as_view()
 
 
+"""
+Target Portal Group Network Portal
+"""
+
+
 class PortalCreateView(KwargsMixin, generic.edit.UpdateView):
     template_name = 'modal_form.html'
     form_class = forms.PortalCreateForm
@@ -643,17 +643,32 @@ class PortalDeleteView(KwargsMixin, generic.edit.UpdateView):
         data = form.cleaned_data
         if data['confirm'] is not True:
             raise LoggedException("Did not confirm!")
+        ip_addr = data['ip_address']
+        port = data['port']
         tpg = self.get_object()
-        the_portal = None
-        for portal in tpg.network_portals:
-            if portal.ip_address == self.kwargs['ip_address'] and portal.port == self.kwargs['port']:
-                the_portal = portal
-                break
-        the_portal.delete()
+
+        try:
+            the_portal = None
+            for portal in tpg.network_portals:
+                if portal.ip_address == self.kwargs['ip_address'] and portal.port == self.kwargs['port']:
+                    the_portal = portal
+                    break
+            if not the_portal:
+                raise LoggedException("Could not find Portal to delete from Tpg '%s' with ip_address=%s port=%s", tpg, ip_address, port)
+            the_portal.delete()
+        except Exception, e:
+            logging.error("Could not delete Portal with ip_address=%s port=%s: %s", ip_address, port, e)
+            raise http.Http404
+
         return super(PortalDeleteView, self).form_valid(form)
 
 portal_delete = PortalDeleteView.as_view()
 
+
+"""
+Target Portal Group Node ACL
+
+"""
 
 class AclCreateView(KwargsMixin, generic.edit.UpdateView):
     template_name = 'modal_form.html'
@@ -721,6 +736,11 @@ class AclDeleteView(KwargsMixin, generic.edit.UpdateView):
 acl_delete = AclDeleteView.as_view()
 
 
+"""
+Target Create Wizard
+"""
+
+
 class TargetCreateWizardView(SessionWizardView):
     template_name = 'storage/target_create_wizard.html'
 
@@ -737,8 +757,8 @@ class TargetCreateWizardView(SessionWizardView):
 
 target_create_wizard = TargetCreateWizardView.as_view([forms.TargetCreateForm,
                                                        forms.TpgCreateForm,
-                                                       forms.VolumeLunMapInitialForm,
-                                                       forms.TpgLunAclCreateForm,
+                                                       forms.LunCreateForm,
+                                                       forms.AclCreateForm,
                                                        ])
 
 

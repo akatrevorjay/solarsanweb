@@ -366,11 +366,11 @@ class TargetRefMixin(object):
         help_text=u'Target WWN (unique identifier)', )
 
 
-class TargetRemoveForm(TargetRefMixin, BaseForm):
+class TargetDeleteForm(TargetRefMixin, BaseForm):
     form_id = 'target-remove-form'
 
     def __init__(self, *args, **kwargs):
-        super(TargetRemoveForm, self).__init__(*args, **kwargs)
+        super(TargetDeleteForm, self).__init__(*args, **kwargs)
         self.helper.add_input(Submit('submit', 'Delete Target', css_class="btn-danger"))
 
 
