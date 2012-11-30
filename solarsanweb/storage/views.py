@@ -405,14 +405,20 @@ class TargetDetailView(BaseView, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(TargetDetailView, self).get_context_data(**kwargs)
+        obj = self.object
 
         form = forms.TpgVolumeLunMapForm()
-        form.helper.form_action = reverse('target-pg-volume-lun-map', kwargs={'slug': self.object.wwn})
+        form.helper.form_action = reverse('target-pg-volume-lun-map', kwargs={'slug': obj.wwn})
         context['target_pg_volume_lun_map_form'] = form
 
         form = forms.TargetRemoveForm()
-        form.helper.form_action = reverse('target-remove', kwargs={'slug': self.object.wwn})
+        form.helper.form_action = reverse('target-remove', kwargs={'slug': obj.wwn})
         context['target_remove_form'] = form
+
+        context.update({
+            'fabric_module': obj.fabric_module,
+            'tpgs': list(obj.tpgs),
+        })
 
         if settings.DEBUG:
             root = storage.target.root

@@ -51,7 +51,7 @@ pool_analytics = {
             .call(context.horizon()
                 .title(function(d) { return d.title; })
                 .metric(function(d) { return d.metric; })
-                .height(20)
+                .height(30)
         );
     },  // end:small_stats
 
