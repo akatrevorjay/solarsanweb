@@ -743,6 +743,36 @@ COMPRESS_ENABLED = True
 ## Enable for single bootstrap.js file
 #BOOTSTRAP_JS_URL = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
 
+#
+# djangorestframework
+#
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+        #'rest_framework.permissions.IsAdminUser',
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.JSONPRenderer',
+        'rest_framework.renderers.YAMLRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.XMLRenderer',
+        'rest_framework.renderers.TemplateHTMLRenderer',
+    ),
+    #'DEFAULT_PARSER_CLASSES': (
+    #    'rest_framework.parsers.JSONParser',
+    #    'rest_framework.parsers.FormParser'
+    #),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        #'rest_framework.authentication.UserBasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    'PAGINATE_BY': 10,
+}
+
+
 ##
 ## local_settings.py can be used to override environment-specific settings
 ## like database and email that differ between development and production.
