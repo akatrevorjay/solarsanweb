@@ -1,7 +1,8 @@
 {% extends "bootstrap2/layouts/base_navbar_responsive.html" %}
 
 {% load url from future %}
-
+{% load cache %}
+{% load crispy_forms_tags %}
 
 {% block title %}SolarSan Console{% endblock %}
 
@@ -41,11 +42,13 @@
                 </li>
                 {% endcomment %}
 
-                {% for curpool in pools|dictsort:"name" %}
                 <!-- Drop it -->
+                {% cache 30 storage-top-nav %}
                 <li class="dropdown-submenu">
-                    <a tabindex="-1" href="{% url 'pool' slug=curpool.name %}">{{ curpool.name }}</a>
+                    <a tabindex="-1" href="#">pools</a>
                     <ul class="dropdown-menu">
+                        {% for curpool in pools|dictsort:"name" %}
+                        <li><a href="{% url 'pool' slug=curpool.name %}">{{ curpool.name }}</a>
 
                         {% comment %}
 
@@ -54,7 +57,7 @@
                         {% for filesystem in curpoolfss|dictsort:"path" %}
 
                         {% ifchanged filesystem.path|length %}
-                            
+
                         {% endifchanged %}
 
                         {% if filesystem.path|length < 3 %}
@@ -91,10 +94,10 @@
 
                         {% endcomment %}
 
+                        {% endfor %}
                     </ul>
                 </li>
-                {% endfor %}
-
+                {% endcache %}
                 <!-- End droppin it -->
             </ul>
         </li>
@@ -149,7 +152,7 @@
 {% endblock %}
 
 {% block post_container %}
-
+{% cache 30 login_modal %}
 <div class="modal fade hide" id="sign-in-modal">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">
@@ -159,19 +162,13 @@
         <span>Login using the form below</span>
     </div>
     <div class="modal-body">
-        {{ login_form }}
-        <label><strong>Username:</strong>
-            <input class="sprited"/>
-        </label>
-        <label><strong>Password:</strong>
-            <input class="sprited"/>
-        </label>
+        {% crispy login_form %}
     </div>
     <div class="modal-footer">
         <a href="#" class="btn" data-dismiss="modal">Close</a>
         <a href="#" class="btn btn-primary">Log In</a>
     </div>
 </div>
-
+{% endcache %}
 {% endblock %}
 

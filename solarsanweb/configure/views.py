@@ -11,11 +11,11 @@ from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
 from solarsan.models import Config
 
 
-class HomeListView( generic.TemplateView ):
+class HomeListView(generic.TemplateView):
     template_name = 'configure/home_list.html'
-    def get( self, request, *args, **kwargs ):
+    def get(self, request, *args, **kwargs):
         context = {}
-        return self.render_to_response( context )
+        return self.render_to_response(context)
 
 
 """
@@ -28,16 +28,16 @@ import gluster
 from configure.models import ClusterNode
 
 
-class ClusterPeerListView( generic.TemplateView ):
+class ClusterPeerListView(generic.TemplateView):
     template_name = 'configure/cluster/peer_list.html'
-    def get( self, request, *args, **kwargs ):
+    def get(self, request, *args, **kwargs):
         peers = gluster.peer.status()
-        #discovered_peers = cache.get( 'RecentlyDiscoveredClusterNodes' )
+        #discovered_peers = cache.get('RecentlyDiscoveredClusterNodes')
         discovered_peers = ClusterNode.objects.all()
         if discovered_peers:
             #discovered_peers = discovered_peers['nodes']
             #if '127.0.0.1' in discovered_peers:
-                #discovered_peers.remove( '127.0.0.1' )  # Remove localhost
+                #discovered_peers.remove('127.0.0.1')  # Remove localhost
             pass
 
         context = {
@@ -45,15 +45,15 @@ class ClusterPeerListView( generic.TemplateView ):
                 'discovered_peers': discovered_peers,
                 'peer_count': peers['peers'],
                 }
-        return self.render_to_response( context )
+        return self.render_to_response(context)
 
 
-class ClusterPeerDetailView( generic.TemplateView ):
+class ClusterPeerDetailView(generic.TemplateView):
     template_name = 'configure/cluster/peer_detail.html'
-    def get( self, request, *args, **kwargs ):
+    def get(self, request, *args, **kwargs):
         peers = gluster.peer.status()
 
-        peer_host = kwargs.get( 'peer' )
+        peer_host = kwargs.get('peer')
         if not peer_host in peers['host'].keys(): raise http.Http404
 
         peer = {peer_host: peers['host'][peer_host]}
@@ -63,7 +63,7 @@ class ClusterPeerDetailView( generic.TemplateView ):
                 'peer': peer,
                 'peer_count': peers['peers'],
                }
-        return self.render_to_response( context )
+        return self.render_to_response(context)
 
 
 """
@@ -78,45 +78,45 @@ import forms
 from configure.models import NetworkInterface
 
 
-class NetworkInterfaceListView( generic.TemplateView ):
+class NetworkInterfaceListView(generic.TemplateView):
     template_name = 'configure/network/interfaces.html'
-    def get( self, request, *args, **kwargs ):
-        interfaces = NetworkInterface.list()
-        context = {'interfaces': interfaces, }
-        return self.render_to_response( context )
+
+    def get(self, request, *args, **kwargs):
+        context = {'interfaces': NetworkInterface.list(), }
+        return self.render_to_response(context)
 
 
-class NetworkInterfaceConfigView( generic.FormView ):
+class NetworkInterfaceConfigView(generic.FormView):
     template_name = 'configure/network/interfaces.html'
     model = NetworkInterface
     form_class = forms.NetworkInterfaceForm
 
-    def get( self, request, *args, **kwargs ):
+    def get(self, request, *args, **kwargs):
         self.name = kwargs['slug']
         # If we don't have the interface in question, then don't proceed.
         try:
-            self.interface = NetworkInterface( self.name )
+            self.interface = NetworkInterface(self.name)
         except:
             raise http.Http404
-        return super( NetworkInterfaceConfigView, self ).get( request, *args, **kwargs )
+        return super(NetworkInterfaceConfigView, self).get(request, *args, **kwargs)
 
-    def post( self, request, *args, **kwargs ):
+    def post(self, request, *args, **kwargs):
         self.name = kwargs['slug']
         # If we don't have the interface in question, then don't proceed.
         try:
-            self.interface = NetworkInterface( self.name )
+            self.interface = NetworkInterface(self.name)
         except:
             raise http.Http404
-        return super( NetworkInterfaceConfigView, self ).post( request, *args, **kwargs )
+        return super(NetworkInterfaceConfigView, self).post(request, *args, **kwargs)
 
-    def get_context_data( self, **kwargs ):
+    def get_context_data(self, **kwargs):
         context = {}
-        context.update( kwargs,
+        context.update(kwargs,
                     interface=self.name,
-                    interfaces=NetworkInterfaceList(), )
-        return super( NetworkInterfaceConfigView, self ).get_context_data( **context )
+                    interfaces=NetworkInterfaceList(),)
+        return super(NetworkInterfaceConfigView, self).get_context_data(**context)
 
-    def get_initial( self ):
+    def get_initial(self):
         #initial = {}
         initial = self.interface.config.__dict__
         return initial
@@ -124,62 +124,62 @@ class NetworkInterfaceConfigView( generic.FormView ):
 #    def get_form(self, form_class):
 #        return form_class(
 #            initial=self.get_initial(),
-#        )
+#       )
 
-    def get_success_url( self ):
+    def get_success_url(self):
         # Redirect to previous url
-        return self.request.META.get( 'HTTP_REFERER', None )
+        return self.request.META.get('HTTP_REFERER', None)
 
-    def form_valid( self, form ):
+    def form_valid(self, form):
         form.instance.name = self.name
         form.save()
         messages.info(
             self.request,
             "Save successful!"
-        )
-        return super( NetworkInterfaceConfigView, self ).form_valid( form )
+       )
+        return super(NetworkInterfaceConfigView, self).form_valid(form)
 
-    def form_invalid( self, form ):
+    def form_invalid(self, form):
         messages.error(
             self.request,
             "Something didn't seem quite right, so we didn't save. Take a gander below and see if you can spot what's up."
-        )
-        return super( NetworkInterfaceConfigView, self ).form_invalid( form )
+       )
+        return super(NetworkInterfaceConfigView, self).form_invalid(form)
 
 network_interface_config = NetworkInterfaceConfigView.as_view()
 
 
-#class NetworkDetailView( generic.TemplateView ):
+#class NetworkDetailView(generic.TemplateView):
 #    template_name = 'configure/network/network_detail.html'
-#    def get( self, request, *args, **kwargs ):
+#    def get(self, request, *args, **kwargs):
 #        context = {}
-#        return self.render_to_response( context )
+#        return self.render_to_response(context)
 #
 #
-#class NetworkInterfaceDetailView( generic.TemplateView ):
+#class NetworkInterfaceDetailView(generic.TemplateView):
 #    template_name = 'configure/network/interface_detail.html'
-#    def get( self, request, *args, **kwargs ):
+#    def get(self, request, *args, **kwargs):
 #        interface_name = kwargs['interface']
 #        interfaces = NetworkInterfaceList()
 #        context = {'interface': interface_name,
 #                   'interfaces': interfaces,
 #                   }
-#        return self.render_to_response( context )
+#        return self.render_to_response(context)
 
 
-#class NetworkInterfaceConfigCRUDBase( object ):
+#class NetworkInterfaceConfigCRUDBase(object):
 #    model = NetworkInterfaceConfig
 #    slug_field = 'name'
 #    form_class = forms.NetworkInterfaceConfigForm
-#    def form_valid( self, form ):
+#    def form_valid(self, form):
 #        ## TODO How to set these from url kwargs properly? self.request.XXX?
 #        #form.instance.name = ''
 #        #form.instance.created_by = self.request.user
-#        return super( NetworkInterfaceConfigCRUDBase, self ).form_valid( form )
+#        return super(NetworkInterfaceConfigCRUDBase, self).form_valid(form)
 #
 #
-#class NetworkInterfaceConfigUpdate( NetworkInterfaceConfigCRUDBase, generic.UpdateView ):
-#    def get_object( self, queryset=None ):
+#class NetworkInterfaceConfigUpdate(NetworkInterfaceConfigCRUDBase, generic.UpdateView):
+#    def get_object(self, queryset=None):
 #        """
 #        This overrides UpdateView's get_object method for a couple reasons:
 #            1. Makes it so if an interface doesn't have a configuration entry yet, it returns one with the current IP information,
@@ -187,18 +187,18 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #            2. Ensures that configuration cannot be created or updated for a nonexistent interface.
 #        """
 #        try:
-#            super( NetworkInterfaceConfigUpdate, self ).get_object( queryset=queryset )
-#        except ( http.Http404 ):
+#            super(NetworkInterfaceConfigUpdate, self).get_object(queryset=queryset)
+#        except (http.Http404):
 #            slug_field = self.get_slug_field()
-#            slug = self.kwargs.get( self.slug_url_kwarg, None )
+#            slug = self.kwargs.get(self.slug_url_kwarg, None)
 #            try:
-#                interface = NetworkInterface( slug )
+#                interface = NetworkInterface(slug)
 #            except:
 #                raise http.Http404
 #            return interface.config
 #
-#class NetworkInterfaceConfigDelete( NetworkInterfaceConfigCRUDBase, generic.DeleteView ):
-#    success_url = reverse_lazy( 'network-interface-list' )
+#class NetworkInterfaceConfigDelete(NetworkInterfaceConfigCRUDBase, generic.DeleteView):
+#    success_url = reverse_lazy('network-interface-list')
 
 #class NetworkInterfaceFormView(FormView):
 #    template_name = 'configure/network/interface_form.html'
@@ -312,7 +312,7 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        return form_class(
 #            initial=self.get_initial(),
 #            subscriber=self.subscriber
-#        )
+#       )
 #
 #    def get_success_url(self):
 #        # Redirect to previous url
@@ -322,14 +322,14 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        messages.info(
 #            self.request,
 #            "You have successfully changed your email notifications"
-#        )
+#       )
 #        return super(EmailPreferenceView, self).form_valid(form)
 #
 #    def form_invalid(self, form):
 #        messages.info(
 #            self.request,
 #            "Your submission has not been saved. Try again."
-#        )
+#       )
 #        return super(EmailPreferenceView, self).form_invalid(form)
 #
 #email_preferences = EmailPreferenceView.as_view()

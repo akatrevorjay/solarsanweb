@@ -27,9 +27,9 @@
 </div>
 {% endcomment %}
 
-{# cache 15 storage-side-nav #}
 <!-- Storage Sidenav -->
 <div class="row">
+    {% cache 15 storage-side-nav %}
     <div class="span3 sidebar-nav" style="max-width: 220px;">
         <div class="accordion" id="sidebar-nav-accordion">
 
@@ -106,6 +106,7 @@
 
         </div>
     </div>
+    {% endcache %}
 
     <div class="span9">
         <div id="filesystem-info" style="padding-left: 10px">
@@ -114,7 +115,6 @@
         </div>
     </div>
 </div>
-{# endcache #}
 
 <!-- FIXME HTML hackery for modal popover creation forms -->
 <div class="hide">

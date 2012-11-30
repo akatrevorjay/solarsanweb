@@ -1,55 +1,69 @@
-from django import forms
-from django.forms.widgets import Input
+
+import os
+import logging
+from dj import forms, formsets, formset_factory, \
+               Form, BaseFormSet, \
+               User, \
+               reverse_lazy
+from mongodbforms import DocumentForm
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 
-class EmailInput(Input):
-    input_type = 'email'
+"""
+Bases
+"""
+
+class BaseForm(forms.Form):
+    form_id = None
+    form_class = None
+    form_method = 'post'
+    form_action = None
+    help_text_inline = None
+
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        if self.form_id:
+            self.helper.form_id = self.form_id
+        if self.form_class:
+            self.helper.form_class = self.form_class
+        if self.form_method:
+            self.helper.form_method = self.form_method
+        if self.form_action:
+            self.helper.form_action = self.form_action
+        if self.help_text_inline:
+            self.helper.help_text_inline = self.help_text_inline
+
+        return super(BaseForm, self).__init__(*args, **kwargs)
 
 
-class LoginForm(forms.Form):
+class BaseCreateForm(BaseForm):
+    #form_class = 'form-horizontal'
+    form_class = 'form-inline'
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        return super(BaseCreateForm, self).__init__(*args, **kwargs)
+
+    def save(self):
+        pass
+
+
+"""
+Login
+"""
+
+
+class LoginForm(BaseForm):
     username = forms.CharField()
-    password = forms.CharField(widget=forms.PasswordInput())
+    password = forms.PasswordInput()
 
+    def __init__(self, *args, **kwargs):
+        super(LoginForm, self).__init__(*args, **kwargs)
 
-class InlineForm(forms.Form):
-    username = forms.CharField()
-    password = forms.CharField(widget=forms.PasswordInput())
-
-
-class RegisterForm(forms.Form):
-    username = forms.CharField(help_text="The username you will use to login with")
-    email = forms.CharField(help_text="You will be asked to verify your email address")
-    password1 = forms.CharField(label="Password", help_text="Must be at least 32 characters long and contain exactly 7 unicode characters", widget=forms.PasswordInput())
-    password2 = forms.CharField(label="Verify password", help_text="Enter your password again for verificaiton!", widget=forms.PasswordInput())
-
-
-class FancyForm(forms.Form):
-    email = forms.CharField(required=False, label="HTML5 Email Input", help_text="Try typing in a wrong email address and pressing submit", widget=EmailInput())
-    placeholder1 = forms.CharField(required=False, label="Placeholder in template", widget=forms.Textarea())
-    placeholder2 = forms.CharField(required=False, label="Placeholder in form.py", widget=forms.Textarea(attrs={'rows': 4, 'placeholder': 'This is defines in root/forms.py instead of the template'}))
-    fake_error = forms.CharField(label="Error Field")
-    long_field = forms.CharField(required=False, label="Long field")
-    appended = forms.CharField(required=False, label="Appended text")
-    prepended = forms.CharField(required=False, label="Prepended text")
-
-
-#class DatasetCronForm(forms.Form):
-
-
-class DatasetServiceForm(forms.Form):
-    enabled = forms.BooleanField(label="Enable", help_text="Whether you want the service to run globally")
-    crontab = forms.CharField()
-
-
-class DatasetCronForm(DatasetServiceForm):
-    auto_snapshot_enabled = forms.BooleanField(label="Enable", help_text="Whether you want the service to run globally")
-    auto_snapshot_crontab = forms.CharField(label="Schedule")
-    online_backup_enabled = forms.BooleanField(label="Enable", help_text="Whether you want the service to run globally")
-    online_backup_crontab = forms.CharField(label="Schedule")
-
-
-class CronForm(forms.Form):
-    enabled = forms.BooleanField(label="Enable", help_text="Whether you want the schedule to run or not, ie a killswitch")
-    seconds = forms.CharField(label="Seconds", help_text="How often in seconds this schedule should run")
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Add'))
 
 

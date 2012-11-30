@@ -163,6 +163,7 @@ TEMPLATE_CONTEXT_PROCESSORS = gs.TEMPLATE_CONTEXT_PROCESSORS + (
     'solarsanweb.solarsan.context_processors.site_styles',   # CSS and JS includes
     'solarsanweb.analytics.context_processors.cube',         # Cube url and such
     #'solarsanweb.solarsan.context_processors.raven_dsn',    # Adds raven_dsn for raven-js
+    'solarsanweb.solarsan.context_processors.login_form',    # Includes login_form context
 )
 
 # Root URL routes

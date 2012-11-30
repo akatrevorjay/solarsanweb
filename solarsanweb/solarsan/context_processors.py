@@ -1,4 +1,5 @@
 from django.conf import settings
+from solarsan.forms import LoginForm
 
 
 def raven_dsn(request):
@@ -6,6 +7,10 @@ def raven_dsn(request):
         return {'raven_dsn': settings.RAVEN_CONFIG['dsn']}
     except:
         return {}
+
+
+def login_form(request):
+    return {'login_form': LoginForm}
 
 
 def site_styles(request):

@@ -15,7 +15,7 @@
 <li class="nav-header">
     Network Interfaces
 </li>
-{% for iface in interfaces.values() %}
+{% for iface in interfaces %}
 {% if not iface.type == 'local' %}
 <li class="{% if interface and iface.name == interface %}active{% endif %}">
     <a href="/configure/network/interfaces/{{ iface.name|urlize }}" rel="tooltip" title="{% for addr in iface.addrs.AF_INET %}{{ addr.addr }} / {{ addr.netmask }};{% endfor %}">{{ iface.name }}</a>
@@ -36,7 +36,7 @@
 <!-- Debug Form -->
 <p>
     <form method="post" class="form-horizontal">{% csrf_token %}
-        {{ form.as_p() }}
+        {{ form }}
         <input type="submit" value="Save" />
     </form>
 </p>
@@ -45,11 +45,11 @@
 {% if interface %}
 <!-- Debug Interface Info -->
 <pre>
-{{ interfaces[interface] }} =
-{{ interfaces[interface].__dict__|pprint }}
+{{ interfaces.interface }} =
+{{ interfaces.interface|pprint }}
 
 config = 
-{{ interfaces[interface].config.__dict__|pprint }}
+{{ interfaces.interface.config|pprint }}
 </pre>
 <br />
 Debug /etc/network/interfaces:<br />
