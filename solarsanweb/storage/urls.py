@@ -49,16 +49,39 @@ volume_patterns = patterns(
 target_patterns = patterns(
     'storage.views',
     url(r'^$', 'target_detail', name='target'),
-    url(r'^/delete$', 'target_remove', name='target-remove'),
-    url(r'pg_create$',
+    url(r'^delete$', 'target_remove', name='target-remove'),
+
+    url(r'pg/create$',
         'target_pg_create',
         name='target-pg-create'),
-    url(r'pg_lun_map$',
-        'target_pg_volume_lun_map',
-        name='target-pg-volume-lun-map'),
-    url(r'pg/(?P<tag>\d+)$',
+    url(r'pgs/(?P<tag>\d+)/update$',
         'target_pg_update',
         name='target-pg-update'),
+    url(r'pgs/(?P<tag>\d+)/delete$',
+        'target_pg_delete',
+        name='target-pg-delete'),
+
+    url(r'pgs/(?P<tag>\d+)/lun/create$',
+        'lun_create',
+        name='lun-create'),
+    url(r'pgs/(?P<tag>\d+)/luns/(?P<lun>\d+)/delete$',
+        'lun_delete',
+        name='lun-delete'),
+
+    url(r'pgs/(?P<tag>\d+)/portal/create$',
+        'portal_create',
+        name='portal-create'),
+    url(r'pgs/(?P<tag>\d+)/portal/delete$',
+        'portal_delete',
+        name='portal-delete'),
+
+    url(r'pgs/(?P<tag>\d+)/acl/create$',
+        'acl_create',
+        name='acl-create'),
+    url(r'pgs/(?P<tag>\d+)/acl/delete$',
+        'acl_delete',
+        name='acl-delete'),
+
 )
 
 urlpatterns = patterns(

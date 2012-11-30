@@ -8,7 +8,7 @@ from dj import generic, http, reverse, render, SessionWizardView
 #from dj import HttpReponse
 from django.conf import settings
 
-from solarsan.utils import convert_human_to_bytes, convert_bytes_to_human
+from solarsan.utils import convert_human_to_bytes, convert_bytes_to_human, LoggedException, FormattedException
 from solarsan.views import JsonMixin, KwargsMixin, AjaxableResponseMixin
 from storage.models import Pool, Dataset, Filesystem, Snapshot, Volume
 from analytics.views import time_window_list
@@ -17,7 +17,6 @@ import storage.forms as forms
 import storage.target
 import storage.cache
 import rtslib
-import storage.target
 
 
 """
@@ -407,14 +406,6 @@ class TargetDetailView(BaseView, generic.DetailView):
         context = super(TargetDetailView, self).get_context_data(**kwargs)
         obj = self.object
 
-        form = forms.TpgVolumeLunMapForm()
-        form.helper.form_action = reverse('target-pg-volume-lun-map', kwargs={'slug': obj.wwn})
-        context['target_pg_volume_lun_map_form'] = form
-
-        form = forms.TargetRemoveForm()
-        form.helper.form_action = reverse('target-remove', kwargs={'slug': obj.wwn})
-        context['target_remove_form'] = form
-
         context.update({
             'fabric_module': obj.fabric_module,
             'tpgs': list(obj.tpgs),
@@ -459,12 +450,16 @@ class TpgCreateView(KwargsMixin, generic.edit.CreateView):
         return form
 
     def get_object(self):
-        self.target_wwn = self.kwargs['slug']
-        self.target = storage.target.get(self.target_wwn)
+        wwn = self.kwargs['slug']
+        self.target = storage.target.get(wwn)
         return self.target
 
     def form_valid(self, form):
-        form.target = self.get_object()
+        self.get_object()
+        logging.info('Creating TPG target=%s', self.target)
+        tpg = rtslib.TPG(self.target, mode='create')
+        tpg.enable = 1
+        logging.debug("Created TPG '%s'", tpg)
         return super(TpgCreateView, self).form_valid(form)
 
 target_pg_create = TpgCreateView.as_view()
@@ -473,94 +468,257 @@ target_pg_create = TpgCreateView.as_view()
 class TpgUpdateView(AjaxableResponseMixin, KwargsMixin, generic.edit.BaseFormView):
     form_class = forms.AjaxTpgUpdateForm
 
-    target_wwn = None
-    target = None
-    tag = None
-    tpg = None
-
-    def render_to_response(self, ctx, **kwargs):
-        #assert not self.request.is_ajax()
-        if self.request.is_ajax():
-            ctx.pop('form')
-            return self.render_to_json_response(ctx, **kwargs)
-
     def get_object(self):
-        self.target_wwn = self.kwargs['slug']
-        self.target = storage.target.get(self.target_wwn)
-
-        self.tag = int(self.kwargs['tag'])
-        self.tpg = self.target.get_tpg(self.tag)
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.tpg = storage.target.get_tpg(wwn, tag)
         return self.tpg
 
     def form_valid(self, form):
         data = form.cleaned_data
         tpg = self.get_object()
-        if not tpg:
-            raise Exception("Could not find tpg%d for Target '%s'",
-                            self.tag, self.target)
 
         if 'enable' in data:
-            logging.info("Updating TPG: '%s'", data)
-            enable = int(data['enable'])
-            if enable == 1:
-                tpg.enable = 1
-            else:
-                tpg.enable = 0
+            enable = bool(int(data['enable']))
+            logging.info("Toggling TPG '%s' enable=%s", tpg, enable)
+            tpg.enable = int(enable)
+            return self.render_to_json_response(dict(
+                enable=tpg.enable))
 
-        if 'node_acl' in data:
-            pass
-
-        return self.render_to_response(dict(enable=tpg.enable))
+    #def render_to_response(self, ctx, **kwargs):
+    #    return self.render_to_json_response(ctx, **kwargs)
 
 target_pg_update = TpgUpdateView.as_view()
 
 
-class TpgVolumeLunMapView(BaseView, generic.edit.FormView):
-    template_name = 'storage/target_create.html'
-    form_class = forms.TpgVolumeLunMapForm
-    slug_url_kwarg = 'slug'
+class TpgDeleteView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.ConfirmForm
 
-    def get_object(self, queryset=None):
-        slug = self.kwargs.get(self.slug_url_kwarg, None)
-        try:
-            obj = storage.target.get(wwn=slug)
-        except storage.target.DoesNotExist:
-            raise http.Http404
-        return obj
+    def get_success_url(self):
+        # TODO Make this actually go somewhere that hasn't been deleted.
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(TpgDeleteView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.object = storage.target.get_tpg(wwn, tag)
+        return self.object
 
     def form_valid(self, form):
-        wwn = form.cleaned_data.get('target_wwn')
-        volume = form.cleaned_data.get('volume')
+        data = form.cleaned_data
+        if data['confirm'] is not True:
+            raise LoggedException("Did not confirm!")
+        tpg = self.get_object()
+        tpg.delete()
+        return super(TpgDeleteView, self).form_valid(form)
 
-        if not volume:
-            raise http.HttpResponseBadRequest
+target_pg_delete = TpgDeleteView.as_view()
 
-        target = self.get_object()
-        volume = Volume.objects.get(pk=volume)
 
-        tag = int(form.cleaned_data['tag'])
-        try:
-            tpg = target.get_tpg(tag)
-        except:
-            tpg = rtslib.TPG(target, tag=tag, mode='create')
+class LunCreateView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.LunCreateForm
 
-        try:
-            so = volume.backstore
-        except Volume.DoesNotExist:
-            volume.save()
+    def get_success_url(self):
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
 
-        lun_id = form.cleaned_data['lun']
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(LunCreateView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
 
-        logging.info("Creating Target PG Lun Mapping with volume='%s' " +
-                     "wwn='%s' tpg='%s' lun='%s' so='%s'",
-                     volume, target, tag, lun_id, so)
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.tpg = storage.target.get_tpg(wwn, tag)
+        return self.tpg
 
-        lun = rtslib.LUN(tpg, lun=lun_id, storage_object=so)
+    def form_valid(self, form):
+        data = form.cleaned_data
+        volume = Volume.objects.get(pk=data['volume'])
+        tpg = self.get_object()
+        tpg.lun(data['lun'], storage_object=volume.backstore)
+        return super(LunCreateView, self).form_valid(form)
 
-        self.success_url = reverse('target', kwargs={'slug': target.wwn})
-        return super(TpgVolumeLunMapView, self).form_valid(form)
+lun_create = LunCreateView.as_view()
 
-target_pg_volume_lun_map = TpgVolumeLunMapView.as_view()
+
+class LunDeleteView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.ConfirmForm
+
+    def get_success_url(self):
+        # TODO Make this actually go somewhere that hasn't been deleted.
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(LunDeleteView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.object = storage.target.get_tpg(wwn, tag)
+        return self.object
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        if data['confirm'] is not True:
+            raise LoggedException("Did not confirm!")
+        tpg = self.get_object()
+        lun_int = int(self.kwargs['lun'])
+        the_lun = None
+        for lun in tpg.luns:
+            if lun.lun == lun_int:
+                the_lun = lun
+                break
+        the_lun.delete()
+        return super(LunDeleteView, self).form_valid(form)
+
+lun_delete = LunDeleteView.as_view()
+
+
+class PortalCreateView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.PortalCreateForm
+
+    def get_success_url(self):
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(PortalCreateView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.tpg = storage.target.get_tpg(wwn, tag)
+        return self.tpg
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        tpg = self.get_object()
+        tpg.network_portal(data['ip'],
+                           data['port'],
+                           mode='create')
+        return super(PortalCreateView, self).form_valid(form)
+
+portal_create = PortalCreateView.as_view()
+
+
+# TODO UNTESTED
+class PortalDeleteView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.ConfirmForm
+
+    def get_success_url(self):
+        # TODO Make this actually go somewhere that hasn't been deleted.
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(PortalDeleteView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.object = storage.target.get_tpg(wwn, tag)
+        return self.object
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        if data['confirm'] is not True:
+            raise LoggedException("Did not confirm!")
+        tpg = self.get_object()
+        the_portal = None
+        for portal in tpg.network_portals:
+            if portal.ip_address == self.kwargs['ip_address'] and portal.port == self.kwargs['port']:
+                the_portal = portal
+                break
+        the_portal.delete()
+        return super(PortalDeleteView, self).form_valid(form)
+
+portal_delete = PortalDeleteView.as_view()
+
+
+class AclCreateView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.AclCreateForm
+
+    def get_success_url(self):
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(AclCreateView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.tpg = storage.target.get_tpg(wwn, tag)
+        return self.tpg
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        tpg = self.get_object()
+        tpg.node_acl(data['node_wwn'],
+                     mode='create')
+        return super(AclCreateView, self).form_valid(form)
+
+acl_create = AclCreateView.as_view()
+
+
+# TODO UNTESTED
+class AclDeleteView(KwargsMixin, generic.edit.UpdateView):
+    template_name = 'modal_form.html'
+    form_class = forms.ConfirmForm
+
+    def get_success_url(self):
+        # TODO Make this actually go somewhere that hasn't been deleted.
+        return reverse('target', kwargs=dict(slug=self.kwargs['slug']))
+
+    def get_form(self, form_class):
+        # Set the correct form action URL
+        form = super(AclDeleteView, self).get_form(form_class)
+        form.helper.form_action = self.request.get_full_path()
+        return form
+
+    def get_object(self):
+        wwn = self.kwargs['slug']
+        tag = int(self.kwargs['tag'])
+        self.object = storage.target.get_tpg(wwn, tag)
+        return self.object
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        if data['confirm'] is not True:
+            raise LoggedException("Did not confirm!")
+        tpg = self.get_object()
+        the_acl = None
+        for acl in tpg.network_acls:
+            if acl.node_wwn == self.kwargs['node_wwn']:
+                the_acl = acl
+                break
+        the_acl.delete()
+        return super(AclDeleteView, self).form_valid(form)
+
+acl_delete = AclDeleteView.as_view()
 
 
 class TargetCreateWizardView(SessionWizardView):
@@ -582,14 +740,6 @@ target_create_wizard = TargetCreateWizardView.as_view([forms.TargetCreateForm,
                                                        forms.VolumeLunMapInitialForm,
                                                        forms.TpgLunAclCreateForm,
                                                        ])
-
-
-
-
-
-
-
-
 
 
 """
@@ -634,8 +784,6 @@ class ContactView(generic.FormView):
         form.send_email()
         return super(ContactView, self).form_valid(form)
 """
-
-
 
 ''' Form Wizard Example
 from django.http import HttpResponseRedirect

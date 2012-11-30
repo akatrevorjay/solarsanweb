@@ -79,3 +79,11 @@ def create_target(fabric_module, wwn=None):
 
 def get_sessions():
     return list(root.sessions)
+
+
+def get_tpg(target, tag, fabric_module=None):
+    if isinstance(target, basestring):
+        target = get(target, fabric_module)
+    if not isinstance(target, rtslib.Target):
+        raise LoggedException("Got a target that wasn't a rtslib.Target instance: '%s'", target)
+    return target.get_tpg(tag)

@@ -50,6 +50,9 @@ class BaseCreateForm(BaseForm):
         self.instance = kwargs.pop('instance', None)
         return super(BaseCreateForm, self).__init__(*args, **kwargs)
 
+    def save(self):
+        pass
+
 
 """
 Devices
@@ -235,6 +238,56 @@ class LunForm(BaseCreateForm):
         #self.fields['lun'].choices.extend(luns)
 
 
+class LunCreateForm(LunForm):
+    volume = forms.ChoiceField(
+        choices=VOLUME_CHOICES,
+        help_text=u'Volume to map to Lun', )
+
+    def __init__(self, *args, **kwargs):
+        super(LunCreateForm, self).__init__(*args, **kwargs)
+
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Add'))
+
+
+class PortalCreateForm(BaseCreateForm):
+    ip = forms.CharField(
+        initial='0.0.0.0',
+        help_text=u'Bind to this IP address', )
+    port = forms.IntegerField(
+        initial=3260,
+        help_text=u'Bind to this port', )
+
+    def __init__(self, *args, **kwargs):
+        super(PortalCreateForm, self).__init__(*args, **kwargs)
+
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Add'))
+
+
+class AclCreateForm(BaseCreateForm):
+    node_wwn = forms.CharField(
+        help_text=u'Node WWN to create ACL for', )
+
+    def __init__(self, *args, **kwargs):
+        super(AclCreateForm, self).__init__(*args, **kwargs)
+
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Add'))
+
+
+class ConfirmForm(BaseCreateForm):
+    confirm = forms.BooleanField(
+            initial=False,
+            help_text=u'Are you sure?', )
+
+    def __init__(self, *args, **kwargs):
+        super(ConfirmForm, self).__init__(*args, **kwargs)
+
+        # TODO Fix this so the modal Save Changes button works instead
+        self.helper.add_input(Submit('submit', 'Confirm'))
+
+
 # FIXME Generate choices list, but this should be gotten via ajax
 TPG_TAG_CHOICES = []
 for x in xrange(1, 10):
@@ -261,12 +314,9 @@ class TpgCreateForm(BaseCreateForm):
         # TODO Fix this so the modal Save Changes button works instead
         self.helper.add_input(Submit('submit', 'Add'))
 
-    def save(self):
-        logging.debug('Creating TPG target=%s', self.target)
-        tpg = rtslib.TPG(self.target, mode='create')
-        tpg.enable = 1
-        logging.info("Created TPG '%s'", tpg)
-        return tpg
+
+class AjaxTpgUpdateForm(Form):
+    enable = forms.IntegerField()
 
 
 class TpgVolumeLunMapForm(TpgForm, LunForm):
@@ -349,9 +399,6 @@ class TpgLunAclCreateForm(TpgMixin, BaseForm):
         self.helper.add_input(Submit('submit', 'Submit'))
         super(TpgLunAclCreateForm, self).__init__(*args, **kwargs)
 
-
-class AjaxTpgUpdateForm(Form):
-    enable = forms.IntegerField()
 
 
 
