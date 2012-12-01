@@ -9,8 +9,9 @@ if settings.SERVER_IS_LINUX:
     import rtslib
     root = rtslib.RTSRoot()
 elif settings.SERVER_IS_KFREEBSD:
-    pass
-
+    class FakeRoot(object):
+        targets = []
+    root = FakeRoot()
 
 class DoesNotExist(FormattedException):
     pass

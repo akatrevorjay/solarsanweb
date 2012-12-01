@@ -47,7 +47,7 @@ DATABASES = {
 #
 
 MONGODB_DATABASES = {
-    'default': {'name': PROJECT_NAME}
+        'default': {'name': PROJECT_NAME, 'host': '192.168.122.167'}
 }
 
 DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
