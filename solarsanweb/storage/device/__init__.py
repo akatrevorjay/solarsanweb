@@ -1,20 +1,29 @@
 
 import os
 from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
-from storage.queryset import QuerySet, filter_by_attrs
+from ..queryset import QuerySet
+
 from django.conf import settings
-
 if settings.SERVER_IS_LINUX:
-    from .os_linux import *
-    from . import os_linux as server_os
+    from .os_linux import backend
 elif settings.SERVER_IS_KFREEBSD:
-    from .os_kfreebsd import *
-    from . import os_kfreebsd as server_os
-
+    from .os_kfreebsd import backend
 
 class DeviceQuerySet(QuerySet):
-    def _get_objects(self):
-        return [Device(drive) for drive in get_devs()]
+    # This will be set later after Device class is created
+    _wrap_objects = None
+    def _get_objs(self):
+        wrapper = getattr(self, '_wrap_objects', None)
+        devs = self._get_raw_objs()
+        if wrapper:
+            devs = [wrapper(d) for d in devs]
+        return devs
+
+    def _get_raw_objs(self):
+        #return backend.get_devices()
+        #return list(Drives().all())
+        #return list(
+        return backend.get_devices()
 
     def __init__(self, *args, **kwargs):
         if 'devices' in kwargs:
@@ -25,19 +34,30 @@ class DeviceQuerySet(QuerySet):
         pass
 
 
-Devices = DeviceQuerySet()
 
-## TODO Drives should maybe not show volume devs?
-#path_by_id = d.path_by_id()
-#basepath = os.path.basename(path_by_id)
-#if basepath.startswith('zd'):
-#    continue
+#class Device(object):
+#    """Device object"""
+#
+#    def __init__(self, path):
+#        self._parted = get_device_by_path(path)
+#        self._udisks = get_device_by_path(path)
+#    # TODO
 
-Drives = DeviceQuerySet(
-    base_filter={
-        'is_drive': True,
-    },
-)
+
+#class Devices(DeviceQuerySet):
+#    pass
+
+
+#class Drives(DeviceQuerySet):
+#    base_filter = {
+#        'DeviceIsDrive': True,
+#    }
+
+#    ## TODO Drives should maybe not show volume devs?
+#    #path_by_id = d.path_by_id()
+#    #basepath = os.path.basename(path_by_id)
+#    #if basepath.startswith('zd'):
+#    #    continue
 
 
 class Mirror(DeviceQuerySet):
@@ -88,19 +108,19 @@ class Mirror(DeviceQuerySet):
         return self.append(other)
 
 
-class _BaseDevice(object):
+class BaseDevice(backend.BaseDevice):
     """Device object
     """
     path = None
     _mirrorable = False
-    _backend_device= None
+    _backend_device = None
     _zpool_create_modifier = None
 
     def __init__(self, arg):
-        if isinstance(arg, cls_Device):
+        if isinstance(arg, backend.RawDevice):
             self._backend_device = arg
         else:
-            self._backend_device = get_device_by_path(arg)
+            self._backend_device = backend.get_device_by_path(arg)
         self.path = self.path_by_id(basename=True)
 
     def __repr__(self):
@@ -112,48 +132,8 @@ class _BaseDevice(object):
         #assert not self.is_partitioned
         return self.path_by_id()
 
-    """
-    Device Info
-    """
-
-    # Vendor is apparently 'ATA' ? Doesn't make sense, not including this for
-    # now. If needed just split(self.model)[0].
-    #@property
-    #def vendor(self):
-    #    return self._backend_device.DriveVendor
-
-    @property
-    def model(self):
-        return self._backend_device.DriveModel
-
-    @property
-    def revision(self):
-        return self._backend_device.DriveRevision
-
-    @property
-    def serial(self):
-        return self._backend_device.DriveSerial
-
-    # Partitions only
-    #@property
-    #def uuid(self):
-    #    return self._backend_device.DriveUuid
-
-    @property
-    def wwn(self):
-        return self._backend_device.DriveWwn
-
-    def size(self, human=False):
-        ret = self._backend_device.DeviceSize
-        if human:
-            ret = convert_bytes_to_human(ret)
-        return ret
-
-    @property
-    def block_size(self):
-        return self._backend_device.DeviceBlockSize
-
-    def paths(self, by_id=True, by_path=True):
+    # TODO udisks device
+    def paths_udisks(self, by_id=True, by_path=True):
         ret = set([self._backend_device.DeviceFile])
         if by_id:
             ret.update(self._backend_device.DeviceFileById)
@@ -188,267 +168,6 @@ class _BaseDevice(object):
             ret = os.path.basename(ret)
         return ret
 
-    """
-    SMART
-    """
-
-    @property
-    def smart_status(self):
-        return self._backend_device.DriveAtaSmartStatus
-
-    @property
-    def is_smart_available(self):
-        return self._backend_device.DriveAtaSmartIsAvailable
-
-    # Not yet implemented in udisks OR in python-udisks
-    #def smart_self_test(self):
-    #    return self._backend_device.DriveAtaInitiateSelfTest()
-
-    """
-    Device Properties
-    """
-
-    @property
-    def is_rotational(self):
-        return self._backend_device.DriveIsRotational
-
-    @property
-    def is_partitioned(self):
-        return self._backend_device.DeviceIsPartitionTable
-
-    @property
-    def is_mounted(self):
-        return self._backend_device.DeviceIsMounted
-
-    @property
-    def mount_paths(self):
-        return self._backend_device.DeviceMountPaths
-
-    @property
-    def is_removable(self):
-        return self._backend_device.DeviceIsRemovable
-
-    @property
-    def is_readonly(self):
-        return self._backend_device.DeviceIsReadOnly
-
-    """
-    Hmm, not sure if these even belong here
-    """
-
-    @property
-    def is_drive(self):
-        return self._backend_device.DeviceIsDrive
-
-    @property
-    def is_partition(self):
-        return self._backend_device.DeviceIsPartition
-
-    """
-    LVM2
-    """
-
-    @property
-    def is_lvm2_lv(self):
-        return self._backend_device.DeviceIsLinuxLvm2LV
-
-    @property
-    def is_lvm2_pv(self):
-        return self._backend_device.DeviceIsLinuxLvm2PV
-
-    """
-    mdraid
-    """
-
-    @property
-    def is_mdraid(self):
-        return self._backend_device.DeviceIsLinuxMd
-
-    @property
-    def is_mdraid_degraded(self):
-        return self._backend_device.LinuxMdIsDegraded
-
-    @property
-    def is_mdraid_component(self):
-        return self._backend_device.DeviceIsLinuxMdComponent
-
-
-class _BasekFreeBSDDevice(object):
-    def __init__(self, arg):
-        if isinstance(arg, cls_Device):
-            self._backend_device = arg
-        else:
-            self._backend_device = get_device_by_path(arg)
-        self.path = self.path_by_id(basename=True)
-
-    def __repr__(self):
-        return "<%s('%s')>" % (self.__class__.__name__, self.path)
-
-    def _zpool_arg(self):
-        #assert self.is_drive or self.is_partition
-        #assert not self.is_mounted
-        #assert not self.is_partitioned
-        return self.path_by_id()
-
-    """
-    Device Info
-    """
-
-    # Vendor is apparently 'ATA' ? Doesn't make sense, not including this for
-    # now. If needed just split(self.model)[0].
-    #@property
-    #def vendor(self):
-    #    return self._backend_device.DriveVendor
-
-    @property
-    def model(self):
-        return self._backend_device.DriveModel
-
-    @property
-    def revision(self):
-        return self._backend_device.DriveRevision
-
-    @property
-    def serial(self):
-        return self._backend_device.DriveSerial
-
-    # Partitions only
-    #@property
-    #def uuid(self):
-    #    return self._backend_device.DriveUuid
-
-    @property
-    def wwn(self):
-        return self._backend_device.DriveWwn
-
-    def size(self, human=False):
-        ret = self._backend_device.DeviceSize
-        if human:
-            ret = convert_bytes_to_human(ret)
-        return ret
-
-    @property
-    def block_size(self):
-        return self._backend_device.DeviceBlockSize
-
-    def paths(self, by_id=True, by_path=True):
-        ret = set([self._backend_device.DeviceFile])
-        if by_id:
-            ret.update(self._backend_device.DeviceFileById)
-        if by_path:
-            ret.update(self._backend_device.DeviceFileByPath)
-        return list(ret)
-
-    def path_by_id(self, basename=False):
-        paths = self.paths()
-        ret = None
-
-        path_by_uuid = None
-        path_by_path = None
-        path_by_id = None
-        path_short = None
-        for x, path in enumerate(paths):
-            if path.startswith('/dev/disk/by-uuid/'):
-                path_by_uuid = path
-            elif path.startswith('/dev/disk/by-path/'):
-                path_by_path = path
-            elif path.startswith('/dev/disk/by-id/'):
-                path_by_id = path
-            if not path_short or len(path_short) > len(path):
-                path_short = path
-
-        for i in [path_by_uuid, path_by_id, path_short, path_by_path, paths[0]]:
-            if i:
-                ret = i
-                break
-
-        if basename:
-            ret = os.path.basename(ret)
-        return ret
-
-    """
-    SMART
-    """
-
-    @property
-    def smart_status(self):
-        return self._backend_device.DriveAtaSmartStatus
-
-    @property
-    def is_smart_available(self):
-        return self._backend_device.DriveAtaSmartIsAvailable
-
-    # Not yet implemented in udisks OR in python-udisks
-    #def smart_self_test(self):
-    #    return self._backend_device.DriveAtaInitiateSelfTest()
-
-    """
-    Device Properties
-    """
-
-    @property
-    def is_rotational(self):
-        return self._backend_device.DriveIsRotational
-
-    @property
-    def is_partitioned(self):
-        return self._backend_device.DeviceIsPartitionTable
-
-    @property
-    def is_mounted(self):
-        return self._backend_device.DeviceIsMounted
-
-    @property
-    def mount_paths(self):
-        return self._backend_device.DeviceMountPaths
-
-    @property
-    def is_removable(self):
-        return self._backend_device.DeviceIsRemovable
-
-    @property
-    def is_readonly(self):
-        return self._backend_device.DeviceIsReadOnly
-
-    """
-    Hmm, not sure if these even belong here
-    """
-
-    @property
-    def is_drive(self):
-        return self._backend_device.DeviceIsDrive
-
-    @property
-    def is_partition(self):
-        return self._backend_device.DeviceIsPartition
-
-    """
-    LVM2
-    """
-
-    @property
-    def is_lvm2_lv(self):
-        return self._backend_device.DeviceIsLinuxLvm2LV
-
-    @property
-    def is_lvm2_pv(self):
-        return self._backend_device.DeviceIsLinuxLvm2PV
-
-    """
-    mdraid
-    """
-
-    @property
-    def is_mdraid(self):
-        return self._backend_device.DeviceIsLinuxMd
-
-    @property
-    def is_mdraid_degraded(self):
-        return self._backend_device.LinuxMdIsDegraded
-
-    @property
-    def is_mdraid_component(self):
-        return self._backend_device.DeviceIsLinuxMdComponent
 
 
 class __MirrorableDeviceMixin(object):
@@ -461,29 +180,59 @@ class __MirrorableDeviceMixin(object):
             return Mirror([self, other])
 
 
-class Device(_BaseDevice):
+class Device(BaseDevice):
     pass
 
 
-class Disk(__MirrorableDeviceMixin, _BaseDevice):
+class Disk(__MirrorableDeviceMixin, BaseDevice):
     """Disk device object
     """
     pass
 
 
-class Cache(__MirrorableDeviceMixin, _BaseDevice):
+class Cache(__MirrorableDeviceMixin, BaseDevice):
     """Cache device object
     """
     _zpool_create_modifier = 'cache'
 
 
-class Spare(_BaseDevice):
+class Spare(BaseDevice):
     """Spare device object
     """
     _zpool_create_modifier = 'spare'
 
 
-class Log(__MirrorableDeviceMixin, _BaseDevice):
+class Log(__MirrorableDeviceMixin, BaseDevice):
     """Log device object
     """
     _zpool_create_modifier = 'log'
+
+
+
+DeviceQuerySet._wrap_objects = Device
+#DeviceQuerySet._wrap_objects = backend.Device
+#Devices = Devices()
+#Drives = Drives()
+
+
+class Devices(DeviceQuerySet):
+    pass
+
+
+class Drives(DeviceQuerySet):
+
+    #base_filter={
+    #    # TODO This is for udisks, what attr fits here?
+    #    'DeviceIsDrive': True,
+    #}
+
+    ## TODO Drives should maybe not show volume devs?
+    #path_by_id = d.path_by_id()
+    #basepath = os.path.basename(path_by_id)
+    #if basepath.startswith('zd'):
+    #    continue
+
+    pass
+
+
+
