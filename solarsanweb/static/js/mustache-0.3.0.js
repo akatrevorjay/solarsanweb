@@ -1,1 +1,1 @@
-../../../vendor/templates/django-jstemplate/jstemplate/static/mustache/js/mustache-0.3.0.js
+../../../vendor/templates/django-jstemplate/jstemplate/static/libs/mustache-0.3.0.js
