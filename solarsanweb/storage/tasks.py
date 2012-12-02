@@ -38,7 +38,7 @@ class Import_ZFS_Metadata(PeriodicTask):
             pool.reload_zdb()
             pool.save()
 
-            if not pool.health_check():
+            if not pool.is_healthy():
                 pool_health = pool.properties['health']
                 logger.error("Can't import storage pool '%s' as it has bad health='%s'!",
                              pool_name,

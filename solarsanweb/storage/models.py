@@ -308,7 +308,8 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
                     #children.insert(cobj.id, cobj)
 
         if obj:
-            obj.children = children
+            if children:
+                obj.children = children
             return obj
         elif obj_type == 'root':
             self.vdevs = children
