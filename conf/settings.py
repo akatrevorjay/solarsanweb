@@ -464,18 +464,18 @@ PASSWORD_HASHERS = (
 #
 
 CACHES = {
-    'default_mem': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': PROJECT_NAME,
-    },
+    #'default_mem': {
+    #    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    #    'LOCATION': PROJECT_NAME,
+    #},
     #'default_db': {
     #    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
     #    'LOCATION': PROJECT_NAME+'_django_db_cache',
     #},
-    #'default_file': {
-    #    'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-    #    'LOCATION': os.path.join(DATA_DIR, 'cache'),
-    #},
+    'default_file': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(DATA_DIR, 'cache'),
+    },
     #'default_mongodb': {
     #    'BACKEND': 'solarsan.cache.EasyGoingMongoDBCache',
     #    'database': PROJECT_NAME,
@@ -484,7 +484,7 @@ CACHES = {
     #},
 }
 
-CACHES['default'] = CACHES.pop('default_mem')
+CACHES['default'] = CACHES.pop('default_file')
 #CACHES['default'] = CACHES.pop('default_mongodb')
 #CACHES['default'] = CACHES.pop('default_db')
 
@@ -559,7 +559,7 @@ CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hrs
 #CELERY_RESULT_BACKEND = "amqp"
 CELERY_RESULT_BACKEND = "mongodb"
 CELERY_MONGODB_BACKEND_SETTINGS = {
-    "database": MONGODB_DATABASES['default'].get('name', None),
+    "database": MONGODB_DATABASES['default']['name'],
     "host": MONGODB_DATABASES['default'].get('host', None),
 }
 
