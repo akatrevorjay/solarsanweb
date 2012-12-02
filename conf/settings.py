@@ -46,8 +46,13 @@ DATABASES = {
 # MongoDB (MongoEngine)
 #
 
+SERVER_ID = "devsolarsanvm"
+
 MONGODB_DATABASES = {
-        'default': {'name': PROJECT_NAME, 'host': '192.168.122.167'}
+    'default': {
+        'name': "%s_%s" % (PROJECT_NAME, SERVER_ID),
+        #'host': '192.168.122.167',
+    },
 }
 
 DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
@@ -554,7 +559,8 @@ CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hrs
 #CELERY_RESULT_BACKEND = "amqp"
 CELERY_RESULT_BACKEND = "mongodb"
 CELERY_MONGODB_BACKEND_SETTINGS = {
-    "database": PROJECT_NAME,
+    "database": MONGODB_DATABASES['default'].get('name', None),
+    "host": MONGODB_DATABASES['default'].get('host', None),
 }
 
 #default_exchange = Exchange('default', type='direct')
