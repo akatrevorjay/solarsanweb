@@ -1,3 +1,4 @@
+from solarsan.utils import convert_bytes_to_human
 #import os
 import parted
 
@@ -148,6 +149,3 @@ class BaseDevice(object):
     @property
     def is_mdraid_component(self):
         return self._backend_device.DeviceIsLinuxMdComponent
-
-
-

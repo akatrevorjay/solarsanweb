@@ -132,15 +132,6 @@ class BaseDevice(backend.BaseDevice):
         #assert not self.is_partitioned
         return self.path_by_id()
 
-    # TODO udisks device
-    def paths_udisks(self, by_id=True, by_path=True):
-        ret = set([self._backend_device.DeviceFile])
-        if by_id:
-            ret.update(self._backend_device.DeviceFileById)
-        if by_path:
-            ret.update(self._backend_device.DeviceFileByPath)
-        return list(ret)
-
     def path_by_id(self, basename=False):
         paths = self.paths()
         ret = None
