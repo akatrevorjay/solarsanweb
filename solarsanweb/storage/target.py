@@ -2,13 +2,16 @@
 
 from solarsan.utils import FormattedException, LoggedException
 from storage.models import Pool, Filesystem, Volume, Snapshot
-import rtslib
-
 #from django.core.cache import cache
 from django.conf import settings
 
-root = rtslib.RTSRoot()
-
+if settings.SERVER_IS_LINUX:
+    import rtslib
+    root = rtslib.RTSRoot()
+elif settings.SERVER_IS_KFREEBSD:
+    class FakeRoot(object):
+        targets = []
+    root = FakeRoot()
 
 class DoesNotExist(FormattedException):
     pass

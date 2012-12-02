@@ -47,7 +47,7 @@ DATABASES = {
 #
 
 MONGODB_DATABASES = {
-    'default': {'name': PROJECT_NAME}
+        'default': {'name': PROJECT_NAME, 'host': '192.168.122.167'}
 }
 
 DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
@@ -267,6 +267,15 @@ MIDDLEWARE_CLASSES = (
 
 import socket
 SERVER_NAME = socket.gethostname()
+
+#
+# Get server OS
+#
+
+SERVER_OS = os.uname()[0]
+
+SERVER_IS_LINUX = SERVER_OS == 'Linux'
+SERVER_IS_KFREEBSD = SERVER_OS == 'GNU/kFreeBSD'
 
 #
 # SolarSan Log UI

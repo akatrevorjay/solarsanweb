@@ -12,12 +12,14 @@ from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 from solarsan.forms import BaseForm, BaseCreateForm
-from storage.models import Pool, Dataset, Volume, Filesystem, Snapshot
-from storage.device import Drives, Devices
+from .models import Pool, Dataset, Volume, Filesystem, Snapshot
+from .device import Drives, Devices
+#from . import cache
+#from . import target
 import storage.cache
 import storage.target
 
-import rtslib
+from django.conf import settings
 
 
 
@@ -25,11 +27,13 @@ import rtslib
 Devices
 """
 
+drvs = Drives()
+devs = Devices()
 
 def _populate_drives_choices():
     ret = []
     # TODO Check that device is not in use already
-    for d in sorted(Drives.filter(), key=lambda x: x.path_by_id()):
+    for d in sorted(drvs.filter(), key=lambda x: x.path_by_id()):
         path_by_id = d.path_by_id()
         basepath = os.path.basename(path_by_id)
         if basepath.startswith('zd') or d.is_removable:
