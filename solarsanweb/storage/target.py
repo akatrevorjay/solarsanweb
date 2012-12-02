@@ -1,5 +1,4 @@
 
-
 from solarsan.utils import FormattedException, LoggedException
 from storage.models import Pool, Filesystem, Volume, Snapshot
 #from django.core.cache import cache
@@ -12,6 +11,7 @@ elif settings.SERVER_IS_KFREEBSD:
     class FakeRoot(object):
         targets = []
     root = FakeRoot()
+
 
 class DoesNotExist(FormattedException):
     pass
