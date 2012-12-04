@@ -251,6 +251,7 @@ PROJECT_APPS = (
     'solarsan',
     'status',
     'configure',
+    'cluster',
     'storage',
     'analytics',
     'zfs',

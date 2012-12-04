@@ -15,20 +15,6 @@ import netifaces
 
 
 """
-Cluster
-"""
-
-
-class ClusterNode(m.Document):
-    meta = {'collection': 'cluster_nodes'}
-    hostname = m.StringField(required=True, unique=True)
-    # TODO Make this an embedded document
-    last_seen = m.DateTimeField()
-    first_seen = m.DateTimeField()
-    interfaces = m.DictField()
-
-
-"""
 Network
 """
 
@@ -41,7 +27,7 @@ def convert_netmask_to_cidr(arg):
     return int(IPy.IP('0/%s' % arg, make_net=True).prefixlen())
 
 
-class NetworkInterface(m.Document):
+class Nic(m.Document):
     PROTO_CHOICES = (
         ('none', 'Disabled'),
         ('static', 'Static IP'),
@@ -96,7 +82,7 @@ class NetworkInterface(m.Document):
     def __init__(self, name=None, **kwargs):
         if name:
             kwargs['name'] = name
-        super(NetworkInterface, self).__init__(**kwargs)
+        super(Nic, self).__init__(**kwargs)
 
         if not self.pk and self.name:
             # Get starting config from the first AF_INET address on the device (if it exists)
@@ -171,8 +157,8 @@ class NetworkInterface(m.Document):
         ret = {}
         for x in netifaces.interfaces():
             try:
-                ret[x] = NetworkInterface(x)
+                ret[x] = Nic(x)
             except:
                 pass
-        #return dict([(x, lambda NetworkInterface(x) except: None) for x in netifaces.interfaces()])
+        #return dict([(x, lambda Nic(x) except: None) for x in netifaces.interfaces()])
         return ret

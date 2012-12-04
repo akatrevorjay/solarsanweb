@@ -13,66 +13,22 @@ from solarsan.models import Config
 from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
 from django.core.cache import cache
 import gluster
-from configure.models import ClusterNode
 
 #from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.core.urlresolvers import reverse_lazy
 from django.forms.models import modelformset_factory
 from django.contrib import messages
-import forms
-from configure.models import NetworkInterface
+from . import forms
+from .models import Nic
 
-class HomeListView(generic.TemplateView):
+
+class HomeView(generic.TemplateView):
     template_name = 'configure/home_list.html'
     def get(self, request, *args, **kwargs):
         context = {}
         return self.render_to_response(context)
 
-
-"""
-Cluster
-"""
-
-
-class ClusterPeerListView(generic.TemplateView):
-    template_name = 'configure/cluster/peer_list.html'
-
-    def get(self, request, *args, **kwargs):
-        #peers = gluster.peer.status()
-        #discovered_peers = cache.get('RecentlyDiscoveredClusterNodes')
-        discovered_peers = ClusterNode.objects.all()
-        if discovered_peers:
-            #discovered_peers = discovered_peers['nodes']
-            #if '127.0.0.1' in discovered_peers:
-                #discovered_peers.remove('127.0.0.1')  # Remove localhost
-            pass
-
-        context = {
-            #'peers': peers['host'],
-            'discovered_peers': discovered_peers,
-            #'peer_count': peers['peers'],
-        }
-        return self.render_to_response(context)
-
-
-class ClusterPeerDetailView(generic.TemplateView):
-    template_name = 'configure/cluster/peer_detail.html'
-
-    def get(self, request, *args, **kwargs):
-        #peers = gluster.peer.status()
-
-        peer_host = kwargs.get('peer')
-        if not peer_host in peers['host'].keys():
-            raise http.Http404
-
-        peer = {peer_host: peers['host'][peer_host]}
-
-        context = {
-            #'peers': peers['host'],
-            #'peer': peer,
-            #'peer_count': peers['peers'],
-        }
-        return self.render_to_response(context)
+home = HomeView.as_view()
 
 
 """
@@ -80,27 +36,29 @@ Network
 """
 
 
-class NetworkInterfaceListView(generic.TemplateView):
+class NicListView(generic.TemplateView):
     template_name = 'configure/network/interfaces.html'
 
     def get(self, request, *args, **kwargs):
-        context = {'interfaces': NetworkInterface.list(), }
+        context = {'interfaces': Nic.list(), }
         return self.render_to_response(context)
 
+nic_list = NicListView.as_view()
 
-class NetworkInterfaceConfigView(KwargsMixin, mongogeneric.UpdateView):
+
+class NicConfigView(KwargsMixin, mongogeneric.UpdateView):
     template_name = 'configure/network/interfaces.html'
-    document = NetworkInterface
-    form_class = forms.NetworkInterfaceForm
+    document = Nic
+    form_class = forms.NicForm
     slug_field = 'name'
 
     def get_context_data(self, **kwargs):
-        context = super(NetworkInterfaceConfigView, self).get_context_data(**kwargs)
+        context = super(NicConfigView, self).get_context_data(**kwargs)
         obj = self.get_object()
 
         context.update(dict(
             interface=obj,
-            interfaces=NetworkInterface.list(),
+            interfaces=Nic.list(),
         ))
 
         return context
@@ -119,7 +77,7 @@ class NetworkInterfaceConfigView(KwargsMixin, mongogeneric.UpdateView):
         return self.request.META.get('HTTP_REFERER', None)
 
 
-network_interface_config = NetworkInterfaceConfigView.as_view()
+nic_config = NicConfigView.as_view()
 
 
 #class NetworkDetailView(generic.TemplateView):
@@ -129,29 +87,29 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        return self.render_to_response(context)
 #
 #
-#class NetworkInterfaceDetailView(generic.TemplateView):
+#class NicDetailView(generic.TemplateView):
 #    template_name = 'configure/network/interface_detail.html'
 #    def get(self, request, *args, **kwargs):
 #        interface_name = kwargs['interface']
-#        interfaces = NetworkInterfaceList()
+#        interfaces = NicList()
 #        context = {'interface': interface_name,
 #                   'interfaces': interfaces,
 #                   }
 #        return self.render_to_response(context)
 
 
-#class NetworkInterfaceConfigCRUDBase(object):
-#    model = NetworkInterfaceConfig
+#class NicConfigCRUDBase(object):
+#    model = NicConfig
 #    slug_field = 'name'
-#    form_class = forms.NetworkInterfaceConfigForm
+#    form_class = forms.NicConfigForm
 #    def form_valid(self, form):
 #        ## TODO How to set these from url kwargs properly? self.request.XXX?
 #        #form.instance.name = ''
 #        #form.instance.created_by = self.request.user
-#        return super(NetworkInterfaceConfigCRUDBase, self).form_valid(form)
+#        return super(NicConfigCRUDBase, self).form_valid(form)
 #
 #
-#class NetworkInterfaceConfigUpdate(NetworkInterfaceConfigCRUDBase, generic.UpdateView):
+#class NicConfigUpdate(NicConfigCRUDBase, generic.UpdateView):
 #    def get_object(self, queryset=None):
 #        """
 #        This overrides UpdateView's get_object method for a couple reasons:
@@ -160,22 +118,22 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #            2. Ensures that configuration cannot be created or updated for a nonexistent interface.
 #        """
 #        try:
-#            super(NetworkInterfaceConfigUpdate, self).get_object(queryset=queryset)
+#            super(NicConfigUpdate, self).get_object(queryset=queryset)
 #        except (http.Http404):
 #            slug_field = self.get_slug_field()
 #            slug = self.kwargs.get(self.slug_url_kwarg, None)
 #            try:
-#                interface = NetworkInterface(slug)
+#                interface = Nic(slug)
 #            except:
 #                raise http.Http404
 #            return interface.config
 #
-#class NetworkInterfaceConfigDelete(NetworkInterfaceConfigCRUDBase, generic.DeleteView):
+#class NicConfigDelete(NicConfigCRUDBase, generic.DeleteView):
 #    success_url = reverse_lazy('network-interface-list')
 
-#class NetworkInterfaceFormView(FormView):
+#class NicFormView(FormView):
 #    template_name = 'configure/network/interface_form.html'
-#    form_class = NetworkInterfaceConfigForm
+#    form_class = NicConfigForm
 #    success_url = reverse_lazy('network-interface-list')
 #
 #    def form_valid(self, form):
@@ -185,8 +143,8 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        return super(ContactView, self).form_valid(form)
 
 
-## Not needed because NetworkInterfaceConfigUpdate handles creation of new objects on it's own.
-#class NetworkInterfaceConfigCreate(NetworkInterfaceConfigCRUDBase, generic.CreateView):
+## Not needed because NicConfigUpdate handles creation of new objects on it's own.
+#class NicConfigCreate(NicConfigCRUDBase, generic.CreateView):
 #    pass
 
 
@@ -337,9 +295,9 @@ network_interface_config = NetworkInterfaceConfigView.as_view()
 #        "formset": formset,
 #    })
 
-#class NetworkInterfaceFormView(FormView):
+#class NicFormView(FormView):
 #    template_name = 'configure/network/interface_update.html'
-#    form_class = NetworkInterfaceConfigForm
+#    form_class = NicConfigForm
 #    success_url = '/configure/network'
 #
 #    def form_valid(self, form):

@@ -97,7 +97,7 @@ def pool_list(request, format=None):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-from configure.models import NetworkInterface
+from configure.models import Nic
 from django.conf import settings
 from IPy import IP
 
@@ -111,7 +111,7 @@ class ClusterProbe(object):
 def cluster_probe(request, format=None):
     """Cluster probe API"""
     if request.method == 'GET':
-        ifaces = NetworkInterface.list()
+        ifaces = Nic.list()
         ret_ifaces = {}
         for iface_name, iface in ifaces.iteritems():
             for af, addrs in iface.addrs.iteritems():

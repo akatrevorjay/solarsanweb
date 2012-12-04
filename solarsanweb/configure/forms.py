@@ -13,12 +13,12 @@ from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 from solarsan.forms import BaseForm, BaseCreateForm
 
-import configure.models
+from . import models
 
 
-class NetworkInterfaceForm(DocumentForm):
+class NicForm(DocumentForm):
     class Meta:
-        document = configure.models.NetworkInterface
+        document = models.Nic
         #exclude = ('name', 'created', 'modified')
 
     form_id = None
@@ -42,7 +42,7 @@ class NetworkInterfaceForm(DocumentForm):
 
         # TODO Fix this so the modal Save Changes button works instead
         self.helper.add_input(Submit('submit', 'Save'))
-        return super(NetworkInterfaceForm, self).__init__(*args, **kwargs)
+        return super(NicForm, self).__init__(*args, **kwargs)
 
 
 
