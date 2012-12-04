@@ -51,11 +51,18 @@ SERVER_ID = "devsolarsanvm"
 MONGODB_DATABASES = {
     'default': {
         'name': "%s_%s" % (PROJECT_NAME, SERVER_ID),
-        #'host': '192.168.122.167',
+    },
+    'syslog': {
+        'name': "syslog",
     },
 }
 
 DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
+
+import mongoengine
+#mongoengine.register_connection('default', 'default')
+mongoengine.register_connection('syslog', 'syslog')
+
 
 # DB Router
 #DATABASE_ROUTERS = ['solarsan.routers.MongoDBRouter', ]
@@ -613,7 +620,7 @@ LOGGING = {
     #'disable_existing_loggers': False,
     'root': {
         'level': 'DEBUG',
-        'handlers': ['console'],
+        'handlers': ['console', 'syslog'],
         #'level': 'WARNING',
         #'handlers': ['console', 'sentry'],
     },
@@ -625,6 +632,12 @@ LOGGING = {
         },
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'syslog': {
+            #'format': '<22>%(asctime)s ' + SERVER_NAME + ' %(name)s[%(process)d]: %(message)s',
+            #'format': 'solarsan.%(name)s[%(process)d]: %(levelname)s %(message)s',
+            'format': 'solarsan/%(name)s.%(module)s/%(processName)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d',
+            'celery_format': 'solarsan/%(name)s/%(processName)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d',
         },
     },
     'filters': {
@@ -651,6 +664,12 @@ LOGGING = {
             'class': 'ConsoleHandler.ConsoleHandler',
             'formatter': 'standard',
         },
+        'syslog': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'syslog',
+            'address': '/dev/log',
+        },
     },
     'loggers': {
         'django.db': {
@@ -660,6 +679,28 @@ LOGGING = {
         },
     }
 }
+
+#
+# Celery mongo logging
+#
+
+import logging
+from celery.signals import after_setup_logger, after_setup_task_logger
+
+
+def after_setup_logger_handler(sender=None, logger=None, loglevel=None,
+                               logfile=None, format=None,
+                               colorize=None, **kwds):
+    syslog_hand = LOGGING['handlers']['syslog']
+    syslog_fmt = LOGGING['formatters']['syslog']['celery_format']
+
+    handler = logging.handlers.SysLogHandler(address=syslog_hand['address'])
+    handler.setFormatter(logging.Formatter(syslog_fmt))
+    handler.setLevel(getattr(logging, syslog_hand['level'], logging.INFO))
+    logger.addHandler(handler)
+
+after_setup_logger.connect(after_setup_logger_handler)
+after_setup_task_logger.connect(after_setup_logger_handler)
 
 #
 # allauth / social auth

@@ -9,7 +9,22 @@ import logging
 import json
 from os.path import getsize, isfile
 
+
+
+import mongoengine
+
+class LogEntry(mongoengine.DynamicDocument):
+    meta = {'collection': 'messages',
+            'db_alias': 'syslog',
+            'max_size': 1024 * 1024 * 256,
+            'allow_inheritance': False,
+            }
+
+
+
+
 def home(request, *args, **kwargs):
+    logs = LogEntry.objects.all()[:100]
     return render_to_response('logs.html',
         {'title': 'Logs',
             },
