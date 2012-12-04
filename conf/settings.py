@@ -633,8 +633,9 @@ LOGGING = {
         'syslog': {
             #'format': '<22>%(asctime)s ' + SERVER_NAME + ' %(name)s[%(process)d]: %(message)s',
             #'format': 'solarsan.%(name)s[%(process)d]: %(levelname)s %(message)s',
-            'format': 'solarsan/%(name)s.%(module)s/%(processName)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d',
-            'celery_format': 'solarsan/%(name)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d',
+            #'format': 'solarsan/%(name)s.%(module)s/%(processName)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d',
+            'format': 'solarsan/%(name)s.%(module)s/%(processName)s[%(process)d]: %(message)s @%(funcName)s:%(lineno)d',
+            #'celery_format': 'solarsan/%(name)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d',
         },
     },
     'filters': {
@@ -683,9 +684,11 @@ LOGGING = {
 
 CELERYD_LOG_COLOR = False
 #CELERYD_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
-CELERYD_LOG_FORMAT = 'solarsan/%(name)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d'
+#CELERYD_LOG_FORMAT = 'solarsan/%(name)s[%(process)d]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d'
+CELERYD_LOG_FORMAT = 'solarsan/%(name)s[%(process)d]: %(message)s @%(funcName)s:%(lineno)d'
 #CELERYD_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
-CELERYD_TASK_LOG_FORMAT = 'solarsan/%(task_name)s[%(task_id)s]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d'
+#CELERYD_TASK_LOG_FORMAT = 'solarsan/%(task_name)s[%(task_id)s]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d'
+CELERYD_TASK_LOG_FORMAT = 'solarsan/%(task_name)s[%(task_id)s]: %(message)s @%(funcName)s:%(lineno)d'
 CELERYD_LOG_LEVEL = 'DEBUG'
 
 import logging
