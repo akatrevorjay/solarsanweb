@@ -556,9 +556,6 @@ BROKER_URL = "librabbitmq://solarsan:Thahnaifee1ichiu8hohv5boosaengai@localhost:
 #CELERY_DEFAULT_RATE_LIMIT = "50/s"  # 100/s
 CELERY_DISABLE_RATE_LIMIT = True
 BROKER_CONNECTION_MAX_RETRIES = "50"  # 100
-#CELERYD_LOG_COLOR = True
-#CELERY_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
-#CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
 CELERYD_MAX_TASKS_PER_CHILD = "100"
 
 # Celery results
@@ -684,6 +681,13 @@ LOGGING = {
 # Celery mongo logging
 #
 
+CELERYD_LOG_COLOR = False
+#CELERYD_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
+CELERYD_LOG_FORMAT = LOGGING['formatters']['syslog']['celery_format']
+#CELERYD_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
+CELERYD_TASK_LOG_FORMAT = LOGGING['formatters']['syslog']['celery_format']
+CELERYD_LOG_LEVEL = 'DEBUG'
+
 import logging
 from celery.signals import after_setup_logger, after_setup_task_logger
 
@@ -692,11 +696,13 @@ def after_setup_logger_handler(sender=None, logger=None, loglevel=None,
                                logfile=None, format=None,
                                colorize=None, **kwds):
     syslog_hand = LOGGING['handlers']['syslog']
-    syslog_fmt = LOGGING['formatters']['syslog']['celery_format']
+    #syslog_fmt = LOGGING['formatters']['syslog']['celery_format']
 
     handler = logging.handlers.SysLogHandler(address=syslog_hand['address'])
-    handler.setFormatter(logging.Formatter(syslog_fmt))
-    handler.setLevel(getattr(logging, syslog_hand['level'], logging.INFO))
+    #handler.setFormatter(logging.Formatter(syslog_fmt))
+    handler.setFormatter(logging.Formatter(format))
+    #handler.setLevel(getattr(logging, syslog_hand['level'], logging.INFO))
+    handler.setLevel(loglevel)
     logger.addHandler(handler)
 
 after_setup_logger.connect(after_setup_logger_handler)
