@@ -1,6 +1,4 @@
 {% extends "base_site.html" %}
-{% from "bootstrap/macros.html" import alert  %}
-{% from "bootstrap/forms/macros.html" import field, input  %}
 
 {% block css_extra %}
     <style></style>
@@ -18,9 +16,17 @@
         <div class="well">
             Logs<br />
             <br />
+<pre>
+{% for entry in entries %}
+{{ entry|pprint }}
+{{ entry.DATE }}
+{{ entry.PRIORITY }}
+{{ entry.MESSAGE }}
+{% endfor %}
+</pre>
+
         </div>
     </div>
 </div>
 
 {% endblock %}
-

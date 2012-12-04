@@ -252,6 +252,7 @@ PROJECT_APPS = (
     'status',
     'configure',
     'cluster',
+    'logs',
     'storage',
     'analytics',
     'zfs',

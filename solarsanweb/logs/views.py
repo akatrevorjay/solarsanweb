@@ -1,36 +1,21 @@
-from django.shortcuts import render_to_response
-
-from django.views.generic import View, ListView
-from django.template import RequestContext
-from django import http
+from dj import render_to_response, generic, http, RequestContext
 from django.conf import settings
-
 import logging
 import json
 from os.path import getsize, isfile
 
-
-
-import mongoengine
-
-class LogEntry(mongoengine.DynamicDocument):
-    meta = {'collection': 'messages',
-            'db_alias': 'syslog',
-            'max_size': 1024 * 1024 * 256,
-            'allow_inheritance': False,
-            }
-
-
+from .models import LogEntry
 
 
 def home(request, *args, **kwargs):
-    logs = LogEntry.objects.all()[:100]
-    return render_to_response('logs.html',
-        {'title': 'Logs',
+    logs = LogEntry.objects[:100]
+    return render_to_response('logs/home.html',
+        {'entries': logs,
             },
         context_instance=RequestContext(request))
 
-class LogListView(ListView):
+
+class LogListView(generic.ListView):
     template_name = 'logs/logtail_list.html'
 
     @property
@@ -40,11 +25,11 @@ class LogListView(ListView):
                 yield (log, filename)
 
     def get_context_data(self, **kwargs):
-        context = super(LogListView, self).get_context_data(**kwargs)
+        context = super(Loggeneric.ListView, self).get_context_data(**kwargs)
         context['update_interval'] = 1000
         return context
 
-class LogTailView(View):
+class LogTailView(generic.View):
     """
     Returns JSON of the form::
 
