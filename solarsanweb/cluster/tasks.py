@@ -67,32 +67,19 @@ class Cluster_Node_Query(Task):
 
         return True
 
-class Cluster_Node_Beacon( Task ):
-    """ Controls cluster beacon service """
-    b = beacon.Beacon( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
-    def run( self, *args, **kwargs ):
-        self.b.daemon = True
-        self.b.start()
-        logger.info( "Started Cluster Beacon." )
 
-
-class Cluster_Node_Discover( PeriodicTask ):
+class Cluster_Node_Discover(PeriodicTask):
     """ Probes for new cluster nodes """
     run_every = timedelta( seconds=settings.SOLARSAN_CLUSTER['discovery'] )
     def run( self, *args, **kwargs ):
         # Beacon discovery
-        logger.info( "Cluster discovery: Probing for new cluster nodes (port=%s,key=%s)",
+        logger.info( "Probing for new cluster nodes (port=%s,key=%s)",
                      settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
 
         nodes = beacon.find_all_servers( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
 
         if '127.0.0.1' not in nodes:
-            if not settings.DEBUG and cache.get('ClusterBeaconStartedTS'):
-                logger.error( "Cluster discovery: Didn't find 127.0.0.1 in discovery; Not starting Cluster Beacon since I already attempted to start it recently.")
-            else:
-                logger.warning( "Cluster discovery: Didn't find 127.0.0.1 in discovery; Starting Cluster Beacon..")
-                Cluster_Node_Beacon.apply()
-                cache.set('ClusterBeaconStartedTS', timezone.now(), 300)
+            logger.error("Didn't find 127.0.0.1 in discovery, is the beacon service started?")
 
         # Call Query task for each host to probe their API
         for node_ip in nodes:
@@ -104,7 +91,7 @@ class Cluster_Node_Discover( PeriodicTask ):
 
 
 ## TODO Cluster Node Cleanup Periodic Task (run weekly/monthly)
-#class Cluster_Node_Cleanup( PeriodicTask ):
+#class Cluster_Node_Cleanup(PeriodicTask):
 
 
 
