@@ -4,7 +4,7 @@
     <style></style>
 {% endblock %}
 
-{# Navbar is set in the app-specific override "base.html #}
+{# Navbar is set in tde app-specific override "base.html #}
 
 {% block pre_content %}
 {% endblock %}
@@ -14,17 +14,29 @@
 <div class="row">
     <div class="span12">
         <div class="well">
-            Logs<br />
-            <br />
-<pre>
-{% for entry in entries %}
-{{ entry|pprint }}
-{{ entry.DATE }}
-{{ entry.PRIORITY }}
-{{ entry.MESSAGE }}
-{% endfor %}
-</pre>
-
+            <table class="table table-striped table-condensed">
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.DATE }}</td>
+                        <td>
+                            {% if entry.PRIORITY == 'info' %}
+                            <span class="badge badge-info">
+                            {% elif entry.PRIORITY == 'warning' %}
+                            <span class="badge badge-warning">
+                            {% elif entry.PRIORITY == 'error' %}
+                            <span class="badge badge-error">
+                            {% else %}
+                            <span class="badge badge-debug">
+                            {% endif %}
+                                {{ entry.PRIORITY }}
+                            </span>
+                        </td>
+                        <td>{{ entry.MESSAGE }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

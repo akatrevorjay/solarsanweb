@@ -8,7 +8,7 @@ from .models import LogEntry
 
 
 def home(request, *args, **kwargs):
-    logs = LogEntry.objects[:100]
+    logs = LogEntry.objects.order_by('-DATE')[:100]
     return render_to_response('logs/home.html',
         {'entries': logs,
             },
@@ -28,6 +28,7 @@ class LogListView(generic.ListView):
         context = super(Loggeneric.ListView, self).get_context_data(**kwargs)
         context['update_interval'] = 1000
         return context
+
 
 class LogTailView(generic.View):
     """
@@ -88,5 +89,3 @@ class LogTailView(generic.View):
             self.iter_json(context),
             content_type='application/json'
         )
-
-
