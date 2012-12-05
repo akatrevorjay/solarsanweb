@@ -31,5 +31,3 @@ Reload tasks
 #    """ Reloads modules for all celery workers """
 #    def run(self, *args, **kwargs):
 #        broadcast('pool_restart', arguments={'reload': True})
-
-

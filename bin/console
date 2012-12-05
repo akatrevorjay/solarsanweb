@@ -1,0 +1,12 @@
+#!/bin/bash
+env_path=$(readlink -f "${BASH_SOURCE[0]}"); env_path="${env_path%/*}/env"
+[[ -n "$basedir" ]] || . "$env_path"
+
+cd "$basedir"
+
+while :; do
+    "./manage.py" "console" >data/motd 2>/dev/null
+    #"./manage.py" "spark_graphs" >> data/motd 2>/dev/null
+    clear; cat data/motd
+    sleep 60
+done

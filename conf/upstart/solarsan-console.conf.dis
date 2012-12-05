@@ -1,0 +1,14 @@
+# tty1 - getty
+#
+# This service maintains a getty on tty1 from the point the system is
+# started until it is shut down again.
+
+#start on solarsan-start
+#stop on solarsan-stop or starting tty1
+
+env HOME=/root
+
+respawn limit 10 5
+respawn
+exec /sbin/rungetty -u root -w /opt/solarsanweb tty1 -- /opt/solarsanweb/bin/console
+
