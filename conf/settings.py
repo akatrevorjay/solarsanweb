@@ -315,7 +315,7 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 SOLARSAN_CLUSTER = {
     'port':         1787,               # Port = 1337 * 1.337
     'key':          'solarsan-key0',    # Key
-    'discovery':    25,                 # Scan for other nodes each this many seconds
+    'discovery':    60,                 # Scan for other nodes each this many seconds
 }
 
 
