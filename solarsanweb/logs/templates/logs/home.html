@@ -20,6 +20,11 @@
                     <tr>
                         <td>{{ entry.DATE }}</td>
                         <td>
+                            <span class="badge badge-debug">
+                                {{ entry.PROGRAM }}
+                            </span>
+                        </td>
+                        <td>
                             {% if entry.PRIORITY == 'info' %}
                             <span class="badge badge-info">
                             {% elif entry.PRIORITY == 'warning' %}
@@ -32,7 +37,12 @@
                                 {{ entry.PRIORITY }}
                             </span>
                         </td>
-                        <td>{{ entry.MESSAGE }}</td>
+                        <td>
+                            <!--<pre>-->
+                            <!--<pre class="pre-scrollable">-->
+                                {{ entry.MESSAGE }}
+                            <!--</pre>-->
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
