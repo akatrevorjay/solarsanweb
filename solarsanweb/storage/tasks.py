@@ -1,9 +1,9 @@
 
+import celery
+from celery import chain, group, task, chord, Task
+from celery.task import periodic_task, PeriodicTask
 from celery.schedules import crontab
-from celery.task import periodic_task, task, chord
-from celery.task.base import PeriodicTask, Task
 from celery.utils.log import get_task_logger
-from celery.task.sets import subtask
 logger = get_task_logger(__name__)
 
 from django.utils import timezone
@@ -23,46 +23,128 @@ import storage.models as m
 
 
 """
+Getters
+"""
+
+
+@task
+def get_pools(last_ret=None, cb=None):
+    return Pool.list(ret=list)
+
+
+@task
+def get_pool_children(pool):
+    pool_name = pool.name
+    pool_fs = pool.filesystem
+    datasets = pool_fs.list(args=['-r', pool_name], type='all')
+    return datasets
+
+
+"""
 Import pool/dataset info from system into DB
 """
 
 
-class Import_ZFS_Metadata(PeriodicTask):
-    run_every = timedelta(minutes=30)
+@periodic_task(run_every=timedelta(minutes=30))
+def sync_zfs():
+    c = (mark_all_as_importing.s() | get_pools.s() | sync_pools.s() | cleanup_still_marked_as_importing.s())
+    return c()
 
-    def run(self, *args, **kwargs):
-        for pool in Pool.list(ret=list):
-            pool_name = pool.name
-            if not getattr(pool, 'id', None):
-                logger.warning("Found new ZFS storage pool '%s'", pool_name)
-            pool.reload_zdb()
-            pool.save()
 
-            if not pool.is_healthy():
-                pool_health = pool.properties['health']
-                logger.error("Can't import storage pool '%s' as it has bad health='%s'!",
-                             pool_name,
-                             pool_health)
-                continue
+@task
+def mark_all_as_importing():
+    for v in [Snapshot, Filesystem, Volume, Pool]:
+        if not getattr(v, 'objects', None):
+            continue
+        v.objects.filter(enabled__ne=False).update(set__importing=True, multi=True)
 
-            pool_fs = pool.filesystem
 
-            for v in [Filesystem, Volume, Snapshot]:
-                if not getattr(v, 'objects', None):
-                    continue
-                v.objects.filter(name__startswith='%s/' % pool_name).update(set__importing=True, multi=True)
-                v.objects.filter(name__startswith='%s@' % pool_name).update(set__importing=True, multi=True)
+#@task
+#def get_pools(last_ret):
+#    return Pool.list(ret=list)
 
-            pool_fs.list(args=['-r', pool_name], type='all')
 
-            for v in [Filesystem, Volume, Snapshot]:
-                if not getattr(v, 'objects', None):
-                    continue
-                #v.objects.filter(importing=True, enabled__ne=False).update(set__enabled=False)
-                #v.objects.filter(importing=True).delete(modified__lt=timezone.now() -
-                #                                        datetime.timedelta(days=7))
-                v.objects.filter(importing=True).delete()
+@task
+def sync_pools(pools):
+    # Use Pool.list() which looks to the filesystem instead of objects
+    # which looks to the DB.
+    c = group((sync_pool.s(pool) | get_pool_children.s() | sync_datasets.s()) for pool in pools)
+    return c().get()
 
+
+@task
+def sync_pool(pool):
+    pool_name = pool.name
+    if not getattr(pool, 'id', None):
+        logger.warning("Found new ZFS storage pool '%s'", pool_name)
+    pool.reload_zdb()  # Grab new data from filesystem
+    pool.enabled = True
+    pool.importing = False
+    pool.save()
+    return pool
+
+
+
+@task
+def sync_datasets(datasets):
+    #c = group(sync_dataset.s(dataset) for dataset in datasets)
+    #return c()
+    for dataset in datasets:
+        sync_dataset.apply(dataset)
+
+
+@task
+def sync_dataset(dataset):
+    if dataset.exists():
+        dataset.enabled = True
+        dataset.importing = False
+        dataset.save()
+
+
+@task
+def cleanup_still_marked_as_importing(last_ret):
+    for v in [Snapshot, Filesystem, Volume, Pool]:
+        if not getattr(v, 'objects', None):
+            continue
+        objs = v.objects.filter(importing=True, enabled__ne=False)
+        if objs:
+            logger.error("Disabling as they seem to no longer exist: %s", objs)
+            objs.update(set__enabled=False, multi=True)
+
+        delete_older_than = timezone.now() - timedelta(days=7)
+        objs = v.objects.filter(enabled=False, modified__lt=delete_older_than)
+        if objs:
+            logger.error("Deleting as they've been disabled for over a week: %s", objs)
+            objs.delete()
+
+
+"""
+Check pool health
+"""
+
+
+@periodic_task(run_every=timedelta(minutes=30))
+def check_pools_health(pools=None):
+    logger.info("POOLS: %s", pools)
+    if not pools:
+        c = (get_pools.s() | check_pools_health.s())
+    else:
+        #c = check_pool_health.chunks(zip(args), 2).group()
+        c = group(check_pool_health.s(pool) for pool in pools)
+    return c()
+
+
+@task
+def check_pool_health(pool):
+    logger.info("BLAH! pool=%s", pool)
+    pool_name = pool.name
+    pool_is_healthy = pool.is_healthy()
+    if not pool_is_healthy:
+        pool_health = pool.properties['health']
+        logger.error("Storage pool '%s' has bad health='%s'!",
+                     pool_name,
+                     pool_health)
+    return pool_is_healthy
 
 
 """
