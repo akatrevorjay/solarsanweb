@@ -5,7 +5,9 @@ import mongoengine
 class LogEntry(mongoengine.DynamicDocument):
     meta = {'collection': 'messages',
             'db_alias': 'syslog',
-            #'max_size': 1024 * 1024 * 256,
+            'max_size': 1024 * 1024 * 256,
+            'ordering': ['-DATE'],
+            'indexes': ['-DATE', 'PRIORITY'],
             'allow_inheritance': False,
             }
 
