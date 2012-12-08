@@ -25,14 +25,14 @@ def site_styles(request):
         'bootstrap/css/bootstrap.css',
         'bootstrap/css/bootstrap-responsive.css',
 
-        '3rd/chosen/chosen/chosen.css',
+        #'3rd/chosen/chosen/chosen.css',
         'css/nv.d3.css',
         '3rd/gritter/css/jquery.gritter.css',
         'css/font-awesome.css',
         'css/animate.css',
         #'css/bootstrap-toggle-buttons.css',
-        'css/datepicker.css',
-        'css/bootstrap-editable.css',
+        #'css/datepicker.css',
+        #'css/bootstrap-editable.css',
 
         'css/base.css',
     ]
@@ -44,9 +44,9 @@ def site_styles(request):
     js_site_pre = [
         'jquery',
         'bootstrap',
-        'bootstrap-datepicker',
-        'bootstrap-editable',
-        'chosen',
+        #'bootstrap-datepicker',
+        #'bootstrap-editable',
+        #'chosen',
         'jquery.gritter',
 
         'd3',
