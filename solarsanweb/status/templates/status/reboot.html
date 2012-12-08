@@ -1,6 +1,7 @@
 {% extends "base_site.html" %}
 
 {% load url from future %}
+{% load crispy_forms_tags %}
 
 {% block css_extra %}
     <style></style>
@@ -16,12 +17,8 @@
 <div class="row">
     <div class="span12">
         <div class="well">
-            Status<br />
-            <br />
-
-            <a href="{% url 'reboot' %}">
-                <button class="btn btn-info">Reboot</button>
-            </a>
+            Really Reboot?<br />
+            {% crispy form %}
         </div>
     </div>
 </div>

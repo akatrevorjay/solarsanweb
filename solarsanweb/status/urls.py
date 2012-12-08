@@ -1,10 +1,13 @@
 
-from django.conf.urls.defaults import *
-from django.views.generic import DetailView, ListView
+from django.conf.urls.defaults import patterns, url
 
-urlpatterns = patterns('status.views',
+
+urlpatterns = patterns(
+    'status.views',
     url(r'^$', 'index', name='index'),
     url(r'^$', 'index', name='status'),
+
+    url(r'^reboot$', 'reboot', name='reboot'),
 )
 
 #urlpatterns += patterns('solarsan.ajax',
