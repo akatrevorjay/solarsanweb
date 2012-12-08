@@ -691,7 +691,7 @@ CELERYD_LOG_FORMAT = 'solarsan/%(name)s[%(process)d]: %(message)s @%(funcName)s:
 #CELERYD_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] [%(task_name)s(%(task_id)s)] %(message)s"
 #CELERYD_TASK_LOG_FORMAT = 'solarsan/%(task_name)s[%(task_id)s]: %(levelname)s %(message)s @%(funcName)s:%(lineno)d'
 CELERYD_TASK_LOG_FORMAT = 'solarsan/%(task_name)s[%(task_id)s]: %(message)s @%(funcName)s:%(lineno)d'
-CELERYD_LOG_LEVEL = 'DEBUG'
+#CELERYD_LOG_LEVEL = 'INFO'
 
 import logging
 from celery.signals import after_setup_logger, after_setup_task_logger
