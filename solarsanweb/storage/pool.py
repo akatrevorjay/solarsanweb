@@ -246,7 +246,8 @@ class Pool(base.Base):
         """
         p = ZpoolStatusParser()
         out = sh.zpool('status', self.name).stdout
-        return p(out)
+        ret = p(out)
+        return ret[self.name]
 
     def iostat(self, capture_length=30):
         """Returns iostat of storage pool.

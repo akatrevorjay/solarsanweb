@@ -19,6 +19,8 @@ import storage.device
 from solarsan.utils import FormattedException, LoggedException
 from solarsan.utils import convert_bytes_to_human
 
+from .parsers.pool import ZdbPoolCacheParser
+
 
 """
 Base
@@ -217,7 +219,14 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     """
     meta = {'collection': 'pools'}
     version = m.IntField()
-    state = m.IntField()
+
+    #state = m.IntField()
+    #state = m.StringField()
+    #errors = m.StringField()
+    #action = m.StringField()
+    #status = m.StringField()
+    #config = m.StringField()
+
     txg = m.IntField()
     #guid = m.StringField(unique=True, required=True, primary_key=True)
     #guid = m.StringField(unique=True)
@@ -238,7 +247,7 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
                                                  auto_save=False)
         if created:
             logging.warning("Found unknown '%s'", obj)
-            obj.reload_zdb()
+            obj.reload_zfs()
             obj.save()
         return obj
 
@@ -264,30 +273,40 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
         return list(self.filesystems()) + list(self.volumes())
 
     """
-    Zdb Parsing
+    Zfs Metadata Importing / Zpool/Zdb Parsing
     """
 
-    def reload_zdb(self):
-        """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
-        zdb = sh.zdb('-C', '-v')
-        ret = yaml.safe_load(zdb.stdout)
-        ret = ret[self.name]
-        self._parse_zdb(ret)
+    def reload_zfs(self):
+        self._reload_zdb()
+        self._reload_status()
 
-    def _parse_zdb(self, ret):
+    def _reload_status(self):
+        """ Snags pool status and vdev info from zpool """
+        # TODO Add to vdev info error counts and such
+        s = self.status()
+        #for k in ['status', 'errors', 'scan', 'see', 'state', 'action', 'config']:
+        #for k in ['errors', 'scan', 'see', 'state', 'action', 'config']:
+        #    setattr(self, k, s[k])
+        #self.pool_status = s['status']
+
+    def _reload_zdb(self):
         """ Parses pool status and vdev info from given zdb data """
+        p = ZdbPoolCacheParser()
+        ret = p()
+        ret = ret[self.name]
+
         # Basic info
         # hostname, vdev_children, vdev_tree, name(single quoted)
         self.guid = unicode(ret['pool_guid'])
-        self.state = ret['state']
+        #self.state = ret['state']
         self.txg = ret['txg']
         self.version = ret['version']
         # Just a count
         #vdev_children = ret['vdev_children']
         # VDev parser
-        self._parse_zdb_vdev_tree(ret['vdev_tree'])
+        self._reload_zdb_vdev_tree(ret['vdev_tree'])
 
-    def _parse_zdb_vdev_tree(self, cur):
+    def _reload_zdb_vdev_tree(self, cur):
         def parse_vdev(cls, data):
             obj = {}
             data['vdev_id'] = data.pop('id', None)
@@ -311,7 +330,7 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
             # Walk through recursively
             for v in cur.itervalues():
                 if isinstance(v, dict):
-                    cobj = self._parse_zdb_vdev_tree(cur=v)
+                    cobj = self._reload_zdb_vdev_tree(cur=v)
                     children.append(cobj)
                     #children.insert(cobj.id, cobj)
 

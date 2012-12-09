@@ -1,4 +1,5 @@
 import sh
+import yaml
 from collections import defaultdict, OrderedDict
 from pyparsing import *
 
@@ -29,7 +30,8 @@ class ZpoolStatusParser(object):
         for v in self.p_status.parseString(str(arg)).asList():
             v = dict(v)
             v['config'] = self._config_parser(v)
-            ret[v['pool']] = v
+            pool_name = v.pop('pool')
+            ret[pool_name] = v
         return ret
 
     p_config_line = Dict(Group(Word(srange("[-:0-9A-z.]")).setResultsName('name')
@@ -46,4 +48,15 @@ class ZpoolStatusParser(object):
         ret = OrderedDict()
         for v in self.p_config.parseString(str(arg['config'])):
             ret[v['name']] = v.asDict()
+        return ret
+
+
+class ZdbPoolCacheParser(object):
+    def __call__(self):
+        """ Snags pool status and vdev info from zdb as zpool status kind of sucks """
+        zargs = ['-C', '-v']
+        #if pool_name:
+        #    zargs.append(pool_name)
+        zdb = sh.zdb(*zargs)
+        ret = yaml.safe_load(zdb.stdout)
         return ret

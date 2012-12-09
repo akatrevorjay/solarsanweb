@@ -77,7 +77,7 @@ def sync_pool(pool):
     pool_name = pool.name
     if not getattr(pool, 'id', None):
         logger.warning("Found new ZFS storage pool '%s'", pool_name)
-    pool.reload_zdb()  # Grab new data from filesystem
+    pool.reload_zfs()  # Grab new data from filesystem
     pool.enabled = True
     pool.importing = False
     pool.save()
