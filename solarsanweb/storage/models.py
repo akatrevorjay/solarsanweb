@@ -15,7 +15,8 @@ from django.core.urlresolvers import reverse
 import rtslib
 import storage.pool
 import storage.dataset
-from solarsan.utils import FormattedException  # LoggedException
+import storage.device
+from solarsan.utils import FormattedException, LoggedException
 from solarsan.utils import convert_bytes_to_human
 
 
@@ -46,6 +47,10 @@ class BaseMixIn(ReprMixIn):
             return 'POOL'
         elif type == 'volume':
             return 'VOL'
+        elif type == 'disk':
+            return 'DSK'
+        #elif type == 'mirror':
+        #    return 'MIR'
         else:
             return 'TGT'
 
@@ -175,6 +180,9 @@ class VDevDisk(VDevChildDocument):
     def health(self):
         # TODO disk health
         return 'Good'
+
+    def to_device(self):
+        return storage.device.Device(self.path)
 
 
 class VDevMirror(VDevChildDocument):
