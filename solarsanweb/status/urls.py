@@ -8,6 +8,7 @@ urlpatterns = patterns(
     url(r'^$', 'index', name='status'),
 
     url(r'^reboot$', 'reboot', name='reboot'),
+    url(r'^shutdown$', 'shutdown', name='shutdown'),
 )
 
 #urlpatterns += patterns('solarsan.ajax',

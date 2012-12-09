@@ -1,8 +1,8 @@
 
 from dj import RequestContext, render_to_response, generic
-import sh
 
 from . import forms
+from . import tasks
 
 
 def index(request, *args, **kwargs):
@@ -12,12 +12,24 @@ def index(request, *args, **kwargs):
         context_instance=RequestContext(request))
 
 
+class ShutdownView(generic.edit.FormView):
+    template_name = 'status/shutdown.html'
+    form_class = forms.ShutdownForm
+
+    def form_valid(self, form):
+        tasks.shutdown.delay()
+        #self.success_url = reverse
+        return super(ShutdownView, self).form_valid(form)
+
+shutdown = ShutdownView.as_view()
+
+
 class RebootView(generic.edit.FormView):
     template_name = 'status/reboot.html'
     form_class = forms.RebootForm
 
     def form_valid(self, form):
-        sh.reboot()
+        tasks.reboot.delay()
         #self.success_url = reverse
         return super(RebootView, self).form_valid(form)
 

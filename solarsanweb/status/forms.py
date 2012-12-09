@@ -23,3 +23,5 @@ class RebootForm(BaseForm):
     def __init__(self, *args, **kwargs):
         super(RebootForm, self).__init__(*args, **kwargs)
         self.helper.add_input(Submit('submit', 'Confirm'))
+
+ShutdownForm = RebootForm
