@@ -1,65 +1,19 @@
 
 #import logging
 import sh
-from collections import defaultdict, OrderedDict
+#from collections import defaultdict, OrderedDict
 #import re
-from solarsan.utils import LoggedException
+from solarsan.utils import LoggedException, FormattedException
 from datetime import datetime
 from django.utils import timezone
+
 from analytics.cube import CubeAnalytics
 from pypercube.expression import EventExpression, MetricExpression, CompoundMetricExpression
 from pypercube.expression import Sum, Min, Max, Median, Distinct
 
-import storage.base
-#import storage.device
-
-from pyparsing import *
-
-
-class _ZpoolStatusParser(object):
-    """Parses 'zpool status' output
-    # TODO status -v (verbose)
-
-    p = ZpoolStatusParser()
-    ret = p()
-    pp(ret)
-    """
-
-    p_section_content = Combine(restOfLine + ZeroOrMore(LineEnd()
-                                + Suppress(White(exact=8)) + restOfLine))
-    p_section = Suppress(':') + p_section_content
-
-    p_first_section = Word('pool') + p_section
-    p_not_first_section = NotAny(Word('pool')) + Word(alphas) + p_section
-
-    p_pool = Dict(Group(p_first_section)) + OneOrMore(Dict(Group(p_not_first_section)))
-    p_status = OneOrMore(Dict(Group(p_pool)))
-
-    def __call__(self, arg=None):
-        if not arg:
-            arg = sh.zpool('status').stdout
-        ret = OrderedDict()
-        for v in self.p_status.parseString(str(arg)).asList():
-            v = dict(v)
-            v['config'] = self._config_parser(v)
-            ret[v['pool']] = v
-        return ret
-
-    p_config_line = Dict(Group(Word(srange("[-:0-9A-z.]")).setResultsName('name')
-                         + Word(alphanums).setResultsName('state')
-                         + Word(alphanums).setResultsName('read')
-                         + Word(alphanums).setResultsName('write')
-                         + Word(alphanums).setResultsName('cksum')
-                         + Suppress(LineEnd())))
-    p_config = Suppress(restOfLine + LineEnd()) + OneOrMore(p_config_line)
-
-    def _config_parser(self, arg):
-        # Config parse for multi-pool (short)
-        # TODO handle children / whitespace in front
-        ret = OrderedDict()
-        for v in self.p_config.parseString(str(arg['config'])):
-            ret[v['name']] = v.asDict()
-        return ret
+from . import base
+#from . import device
+from .parsers.pool import ZpoolStatusParser
 
 
 class PoolAnalytics(CubeAnalytics):
@@ -87,7 +41,7 @@ class PoolAnalytics(CubeAnalytics):
         return self._render('alloc', 'free', **kwargs)
 
 
-class PoolProperty(storage.base.BaseProperty):
+class PoolProperty(base.BaseProperty):
     """Storage Pool Property object
     """
     pass
@@ -195,7 +149,7 @@ class PoolProperties(object):
 
 
 # TODO Enumerate devices on pool from status
-class Pool(storage.base.Base):
+class Pool(base.Base):
     """Storage Pool object
     """
     type = 'pool'
@@ -290,7 +244,7 @@ class Pool(storage.base.Base):
         pool.status()
 
         """
-        p = _ZpoolStatusParser()
+        p = ZpoolStatusParser()
         out = sh.zpool('status', self.name).stdout
         return p(out)
 
