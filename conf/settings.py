@@ -291,8 +291,9 @@ SERVER_OS = os.uname()[0]
 SERVER_IS_LINUX = SERVER_OS == 'Linux'
 SERVER_IS_KFREEBSD = SERVER_OS == 'GNU/kFreeBSD'
 
+"""
 #
-# SolarSan Log UI
+# django-logtail
 #
 
 # Logs to tail
@@ -300,6 +301,7 @@ LOGTAIL_FILES = {
     #'syslog': '/var/log/syslog',
     'solarvisor': DATA_DIR + '/log/supervisord.log',
 }
+"""
 
 #
 # django-crispy-forms
@@ -330,13 +332,24 @@ SOLARSAN_CLUSTER = {
 CUBE_HOST = 'localhost'
 CUBE_COLLECTOR_URL = 'udp://%s:1180' % CUBE_HOST
 
+"""
 #
 # django-pdb
 #
 
-#if DEBUG:
-#    INSTALLED_APPS += ('django_pdb', )
-#    MIDDLEWARE_CLASSES += ('django_pdb.middleware.PdbMiddleware', )
+if DEBUG:
+    INSTALLED_APPS += ('django_pdb', )
+    MIDDLEWARE_CLASSES += ('django_pdb.middleware.PdbMiddleware', )
+"""
+
+"""
+#
+# django-ipython-notebook
+#
+
+if DEBUG:
+    INSTALLED_APPS += ('django_ipython_notebook', )
+"""
 
 #
 # Smuggler
@@ -506,36 +519,6 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
     'django.template.loaders.filesystem.Loader',
 )
-
-##
-## Jinja2 template related
-##
-#
-##JINJA2_FILTERS = (
-##)
-#
-##JINJA2_TESTS = {
-##    #'test_name': 'path.to.mytest',
-##}
-#
-#JINJA2_EXTENSIONS = (
-#    'jinja2.ext.do', 'jinja2.ext.i18n', 'jinja2.ext.with_', 'jinja2.ext.loopcontrols',
-#    #'compressor.contrib.jinja2ext.CompressorExtension',
-#    #'solarsan.helpers.mustachejs',
-#)
-#
-##from jinja2 import StrictUndefined
-##JINJA2_ENVIRONMENT_OPTIONS = {
-##    #'autoescape': False,
-##    #'undefined': StrictUndefined,
-##    #'autoreload': True,                # Is this needed with coffin or just jingo?
-##}
-#
-## Monkeypatch Django to mimic Jinja2 behaviour (related to autoescaped strings)
-#from django.utils import safestring
-#if not hasattr(safestring, '__html__'):
-#    safestring.SafeString.__html__ = lambda self: str(self)
-#    safestring.SafeUnicode.__html__ = lambda self: unicode(self)
 
 #
 # Celery (async tasks)
@@ -713,47 +696,49 @@ def after_setup_logger_handler(sender=None, logger=None, loglevel=None,
 after_setup_logger.connect(after_setup_logger_handler)
 after_setup_task_logger.connect(after_setup_logger_handler)
 
+"""
 #
 # allauth / social auth
 #
 
-#INSTALLED_APPS += (
-#    'allauth',
-#    'allauth.account',
-#    'allauth.socialaccount',
-#    'allauth.socialaccount.providers.facebook',
-#    'allauth.socialaccount.providers.google',
-#    'allauth.socialaccount.providers.github',
-#    'allauth.socialaccount.providers.linkedin',
-#    'allauth.socialaccount.providers.openid',
-#    'allauth.socialaccount.providers.persona',
-#    'allauth.socialaccount.providers.soundcloud',
-#    'allauth.socialaccount.providers.twitter',
-#)
-#
-#SOCIALACCOUNT_PROVIDERS = {
-#    #'google':
-#    #    { 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
-#    #'openid':
-#    #    { 'SERVERS':
-#    #        [dict(id='yahoo',
-#    #              name='Yahoo',
-#    #              openid_url='http://me.yahoo.com'),
-#    #         dict(id='hyves',
-#    #              name='Hyves',
-#    #              openid_url='http://hyves.nl'),
-#    #         dict(id='google',
-#    #              name='Google',
-#    #              openid_url='https://www.google.com/accounts/o8/id')]},
-#    'persona': {
-#        'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console'},
-#    },
-#}
-#
-#TEMPLATE_CONTEXT_PROCESSORS += (
-#    'allauth.account.context_processors.account',
-#    'allauth.socialaccount.context_processors.socialaccount',
-#)
+INSTALLED_APPS += (
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.linkedin',
+    'allauth.socialaccount.providers.openid',
+    'allauth.socialaccount.providers.persona',
+    'allauth.socialaccount.providers.soundcloud',
+    'allauth.socialaccount.providers.twitter',
+)
+
+SOCIALACCOUNT_PROVIDERS = {
+    #'google':
+    #    { 'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile'] },
+    #'openid':
+    #    { 'SERVERS':
+    #        [dict(id='yahoo',
+    #              name='Yahoo',
+    #              openid_url='http://me.yahoo.com'),
+    #         dict(id='hyves',
+    #              name='Hyves',
+    #              openid_url='http://hyves.nl'),
+    #         dict(id='google',
+    #              name='Google',
+    #              openid_url='https://www.google.com/accounts/o8/id')]},
+    'persona': {
+        'REQUEST_PARAMETERS': {'siteName': 'SolarSan Console'},
+    },
+}
+
+TEMPLATE_CONTEXT_PROCESSORS += (
+    'allauth.account.context_processors.account',
+    'allauth.socialaccount.context_processors.socialaccount',
+)
+"""
 
 #
 # django-compressor
@@ -800,16 +785,18 @@ COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
 #COMPRESS_CACHE_BACKEND = 'default'
 COMPRESS_ENABLED = True
 
+"""
 #
 # django-bootstrap-toolkit
 #
 
-#BOOTSTRAP_BASE_URL = '/static/bootstrap/'
-#BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
-#BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
-#BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
-## Enable for single bootstrap.js file
-#BOOTSTRAP_JS_URL = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
+BOOTSTRAP_BASE_URL = '/static/bootstrap/'
+BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
+BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
+BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
+# Enable for single bootstrap.js file
+BOOTSTRAP_JS_URL = BOOTSTRAP_JS_BASE_URL + 'bootstrap.js'
+"""
 
 #
 # djangorestframework
