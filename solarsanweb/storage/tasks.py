@@ -54,9 +54,9 @@ def sync_zfs():
 @task
 def mark_all_as_importing():
     for v in [Snapshot, Filesystem, Volume, Pool]:
-        if not getattr(v, 'objects', None):
+        if not getattr(v, 'objects_including_disabled', None):
             continue
-        v.objects.filter(enabled__ne=False).update(set__importing=True, multi=True)
+        v.objects.update(set__importing=True, multi=True)
 
 
 #@task
@@ -84,7 +84,6 @@ def sync_pool(pool):
     return pool
 
 
-
 @task
 def sync_datasets(datasets):
     #c = group(sync_dataset.s(dataset) for dataset in datasets)
@@ -104,15 +103,15 @@ def sync_dataset(dataset):
 @task
 def cleanup_still_marked_as_importing(last_ret):
     for v in [Snapshot, Filesystem, Volume, Pool]:
-        if not getattr(v, 'objects', None):
+        if not getattr(v, 'objects_including_disabled', None):
             continue
-        objs = v.objects.filter(importing=True, enabled__ne=False)
+        objs = v.objects.filter(importing=True)
         if objs:
             logger.error("Disabling as they seem to no longer exist: %s", objs)
             objs.update(set__enabled=False, multi=True)
 
         delete_older_than = timezone.now() - timedelta(days=7)
-        objs = v.objects.filter(enabled=False, modified__lt=delete_older_than)
+        objs = v.objects_including_disabled.filter(enabled=False, modified__lt=delete_older_than)
         if objs:
             logger.error("Deleting as they've been disabled for over a week: %s", objs)
             objs.delete()
@@ -203,7 +202,7 @@ class Auto_Snapshot( Task ):
 
             for dataset_name in sched['datasets']:
                 try:
-                    dataset = Filesystem.objects.get( name=dataset_name )
+                    dataset = Filesystem.objects_including_disabled.get( name=dataset_name )
                 except ( Filesystem.DoesNotExist ):
                     logger.error( "Was supposed to check if a snapshot was scheduled for dataset %s but it does not exist?", dataset_name )
                     continue

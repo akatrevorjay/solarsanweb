@@ -27,6 +27,12 @@ import cluster.models as cm
 Base
 """
 
+#class EnablementQuerySet(m.QuerySet):
+#    def enabled(self, queryset):
+#        pass
+#    def disabled(self, queryset):
+#        pass
+
 
 class ReprMixIn(object):
     def __repr__(self):
@@ -236,6 +242,14 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     vdevs = m.ListField(m.EmbeddedDocumentField(VDevChildDocument))
 
     _VDEV_TYPE_MAP = _VDEV_TYPE_MAP
+
+    @m.queryset_manager
+    def objects(doc_cls, queryset):
+        return queryset.filter(enabled__ne=False)
+
+    @m.queryset_manager
+    def objects_including_disabled(doc_cls, queryset):
+        return queryset
 
     """
     Clustering
@@ -447,6 +461,15 @@ class _DatasetBase(_StorageBaseDocument):
             cls = Snapshot
         return cls
 
+    @m.queryset_manager
+    def objects(doc_cls, queryset):
+        return queryset.filter(enabled__ne=False)
+
+    @m.queryset_manager
+    def objects_including_disabled(doc_cls, queryset):
+        return queryset
+
+
 
 class Dataset(_DatasetBase, storage.dataset.Dataset):
     pass
@@ -474,6 +497,14 @@ class Filesystem(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Files
     def children(self):
         return list(self.filesystems()) + list(self.volumes()) + list(self.snapshots())
 
+    @m.queryset_manager
+    def objects(doc_cls, queryset):
+        return queryset.filter(enabled__ne=False)
+
+    @m.queryset_manager
+    def objects_including_disabled(doc_cls, queryset):
+        return queryset
+
 
 class Snapshot(_DatasetBase, storage.dataset.Snapshot):
     """Storage Snapshot object
@@ -482,6 +513,15 @@ class Snapshot(_DatasetBase, storage.dataset.Snapshot):
         super(Snapshot, self).__init__(*args, **kwargs)
         if getattr(self, '_init'):
             self._init(*args, **kwargs)
+
+    @m.queryset_manager
+    def objects(doc_cls, queryset):
+        return queryset.filter(enabled__ne=False)
+
+    @m.queryset_manager
+    def objects_including_disabled(doc_cls, queryset):
+        return queryset
+
 
 
 """
@@ -568,3 +608,11 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
         if self.pk:
             self.save()
         return True
+
+    @m.queryset_manager
+    def objects(doc_cls, queryset):
+        return queryset.filter(enabled__ne=False)
+
+    @m.queryset_manager
+    def objects_including_disabled(doc_cls, queryset):
+        return queryset

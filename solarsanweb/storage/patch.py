@@ -59,11 +59,11 @@ def patch_queryset():
             #ret['_collection_obj'] = self._collection_obj
             self.__dict__.update(ret)
 
-    if getattr(mongoengine.queryset.QuerySet, 'use_cache', True) is not None:
-        _old_QuerySet = mongoengine.queryset.QuerySet
-        mongoengine.queryset.QuerySet = QuerySet
+    #if getattr(mongoengine.queryset.QuerySet, 'use_cache', True) is not None:
+    #    _old_QuerySet = mongoengine.queryset.QuerySet
+    #    mongoengine.queryset.QuerySet = QuerySet
 
-patch_queryset()
+#patch_queryset()
 
 import rtslib
 import storage.models
