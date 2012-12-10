@@ -16,7 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 #from django import db
 #from django.db import import autocommit, commit, commit_manually, commit_on_success, is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
 
-from cluster.models import ClusterNode
+from .models import Node
 
 """
 Cluster Discovery / Beacon
@@ -24,7 +24,7 @@ Cluster Discovery / Beacon
 
 from django.core.cache import cache
 from django.conf import settings
-#from cluster.models import ClusterNode
+#from cluster.models import Node
 import beacon
 #import json
 
@@ -60,7 +60,7 @@ class Cluster_Node_Query(Task):
         #logger.debug("Probe=%s", probe)
 
         # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we should do it a layer above.
-        cnode, created = ClusterNode.objects.get_or_create(hostname=probe['hostname'])
+        cnode, created = Node.objects.get_or_create(hostname=probe['hostname'])
         cnode.interfaces = dict(probe['interfaces'])
         cnode['last_seen'] = timezone.now()
         cnode.save()

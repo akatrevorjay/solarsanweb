@@ -13,7 +13,7 @@ from solarsan.models import Config
 from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
 from django.core.cache import cache
 import gluster
-from .models import ClusterNode
+from .models import Node
 
 #from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.core.urlresolvers import reverse_lazy
@@ -42,8 +42,8 @@ class PeerListView(generic.TemplateView):
 
     def get(self, request, *args, **kwargs):
         #peers = gluster.peer.status()
-        #discovered_peers = cache.get('RecentlyDiscoveredClusterNodes')
-        discovered_peers = ClusterNode.objects.all()
+        #discovered_peers = cache.get('RecentlyDiscoveredNodes')
+        discovered_peers = Node.objects.all()
         if discovered_peers:
             #discovered_peers = discovered_peers['nodes']
             #if '127.0.0.1' in discovered_peers:
