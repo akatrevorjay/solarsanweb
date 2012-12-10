@@ -4,8 +4,7 @@
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
-import sh
-import yaml
+#import sh
 
 import mongoengine as m
 from datetime import datetime
@@ -20,6 +19,8 @@ from solarsan.utils import FormattedException, LoggedException
 from solarsan.utils import convert_bytes_to_human
 
 from .parsers.pool import ZdbPoolCacheParser
+
+import cluster.models as cm
 
 
 """
@@ -236,6 +237,52 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
 
     _VDEV_TYPE_MAP = _VDEV_TYPE_MAP
 
+    """
+    Clustering
+    """
+
+    is_clustered = m.BooleanField(default=False)
+    #cluster_is_active = m.BooleanField()
+    cluster_peer = m.ReferenceField(cm.Peer)
+    cluster_state = m.DictField()
+    cluster_target_wwn = m.StringField()
+
+    def cluster_promote(self, force=False):
+        """
+        1. Tell peer PENDING_PROMOTION
+        2. Wait for peer to respond OK and peer state to change to PENDING_DEMOTION
+          a. If timeout occurs or FAILED_DEMOTION is received:
+              If force==True: Forcefully takeover
+              Otherwise: Spew errors like it's y2k
+          b. Otherwise: Wait for DEMOTED and constant heartbeat replies
+        3. Stop local cluster target
+        4. Connect to peer's cluster target
+        5. Import pool
+        """
+        pass
+
+    def cluster_demote(self, force=False):
+        """
+        1. Tell peer PENDING_DEMOTION
+        2. Wait for peer to respond OK, PENDING_PROMOTION
+          a. If timeout occurs:
+            1. Spew errors like it's y2k
+            2. Set state to FAILED_DEMOTION
+        3. Stop any targets on pool
+        4. Export pool
+        5. Share out local pool disks through my cluster target
+        5. Disconnect from cluster targets for this pool
+        6. Tell peer DEMOTED
+        """
+        pass
+
+    def cluster_heartbeat(self):
+        return self.cluster_peer.heartbeat()
+
+    """
+    Now back to your normal daily programming
+    """
+
     def __init__(self, *args, **kwargs):
         super(Pool, self).__init__(*args, **kwargs)
         if getattr(self, '_init'):
@@ -283,11 +330,12 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     def _reload_status(self):
         """ Snags pool status and vdev info from zpool """
         # TODO Add to vdev info error counts and such
-        s = self.status()
+        #s = self.status()
         #for k in ['status', 'errors', 'scan', 'see', 'state', 'action', 'config']:
         #for k in ['errors', 'scan', 'see', 'state', 'action', 'config']:
         #    setattr(self, k, s[k])
         #self.pool_status = s['status']
+        pass
 
     def _reload_zdb(self):
         """ Parses pool status and vdev info from given zdb data """
