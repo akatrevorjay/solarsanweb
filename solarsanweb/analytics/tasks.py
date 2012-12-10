@@ -183,8 +183,8 @@ from datetime import datetime
 
 class Pool_IO_Stats(PeriodicTask):
     """ Periodic task to log iostats per pool to db. """
-    run_every = timedelta(seconds=30)
-    def run(self, capture_length=30, *args, **kwargs):
+    run_every = timedelta(seconds=10)
+    def run(self, capture_length=10, *args, **kwargs):
         #iostats = storage.models.Pool.objects.first().iostat(capture_length=capture_length)
         iostats = zfs.pool.iostat(capture_length=capture_length)
 
