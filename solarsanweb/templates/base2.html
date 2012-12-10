@@ -43,7 +43,7 @@
                 {% endcomment %}
 
                 <!-- Drop it -->
-                {% cache 30 storage-top-nav %}
+                {# cache 30 storage-top-nav #}
                 <li class="dropdown-submenu">
                     <a tabindex="-1" href="#">pools</a>
                     <ul class="dropdown-menu">
@@ -97,7 +97,7 @@
                         {% endfor %}
                     </ul>
                 </li>
-                {% endcache %}
+                {# endcache #}
                 <!-- End droppin it -->
             </ul>
         </li>
@@ -153,7 +153,7 @@
 {% endblock %}
 
 {% block post_container %}
-{% cache 30 login_modal %}
+{# cache 30 login_modal #}
 <div class="modal fade hide" id="sign-in-modal">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">
@@ -170,6 +170,6 @@
         <a href="#" class="btn btn-primary">Log In</a>
     </div>
 </div>
-{% endcache %}
+{# endcache #}
 {% endblock %}
 
