@@ -61,10 +61,7 @@ class PoolProperties(object):
         pool.properties['alloc']
 
         """
-        try:
-            return self._get(k)
-        except sh.ErrorReturnCode_1:
-            raise KeyError
+        return self._get(k)
 
     def __setitem__(self, k, v):
         """Sets pool property.
@@ -73,10 +70,7 @@ class PoolProperties(object):
         pool.properties['readonly'] = 'on'
 
         """
-        try:
-            return self._set(k, v)
-        except sh.ErrorReturnCode_1:
-            raise ValueError
+        return self._set(k, v)
 
     def __iter__(self):
         # TODO yield
@@ -100,7 +94,11 @@ class PoolProperties(object):
 
         ret = []
         skip = 1
-        for line in sh.zpool('get', ','.join(props), self._parent.name):
+        try:
+            out = sh.zpool('get', ','.join(props), self._parent.name)
+        except sh.ErrorReturnCode_2:
+            raise KeyError
+        for line in out:
             if skip > 0:
                 skip -= 1
                 continue
@@ -129,7 +127,10 @@ class PoolProperties(object):
             prop = v
             v = prop.value
 
-        sh.zpool('set', '%s=%s' % (k, v), self._parent.name)
+        try:
+            sh.zpool('set', '%s=%s' % (k, v), self._parent.name)
+        except sh.ErrorReturnCode_2:
+            raise ValueError
 
         if prop:
             prop.value = v

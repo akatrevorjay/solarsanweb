@@ -26,7 +26,7 @@ class DatasetProperties(object):
         """
         try:
             return self._get(k)
-        except sh.ErrorReturnCode_1:
+        except sh.ErrorReturnCode_2:
             raise KeyError
 
     def __setitem__(self, k, v):
@@ -38,7 +38,7 @@ class DatasetProperties(object):
         """
         try:
             return self._set(k, v)
-        except sh.ErrorReturnCode_1:
+        except sh.ErrorReturnCode_2:
             raise ValueError
 
     def __iter__(self):
