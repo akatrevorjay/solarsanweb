@@ -243,7 +243,7 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
 
     is_clustered = m.BooleanField(default=False)
     #cluster_is_active = m.BooleanField()
-    cluster_peer = m.ReferenceField(cm.Peer)
+    cluster_peer = m.ReferenceField(cm.Peer, dbref=False)
     cluster_state = m.DictField()
     cluster_target_wwn = m.StringField()
 
