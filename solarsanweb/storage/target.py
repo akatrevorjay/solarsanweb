@@ -90,3 +90,25 @@ def get_tpg(target, tag, fabric_module=None):
     if not isinstance(target, rtslib.Target):
         raise LoggedException("Got a target that wasn't a rtslib.Target instance: '%s'", target)
     return target.get_tpg(tag)
+
+
+def storage_object_list():
+    return list(root.storage_objects)
+
+
+def get_storage_objects(name=None, path=None, max=None):
+    ret = []
+    for so in storage_object_list():
+        if name and so.name != name:
+            continue
+        if path and so.path != path:
+            continue
+        ret.append(so)
+    if max and len(ret) > max:
+        raise LoggedException("For some reason, multiple storage objects matched your expression: {name=%s, path=%s}", name, path)
+    return ret
+
+
+def get_storage_object(**kwargs):
+    kwargs['max'] = 1
+    return get_storage_objects(**kwargs)[0]
