@@ -103,33 +103,38 @@ def get_config():
     return Config.objects.get(name='cluster')
 
 
-cluster_conf = get_config()
-
-
-def get_cluster_target():
-    fm = storage.target.get_fabric_module('iscsi')
-    if hasattr(cluster_conf, 'target_wwn'):
-        target = rtslib.Target(fm, cluster_conf.target_wwn)
+def get_or_create_target(wwn=None, fm=None):
+    if not fm:
+        fm = 'iscsi'
+    fm = storage.target.get_fabric_module(fm)
+    if wwn:
+        target = rtslib.Target(fm, wwn)
     else:
         target = rtslib.Target(fm)
-
     return target
 
 
 @task
 def export_clustered_pool_vdevs():
-    target = get_cluster_target()
+    cluster_conf = get_config()
+    target = get_or_create_target(wwn=getattr(cluster_conf, 'target_wwn', None),
+                                  fm=getattr(cluster_conf, 'target_fm', None))
+    if not hasattr(cluster_conf, 'target_wwn'):
+        cluster_conf.target_wwn = target.wwn
+        cluster_conf.save()
     tpg = rtslib.TPG(target, tag=1)
+    tpg.enable = 1
     portal = tpg.network_portal('0.0.0.0', 3290)
 
     luns = list(tpg.luns)
     logger.info("luns=%s", luns)
 
     # TODO Make default manager for Pool pay attention to enabled=bool
-    for pool in Pool.objects_including_disabled.filter(is_clustered=True):
+    for pool in Pool.objects_including_disabled.filter(is_clustered=True, enabled=False):
         logger.info("pool=%s", pool)
         for vdev in pool.vdevs:
             export_clustered_pool_vdev(pool, tpg, vdev)
+
 
 
 @task
@@ -139,11 +144,16 @@ def export_clustered_pool_vdev(pool, tpg, vdev):
             export_clustered_pool_vdev(pool, tpg, child)
         return
 
+    logger.info("vdev path=%s vdev=%s", vdev.path, vdev)
+
     if not os.path.exists(vdev.path):
         logger.error("Vdev path does not exist: '%s'", vdev.path)
         return False
 
     bso = storage.target.get_or_create_bso("cluster_%s_%s" % (pool.name, vdev.guid), dev=vdev.path)
+    # TODO Exceptions
+    if not bso:
+        return
     lun = storage.target.get_or_create_bso_lun_in_tpg(bso, tpg)
 
     logger.info("vdev path=%s bso=%s lun=%s", vdev.path, bso, lun)

@@ -13,6 +13,22 @@ from solarsanweb.paths import PROJECT_NAME, TOP_DIR, PROJECT_DIR, DATA_DIR
 from django.conf import global_settings as gs
 
 #
+# Get server name
+#
+
+import socket
+SERVER_NAME = socket.gethostname()
+
+#
+# Get server OS
+#
+
+SERVER_OS = os.uname()[0]
+
+SERVER_IS_LINUX = SERVER_OS == 'Linux'
+SERVER_IS_KFREEBSD = SERVER_OS == 'GNU/kFreeBSD'
+
+#
 # Project Common
 #
 
@@ -46,7 +62,7 @@ DATABASES = {
 # MongoDB (MongoEngine)
 #
 
-SERVER_ID = "devsolarsanvm"
+SERVER_ID = SERVER_NAME
 
 MONGODB_DATABASES = {
     'default': {
@@ -274,22 +290,6 @@ MIDDLEWARE_CLASSES = (
     #'solarsan.middleware.RequireLoginMiddleware',               # Require login across whole site, broken
     #'django.middleware.gzip.GZipMiddleware',                    # Compress output
 )
-
-#
-# Get server name
-#
-
-import socket
-SERVER_NAME = socket.gethostname()
-
-#
-# Get server OS
-#
-
-SERVER_OS = os.uname()[0]
-
-SERVER_IS_LINUX = SERVER_OS == 'Linux'
-SERVER_IS_KFREEBSD = SERVER_OS == 'GNU/kFreeBSD'
 
 """
 #
