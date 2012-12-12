@@ -6,8 +6,8 @@ import time
 
 import sys
 import zmq
-from ...fsm import FSM
-from ...models import Node, Peer
+from cluster.fsm import FSM
+from cluster.models import Node, Peer
 from storage.models import Pool
 
 
@@ -29,22 +29,30 @@ class Command(BaseCommand):
             primary = bool(int(args[0]))
         print "primary=%s" % primary
 
-        clustered_pools = [pool for pool in Pool.objects.filter(is_clustered=True)
-        #for pool in clustered_pools:
-        pool = clustered_pools[0]
+        main()
 
-        local = "tcp://*:%d" % CLUSTER_ZMQ_HEARTBEAT_PORT
 
-        remote_host = "san1"
-        remote = "tcp://%s:%d" % (remote_host, CLUSTER_ZMQ_HEARTBEAT_PORT)
+def main():
+    clustered_pools = [pool for pool in
+                       Pool.objects_including_disabled.filter(is_clustered=True)]
+    pool = clustered_pools[0]
 
-        client = "tcp://*:%d" % CLUSTER_ZMQ_API_PORT
+    local = "tcp://*:%d" % CLUSTER_ZMQ_HEARTBEAT_PORT
 
-        fsm = FSM(True, local, remote)
-        fsm.register_voter(client, zmq.ROUTER, echo)
-        fsm.start()
+    remote_host = "san1"
+    remote = "tcp://%s:%d" % (remote_host, CLUSTER_ZMQ_HEARTBEAT_PORT)
+
+    client = "tcp://*:%d" % CLUSTER_ZMQ_API_PORT
+
+    fsm = FSM(True, local, remote)
+    fsm.register_voter(client, zmq.ROUTER, echo)
+    fsm.start()
 
 
 def echo(socket, msg):
     """Echo service"""
     socket.send_multipart(msg)
+
+
+if __name__ == '__main__':
+    main()
