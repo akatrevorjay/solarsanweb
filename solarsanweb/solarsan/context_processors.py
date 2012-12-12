@@ -25,7 +25,7 @@ def site_styles(request):
         'bootstrap/css/bootstrap.css',
         'bootstrap/css/bootstrap-responsive.css',
 
-        #'3rd/chosen/chosen/chosen.css',
+        '3rd/chosen/chosen/chosen.css',
         'css/nv.d3.css',
         '3rd/gritter/css/jquery.gritter.css',
         'css/font-awesome.css',
@@ -46,7 +46,7 @@ def site_styles(request):
         'bootstrap',
         #'bootstrap-datepicker',
         #'bootstrap-editable',
-        #'chosen',
+        'chosen',
         'jquery.gritter',
 
         'd3',
