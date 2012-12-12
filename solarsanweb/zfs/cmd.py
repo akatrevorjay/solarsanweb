@@ -60,7 +60,7 @@ class Command(object):
         # Generate command arg mask from *args with some black pymagic
         cmdf = self.cmd+' '+' '.join(['{}' for i in xrange(len(args))])
         logging.debug("Command: %s %s %s %s", self, self.cmd, args, kwargs)
-        print "Command: %s %s %s %s" % (self, self.cmd, args, kwargs)
+        #print "Command: %s %s %s %s" % (self, self.cmd, args, kwargs)
 
         ofilter = kwargs.pop('ofilter', getattr(self, 'ofilter', None))
         ret_type = kwargs.pop('ret', None)
