@@ -180,6 +180,7 @@ Pool IOStats
 
 import cube_python
 from datetime import datetime
+from copy import deepcopy
 
 class Pool_IO_Stats(PeriodicTask):
     """ Periodic task to log iostats per pool to db. """
@@ -189,7 +190,7 @@ class Pool_IO_Stats(PeriodicTask):
         iostats = zfs.pool.iostat(capture_length=capture_length)
 
         e = cube_python.Emitter(settings.CUBE_COLLECTOR_URL)
-        for i in iostats:
+        for i, iostat in iostats.items():
             try:
                 pool = Pool.objects.get(name=i)
             except (KeyError, Pool.DoesNotExist):
@@ -204,14 +205,26 @@ class Pool_IO_Stats(PeriodicTask):
                          },
                      }
 
+            for k, v in {'usage': ['alloc', 'free'],
+                      'bandwidth': ['read', 'write'],
+                      'iops': ['read', 'write']
+                      }.items():
+                event2 = deepcopy(event)
+                #del event['data']['pool']
+                event2['type'] = 'pool_iostat_%s' % (k)
+                for l in v:
+                    event2['data'][l] = iostat.get(l, iostat.get('%s_%s' % (k, l), None))
+                #logger.info('event2=%s', event2)
+                ret = e.send(event2)
+
             # Convert human readable to bytes
             for j in ['alloc', 'free',
                       'bandwidth_read', 'bandwidth_write',
                       'iops_read', 'iops_write']:
-                event['data'][j] = int(convert_human_to_bytes(iostats[i][j]))
-
+                event['data'][j] = int(convert_human_to_bytes(iostat[j]))
             ret = e.send(event)
             #logger.debug('event=%s ret=%s', event, ret)
+
         e.close()
 
 
