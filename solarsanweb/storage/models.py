@@ -244,6 +244,10 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     _VDEV_TYPE_MAP = _VDEV_TYPE_MAP
 
     @m.queryset_manager
+    def objects_clustered(doc_cls, queryset):
+        return queryset.filter(is_clustered=True)
+
+    @m.queryset_manager
     def objects(doc_cls, queryset):
         return queryset.filter(enabled__ne=False)
 
@@ -259,7 +263,6 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     #cluster_is_active = m.BooleanField()
     cluster_peer = m.ReferenceField(cm.Peer, dbref=False)
     cluster_state = m.DictField()
-    cluster_target_wwn = m.StringField()
 
     def cluster_promote(self, force=False):
         """

@@ -8,8 +8,8 @@ import sys
 import zmq
 from cluster.fsm import FSM
 from cluster.models import Node, Peer
-from storage.models import Pool
-
+import storage.models as m
+from solarsan.models import Config
 
 CLUSTER_ZMQ_HEARTBEAT_PORT = 5003
 CLUSTER_ZMQ_API_PORT = 5001
@@ -17,25 +17,22 @@ CLUSTER_ZMQ_API_PORT = 5001
 
 class Command(BaseCommand):
     help = 'Run SolarSan Cluster ZMQ'
-    args = 'primary'
+    #args = 'primary'
     #label = 'annotation tag (TODO, FIXME, HACK, XXX)'
 
     def handle(self, *args, **options):
         logging.info("Starting Cluster ZMQ..")
-        print args, options
-
-        primary = None
-        if args:
-            primary = bool(int(args[0]))
-        print "primary=%s" % primary
-
         main()
 
 
 def main():
-    clustered_pools = [pool for pool in
-                       Pool.objects_including_disabled.filter(is_clustered=True)]
-    pool = clustered_pools[0]
+    #clustered_pools = [pool for pool in
+    #                   Pool.objects_including_disabled.filter(is_clustered=True)]
+    #pool = clustered_pools[0]
+
+    pool = m.Pool.objects_including_disabled.get(name='dpool')
+
+    print pool.name
 
     local = "tcp://*:%d" % CLUSTER_ZMQ_HEARTBEAT_PORT
 

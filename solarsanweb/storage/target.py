@@ -112,3 +112,36 @@ def get_storage_objects(name=None, path=None, max=None):
 def get_storage_object(**kwargs):
     kwargs['max'] = 1
     return get_storage_objects(**kwargs)[0]
+
+
+def is_tpg_lun_available(tpg, i):
+    for lun in tpg.luns:
+        if lun.lun == i:
+            return False
+    return True
+
+
+def get_tpg_available_lun(tpg):
+    for i in xrange(0, 100):
+        if is_tpg_lun_available(tpg, i):
+            return i
+
+
+def get_or_create_bso(name, dev=None):
+    try:
+        ret = rtslib.BlockStorageObject(name)
+        if ret.udev_path != dev:
+            ret.udev_path = dev
+    except rtslib.RTSLibNotInCFS:
+        if rtslib.utils.is_dev_in_use(dev):
+            print "device is in use"
+            return
+        ret = rtslib.BlockStorageObject(name, dev=dev)
+    return ret
+
+
+def get_or_create_bso_lun_in_tpg(bso, tpg):
+    for lun in tpg.luns:
+        if lun.storage_object == bso:
+            return lun
+    return rtslib.LUN(tpg, storage_object=bso)

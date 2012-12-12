@@ -27,12 +27,11 @@ Signal example
 Config
 """
 
-class Config(m.Document):
-    meta = {'collection': 'config',}
+
+class Config(m.DynamicDocument):
     name = m.StringField(unique=True)
-    config = m.DictField()
-    created = m.DateTimeField()
-    modified = m.DateTimeField()
+    #created = m.DateTimeField()
+    #modified = m.DateTimeField()
 
 
 

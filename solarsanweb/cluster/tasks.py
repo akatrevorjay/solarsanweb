@@ -15,8 +15,14 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 #from django import db
 #from django.db import import autocommit, commit, commit_manually, commit_on_success, is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
+from solarsan.models import Config
+import storage.target
+import rtslib
+import os
+import logging
+import sys
 
-from .models import Node
+from .models import Node, Peer
 
 """
 Cluster Discovery / Beacon
@@ -89,11 +95,55 @@ class Cluster_Node_Discover(PeriodicTask):
         #s.apply_async()
 
 
-
 ## TODO Cluster Node Cleanup Periodic Task (run weekly/monthly)
 #class Cluster_Node_Cleanup(PeriodicTask):
 
 
+def get_config():
+    return Config.objects.get(name='cluster')
 
 
+cluster_conf = get_config()
 
+
+def get_cluster_target():
+    fm = storage.target.get_fabric_module('iscsi')
+    if hasattr(cluster_conf, 'target_wwn'):
+        target = rtslib.Target(fm, cluster_conf.target_wwn)
+    else:
+        target = rtslib.Target(fm)
+
+    return target
+
+
+@task
+def export_clustered_pool_vdevs():
+    target = get_cluster_target()
+    tpg = rtslib.TPG(target, tag=1)
+    portal = tpg.network_portal('0.0.0.0', 3290)
+
+    luns = list(tpg.luns)
+    logger.info("luns=%s", luns)
+
+    # TODO Make default manager for Pool pay attention to enabled=bool
+    for pool in Pool.objects_including_disabled.filter(is_clustered=True):
+        logger.info("pool=%s", pool)
+        for vdev in pool.vdevs:
+            export_clustered_pool_vdev(pool, tpg, vdev)
+
+
+@task
+def export_clustered_pool_vdev(pool, tpg, vdev):
+    if vdev.is_parent:
+        for child in vdev.children:
+            export_clustered_pool_vdev(pool, tpg, child)
+        return
+
+    if not os.path.exists(vdev.path):
+        logger.error("Vdev path does not exist: '%s'", vdev.path)
+        return False
+
+    bso = storage.target.get_or_create_bso("cluster_%s_%s" % (pool.name, vdev.guid), dev=vdev.path)
+    lun = storage.target.get_or_create_bso_lun_in_tpg(bso, tpg)
+
+    logger.info("vdev path=%s bso=%s lun=%s", vdev.path, bso, lun)
