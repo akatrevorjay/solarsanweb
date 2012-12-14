@@ -236,6 +236,26 @@ class Pool(base.Base):
         sh.zpool('clear', self.name)
         return True
 
+    def import_(self):
+        """Imports storage pool.
+
+        pool = Pool('dpool')
+        pool.import_()
+
+        """
+        sh.zpool('import', self.name)
+        return True
+
+    def export(self):
+        """Exports storage pool.
+
+        pool = Pool('dpool')
+        pool.export()
+
+        """
+        sh.zpool('export', self.name)
+        return True
+
     def destroy(self, confirm=False):
         """Destroys storage pool.
 

@@ -18,6 +18,8 @@ import storage.models
 import storage.models as m
 import storage.tasks
 import status.tasks
+import cluster.models
+import cluster.tasks
 
 
 class Command(BaseCommand):
@@ -164,6 +166,15 @@ class Pool(StorageNode):
     def ui_command_clear(self):
         pp(self.obj.clear())
 
+    """
+    Developer
+    """
+
+    def ui_command_import(self):
+        pp(self.obj.import_())
+
+    def ui_command_export(self):
+        pp(self.obj.export())
 
 
 class Pools(configshell.node.ConfigNode):
@@ -215,6 +226,11 @@ class Logs(configshell.node.ConfigNode):
         os.system("tail -qF /var/log/debug /var/log/syslog | ccze -A")
 
 
+"""
+Developer
+"""
+
+
 class Developer(configshell.node.ConfigNode):
     def __init__(self, parent):
         super(Developer, self).__init__('developer', parent)
@@ -240,6 +256,70 @@ class Developer(configshell.node.ConfigNode):
 
     def ui_command_start_services(self):
         os.system("start solarsan")
+
+    def ui_command_targetcli(self):
+        os.system("targetcli")
+
+    def ui_command_export_clustered_pool_vdevs(self):
+        cluster.tasks.export_clustered_pool_vdevs.apply()
+
+    def ui_command_top(self):
+        os.system("top")
+
+    def ui_command_ps(self):
+        os.system("ps aux")
+
+    def ui_command_pstree(self):
+        os.system("pstree -ahuU")
+
+    def ui_command_iostat(self):
+        os.system("iostat -m 5 2")
+
+    def ui_command_zpool_iostat(self):
+        os.system("zpool iostat -v 5 2")
+
+    def ui_command_ibstat(self):
+        os.system("ibstat")
+
+    def ui_command_ibstatus(self):
+        os.system("ibstatus")
+
+    def ui_command_ibv_devinfo(self):
+        os.system("ibv_devinfo")
+
+    def ui_command_ibping(self, host):
+        print sh.ibping(host, _err_to_out=True)
+
+    def ui_command_ibrouters(self):
+        os.system("ibrouters")
+
+    def ui_command_ibswitches(self):
+        os.system("ibswitches")
+
+    def ui_command_ibdiscover(self):
+        os.system("ibdiscover")
+
+    def ui_command_ibnodes(self):
+        os.system("ibnodes")
+
+    def ui_command_ibtool(self):
+        os.system("ibtool")
+
+    def ui_command_rdma(self, host=None):
+        if host:
+            logging.info("Running client to host='%s'", host)
+            ret = sh.rdma_client(host, _err_to_out=True, _iter=True)
+        else:
+            logging.info("Running server on 0.0.0.0")
+            ret = sh.rdma_server(_err_to_out=True, _iter=True)
+        for line in ret:
+            print line.rstrip("\n")
+
+    #def ui_command_ibstat(self):
+    #    os.system("ibstat")
+
+    #def ui_command_ibstat(self):
+    #    os.system("ibstat")
 
 
 class Benchmarks(configshell.node.ConfigNode):
