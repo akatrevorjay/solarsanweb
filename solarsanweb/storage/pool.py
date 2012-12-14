@@ -226,6 +226,16 @@ class Pool(base.Base):
         #    return False
         return True
 
+    def clear(self):
+        """Clears any errors on storage pool.
+
+        pool = Pool('dpool')
+        pool.clear()
+
+        """
+        sh.zpool('clear', self.name)
+        return True
+
     def destroy(self, confirm=False):
         """Destroys storage pool.
 
