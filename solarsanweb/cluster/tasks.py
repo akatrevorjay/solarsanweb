@@ -24,6 +24,9 @@ import sys
 
 from .models import Node, Peer
 
+import solarsan.signals
+
+
 """
 Cluster Discovery / Beacon
 """
@@ -136,7 +139,6 @@ def export_clustered_pool_vdevs():
             export_clustered_pool_vdev(pool, tpg, vdev)
 
 
-
 @task
 def export_clustered_pool_vdev(pool, tpg, vdev):
     if vdev.is_parent:
@@ -157,3 +159,10 @@ def export_clustered_pool_vdev(pool, tpg, vdev):
     lun = storage.target.get_or_create_bso_lun_in_tpg(bso, tpg)
 
     logger.info("vdev path=%s bso=%s lun=%s", vdev.path, bso, lun)
+
+
+@task
+def startup(**kwargs):
+    export_clustered_pool_vdevs.delay()
+
+solarsan.signals.startup.connect(startup)

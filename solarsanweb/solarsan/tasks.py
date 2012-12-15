@@ -7,12 +7,12 @@ from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
 from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
-from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
+from .utils import convert_bytes_to_human, convert_human_to_bytes
 #from django.core.files.storage import Storage
 from django.core.exceptions import ObjectDoesNotExist
 #from django import db
 #from django.db import import autocommit, commit, commit_manually, commit_on_success, is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
-from solarsan.models import Config
+from .models import Config
 import storage.target
 import rtslib
 import os
@@ -50,6 +50,6 @@ def startup():
 
 
 def on_startup(**kwargs):
-    logger.info("SolarSan Startup Signal! kwargs=%s", kwargs)
+    logger.info("SolarSan Startup!")
 
 signals.startup.connect(on_startup)

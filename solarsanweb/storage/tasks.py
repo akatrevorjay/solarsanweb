@@ -41,6 +41,20 @@ def get_pool_children(pool):
 
 
 """
+Startup
+"""
+
+import solarsan.signals
+
+
+@task
+def startup(**kwargs):
+    sync_zfs.delay()
+
+solarsan.signals.startup.connect(startup)
+
+
+"""
 Import pool/dataset info from system into DB
 """
 
