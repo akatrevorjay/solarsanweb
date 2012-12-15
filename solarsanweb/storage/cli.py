@@ -10,10 +10,21 @@ import logging
 import configshell
 
 from solarsan.utils import LoggedException, FormattedException
-from pprint import pprint as pp
+from pprint import pprint, pformat
 
 from . import models as m
 from . import tasks
+
+
+from pygments import highlight
+from pygments.lexers import PythonLexer
+#from pygments.lexers.web import JSONLexer
+from pygments.formatters.terminal256 import Terminal256Formatter
+
+
+def pp(arg):
+    print highlight(pformat(arg), PythonLexer(), Terminal256Formatter())
+    #print highlight(pformat(arg), JSONLexer(), Terminal256Formatter())
 
 
 class StorageNode(configshell.node.ConfigNode):
