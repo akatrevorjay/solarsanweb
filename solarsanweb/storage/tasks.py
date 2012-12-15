@@ -47,7 +47,6 @@ Startup
 import solarsan.signals
 
 
-@task
 def startup(**kwargs):
     sync_zfs.delay()
 

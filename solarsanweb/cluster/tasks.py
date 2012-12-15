@@ -161,7 +161,6 @@ def export_clustered_pool_vdev(pool, tpg, vdev):
     logger.info("vdev path=%s bso=%s lun=%s", vdev.path, bso, lun)
 
 
-@task
 def startup(**kwargs):
     export_clustered_pool_vdevs.delay()
 
