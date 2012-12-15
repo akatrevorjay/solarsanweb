@@ -127,6 +127,7 @@ def export_clustered_pool_vdevs():
         cluster_conf.save()
     tpg = rtslib.TPG(target, tag=1)
     tpg.enable = 1
+    tpg.set_attribute('authentication', 0)
     portal = tpg.network_portal('0.0.0.0', 3290)
 
     luns = list(tpg.luns)
