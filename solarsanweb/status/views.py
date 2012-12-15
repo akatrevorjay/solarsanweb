@@ -2,8 +2,8 @@
 from dj import RequestContext, render_to_response, generic
 
 from . import forms
-from . import tasks
-
+#from . import tasks
+import solarsan.tasks
 
 def index(request, *args, **kwargs):
     return render_to_response('status/home.html',
@@ -17,7 +17,7 @@ class ShutdownView(generic.edit.FormView):
     form_class = forms.ShutdownForm
 
     def form_valid(self, form):
-        tasks.shutdown.delay()
+        solarsan.tasks.shutdown.delay()
         #self.success_url = reverse
         return super(ShutdownView, self).form_valid(form)
 
@@ -29,7 +29,7 @@ class RebootView(generic.edit.FormView):
     form_class = forms.RebootForm
 
     def form_valid(self, form):
-        tasks.reboot.delay()
+        solarsan.tasks.reboot.delay()
         #self.success_url = reverse
         return super(RebootView, self).form_valid(form)
 

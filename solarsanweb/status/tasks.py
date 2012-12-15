@@ -16,20 +16,3 @@ import sh
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
-
-
-"""
-Shutdown/Reboot
-"""
-
-
-@task
-def shutdown():
-    logger.warning("Shutting system down..")
-    return sh.shutdown('-h', 'now')
-
-
-@task
-def reboot():
-    logger.warning("Rebooting system..")
-    return sh.shutdown('-r', 'now')

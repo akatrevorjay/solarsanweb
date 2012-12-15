@@ -28,6 +28,7 @@ from django.utils import timezone
 ##from django import db
 ##from django.db import import autocommit, commit, commit_manually, commit_on_success, is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
 
+import sh
 from . import signals
 
 
@@ -44,6 +45,13 @@ Reload tasks
 #        broadcast('pool_restart', arguments={'reload': True})
 
 
+"""
+Startup/Shutdown
+"""
+
+SHUTDOWN_WAIT = 10
+
+
 @task
 def startup():
     signals.startup.send(sender=None)
@@ -53,3 +61,32 @@ def on_startup(**kwargs):
     logger.info("SolarSan Startup!")
 
 signals.startup.connect(on_startup)
+
+
+@task
+def shutdown():
+    signals.shutdown.send(sender=None)
+    logger.warning("Shutting system down in %ds..", SHUTDOWN_WAIT)
+    time.sleep(SHUTDOWN_WAIT)
+    return sh.shutdown('-h', 'now')
+
+
+def on_shutdown(**kwargs):
+    logger.info("SolarSan Shutdown!")
+
+signals.shutdown.connect(on_shutdown)
+
+
+@task
+def reboot():
+    signals.reboot.send(sender=None)
+    signals.shutdown.send(sender=None)
+    logger.warning("Rebooting system in %ds..", SHUTDOWN_WAIT)
+    time.sleep(SHUTDOWN_WAIT)
+    return sh.shutdown('-r', 'now')
+
+
+def on_reboot(**kwargs):
+    logger.info("SolarSan Reboot!")
+
+signals.reboot.connect(on_reboot)
