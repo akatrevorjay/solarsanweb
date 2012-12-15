@@ -111,9 +111,12 @@ class System(configshell.node.ConfigNode):
 class StorageNode(configshell.node.ConfigNode):
     def __init__(self, parent, obj):
         self.obj = obj
+        if obj.type == 'pool':
+            self.child_types = {}
         #self.parent = parent
         obj_path = obj.path()
         super(StorageNode, self).__init__(obj_path[-1], parent)
+
 
         if hasattr(obj, 'children'):
             all_children = obj.children()
@@ -137,13 +140,46 @@ class StorageNode(configshell.node.ConfigNode):
                 children = find_children(show_depth)
 
                 for child in children:
-                    Dataset(self, child)
+                    #if obj.type == 'pool':
+                    #    if not child.type in self.child_types:
+                    #        self.child_types[child.type] = StorageNodeChildType(self, child.type)
+                    #    add_child_dataset(self.child_types[child.type], child)
+                    #else:
+                    if True:
+                        add_child_dataset(self, child)
 
-    def ui_command_create(self):
+    def ui_command_create_filesystem(self):
         '''
-        create - Creates a storage Pool
+        create - Creates a Filesystem
         '''
         os.system("echo TODO")
+
+    def ui_command_create_volume(self):
+        '''
+        create - Creates a volume
+        '''
+        os.system("echo TODO")
+
+    def ui_command_create_snapshot(self):
+        '''
+        create - Creates a snapshot
+        '''
+        os.system("echo TODO")
+
+
+def add_child_dataset(self, child):
+    if child.type == 'filesystem':
+        Dataset(self, child)
+    elif child.type == 'volume':
+        Dataset(self, child)
+    elif child.type == 'snapshot':
+        Dataset(self, child)
+
+
+class StorageNodeChildType(configshell.node.ConfigNode):
+    def __init__(self, parent, child_type):
+        self.child_type = child_type
+        super(StorageNodeChildType, self).__init__('%ss' % child_type, parent)
 
 
 class Dataset(StorageNode):
@@ -177,24 +213,19 @@ class Pool(StorageNode):
         pp(self.obj.export())
 
 
-class Pools(configshell.node.ConfigNode):
-    def __init__(self, parent):
-        super(Pools, self).__init__('pools', parent)
-
-        for pool in storage.models.Pool.objects.all():
-            Pool(self, pool)
-
-    def ui_command_create(self):
-        '''
-        create - Creates a storage Pool
-        '''
-        os.system("echo TODO")
-
 
 class Storage(configshell.node.ConfigNode):
     def __init__(self, parent):
         super(Storage, self).__init__('storage', parent)
-        Pools(self)
+
+        for pool in storage.models.Pool.objects.all():
+            Pool(self, pool)
+
+    def ui_command_create_pool(self, name):
+        '''
+        create - Creates a storage Pool
+        '''
+        os.system("echo TODO")
 
     def ui_command_lsscsi(self):
         '''
