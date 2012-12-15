@@ -111,8 +111,6 @@ class System(configshell.node.ConfigNode):
 class StorageNode(configshell.node.ConfigNode):
     def __init__(self, parent, obj):
         self.obj = obj
-        #if obj.type == 'pool':
-        #    self.child_types = {}
         obj_path = obj.path()
         super(StorageNode, self).__init__(obj_path[-1], parent)
 
@@ -130,21 +128,11 @@ class StorageNode(configshell.node.ConfigNode):
                             ret.append(child)
                     return ret
 
-                #max_child_depth = None
                 show_depth = len(obj_path) + 1
-                #children = []
-                #while not children and (not max_child_depth or show_depth < max_child_depth):
-                #    children = find_children(show_depth)
                 children = find_children(show_depth)
 
                 for child in children:
-                    #if obj.type == 'pool':
-                    #    if not child.type in self.child_types:
-                    #        self.child_types[child.type] = StorageNodeChildType(self, child.type)
-                    #    add_child_dataset(self.child_types[child.type], child)
-                    #else:
-                    if True:
-                        add_child_dataset(self, child)
+                    add_child_dataset(self, child)
 
     def ui_command_create_filesystem(self):
         '''
