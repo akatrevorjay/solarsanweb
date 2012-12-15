@@ -101,7 +101,11 @@ class Pool(StorageNode):
 
     def ui_command_status(self):
         status = self.obj.status()
-        status['config'] = dict(status['config'])
+        config = []
+        for k, v in status['config'].items():
+            v['name'] = k
+            config.append(v)
+        status['config'] = config
         pp(status)
 
     def ui_command_clear(self):

@@ -25,7 +25,7 @@ class ZpoolStatusParser(object):
 
     def __call__(self, arg=None):
         if not arg:
-            arg = sh.zpool('status').stdout
+            arg = sh.zpool('status', '-v').stdout
         ret = OrderedDict()
         for v in self.p_status.parseString(str(arg)).asList():
             v = dict(v)

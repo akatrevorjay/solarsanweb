@@ -276,7 +276,7 @@ class Pool(base.Base):
 
         """
         p = ZpoolStatusParser()
-        out = sh.zpool('status', self.name).stdout
+        out = sh.zpool('status', '-v', self.name).stdout
         ret = p(out)
         return ret[self.name]
 

@@ -284,8 +284,9 @@ class CliRoot(configshell.node.ConfigNode):
 def main():
     from storage.cli import Storage
     from logs.cli import Logs
+    from configure.cli import Configure
 
-    CLI_TOP_SECTIONS = [Storage, Logs]
+    CLI_TOP_SECTIONS = [Storage, Logs, Configure]
 
     shell = configshell.shell.ConfigShell('~/.solarsancli')
     root_node = CliRoot(shell, CLI_TOP_SECTIONS)
