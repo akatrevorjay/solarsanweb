@@ -111,12 +111,10 @@ class System(configshell.node.ConfigNode):
 class StorageNode(configshell.node.ConfigNode):
     def __init__(self, parent, obj):
         self.obj = obj
-        if obj.type == 'pool':
-            self.child_types = {}
-        #self.parent = parent
+        #if obj.type == 'pool':
+        #    self.child_types = {}
         obj_path = obj.path()
         super(StorageNode, self).__init__(obj_path[-1], parent)
-
 
         if hasattr(obj, 'children'):
             all_children = obj.children()
