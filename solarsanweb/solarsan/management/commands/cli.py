@@ -302,8 +302,9 @@ class Developer(configshell.node.ConfigNode):
     def ui_command_ibnodes(self):
         os.system("ibnodes")
 
-    def ui_command_ibtool(self):
-        os.system("ibtool")
+    def ui_command_ibtool(self, *args):
+        for line in sh.ibtool(*args, _iter=True, _err_to_out=True):
+            print line.rstrip("\n")
 
     def ui_command_rdma(self, host=None):
         if host:
