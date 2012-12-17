@@ -9,6 +9,7 @@ import sh
 import re
 import logging
 import configshell
+from configshell import ConfigNode, ExecutionError
 
 from solarsan.utils import LoggedException, FormattedException, \
     convert_human_to_bytes, convert_bytes_to_human
@@ -19,7 +20,7 @@ from . import tasks
 from .utils import clean_name
 
 
-class StorageNode(configshell.node.ConfigNode):
+class StorageNode(ConfigNode):
     def __init__(self, parent, obj):
         self.obj = obj
         obj_path = obj.path()
@@ -144,7 +145,7 @@ def add_child_dataset(self, child):
         Dataset(self, child)
 
 
-class StorageNodeChildType(configshell.node.ConfigNode):
+class StorageNodeChildType(ConfigNode):
     def __init__(self, parent, child_type):
         self.child_type = child_type
         super(StorageNodeChildType, self).__init__('%ss' % child_type, parent)
@@ -200,18 +201,16 @@ class Pool(StorageNode):
 
     def ui_command_status(self):
         status = self.obj.status()
-        config = []
-        for k, v in status['config'].items():
-            v['name'] = k
-            config.append(v)
-        status['config'] = config
+        #config = []
+        #for k, v in status['config'].items():
+        #    v['name'] = k
+        #    config.append(v)
+        #status['config'] = config
+        status.pop('config')
         pp(status)
 
     def ui_command_health(self):
-        pp(self.obj.properties['health'])
-
-    def ui_command_is_clustered(self):
-        pp(self.obj.is_clustered)
+        pp(str(self.obj.properties['health']))
 
     def ui_command_clear(self):
         pp(self.obj.clear())
@@ -226,9 +225,15 @@ class Pool(StorageNode):
     def ui_command_export(self):
         pp(self.obj.export())
 
+    """
+    Cluster
+    """
+
+    def ui_command_is_clustered(self):
+        pp(self.obj.is_clustered)
 
 
-class Storage(configshell.node.ConfigNode):
+class Storage(ConfigNode):
     def __init__(self, parent):
         super(Storage, self).__init__('storage', parent)
 
