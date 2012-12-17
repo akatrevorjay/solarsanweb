@@ -1,43 +1,53 @@
-from celery import group
+
+import celery
+from celery import chain, group, task, chord, Task
+from celery.task import periodic_task, PeriodicTask
 from celery.schedules import crontab
-from celery.task import periodic_task, task, chord
-from celery.task.base import PeriodicTask, Task
-from celery.task.sets import subtask, TaskSet
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
-from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
-from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes
-import datetime, time
-from datetime import timedelta
+from datetime import datetime, timedelta
+import time
 from django.utils import timezone
 #from django.core.files.storage import Storage
-from django.core.exceptions import ObjectDoesNotExist
+#from django.core.exceptions import ObjectDoesNotExist
 #from django import db
-#from django.db import import autocommit, commit, commit_manually, commit_on_success, is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
-from solarsan.models import Config
-import storage.target
-import rtslib
+#from django.db import import autocommit, commit, commit_manually, commit_on_success, \
+#    is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
 import os
 import logging
 import sys
 
+from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes, \
+    LoggedException
+from django.conf import settings
+import storage.target
+import rtslib
+import beacon
+
+from solarsan.models import Config
+from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
 from .models import Node, Peer
 
 import solarsan.signals
 
 
+
 """
-Cluster Discovery / Beacon
+Config
 """
 
-from django.core.cache import cache
-from django.conf import settings
-#from cluster.models import Node
-import beacon
-#import json
+
+def get_config():
+    return Config.objects.get(name='cluster')
+
+
+"""
+Neighbor Node
+"""
 
 from piston_mini_client import PistonAPI, returns_json
+
 
 class ClusterAPI(PistonAPI):
     def __init__(self, *args, **kwargs):
@@ -53,57 +63,55 @@ class ClusterAPI(PistonAPI):
         return self._get('cluster/probe/.json')
 
 
-class Cluster_Node_Query(Task):
-    def run(self, *args, **kwargs):
-        # Probe single host (say after beacon discovery)
-        host =  kwargs.get('host')
-        if not host:
-            raise Exception('No host specified')
-        api = ClusterAPI(host=host)
-        try:
-            probe = api.probe()
-        except:
-            logger.error( 'Cluster discovery (probe \'%s\'): Failed.', host)
-            return False
-        logger.debug( "Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
-        #logger.debug("Probe=%s", probe)
+@task
+def probe_node(host):
+    """Probes a discovered node for info"""
+    api = ClusterAPI(host=host)
 
-        # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we should do it a layer above.
-        cnode, created = Node.objects.get_or_create(hostname=probe['hostname'])
-        cnode.interfaces = dict(probe['interfaces'])
-        cnode['last_seen'] = timezone.now()
-        cnode.save()
+    try:
+        probe = api.probe()
+    except:
+        logger.error('Cluster discovery (probe \'%s\'): Failed.', host)
+        return False
+    logger.info("Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
 
-        return True
+    # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we
+    # should do it a layer above.
+    cnode, created = Node.objects.get_or_create(hostname=probe['hostname'])
+    cnode.interfaces = dict(probe['interfaces'])
+    cnode['last_seen'] = timezone.now()
+    cnode.save()
+
+    return True
 
 
-class Cluster_Node_Discover(PeriodicTask):
+@periodic_task(run_every=timedelta(seconds=settings.SOLARSAN_CLUSTER['discovery']))
+def discover_neighbor_nodes():
     """ Probes for new cluster nodes """
-    run_every = timedelta( seconds=settings.SOLARSAN_CLUSTER['discovery'] )
-    def run( self, *args, **kwargs ):
-        # Beacon discovery
-        logger.info( "Probing for new cluster nodes (port=%s,key=%s)",
-                     settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
+    # Beacon discovery
+    port = settings.SOLARSAN_CLUSTER['port']
+    key = settings.SOLARSAN_CLUSTER['key']
 
-        nodes = beacon.find_all_servers( settings.SOLARSAN_CLUSTER['port'], settings.SOLARSAN_CLUSTER['key'] )
+    logger.info("Probing for new cluster nodes (port=%s,key=%s)", port, key)
+    nodes = beacon.find_all_servers(port, key)
 
-        if '127.0.0.1' not in nodes:
-            logger.error("Didn't find 127.0.0.1 in discovery, is the beacon service started?")
+    if '127.0.0.1' not in nodes:
+        logger.error("Didn't find 127.0.0.1 in discovery, is the beacon service started?")
 
-        # Call Query task for each host to probe their API
-        for node_ip in nodes:
-            logger.debug("node_ip=%s", node_ip)
-            Cluster_Node_Query.delay(host=node_ip)
-        #s = group([Cluster_Node_Query.subtask(host=node_ip) for node_ip in nodes])
-        #s.apply_async()
+    # Call Query task for each host to probe their API
+    c = group(probe_node.s(node) for node in nodes)
+    c()
 
 
-## TODO Cluster Node Cleanup Periodic Task (run weekly/monthly)
-#class Cluster_Node_Cleanup(PeriodicTask):
+# TODO Cluster Node Cleanup Periodic Task (run weekly/monthly)
+@periodic_task(run_every=timedelta(days=7))
+def cleanup_ancient_discovered_nodes():
+    logger.warning("TODO")
 
 
-def get_config():
-    return Config.objects.get(name='cluster')
+"""
+Clustered Pool LUN Export
+"""
 
 
 def get_or_create_target(wwn=None, fm=None):
@@ -133,7 +141,6 @@ def export_clustered_pool_vdevs():
     luns = list(tpg.luns)
     logger.info("luns=%s", luns)
 
-    # TODO Make default manager for Pool pay attention to enabled=bool
     for pool in Pool.objects_including_disabled.filter(is_clustered=True, enabled=False):
         logger.info("pool=%s", pool)
         for vdev in pool.vdevs:
@@ -162,7 +169,13 @@ def export_clustered_pool_vdev(pool, tpg, vdev):
     logger.info("vdev path=%s bso=%s lun=%s", vdev.path, bso, lun)
 
 
+"""
+Startup
+"""
+
+
 def startup(**kwargs):
+    discover_neighbor_nodes.delay()
     export_clustered_pool_vdevs.delay()
 
 solarsan.signals.startup.connect(startup, sender='solarsan')
