@@ -283,8 +283,7 @@ class CliRoot(ConfigNode):
         self.define_config_group_param(
             'global', 'developer_mode', 'bool',
             'If true, enables developer mode.')
-
-        print self.get_group_param('global', 'developer_mode')
+        #print self.get_group_param('global', 'developer_mode')
 
 
         for section in sections:

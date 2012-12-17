@@ -135,6 +135,59 @@ class StorageNode(ConfigNode):
             raise LoggedException("Object '%s' does not exist", obj)
         obj.rename(new)
 
+    """
+    Properties
+    """
+
+    def ui_getgroup_property(self, property):
+        '''
+        This is the backend method for getting propertys.
+        @param property: The property to get the value of.
+        @type property: str
+        @return: The property's value
+        @rtype: arbitrary
+        '''
+        return str(self.obj.properties[property])
+
+    def ui_setgroup_property(self, property, value):
+        '''
+        This is the backend method for setting propertys.
+        @param property: The property to set the value of.
+        @type property: str
+        @param value: The property's value
+        @type value: arbitrary
+        '''
+        self.obj.properties[property] = value
+
+    POOL_STATISTICS = ['dedupratio']
+
+    def ui_getgroup_statistic(self, statistic):
+        '''
+        This is the backend method for getting statistics.
+        @param statistic: The statistic to get the value of.
+        @type statistic: str
+        @return: The statistic's value
+        @rtype: arbitrary
+        '''
+        if statistic in self.POOL_STATISTICS:
+            obj = self.obj.pool
+        else:
+            obj = self.obj
+
+        return str(obj.properties[statistic])
+
+    def ui_setgroup_statistic(self, statistic, value):
+        '''
+        This is the backend method for setting statistics.
+        @param statistic: The statistic to set the value of.
+        @type statistic: str
+        @param value: The statistic's value
+        @type value: arbitrary
+        '''
+        #self.obj.properties[statistic] = value
+        return None
+
+
 
 def add_child_dataset(self, child):
     if child.type == 'filesystem':
@@ -155,6 +208,30 @@ class Dataset(StorageNode):
     def __init__(self, parent, dataset):
         super(Dataset, self).__init__(parent, dataset)
 
+        self.define_config_group_param(
+            'property', 'compress', 'bool',
+            'If true, enables compression.')
+
+        self.define_config_group_param(
+            'property', 'dedup', 'bool',
+            'If true, enables deduplication.')
+
+        #self.define_config_group_param(
+        #    'property', 'atime', 'bool',
+        #    'If true, enables updates of file access times. This hurts performance, and is rarely wanted.'
+
+        self.define_config_group_param(
+            'statistic', 'compressratio', 'string',
+            'Compression ratio for this dataset and children.')
+
+        self.define_config_group_param(
+            'statistic', 'dedupratio', 'string',
+            'Deduplication ratio for this dataset and children.')
+
+
+    #def ui_type_blah(self):
+    #    pass
+
     def summary(self):
         # TODO Check disk usage percentage, generic self.obj.errors/warnings
         # interface perhaps?
@@ -162,6 +239,15 @@ class Dataset(StorageNode):
 
 
 class Pool(StorageNode):
+    help_intro = '''
+                 STORAGE POOL
+                 ============
+                 Storage Pools are dataset containers, they contain datasets such as a filesystem or a volume.
+
+                 Literally, it's just like a giant swimming pool for your data.
+                 That is, except someone replaced your water with solid state drives and rotating platters.
+                 '''
+
     def __init__(self, parent, pool):
         super(Pool, self).__init__(parent, pool)
 
@@ -186,11 +272,11 @@ class Pool(StorageNode):
     def ui_command_lsdevices(self):
         pp(self.obj.pretty_devices())
 
-    def ui_command_add_device(self, path, type='disk'):
-        logging.error("TODO")
+    #def ui_command_add_device(self, path, type='disk'):
+    #    logging.error("TODO")
 
-    def ui_command_replace_device(self, old, new):
-        logging.error("TODO")
+    #def ui_command_replace_device(self, old, new):
+    #    logging.error("TODO")
 
     """
     Status
@@ -229,6 +315,7 @@ class Pool(StorageNode):
     Cluster
     """
 
+    # TODO Attribute
     def ui_command_is_clustered(self):
         pp(self.obj.is_clustered)
 
