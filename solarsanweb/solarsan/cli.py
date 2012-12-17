@@ -285,8 +285,9 @@ def main():
     from storage.cli import Storage
     from logs.cli import Logs
     from configure.cli import Configure
+    from cluster.cli import Cluster
 
-    CLI_TOP_SECTIONS = [Storage, Logs, Configure]
+    CLI_TOP_SECTIONS = [Storage, Logs, Configure, Cluster]
 
     shell = configshell.shell.ConfigShell('~/.solarsancli')
     root_node = CliRoot(shell, CLI_TOP_SECTIONS)
