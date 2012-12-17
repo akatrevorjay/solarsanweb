@@ -236,11 +236,12 @@ class VDevDisk(VDevChildDocument):
 
     @property
     def health(self):
-        if self.is_healthy:
-            return 'Good'
-        else:
+        #if self.is_healthy:
+        #    return 'Good'
+        #else:
+        if True:
             state = self.state or 'UNKNOWN'
-            return capfirst(state)
+            return capfirst(state.lower())
 
     @property
     def is_healthy(self):
