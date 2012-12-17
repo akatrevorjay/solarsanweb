@@ -11,6 +11,7 @@ import mongoengine as m
 from datetime import datetime
 #from django.utils import timezone
 from django.core.urlresolvers import reverse
+from django.utils.text import capfirst
 
 import rtslib
 import storage.pool
@@ -161,16 +162,19 @@ class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
         def do_vdev(vdev):
             ret = {'type': vdev.type,
                    #'_obj': vdev,
-                   'modified': vdev.modified,
-                   'created': vdev.created,
-                   'id': vdev.vdev_id,
+                   #'modified': vdev.modified,
+                   #'created': vdev.created,
+                   #'id': vdev.vdev_id,
                    'guid': vdev.guid,
                    }
             if vdev.is_parent:
                 ret['children'] = [do_vdev(child) for child in vdev.children]
             else:
                 ret['path'] = vdev.path
-                ret['whole_disk'] = vdev.whole_disk
+                ret['whole_disk'] = bool(vdev.whole_disk)
+                ret['is_healthy'] = vdev.is_healthy
+                #ret['state'] = vdev.state
+                ret['health'] = vdev.health
             return ret
         return do_vdev(self)
 
@@ -213,6 +217,7 @@ class VDevDisk(VDevChildDocument):
     path = m.StringField()
     whole_disk = m.IntField()
     type = 'disk'
+    state = m.StringField()
 
     @property
     def children(self):
@@ -232,8 +237,15 @@ class VDevDisk(VDevChildDocument):
 
     @property
     def health(self):
-        # TODO disk health
-        return 'Good'
+        if self.is_healthy:
+            return 'Good'
+        else:
+            state = self.state or 'UNKNOWN'
+            return capfirst(state)
+
+    @property
+    def is_healthy(self):
+        return self.state == 'ONLINE'
 
     def to_device(self):
         return storage.device.Device(self.path)
@@ -273,7 +285,7 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     version = m.IntField()
 
     #state = m.IntField()
-    #state = m.StringField()
+    state = m.StringField()
     #errors = m.StringField()
     #action = m.StringField()
     #status = m.StringField()
@@ -388,6 +400,8 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     def reload_zfs(self):
         self._reload_zdb()
         self._reload_status()
+        #if self._changed_fields:
+        #    self.save()
 
     # TODO filter_by_attrs here
     #def get_vdev_by_guid(self, guid, vdevs=None):
@@ -411,12 +425,16 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
             vdevs = self.vdevs
         for vdev in vdevs:
             if vdev.is_parent:
-                vdev = self.guess_vdev_by_basename(child)
+                vdev = self.guess_vdev_by_basename(basename, vdevs=vdev.children)
                 if vdev:
                     return vdev
-
-            if os.path.basename(vdev.path) == basename:
-                return vdev
+            else:
+                if os.path.basename(vdev.path) == basename:
+                    return vdev
+                # TODO Fix bug in udev device discovery where it doesn't look
+                # for zfs part labels on iscsi devices
+                if os.path.basename(vdev.path) == '%s-part1' % basename:
+                    return vdev
 
     def _reload_status(self):
         """ Snags pool status and vdev info from zpool """
@@ -428,28 +446,15 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
         #    setattr(self, k, s[k])
         #self.pool_status = s['status']
 
-        def do_vdev(vdev):
-            if vdev.is_parent:
-                for vdev in vdev.children:
-                    if do_vdev(vdev):
-                        return True
-                return False
-
-            if os.path.basename(vdev.path) == basename:
-                vdev.state = v['state']
-                return True
-            return False
-
         for k, v in s['config'].items():
             if k == self.name:
                 self.state = v['state']
             else:
                 vdev = self.guess_vdev_by_basename(k)
+                #logging.info("k=%s v=%s vdev=%s", k, v, vdev)
                 if vdev:
+                    #logging.info("Got vdev=%s", vdev)
                     vdev.state = v['state']
-
-        if self._changed_fields:
-            self.save()
 
     def _reload_zdb(self):
         """ Parses pool status and vdev info from given zdb data """
