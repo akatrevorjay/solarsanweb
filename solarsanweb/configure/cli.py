@@ -23,6 +23,13 @@ class Nic(configshell.node.ConfigNode):
         self.obj = nic
         super(Nic, self).__init__(name, parent)
 
+    def summary(self):
+        try:
+            ipv4_addrs = [v['addr'] for v in self.obj.addrs.get('AF_INET')]
+            return (', '.join(ipv4_addrs), bool(ipv4_addrs))
+        except:
+            return ('None', False)
+
     def ui_command_addrs(self):
         pp(self.obj.addrs)
 

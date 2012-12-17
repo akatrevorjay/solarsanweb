@@ -10,7 +10,8 @@ import re
 import logging
 import configshell
 
-from solarsan.utils import LoggedException, FormattedException
+from solarsan.utils import LoggedException, FormattedException, \
+    convert_human_to_bytes, convert_bytes_to_human
 from solarsan.pretty import pp
 
 from . import models as m
@@ -153,10 +154,29 @@ class Dataset(StorageNode):
     def __init__(self, parent, dataset):
         super(Dataset, self).__init__(parent, dataset)
 
+    def summary(self):
+        # TODO Check disk usage percentage, generic self.obj.errors/warnings
+        # interface perhaps?
+        return (self.obj.type, True)
+
 
 class Pool(StorageNode):
     def __init__(self, parent, pool):
         super(Pool, self).__init__(parent, pool)
+
+    def summary(self):
+        return (self.obj.health, self.obj.is_healthy())
+
+    def ui_command_usage(self):
+        obj = self.obj
+        alloc = str(obj.properties['alloc'])
+        free = str(obj.properties['free'])
+        total = str(obj.properties['size'])
+        ret = {'alloc': alloc,
+               'free': free,
+               'total': total,
+               }
+        pp(ret)
 
     """
     Devices

@@ -52,6 +52,7 @@ class ReprMixIn(object):
 class BaseMixIn(ReprMixIn):
     @property
     def short_type(self):
+        type = self.type
         if type == 'filesystem':
             return 'FS'
         elif type == 'pool':
@@ -314,6 +315,19 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     @m.queryset_manager
     def objects_including_disabled(doc_cls, queryset):
         return queryset
+
+    """
+    Status
+    """
+
+    @property
+    def health(self):
+        #if self.is_healthy:
+        #    return 'Good'
+        #else:
+        if True:
+            state = self.state or 'UNKNOWN'
+            return capfirst(state.lower())
 
     """
     Clustering
