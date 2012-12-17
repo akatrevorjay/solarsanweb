@@ -26,6 +26,26 @@ class StorageNode(ConfigNode):
         obj_path = obj.path()
         super(StorageNode, self).__init__(obj_path[-1], parent)
 
+        self.define_config_group_param(
+            'property', 'compress', 'string',
+            'If on, enables compression.')
+
+        self.define_config_group_param(
+            'property', 'dedup', 'string',
+            'If on, enables deduplication.')
+
+        self.define_config_group_param(
+            'property', 'atime', 'string',
+            'If on, enables updates of file access times. This hurts performance, and is rarely wanted.')
+
+        self.define_config_group_param(
+            'statistic', 'compressratio', 'string',
+            'Compression ratio for this dataset and children.')
+
+        self.define_config_group_param(
+            'statistic', 'dedupratio', 'string',
+            'Deduplication ratio for this dataset and children.')
+
         if hasattr(obj, 'children'):
             all_children = obj.children()
             if all_children:
@@ -139,6 +159,8 @@ class StorageNode(ConfigNode):
     Properties
     """
 
+    POOL_PROPERTIES = []
+
     def ui_getgroup_property(self, property):
         '''
         This is the backend method for getting propertys.
@@ -147,7 +169,11 @@ class StorageNode(ConfigNode):
         @return: The property's value
         @rtype: arbitrary
         '''
-        return str(self.obj.properties[property])
+        if property in self.POOL_PROPERTIES:
+            obj = self.get_pool()
+        else:
+            obj = self.get_filesystem()
+        return str(obj.properties[property])
 
     def ui_setgroup_property(self, property, value):
         '''
@@ -157,7 +183,11 @@ class StorageNode(ConfigNode):
         @param value: The property's value
         @type value: arbitrary
         '''
-        self.obj.properties[property] = value
+        if property in self.POOL_PROPERTIES:
+            obj = self.get_pool()
+        else:
+            obj = self.get_filesystem()
+        obj.properties[property] = value
 
     POOL_STATISTICS = ['dedupratio']
 
@@ -170,9 +200,9 @@ class StorageNode(ConfigNode):
         @rtype: arbitrary
         '''
         if statistic in self.POOL_STATISTICS:
-            obj = self.obj.pool
+            obj = self.get_pool()
         else:
-            obj = self.obj
+            obj = self.get_filesystem()
 
         return str(obj.properties[statistic])
 
@@ -207,26 +237,6 @@ class StorageNodeChildType(ConfigNode):
 class Dataset(StorageNode):
     def __init__(self, parent, dataset):
         super(Dataset, self).__init__(parent, dataset)
-
-        self.define_config_group_param(
-            'property', 'compress', 'bool',
-            'If true, enables compression.')
-
-        self.define_config_group_param(
-            'property', 'dedup', 'bool',
-            'If true, enables deduplication.')
-
-        #self.define_config_group_param(
-        #    'property', 'atime', 'bool',
-        #    'If true, enables updates of file access times. This hurts performance, and is rarely wanted.'
-
-        self.define_config_group_param(
-            'statistic', 'compressratio', 'string',
-            'Compression ratio for this dataset and children.')
-
-        self.define_config_group_param(
-            'statistic', 'dedupratio', 'string',
-            'Deduplication ratio for this dataset and children.')
 
 
     #def ui_type_blah(self):
