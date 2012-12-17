@@ -1,0 +1,77 @@
+
+=== Alerts ===
+- Email alerts
+
+=== Analytics ===
+- SNMP monitoring
+    - IOStats
+    - Health
+
+- Sensors
+    - pysensors, look at glances for an example
+
+- Per disk IOStats:
+    - look at glances for an example
+    - parse iostat output
+    - parse zpool iostat -v
+
+=== Storage ===
+- Sync ZFS metadata into DB more specifically
+    - Handle slogs
+    - Handle cache
+
+- Merge VDevs with Device, unified device interface with an easy way to discover from either direction (ie vdev guid, device path, vdev path)
+
+- Watch udisks2 events
+    - Act accordingly, ie add Device to DB
+    - if a device changes or is removed, update DB and health
+    - Auto-replace bad device upon new device insertion, etc
+
+
+=== Cluster ===
+- Clustered Pools
+    - Wait for remote pool vdevs for a specified amount of time
+    - If remote pool vdevs are suddenly found, provide a way to easily do the export/import/clear dance
+    - Don't mark exported clustered pools as enabled=False, check for is_clustered
+    - Upon sudden degradation, failover to the other peer
+    - Finish up heartbeat system
+    - Pool health checks, act upon bad health
+    - v2: Deal with becoming a cluster from not a cluster?
+    - Fix udev not seeing zfs labels on remote iSCSI target devices, SRP probably "just works" already
+
+- SRP support, not just iSCSI
+
+- DRBD over Volume support, not just mirrored clustered pools
+
+- ZMQ instead of json heartbeat yanks (semi-started, need to play with zmq more)
+
+
+=== CLI ===
+- Configure
+    - Network configuration
+    - Hostname
+
+- Cluster
+    - How to show/configure clusters and clustered pools? I'm not really a fan of the current way.
+
+- Storage
+    - Create pools from CLI
+    - Allow to grow/shrink quotas
+    - Allow to grow volumes
+
+- Target
+    - Target configuration from CLI
+    - SRP support
+
+- Use attributes/global/parameters much more, especially for things like properties
+
+
+=== Installation ===
+- Salt
+    - Script entire setup (started)
+    - Draft out requirements (pip freeze, etc)
+
+- Perhaps use distribute with a nice setup.py?
+
+
+
