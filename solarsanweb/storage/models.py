@@ -459,6 +459,9 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
                     #logging.info("Got vdev=%s", vdev)
                     vdev.state = v['state']
 
+                    if vdev._changed_fields:
+                        vdev.save()
+
     def _reload_zdb(self):
         """ Parses pool status and vdev info from given zdb data """
         p = ZdbPoolCacheParser()
