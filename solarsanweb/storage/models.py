@@ -408,6 +408,27 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
         else:
             raise Exception("Could not parse VDev tree")
 
+    """
+    Devices
+    """
+
+    @property
+    def devices(self):
+        ret = {}
+
+        def do_vdev(vdev):
+            ret = {'type': vdev.type, '_obj': vdev}
+            if vdev.is_parent:
+                ret['children'] = [do_vdev(child) for child in vdev.children]
+            else:
+                ret['path'] = vdev.path
+            return ret
+
+        for vdev in self.vdevs:
+            ret[vdev.guid] = do_vdev(vdev)
+
+        return ret
+
 
 """
 Dataset

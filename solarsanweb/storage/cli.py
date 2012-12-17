@@ -168,20 +168,7 @@ class Pool(StorageNode):
     """
 
     def ui_command_lsdevices(self):
-        ret = {}
-
-        def do_vdev(vdev):
-            ret = {'type': vdev.type, '_obj': vdev}
-            if vdev.is_parent:
-                ret['children'] = [do_vdev(child) for child in vdev.children]
-            else:
-                ret['path'] = vdev.path
-            return ret
-
-        for vdev in self.obj.vdevs:
-            ret[vdev.guid] = do_vdev(vdev)
-
-        pp(ret)
+        pp(self.obj.devices)
 
     def ui_command_add_device(self, path, type='disk'):
         logging.error("TODO")
