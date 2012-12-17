@@ -141,7 +141,7 @@ def export_clustered_pool_vdevs():
     luns = list(tpg.luns)
     logger.info("luns=%s", luns)
 
-    for pool in Pool.objects_including_disabled.filter(is_clustered=True, enabled=False):
+    for pool in Pool.objects_clustered.filter(enabled=False):
         logger.info("pool=%s", pool)
         for vdev in pool.vdevs:
             export_clustered_pool_vdev(pool, tpg, vdev)

@@ -1,8 +1,10 @@
 import os
 import logging
 import time
+import ipdb
 
 import configshell
+from configshell import ConfigNode, ExecutionError
 import sh
 
 from pprint import pprint as pp
@@ -16,7 +18,7 @@ import storage.models as m
 
 
 
-class System(configshell.node.ConfigNode):
+class System(ConfigNode):
     def __init__(self, parent):
         super(System, self).__init__('system', parent)
 
@@ -83,7 +85,7 @@ Developer
 """
 
 
-class Developer(configshell.node.ConfigNode):
+class Developer(ConfigNode):
     def __init__(self, parent):
         super(Developer, self).__init__('developer', parent)
         Benchmarks(self)
@@ -174,8 +176,14 @@ class Developer(configshell.node.ConfigNode):
     #def ui_command_ibstat(self):
     #    os.system("ibstat")
 
+    def ui_command_ipdb(self):
+        ipdb.set_trace()
 
-class Benchmarks(configshell.node.ConfigNode):
+    #def ui_command_ipdb_post_mortem(self):
+    #    ipdb.pm()
+
+
+class Benchmarks(ConfigNode):
     def __init__(self, parent):
         super(Benchmarks, self).__init__('benchmarks', parent)
 
@@ -268,9 +276,16 @@ class Benchmarks(configshell.node.ConfigNode):
         self._cleanup_test_filesystem()
 
 
-class CliRoot(configshell.node.ConfigNode):
+class CliRoot(ConfigNode):
     def __init__(self, shell, sections):
         super(CliRoot, self).__init__('/', shell=shell)
+
+        self.define_config_group_param(
+            'global', 'developer_mode', 'bool',
+            'If true, enables developer mode.')
+
+        print self.get_group_param('global', 'developer_mode')
+
 
         for section in sections:
             section(self)
@@ -279,6 +294,113 @@ class CliRoot(configshell.node.ConfigNode):
 
         if settings.DEBUG:
             Developer(self)
+
+    def summary(self):
+        #return ('Thar be dragons.', False)
+        return ('Ready.', True)
+
+    def new_node(self, new_node):
+        logging.info("New node: %s", new_node)
+        return None
+
+    def refresh(self):
+        for child in self.children:
+            child.refresh()
+
+    def ui_command_refresh(self):
+        self.refresh()
+
+    #def ui_getgroup_global(self, key):
+    #    '''
+    #    This is the backend method for getting keys.
+    #    @key key: The key to get the value of.
+    #    @type key: str
+    #    @return: The key's value
+    #    @rtype: arbitrary
+    #    '''
+    #    logging.info("attr=%s", key)
+    #    #return self.rtsnode.get_global(key)
+
+    #def ui_setgroup_global(self, key, value):
+    #    '''
+    #    This is the backend method for setting keys.
+    #    @key key: The key to set the value of.
+    #    @type key: str
+    #    @key value: The key's value
+    #    @type value: arbitrary
+    #    '''
+    #    logging.info("attr=%s val=%s", key, value)
+    #    #self.assert_root()
+    #    #self.rtsnode.set_global(key, value)
+
+    def ui_getgroup_param(self, param):
+        '''
+        This is the backend method for getting params.
+        @param param: The param to get the value of.
+        @type param: str
+        @return: The param's value
+        @rtype: arbitrary
+        '''
+        logging.info("attr=%s", param)
+        #return self.rtsnode.get_param(param)
+
+    def ui_setgroup_param(self, param, value):
+        '''
+        This is the backend method for setting params.
+        @param param: The param to set the value of.
+        @type param: str
+        @param value: The param's value
+        @type value: arbitrary
+        '''
+        logging.info("attr=%s val=%s", param, value)
+        #self.assert_root()
+        #self.rtsnode.set_param(param, value)
+
+    def ui_getgroup_attribute(self, attribute):
+        '''
+        This is the backend method for getting attributes.
+        @param attribute: The attribute to get the value of.
+        @type attribute: str
+        @return: The attribute's value
+        @rtype: arbitrary
+        '''
+        logging.info("attr=%s", attribute)
+        #return self.rtsnode.get_attribute(attribute)
+
+    def ui_setgroup_attribute(self, attribute, value):
+        '''
+        This is the backend method for setting attributes.
+        @param attribute: The attribute to set the value of.
+        @type attribute: str
+        @param value: The attribute's value
+        @type value: arbitrary
+        '''
+        logging.info("attr=%s val=%s", attribute, value)
+        #self.assert_root()
+        #self.rtsnode.set_attribute(attribute, value)
+
+    def ui_getgroup_parameter(self, parameter):
+        '''
+        This is the backend method for getting parameters.
+        @param parameter: The parameter to get the value of.
+        @type parameter: str
+        @return: The parameter's value
+        @rtype: arbitrary
+        '''
+        logging.info("parameter=%s", parameter)
+        #return self.rtsnode.get_parameter(parameter)
+
+    def ui_setgroup_parameter(self, parameter, value):
+        '''
+        This is the backend method for setting parameters.
+        @param parameter: The parameter to set the value of.
+        @type parameter: str
+        @param value: The parameter's value
+        @type value: arbitrary
+        '''
+        logging.info("parameter=%s val=%s", parameter, value)
+        #self.assert_root()
+        #self.rtsnode.set_parameter(parameter, value)
 
 
 def main():
