@@ -167,7 +167,7 @@ class Pool(StorageNode):
     Devices
     """
 
-    def ui_command_devices(self):
+    def ui_command_lsdevices(self):
         ret = {}
 
         def do_vdev(vdev):
