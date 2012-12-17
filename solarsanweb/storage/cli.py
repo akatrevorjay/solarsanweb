@@ -190,6 +190,9 @@ class Pool(StorageNode):
     def ui_command_health(self):
         pp(self.obj.properties['health'])
 
+    def ui_command_is_clustered(self):
+        pp(self.obj.is_clustered)
+
     def ui_command_clear(self):
         pp(self.obj.clear())
 
