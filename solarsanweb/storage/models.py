@@ -179,7 +179,6 @@ class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
         return do_vdev(self)
 
 
-
 class VDevRoot(VDevBaseDocument):
     #pool_guid = m.StringField()
     #vdev_id = m.IntField()

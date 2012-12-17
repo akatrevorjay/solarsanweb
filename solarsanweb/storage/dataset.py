@@ -1,6 +1,6 @@
 
 from solarsan.utils import LoggedException
-#import logging
+import logging
 import sh
 #from collections import defaultdict
 import storage.base
@@ -304,6 +304,24 @@ class Filesystem(Dataset):
         # TODO Force delete of this in bg (with '-d')
         return True
 
+    def rename(self, new):
+        """Renames storage filesystem.
+
+        filesystem = Filesystem('dpool/r0')
+        filesystem.rename('dpool/r1')
+
+        """
+        old = self.name
+        logging.info("Renaming dataset '%s' to '%s'", old, new)
+        try:
+            sh.zfs('rename', old, new)
+            self.name = new
+        except:
+            self.name = old
+            raise
+        finally:
+            self.save()
+
 
 class Volume(Dataset):
     type = 'volume'
@@ -370,6 +388,24 @@ class Volume(Dataset):
         sh.zfs(*opts)
         # TODO Force delete of this in bg
         return True
+
+    def rename(self, new):
+        """Renames storage volume.
+
+        volume = Volume('dpool/r0')
+        volume.rename('dpool/r1')
+
+        """
+        old = self.name
+        logging.info("Renaming dataset '%s' to '%s'", old, new)
+        try:
+            sh.zfs('rename', old, new)
+            self.name = new
+        except:
+            self.name = old
+            raise
+        finally:
+            self.save()
 
 
 class Snapshot(Dataset):

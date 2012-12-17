@@ -124,6 +124,15 @@ class StorageNode(configshell.node.ConfigNode):
         obj.destroy(confirm=confirm)
         obj.delete()
 
+    def ui_command_rename(self, new):
+        path = self.obj.path(len=-1)
+        path.append(clean_name(new))
+        new = os.path.join(*path)
+        obj = self.obj
+        if not obj.exists():
+            raise LoggedException("Object '%s' does not exist", obj)
+        obj.rename(new)
+
 
 def add_child_dataset(self, child):
     if child.type == 'filesystem':
