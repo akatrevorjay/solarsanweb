@@ -1,6 +1,7 @@
 
 #from django.db import models
 #from jsonfield import JSONField
+import os
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
@@ -129,6 +130,50 @@ class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
     created = m.DateTimeField(default=datetime.now())
     ## TODO Override validation and ensure modified gets updated on modification
     modified = m.DateTimeField(default=datetime.now())
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        data = {}
+        path = getattr(self, 'path', None)
+        if path:
+            data['path'] = path
+        guid = getattr(self, 'guid', None)
+        if guid:
+            data['guid'] = guid
+        if hasattr(self, 'is_parent') and self.is_parent:
+            data['children'] = self.children
+        return "<%s: %s>" % (cls_name, data)
+
+    def pretty(self):
+        cls_name = self.__class__.__name__
+        data = {}
+        path = getattr(self, 'path', None)
+        if path:
+            data['path'] = path
+        guid = getattr(self, 'guid', None)
+        if guid:
+            data['guid'] = guid
+        if hasattr(self, 'is_parent') and self.is_parent:
+            data['children'] = self.children
+        return "%s" % (cls_name, data)
+
+    def pretty_dict(self):
+        def do_vdev(vdev):
+            ret = {'type': vdev.type,
+                   #'_obj': vdev,
+                   'modified': vdev.modified,
+                   'created': vdev.created,
+                   'id': vdev.vdev_id,
+                   'guid': vdev.guid,
+                   }
+            if vdev.is_parent:
+                ret['children'] = [do_vdev(child) for child in vdev.children]
+            else:
+                ret['path'] = vdev.path
+                ret['whole_disk'] = vdev.whole_disk
+            return ret
+        return do_vdev(self)
+
 
 
 class VDevRoot(VDevBaseDocument):
@@ -344,15 +389,67 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
         self._reload_zdb()
         self._reload_status()
 
+    # TODO filter_by_attrs here
+    #def get_vdev_by_guid(self, guid, vdevs=None):
+    #    if not vdevs:
+    #        vdevs = self.vdevs
+    #    for vdev in vdevs:
+    #        if vdev.is_parent:
+    #
+    #        if vdev.guid == guid:
+    #            return vdev
+
+    #def get_vdev_by_path(self, path):
+    #    for vdev in self.vdevs:
+    #        if vdev.is_parent:
+    #
+    #        if vdev.path == path:
+    #            return vdev
+
+    def guess_vdev_by_basename(self, basename, vdevs=None):
+        if not vdevs:
+            vdevs = self.vdevs
+        for vdev in vdevs:
+            if vdev.is_parent:
+                vdev = self.guess_vdev_by_basename(child)
+                if vdev:
+                    return vdev
+
+            if os.path.basename(vdev.path) == basename:
+                return vdev
+
     def _reload_status(self):
         """ Snags pool status and vdev info from zpool """
         # TODO Add to vdev info error counts and such
-        #s = self.status()
+        s = self.status()
+
         #for k in ['status', 'errors', 'scan', 'see', 'state', 'action', 'config']:
         #for k in ['errors', 'scan', 'see', 'state', 'action', 'config']:
         #    setattr(self, k, s[k])
         #self.pool_status = s['status']
-        pass
+
+        def do_vdev(vdev):
+            if vdev.is_parent:
+                for vdev in vdev.children:
+                    if do_vdev(vdev):
+                        return True
+                return False
+
+            if os.path.basename(vdev.path) == basename:
+                vdev.state = v['state']
+                return True
+            return False
+
+        for k, v in s['config'].items():
+            if k == self.name:
+                self.state = v['state']
+            else:
+                vdev = self.guess_vdev_by_basename(k)
+                if vdev:
+                    vdev.state = v['state']
+
+        if self._changed_fields:
+            self.save()
 
     def _reload_zdb(self):
         """ Parses pool status and vdev info from given zdb data """
@@ -428,6 +525,9 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
             ret[vdev.guid] = do_vdev(vdev)
 
         return ret
+
+    def pretty_devices(self):
+        return [vdev.pretty_dict() for vdev in self.vdevs]
 
 
 """

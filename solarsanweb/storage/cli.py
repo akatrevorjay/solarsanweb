@@ -6,30 +6,16 @@ import time
 from datetime import datetime, timedelta
 #import re
 import sh
+import re
 import logging
 import configshell
 
 from solarsan.utils import LoggedException, FormattedException
-from pprint import pprint, pformat
+from solarsan.pretty import pp
 
 from . import models as m
 from . import tasks
-
-
-from pygments import highlight
-from pygments.lexers import PythonLexer
-#from pygments.lexers.web import JSONLexer
-from pygments.formatters.terminal256 import Terminal256Formatter
-
-
-def pp(arg):
-    print highlight(pformat(arg), PythonLexer(), Terminal256Formatter())
-    #print highlight(pformat(arg), JSONLexer(), Terminal256Formatter())
-
-
-def clean_name(name):
-    # TODO MAKE THIS CLEAN SHIT [^A-z]
-    return os.path.basename(name)
+from .utils import clean_name
 
 
 class StorageNode(configshell.node.ConfigNode):
@@ -168,7 +154,7 @@ class Pool(StorageNode):
     """
 
     def ui_command_lsdevices(self):
-        pp(self.obj.devices)
+        pp(self.obj.pretty_devices())
 
     def ui_command_add_device(self, path, type='disk'):
         logging.error("TODO")
