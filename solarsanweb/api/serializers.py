@@ -68,29 +68,24 @@ class PoolSerializer(serializers.Serializer):
         return attrs
 
 
-class ClusterProbeSerializer(serializers.Serializer):
-    hostname = serializers.Field()
-    interfaces = serializers.Field()
-
-    #def restore_object(self, attrs, instance=None):
-    #    if instance:
-    #        return instance
-    #    return dict()
 
 #class PoolSerializer(serializers.HyperlinkedModelSerializer):
 #    class Meta:
 #        model = storage.models.Pool
 #        fields = ('name', )
 
+
 class FilesystemSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = storage.models.Filesystem
         fields = ('name', )
 
+
 class VolumeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = storage.models.Volume
         fields = ('name', )
+
 
 class SnapshotSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

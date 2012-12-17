@@ -1,4 +1,9 @@
 
+import os
+import sys
+import logging
+from bunch import Bunch
+
 from rest_framework import status
 from rest_framework import renderers
 from rest_framework import generics, mixins
@@ -10,8 +15,9 @@ from rest_framework import permissions
 
 from django.contrib.auth.models import User, Group
 import storage.models
-from api import serializers
-
+import cluster.models
+from . import serializers
+from . import models
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -95,41 +101,6 @@ def pool_list(request, format=None):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-from configure.models import Nic
-from django.conf import settings
-from IPy import IP
-
-
-class ClusterProbe(object):
-    interfaces = None
-    hostname = None
-
-
-@api_view(['GET'])
-def cluster_probe(request, format=None):
-    """Cluster probe API"""
-    if request.method == 'GET':
-        ifaces = Nic.list()
-        ret_ifaces = {}
-        for iface_name, iface in ifaces.iteritems():
-            for af, addrs in iface.addrs.iteritems():
-                for addr in addrs:
-                    if 'addr' not in addr or 'netmask' not in addr:
-                        continue
-                    if iface_name not in ret_ifaces:
-                        ret_ifaces[iface_name] = {}
-                    if af not in ret_ifaces[iface_name]:
-                        ret_ifaces[iface_name][af] = []
-                    ret_ifaces[iface_name][af].append( (addr['addr'], addr['netmask']) )
-        ret = ClusterProbe()
-        ret.hostname = settings.SERVER_NAME
-        ret.interfaces = ret_ifaces
-        #ret = {'hostname': settings.SERVER_NAME, 'interfaces': ret_ifaces}
-        serializer = serializers.ClusterProbeSerializer(ret)
-        return Response(serializer.data)
-
 
 
 

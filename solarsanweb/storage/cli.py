@@ -205,6 +205,9 @@ class Pool(StorageNode):
         status['config'] = config
         pp(status)
 
+    def ui_command_health(self):
+        pp(self.obj.properties['health'])
+
     def ui_command_clear(self):
         pp(self.obj.clear())
 
