@@ -28,11 +28,11 @@ class StorageNode(ConfigNode):
 
         self.define_config_group_param(
             'property', 'compress', 'string',
-            'If on, enables compression.')
+            'If on, enables compression. This increases performance and lowers disk usage.')
 
         self.define_config_group_param(
             'property', 'dedup', 'string',
-            'If on, enables deduplication.')
+            'If on, enables deduplication. Should only be used with very specific workloads.')
 
         self.define_config_group_param(
             'property', 'atime', 'string',
