@@ -153,3 +153,6 @@ class Storage(configshell.node.ConfigNode):
         sync_metadata - syncs metadata from filesystem to database
         '''
         tasks.sync_zfs.apply()
+
+    def ui_command_lsblk(self):
+        os.system("lsblk")
