@@ -27,6 +27,11 @@ def pp(arg):
     #print highlight(pformat(arg), JSONLexer(), Terminal256Formatter())
 
 
+def clean_name(name):
+    # TODO MAKE THIS CLEAN SHIT [^A-z]
+    return os.path.basename(name)
+
+
 class StorageNode(configshell.node.ConfigNode):
     def __init__(self, parent, obj):
         self.obj = obj
@@ -53,23 +58,85 @@ class StorageNode(configshell.node.ConfigNode):
                 for child in children:
                     add_child_dataset(self, child)
 
-    def ui_command_create_filesystem(self):
+    """
+    Getters
+    """
+
+    def get_pool(self):
+        if self.obj.type == 'pool':
+            return self.obj
+        else:
+            return self.obj.pool
+
+    def get_filesystem(self):
+        if self.obj.type == 'pool':
+            return self.obj.filesystem
+        elif self.obj.type == 'filesystem':
+            return self.obj
+
+    """
+    Child Creationism (Teach it to them young)
+    """
+
+    def ui_command_create_filesystem(self, name):
         '''
         create - Creates a Filesystem
         '''
-        os.system("echo TODO")
+        parent = self.get_filesystem()
+        pool = self.get_pool()
+        cls = m.Filesystem
+        name = clean_name(name)
 
-    def ui_command_create_volume(self):
+        obj_name = os.path.join(parent.name, name)
+        obj = cls(name=obj_name)
+        if obj.exists():
+            raise LoggedException("Object '%s' already exists", name)
+        obj.pool = pool
+        obj.create()
+        obj.save()
+
+    def ui_command_create_volume(self, name, size):
         '''
         create - Creates a volume
         '''
-        os.system("echo TODO")
+        parent = self.get_filesystem()
+        pool = self.get_pool()
+        cls = m.Volume
+        name = clean_name(name)
 
-    def ui_command_create_snapshot(self):
+        obj_name = os.path.join(parent.name, name)
+        obj = cls(name=obj_name)
+        if obj.exists():
+            raise LoggedException("Object '%s' already exists", name)
+        obj.pool = pool
+        obj.create(size)
+        obj.save()
+
+    def ui_command_create_snapshot(self, name):
         '''
         create - Creates a snapshot
         '''
-        os.system("echo TODO")
+        parent = self.get_filesystem()
+        pool = self.get_pool()
+        cls = m.Snapshot
+        name = clean_name(name)
+
+        obj_name = os.path.join(parent.name, name)
+        obj = cls(name=obj_name)
+        if obj.exists():
+            raise LoggedException("Object '%s' already exists", name)
+        obj.pool = pool
+        obj.create()
+        obj.save()
+
+    def ui_command_destroy(self, confirm=False):
+        obj = self.obj
+        if not obj.exists():
+            raise LoggedException("Object '%s' does not exist", obj)
+        if not confirm:
+            raise LoggedException("You must set confirm=True argument to confirm such an action of destruction")
+        obj.destroy(confirm=confirm)
+        obj.delete()
 
 
 def add_child_dataset(self, child):
@@ -96,6 +163,36 @@ class Pool(StorageNode):
     def __init__(self, parent, pool):
         super(Pool, self).__init__(parent, pool)
 
+    """
+    Devices
+    """
+
+    def ui_command_devices(self):
+        ret = {}
+
+        def do_vdev(vdev):
+            ret = {'type': vdev.type, '_obj': vdev}
+            if vdev.is_parent:
+                ret['children'] = [do_vdev(child) for child in vdev.children]
+            else:
+                ret['path'] = vdev.path
+            return ret
+
+        for vdev in self.obj.vdevs:
+            ret[vdev.guid] = do_vdev(vdev)
+
+        pp(ret)
+
+    def ui_command_add_device(self, path, type='disk'):
+        logging.error("TODO")
+
+    def ui_command_replace_device(self, old, new):
+        logging.error("TODO")
+
+    """
+    Status
+    """
+
     def ui_command_iostat(self, capture_length=2):
         pp(self.obj.iostat(capture_length=capture_length))
 
@@ -112,7 +209,7 @@ class Pool(StorageNode):
         pp(self.obj.clear())
 
     """
-    Developer
+    Import/Export
     """
 
     def ui_command_import(self):
