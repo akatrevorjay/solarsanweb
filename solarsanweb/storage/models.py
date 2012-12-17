@@ -118,9 +118,11 @@ VDevs
 """
 
 
-class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
-    meta = {'abstract': True, }
-            #'ordering': ['-created']}
+class VDevBaseDocument(BaseMixIn, m.Document):
+    meta = {'abstract': True,
+            'allow_inheritance': True,
+            #'ordering': ['-created'],
+            }
 
     #VDEV_TYPES=['root', 'mirror', 'disk']
     #type = m.StringField(required=True, choices=VDEV_TYPES)
@@ -179,25 +181,25 @@ class VDevBaseDocument(BaseMixIn, m.EmbeddedDocument):
         return do_vdev(self)
 
 
-class VDevRoot(VDevBaseDocument):
-    #pool_guid = m.StringField()
-    #vdev_id = m.IntField()
-    state = m.IntField()
-    txg = m.IntField()
+#class VDevRoot(VDevBaseDocument):
+#    #pool_guid = m.StringField()
+#    #vdev_id = m.IntField()
+#    state = m.IntField()
+#    txg = m.IntField()
 
 
-class VDevPool(VDevBaseDocument):
-    version = m.IntField()
-    name = m.StringField()
-    state = m.IntField()
-    txg = m.IntField()
-    hostname = m.StringField()
-
-    vdev_children = m.IntField()
-    vdev_tree = m.MapField(m.EmbeddedDocumentField(VDevRoot))
-
-    #def children(self):
-    #    pass
+#class VDevPool(VDevBaseDocument):
+#    version = m.IntField()
+#    name = m.StringField()
+#    state = m.IntField()
+#    txg = m.IntField()
+#    hostname = m.StringField()
+#
+#    vdev_children = m.IntField()
+#    vdev_tree = m.MapField(m.ReferenceField(VDevRoot, dbref=False, reverse_delete_rule=m.CASCADE))
+#
+#    #def children(self):
+#    #    pass
 
 
 class VDevChildDocument(VDevBaseDocument):
@@ -252,7 +254,7 @@ class VDevDisk(VDevChildDocument):
 
 
 class VDevMirror(VDevChildDocument):
-    children = m.ListField(m.EmbeddedDocumentField(VDevDisk))
+    children = m.ListField(m.ReferenceField(VDevDisk, dbref=False, reverse_delete_rule=m.CASCADE))
     type = 'mirror'
 
     @property
@@ -296,7 +298,8 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
     #guid = m.StringField(unique=True)
     guid = m.StringField(unique=True, required=False)
     hostname = m.StringField()
-    vdevs = m.ListField(m.EmbeddedDocumentField(VDevChildDocument))
+    #vdevs = m.ListField(m.EmbeddedDocumentField(VDevChildDocument))
+    vdevs = m.ListField(m.ReferenceField(VDevChildDocument, dbref=False, reverse_delete_rule=m.CASCADE))
 
     _VDEV_TYPE_MAP = _VDEV_TYPE_MAP
 
@@ -475,14 +478,15 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
 
     def _reload_zdb_vdev_tree(self, cur):
         def parse_vdev(cls, data):
-            obj = {}
+            obj, created = cls.objects.get_or_create(
+                guid=unicode(data.pop('guid')), )
             data['vdev_id'] = data.pop('id', None)
             for v in cls._fields.keys():
                 if v == 'id':
                     continue
                 if v in data:
-                    obj[v] = unicode(data[v])
-            return cls(**obj)
+                    setattr(obj, v, unicode(data[v]))
+            return obj
 
         obj_type = cur['type']
         obj_cls = self._VDEV_TYPE_MAP[obj_type]
@@ -490,8 +494,8 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
             obj = parse_vdev(obj_cls, cur)
         else:
             obj = None
-        children = []
 
+        children = []
         # Don't look for children with a type of disk, cause disks don't let disks have disks
         if obj_type in ['mirror', 'root']:
             # Walk through recursively
@@ -504,6 +508,8 @@ class Pool(_StorageBaseDocument, storage.pool.Pool):
         if obj:
             if children:
                 obj.children = children
+            if obj._changed_fields:
+                obj.save()
             return obj
         elif obj_type == 'root':
             self.vdevs = children
