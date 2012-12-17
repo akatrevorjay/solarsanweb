@@ -1,0 +1,6 @@
+#!/bin/bash
+env_path=$(readlink -f "${BASH_SOURCE[0]}"); env_path="${env_path%/*}/env"
+[[ -n "$basedir" ]] || . "$env_path"
+
+cd "$basedir"
+exec "./manage.py" "cli"
