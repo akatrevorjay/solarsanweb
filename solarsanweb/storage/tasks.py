@@ -50,7 +50,7 @@ import solarsan.signals
 def startup(**kwargs):
     sync_zfs.delay()
 
-solarsan.signals.startup.connect(startup)
+solarsan.signals.startup.connect(startup, sender='solarsan')
 
 
 """

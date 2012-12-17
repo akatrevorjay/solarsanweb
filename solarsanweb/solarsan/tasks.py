@@ -54,18 +54,18 @@ SHUTDOWN_WAIT = 10
 
 @task
 def startup():
-    signals.startup.send(sender=None)
+    signals.startup.send(sender='solarsan')
 
 
 def on_startup(**kwargs):
     logger.info("SolarSan Startup!")
 
-signals.startup.connect(on_startup)
+signals.startup.connect(on_startup, sender='solarsan')
 
 
 @task
 def shutdown():
-    signals.shutdown.send(sender=None)
+    signals.shutdown.send(sender='solarsan')
     logger.warning("Shutting system down in %ds..", SHUTDOWN_WAIT)
     time.sleep(SHUTDOWN_WAIT)
     return sh.shutdown('-h', 'now')
@@ -74,13 +74,13 @@ def shutdown():
 def on_shutdown(**kwargs):
     logger.info("SolarSan Shutdown!")
 
-signals.shutdown.connect(on_shutdown)
+signals.shutdown.connect(on_shutdown, sender='solarsan')
 
 
 @task
 def reboot():
-    signals.reboot.send(sender=None)
-    signals.shutdown.send(sender=None)
+    signals.reboot.send(sender='solarsan')
+    signals.shutdown.send(sender='solarsan')
     logger.warning("Rebooting system in %ds..", SHUTDOWN_WAIT)
     time.sleep(SHUTDOWN_WAIT)
     return sh.shutdown('-r', 'now')
@@ -89,4 +89,4 @@ def reboot():
 def on_reboot(**kwargs):
     logger.info("SolarSan Reboot!")
 
-signals.reboot.connect(on_reboot)
+signals.reboot.connect(on_reboot, sender='solarsan')

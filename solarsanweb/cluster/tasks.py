@@ -165,4 +165,4 @@ def export_clustered_pool_vdev(pool, tpg, vdev):
 def startup(**kwargs):
     export_clustered_pool_vdevs.delay()
 
-solarsan.signals.startup.connect(startup)
+solarsan.signals.startup.connect(startup, sender='solarsan')
