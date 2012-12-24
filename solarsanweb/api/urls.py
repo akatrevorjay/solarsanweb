@@ -46,7 +46,7 @@ urlpatterns += patterns(
 )
 
 # Default login/logout views
-urlpatterns += patterns(
-    '',
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
-)
+#urlpatterns += patterns(
+#    '',
+#    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+#)

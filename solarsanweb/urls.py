@@ -35,8 +35,8 @@ urlpatterns = patterns('',
     url(r'^storage/', include('storage.urls')),
 
     url(r'^api/v1/', include('api.urls'), name='api'),
-    url(r'^api-auth/', include('djangorestframework.urls', namespace='djangorestframework')),
-    url(r'^restframework', include('djangorestframework.urls', namespace='djangorestframework')),
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    #url(r'^restframework', include('djangorestframework.urls', namespace='djangorestframework')),
 
     #url(r'^formtest/', include('formtest.urls')),
 
