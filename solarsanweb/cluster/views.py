@@ -16,7 +16,7 @@ from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
 from solarsan.models import Config
 from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
 from django.core.cache import cache
-import gluster
+#import gluster
 from .models import Node
 from . import models
 from . import serializers
