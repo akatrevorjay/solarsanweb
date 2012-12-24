@@ -12,7 +12,7 @@ from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
 from solarsan.models import Config
 from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
 from django.core.cache import cache
-import gluster
+#import gluster
 
 #from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.core.urlresolvers import reverse_lazy
