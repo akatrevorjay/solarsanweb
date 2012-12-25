@@ -51,6 +51,7 @@ class BaseView(CrumbMixin, KwargsMixin):
     def get_context_data(self, **kwargs):
         ctx = super(BaseView, self).get_context_data(**kwargs)
         ctx['object_types_forms'] = get_object_forms()
+        # TODO Remove this cache carp
         object_types_objects = storage.cache.storage_objects()
         ctx['object_types_objects'] = {}
         for k, vs in object_types_objects.iteritems():
@@ -260,7 +261,7 @@ class VolumeDetailView(VolumeView, DatasetDetailView, mongogeneric.DetailView):
     def get_context_data(self, **kwargs):
         context = super(VolumeDetailView, self).get_context_data(**kwargs)
         #context['targets'] = storage.target.target_list(fabric_module=fabric)
-        context['targets'] = storage.target.target_list(cached=True)
+        context['targets'] = storage.target.target_list()
         #context['backstore'] = backstore = self.object.backstore
         context['backstore'] = context['object'].backstore
         if context['backstore']:
@@ -370,7 +371,7 @@ class TargetDeleteView(KwargsMixin, generic.edit.FormView):
             # TODO This would probably be better as either part of a wrapper
             # func (including deletion) in storage.target, or by altering
             # Target's method to do this itself.
-            storage.cache.cache.delete('targets')
+            #storage.cache.cache.delete('targets')
         except storage.target.DoesNotExist:
             raise http.Http404
 

@@ -111,7 +111,9 @@ def get_storage_objects(name=None, path=None, max=None):
 
 def get_storage_object(**kwargs):
     kwargs['max'] = 1
-    return get_storage_objects(**kwargs)[0]
+    ret = get_storage_objects(**kwargs)
+    if ret:
+        return ret[0]
 
 
 def is_tpg_lun_available(tpg, i):
