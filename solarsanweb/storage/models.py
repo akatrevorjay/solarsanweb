@@ -5,7 +5,8 @@ import os
 import logging
 #from django.utils import timezone
 #from solarsan.utils import FilterableDict, convert_bytes_to_human, convert_human_to_bytes
-#import sh
+import sh
+import re
 
 import mongoengine as m
 from datetime import datetime
@@ -21,6 +22,7 @@ from solarsan.utils import FormattedException, LoggedException
 from solarsan.utils import convert_bytes_to_human
 
 from .parsers.pool import ZdbPoolCacheParser
+from .parsers.drbd import drbd_overview_parser
 
 import cluster.models as cm
 
@@ -622,7 +624,6 @@ class _DatasetBase(_StorageBaseDocument):
         return queryset
 
 
-
 class Dataset(_DatasetBase, storage.dataset.Dataset):
     pass
 
@@ -675,7 +676,6 @@ class Snapshot(_DatasetBase, storage.dataset.Snapshot):
         return queryset
 
 
-
 """
 Volumes / Targets
 """
@@ -704,6 +704,10 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
 
     def children(self):
         return list(self.snapshots())
+
+    """
+    Target Backstore
+    """
 
     @property
     def backstore(self):
@@ -761,6 +765,10 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
             self.save()
         return True
 
+    """
+    QuerySet
+    """
+
     @m.queryset_manager
     def objects(doc_cls, queryset):
         return queryset.filter(enabled__ne=False)
@@ -768,3 +776,92 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
     @m.queryset_manager
     def objects_including_disabled(doc_cls, queryset):
         return queryset
+
+    """
+    Replicated Volumes
+    This needs some love, this is rather horrid imo
+    """
+
+    is_replicated = m.BooleanField()
+    replication_peer = m.ReferenceField(cm.Peer, dbref=False)
+    replication_port = m.IntField()
+
+    @property
+    def replication_device_name(self):
+        return self.path(-1)[0]
+
+    @property
+    def replication_device_path(self):
+        return '/dev/drbd/by-res/%s' % self.replicated_device_name
+
+    def replication_init(self, is_source=False):
+        repl_name = self.replication_device_name
+
+        # Format volume for replication
+        sh.drbdadm('create-md', repl_name)
+
+        if is_source:
+            repl_dev_path = self.replication_device_path
+            # This forcefully overwrites the data of our peer
+            sh.drbdsetup(repl_dev_path, 'primary', force='yes')
+
+    def replication_promote_to_primary(self):
+        repl_name = self.replication_device_name
+        sh.drbdadm('primary', repl_name)
+
+    def replication_demote_to_secondary(self):
+        repl_name = self.replication_device_name
+        sh.drbdadm('secondary', repl_name)
+
+    def replication_write_config(self):
+        pass
+
+    """
+    Replication Status
+    """
+
+    @property
+    def replication_status(self):
+        repl_name = self.replication_device_name
+        return drbd_overview_parser(resource=repl_name)
+
+    @property
+    def replication_is_primary(self):
+        status = self.replication_status
+        role = status['role']
+        if role == 'Primary':
+            return True
+        elif role == 'Secondary':
+            return False
+
+    @property
+    def replication_is_connected(self):
+        status = self.replication_status
+        cstate = status['connection_state']
+
+        if cstate == 'Connected':
+            return True
+        # TODO Better testing here
+        else:
+            return False
+
+    @property
+    def replication_is_up_to_date(self):
+        status = self.replication_status
+        dstate = status['disk_state']
+
+        if dstate == 'UpToDate':
+            return True
+        else:
+            return False
+
+    @property
+    def replication_is_healthy(self):
+        status = self.replication_status
+        cstate = status['connection_state']
+        dstate = status['disk_state']
+
+        if dstate == 'UpToDate' and cstate == 'Connected':
+            return True
+        else:
+            return False

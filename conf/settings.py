@@ -304,6 +304,18 @@ LOGTAIL_FILES = {
 """
 
 #
+# django-ztask
+#
+
+INSTALLED_APPS += ('django_ztask', )
+#ZTASKD_URL = 'tcp://127.0.0.1:5555'
+#ZTASKD_ALWAYS_EAGER = False
+#ZTASKD_DISABLED = False
+#ZTASKD_RETRY_COUNT = 5
+#ZTASKD_RETRY_AFTER = 5
+#ZTASKD_ON_LOAD = ()
+
+#
 # django-crispy-forms
 #
 
