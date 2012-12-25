@@ -307,7 +307,7 @@ LOGTAIL_FILES = {
 # django-ztask
 #
 
-INSTALLED_APPS += ('django_ztask', )
+#INSTALLED_APPS += ('django_ztask', )
 #ZTASKD_URL = 'tcp://127.0.0.1:5555'
 #ZTASKD_ALWAYS_EAGER = False
 #ZTASKD_DISABLED = False
