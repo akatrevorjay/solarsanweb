@@ -798,6 +798,7 @@ class Volume(_DatasetBase, _SnapshottableDatasetMixin, storage.dataset.Volume):
         repl_name = self.replication_device_name
 
         # Format volume for replication
+        # Not needed with official tools init script?
         sh.drbdadm('create-md', repl_name)
 
         if is_source:
