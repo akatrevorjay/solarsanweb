@@ -75,3 +75,24 @@
 
 
 
+=== ZMQ Service ===
+
+- Cluster peers connect to each other
+
+- Must have a task queue for cluster operations (ie, snapshot, destroy, rename, etc),
+    so that operations are done to all in the cluster (not so much for pools but for replicated volumes and such)
+
+- Must have a cluster beacon to probe out neighboring nodes
+
+- Must have a heartbeat monitoring service
+
+- Must have a shared state synchronization service so all nodes know what the hell is going on at all times
+>> ALL NODES SHOULD KNOW EVERYTHING!
+
+- Must have a STONITH method for misbehaving cluster members
+
+- Must have a voting mechanism for determining cluster master in case there is none,
+    OR is it possible to not have a master?
+
+
+
