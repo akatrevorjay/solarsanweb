@@ -48,6 +48,13 @@
   - Reseaching
 
 
+=== Target ===
+
+- Pluggable Backend support (ie rtslib/SCST)
+
+- SCST Backend
+
+
 === CLI ===
 - Configure
     - Network configuration
@@ -61,7 +68,7 @@
     - Allow to grow/shrink quotas
     - Allow to grow volumes
 
-- Target
+- Target (rtslib)
     - Target configuration from CLI
     - SRP support
 
