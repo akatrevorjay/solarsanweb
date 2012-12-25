@@ -42,8 +42,10 @@
 - SRP support, not just iSCSI
 
 - DRBD over Volume support, not just mirrored clustered pools
+  - Started
 
 - ZMQ instead of json heartbeat yanks (semi-started, need to play with zmq more)
+  - Reseaching
 
 
 === CLI ===
