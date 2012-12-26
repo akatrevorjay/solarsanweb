@@ -8,6 +8,8 @@ import time
 import socket
 import zmq
 
+from . import tasks
+
 import ethtool
 from lru import LRUCacheDict
 
@@ -15,7 +17,7 @@ from lru import LRUCacheDict
 PING_INTERFACE = 'eth1'
 PING_PORT_NUMBER = 9999
 PING_MSG_SIZE = 1
-PING_INTERVAL = 1  # Once per second
+PING_INTERVAL = 60
 
 
 def get_local_ip_to(target):
@@ -93,7 +95,8 @@ class Beacon(UDP):
         from_self = local_ip == ip
         if from_self:
             return
-        logging.debug("Got ping from ip='%s', from_self='%s', buf='%s'", ip, from_self, buf)
+        logging.debug("Got peer broadcast ip='%s', from_self='%s', buf='%s'", ip, from_self, buf)
+        tasks.probe_node.delay(ip)
 
 
 def main():
