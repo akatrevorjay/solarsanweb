@@ -1,7 +1,6 @@
 import os
 import logging
 import time
-import ipdb
 
 import configshell
 from configshell import ConfigNode, ExecutionError
@@ -177,9 +176,11 @@ class Developer(ConfigNode):
     #    os.system("ibstat")
 
     def ui_command_ipdb(self):
+        import ipdb
         ipdb.set_trace()
 
     #def ui_command_ipdb_post_mortem(self):
+    #    import ipdb
     #    ipdb.pm()
 
 
