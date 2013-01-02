@@ -1,5 +1,3 @@
-# Django settings for solarsanweb project.
-
 #
 # Basic setup
 #
@@ -230,7 +228,7 @@ INSTALLED_APPS = (
     'south',
     #'djsupervisor',
 
-    'devserver',
+    #'devserver',
 
     #'sentry',
     #'raven.contrib.django',
@@ -320,18 +318,6 @@ LOGTAIL_FILES = {
 #
 
 CRISPY_FAIL_SILENTLY = not DEBUG
-
-#
-# SolarSan Cluster
-#
-
-# TODO Make key configurable, put it in the DB and in the UI.
-SOLARSAN_CLUSTER = {
-    'port':         1787,               # Port = 1337 * 1.337
-    'key':          'solarsan-key0',    # Key
-    'discovery':    60,                 # Scan for other nodes each this many seconds
-}
-
 
 ##
 ## 3rd party addins and such
@@ -838,23 +824,3 @@ REST_FRAMEWORK = {
     ),
     'PAGINATE_BY': 10,
 }
-
-
-##
-## local_settings.py can be used to override environment-specific settings
-## like database and email that differ between development and production.
-##
-
-try:
-    from settings_local import *
-except ImportError:
-    pass
-
-#
-# Monkey patch storage classes.
-#   (Yes, I'm aware how bad of a location for this this is.)
-#
-
-import storage.patch
-storage.patch.patch_queryset()
-storage.patch.patch_rtslib()
