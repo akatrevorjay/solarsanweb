@@ -33,7 +33,7 @@ class FSMError(Exception):
     pass
 
 
-class FSM(object):
+class BinaryStar(object):
     ctx = None              # Our private context
     loop = None             # Reactor loop
     statepub = None         # State publisher
@@ -152,7 +152,7 @@ class FSM(object):
                 # Peer becomes master if timeout has passed
                 # It's the client request that triggers the failover
                 assert (self.peer_expiry > 0)
-                if (time.time () >= self.peer_expiry):
+                if (time.time() >= self.peer_expiry):
                     # If peer is dead, switch to the active state
                     logging.info("failover successful, ready as master")
                     self.state = STATE_ACTIVE
@@ -165,15 +165,14 @@ class FSM(object):
                 self.loop.add_callback(self.master_callback)
         return accept
 
-
     # ---------------------------------------------------------------------
     # Reactor event handlers...
 
-    def send_state (self):
+    def send_state(self):
         """Publish our state to peer"""
         self.statepub.send("%d" % self.state)
 
-    def recv_state (self, msg):
+    def recv_state(self, msg):
         """Receive state from peer, execute finite state machine"""
         state = msg[0]
         if state:
@@ -214,3 +213,21 @@ class FSM(object):
 
         stream = ZMQStream(socket, self.loop)
         stream.on_recv(self.voter_ready)
+
+
+
+
+
+class FSM(BinaryStar):
+    def __init__(self, primary, local, remote):
+        BinaryStar.__init__(self, primary, local, remote)
+
+    def master_callback(self):
+        print "is master"
+
+    def slave_callback(self):
+        print "is slave"
+
+
+
+

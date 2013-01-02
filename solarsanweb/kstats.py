@@ -139,9 +139,11 @@ def get():
 class KStats:
     def __init__(self):
         self.update()
+        
     def update(self, *args, **kwargs):
         self.get_kstat()
         self.get_kmem()
+        
     def get_kstat(self, *args, **kwargs):
         if not hasattr(self, 'kstat'):
             self.kstat = {}
@@ -170,6 +172,7 @@ class KStats:
         self.kstat_prev = self.kstat
         self.kstat = self.kstat_next
         del self.kstat_next
+
     def get_kmem(self, *args, **kwargs):
         if not hasattr(self, 'kmem'):
             self.kmem = {}
@@ -195,5 +198,3 @@ class KStats:
         self.kmem_prev = self.kmem
         self.kmem = self.kmem_next
         del self.kmem_next
-
-

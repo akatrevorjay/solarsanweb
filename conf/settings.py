@@ -73,7 +73,7 @@ MONGODB_DATABASES = {
     },
 }
 
-DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
+#DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
 
 import mongoengine
 #mongoengine.register_connection('default', 'default')
@@ -216,9 +216,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 
     # Uncomment the next lines to enable the admin:
-    'django_mongoengine.auth',
-    'django_mongoengine.admin.sites',
-    'django_mongoengine.admin',
+    #'django_mongoengine.auth',
+    #'django_mongoengine.admin.sites',
+    #'django_mongoengine.admin',
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
@@ -228,7 +228,7 @@ INSTALLED_APPS = (
     'djcelery.transport',
     'django_extensions',
     'south',
-    'djsupervisor',
+    #'djsupervisor',
 
     'devserver',
 
@@ -241,7 +241,7 @@ INSTALLED_APPS = (
     #'bootstrap_toolkit',
     'crispy_forms',
 
-    'jstemplate',
+    #'jstemplate',
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -368,8 +368,8 @@ if DEBUG:
 #   DB fixture manager
 #
 
-if DEBUG:
-    INSTALLED_APPS += ('smuggler', )
+#if DEBUG:
+#    INSTALLED_APPS += ('smuggler', )
 
 #
 # devserver
@@ -456,18 +456,18 @@ if DEBUG:
 # django-supervisor
 #
 
-SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
+#SUPERVISOR_CONFIG_FILE = os.path.join(TOP_DIR, 'conf', 'supervisord.conf')
 
 #
 # jstemplate
 #
 
-JSTEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, "templates", "jstemplates"),
-)
+#JSTEMPLATE_DIRS = (
+#    os.path.join(PROJECT_DIR, "templates", "jstemplates"),
+#)
 
-for x in PROJECT_APPS:
-    JSTEMPLATE_DIRS += (os.path.join(PROJECT_DIR, x, "templates", "jstemplates"), )
+#for x in PROJECT_APPS:
+#    JSTEMPLATE_DIRS += (os.path.join(PROJECT_DIR, x, "templates", "jstemplates"), )
 
 #
 # Auth
@@ -756,7 +756,7 @@ TEMPLATE_CONTEXT_PROCESSORS += (
 # django-compressor
 #
 
-INSTALLED_APPS += ('compressor', )
+#INSTALLED_APPS += ('compressor', )
 
 # List of finder classes that know how to find static files in
 # various locations.

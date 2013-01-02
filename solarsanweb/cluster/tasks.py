@@ -23,7 +23,6 @@ from solarsan.utils import convert_bytes_to_human, convert_human_to_bytes, \
 from django.conf import settings
 import storage.target
 import rtslib
-import beacon
 
 from solarsan.models import Config
 from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
@@ -82,25 +81,7 @@ def probe_node(host):
     cnode['last_seen'] = timezone.now()
     cnode.save()
 
-    return True
-
-
-@periodic_task(run_every=timedelta(seconds=settings.SOLARSAN_CLUSTER['discovery']))
-def discover_neighbor_nodes():
-    """ Probes for new cluster nodes """
-    # Beacon discovery
-    port = settings.SOLARSAN_CLUSTER['port']
-    key = settings.SOLARSAN_CLUSTER['key']
-
-    logger.info("Probing for new cluster nodes (port=%s,key=%s)", port, key)
-    nodes = beacon.find_all_servers(port, key)
-
-    if '127.0.0.1' not in nodes:
-        logger.error("Didn't find 127.0.0.1 in discovery, is the beacon service started?")
-
-    # Call Query task for each host to probe their API
-    c = group(probe_node.s(node) for node in nodes)
-    c()
+    return cnode.pk
 
 
 # TODO Cluster Node Cleanup Periodic Task (run weekly/monthly)
