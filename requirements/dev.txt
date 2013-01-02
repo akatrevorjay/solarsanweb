@@ -24,12 +24,16 @@ django-extensions==1.0.2
 django-jsonify==0.2.1
 djangorestframework==2.1.14
 ethtool==0.7
+httplib2==0.7.7
 ipcalc==0.6
 ipython==0.13.1
 iterpipes==0.4
 kombu==2.5.4
 mongoengine==0.7.8
+netbeacon==1.1
 netifaces==0.8
+oauth==1.0.1
+piston-mini-client==0.7.3
 pymongo==2.4.1
 pyparsing==1.5.6
 pypercube==0.1.3
