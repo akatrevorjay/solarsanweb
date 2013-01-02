@@ -1,10 +1,11 @@
 *.pyc
 *.pyo
+*.ipynb
 
 /env
 /data
 
-/conf/settings_local.py
+/conf/settings.py
 
 *.swp
 *.swo

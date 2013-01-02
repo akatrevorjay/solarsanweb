@@ -2,6 +2,7 @@
 from rest_framework import serializers
 
 
+'''
 class ClusterProbeSerializer(serializers.Serializer):
     hostname = serializers.Field()
     interfaces = serializers.Field()
@@ -10,10 +11,13 @@ class ClusterProbeSerializer(serializers.Serializer):
     #    if instance:
     #        return instance
     #    return dict()
+'''
 
 
+'''
 class ClusterPingSerializer(serializers.Serializer):
     pong = serializers.Field()
+'''
 
 
 class ClusteredPoolHeartbeatSerializer(serializers.Serializer):

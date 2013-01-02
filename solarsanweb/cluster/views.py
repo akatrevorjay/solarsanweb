@@ -1,31 +1,33 @@
 import logging
-import os
-import sys
+#import os
+#import sys
 
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page
+#from django.shortcuts import render_to_response, get_object_or_404
+#from django.template import RequestContext
+#from django.contrib.auth.decorators import login_required
+#from django.utils.decorators import method_decorator
+#from django.views.decorators.csrf import csrf_exempt
+#from django.views.decorators.cache import cache_page
 from django import http
 from django.views import generic
-import mongogeneric
+# import mongogeneric
 
-from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
-from solarsan.models import Config
-from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
-from django.core.cache import cache
+#from storage.models import Pool, Dataset, Filesystem, Volume, Snapshot
+#from solarsan.models import Config
+#from solarsan.views import KwargsMixin, AjaxableResponseMixin, JsonMixin
+#from django.core.cache import cache
 #import gluster
+
+from django.conf import settings
 from .models import Node
 from . import models
 from . import serializers
 
 #from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
-from django.core.urlresolvers import reverse_lazy
-from django.forms.models import modelformset_factory
-from django.contrib import messages
-from . import forms
+#from django.core.urlresolvers import reverse_lazy
+#from django.forms.models import modelformset_factory
+#from django.contrib import messages
+#from . import forms
 
 
 """
@@ -91,17 +93,18 @@ peer_detail = PeerDetailView.as_view()
 """
 API
 """
-from rest_framework import status
-from rest_framework import renderers
-from rest_framework import generics, mixins
-from rest_framework.views import APIView
+#from rest_framework import status
+#from rest_framework import renderers
+#from rest_framework import generics, mixins
+#from rest_framework.views import APIView
 from rest_framework.decorators import api_view
-from rest_framework.reverse import reverse
+#from rest_framework.reverse import reverse
 from rest_framework.response import Response
-from rest_framework import permissions
+#from rest_framework import permissions
 
+
+'''
 from configure.models import Nic
-from django.conf import settings
 from IPy import IP
 
 
@@ -132,6 +135,7 @@ def cluster_probe(request, format=None):
         #ret = {'hostname': settings.SERVER_NAME, 'interfaces': ret_ifaces}
         serializer = serializers.ClusterProbeSerializer(ret)
         return Response(serializer.data)
+'''
 
 
 def get_node_by_ip(ip, nodes=None):
@@ -146,6 +150,7 @@ def get_node_by_ip(ip, nodes=None):
                         return node
 
 
+'''
 class GenericObject(object):
     def __setitem__(self, k, v):
         return setattr(self, k, v)
@@ -166,6 +171,7 @@ def cluster_ping(request, format=None):
         ret['pong'] = True
         serializer = serializers.ClusterPingSerializer(ret)
         return Response(serializer.data)
+'''
 
 
 @api_view(['GET'])
@@ -179,13 +185,15 @@ def clustered_pool_heartbeat(request, format=None):
                  pool, source_node, source_ip)
 
     if request.method == 'GET':
-        #ret = ClusteredPoolHeartbeatObject()
-        #
-        #pools = ret.pools = {}
-        #for pool in storage.models.Pool.objects_clustered.all():
-        #    pools[pool.name] = {'is_healthy': pool.is_healthy(),
-        #                        'cluster_state': pool.cluster_state,
-        #                        }
+        '''
+        ret = ClusteredPoolHeartbeatObject()
+
+        pools = ret.pools = {}
+        for pool in storage.models.Pool.objects_clustered.all():
+            pools[pool.name] = {'is_healthy': pool.is_healthy(),
+                                'cluster_state': pool.cluster_state,
+                                }
+        '''
 
         serializer = serializers.ClusteredPoolHeartbeatSerializer(pool)
         return Response(serializer.data)
