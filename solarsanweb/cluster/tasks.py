@@ -9,10 +9,10 @@ logger = get_task_logger(__name__)
 from datetime import datetime, timedelta
 import time
 from django.utils import timezone
-#from django.core.files.storage import Storage
-#from django.core.exceptions import ObjectDoesNotExist
-#from django import db
-#from django.db import import autocommit, commit, commit_manually, commit_on_success, \
+# from django.core.files.storage import Storage
+# from django.core.exceptions import ObjectDoesNotExist
+# from django import db
+# from django.db import import autocommit, commit, commit_manually, commit_on_success, \
 #    is_dirty, is_managed, rollback, savepoint, set_clean, set_dirty
 import os
 import logging
@@ -46,51 +46,51 @@ def get_config():
 Neighbor Node
 """
 
-from piston_mini_client import PistonAPI, returns_json
-
-
-class ClusterAPI(PistonAPI):
-    def __init__(self, *args, **kwargs):
-        kwargs['service_root'] = '%s://%s/api/v%s' % (kwargs.get('proto', 'https'), kwargs.get('host', 'localhost'), kwargs.get('version', '1'))
-        for x in ['proto', 'host', 'version']:
-            if x in kwargs:
-                kwargs.pop(x)
-        kwargs['disable_ssl_validation'] = True
-        super(ClusterAPI, self).__init__(*args, **kwargs)
-
-    @returns_json
-    def probe(self):
-        return self._get('cluster/probe/.json')
+from . import rpc
 
 
 @task
 def probe_node(host):
     """Probes a discovered node for info"""
-    api = ClusterAPI(host=host)
+    c = rpc.get_client(host)
+
+    hostname = None
+    interfaces = None
 
     try:
-        probe = api.probe()
-    except:
-        logger.error('Cluster discovery (probe \'%s\'): Failed.', host)
+        hostname = c.hostname()
+        interfaces = c.interfaces()
+        logger.info("Cluster discovery (host='%s'): Hostname is '%s'.", host, hostname)
+    except Exception, e:
+        logger.error("Cluster discovery (host='%s') failed: %s", host, e)
+    finally:
+        c.close()
+
+    if None in [hostname, interfaces]:
         return False
-    logger.info("Cluster discovery (probe '%s'): Hostname is '%s'.", host, probe['hostname'])
 
     # TODO Each node should prolly get a UUID, glusterfs already assigns one, but maybe we
     # should do it a layer above.
-    cnode, created = Node.objects.get_or_create(hostname=probe['hostname'])
-    cnode.interfaces = dict(probe['interfaces'])
+    cnode, created = Node.objects.get_or_create(hostname=hostname)
+    cnode.interfaces = dict(interfaces)
     cnode['last_seen'] = timezone.now()
     cnode.save()
 
     return cnode.pk
 
 
-@periodic_task(run_every=timedelta(seconds=settings.SOLARSAN_CLUSTER['discovery']))
+"""
+Neighbor Node Discovery
+"""
+
+
+# This is the netbeacon discovery implementation
+@periodic_task(run_every=timedelta(seconds=settings.CLUSTER_DISCOVERY_INTERVAL))
 def discover_neighbor_nodes():
     """ Probes for new cluster nodes """
     # Beacon discovery
-    port = settings.SOLARSAN_CLUSTER['port']
-    key = settings.SOLARSAN_CLUSTER['key']
+    port = settings.CLUSTER_DISCOVERY_PORT
+    key = settings.CLUSTER_DISCOVERY_KEY
 
     logger.info("Probing for new cluster nodes (port=%s,key=%s)", port, key)
     nodes = beacon.find_all_servers(port, key)

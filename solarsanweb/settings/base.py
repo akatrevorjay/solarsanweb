@@ -74,8 +74,14 @@ MONGODB_DATABASES = {
 #DJANGO_MONGOENGINE_OVERRIDE_ADMIN = True
 
 import mongoengine
-#mongoengine.register_connection('default', 'default')
-mongoengine.register_connection('syslog', 'syslog')
+
+
+def _register_mongo_databases():
+    for k, v in MONGODB_DATABASES.items():
+        v = v.copy()
+        name = v.pop('name', k)
+        mongoengine.register_connection(k, name, **v)
+_register_mongo_databases()
 
 
 # DB Router
@@ -738,11 +744,12 @@ TEMPLATE_CONTEXT_PROCESSORS += (
 )
 """
 
+"""
 #
 # django-compressor
 #
 
-#INSTALLED_APPS += ('compressor', )
+INSTALLED_APPS += ('compressor', )
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -782,6 +789,7 @@ if DEBUG:
 COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
 #COMPRESS_CACHE_BACKEND = 'default'
 COMPRESS_ENABLED = True
+"""
 
 """
 #

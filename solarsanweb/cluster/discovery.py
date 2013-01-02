@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import logging
 import os
@@ -8,16 +7,11 @@ import time
 import socket
 import zmq
 
+from django.conf import settings
 from . import tasks
 
 import ethtool
 from lru import LRUCacheDict
-
-
-PING_INTERFACE = 'eth1'
-PING_PORT_NUMBER = 9999
-PING_MSG_SIZE = 1
-PING_INTERVAL = 60
 
 
 def get_local_ip_to(target):
@@ -30,10 +24,6 @@ def get_local_ip_to(target):
     except:
         pass
     return ret
-
-#print get_local_ip_to('10.90.90.151')
-#print get_local_ip_to('10.90.90.165')
-#print get_local_ip_to('8.8.8.8')
 
 
 class UDP(object):
@@ -72,7 +62,7 @@ class Beacon(UDP):
         self.address = ethtool.get_ipaddr(interface)
         self._local_ip_cache = LRUCacheDict(max_size=1024, expiration=3600)
 
-        #if not broadcast:
+        # if not broadcast:
         #    broadcast = ethtool.get_broadcast(interface)
 
         logging.info("Using iface '%s' address '%s:%d' broadcast '%s'",
@@ -100,7 +90,7 @@ class Beacon(UDP):
 
 
 def main():
-    beacon = Beacon(PING_INTERFACE, PING_PORT_NUMBER)
+    beacon = Beacon(settings.CLUSTER_DISCOVERY_INTERFACE, settings.CLUSTER_DISCOVERY_PORT)
 
     poller = zmq.Poller()
     poller.register(beacon.handle, zmq.POLLIN)
@@ -120,12 +110,12 @@ def main():
 
         # Someone answered our ping
         if beacon.handle.fileno() in events:
-            beacon.recv(PING_MSG_SIZE)
+            beacon.recv(settings.CLUSTER_DISCOVERY_MSG_SIZE)
 
         if time.time() >= ping_at:
             # Broadcast our beacon
             beacon.send_ping()
-            ping_at = time.time() + PING_INTERVAL
+            ping_at = time.time() + settings.CLUSTER_DISCOVERY_INTERVAL
 
 if __name__ == '__main__':
     main()

@@ -32,13 +32,13 @@ ipcalc==0.6
 ipython==0.13.1
 iterpipes==0.4
 kombu==2.5.4
+librabbitmq==1.0.0
 line-profiler==1.0b3
 mongoengine==0.7.8
 msgpack-python==0.2.4
 netbeacon==1.1
 netifaces==0.8
 oauth==1.0.1
-piston-mini-client==0.7.3
 pymongo==2.4.1
 pyparsing==1.5.6
 pypercube==0.1.3
