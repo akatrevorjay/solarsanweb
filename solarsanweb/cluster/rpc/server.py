@@ -29,7 +29,15 @@ class ClusterRPC(object):
         """Ping Peer"""
         return True
 
+    """
+    Storage
+    """
+
+    def pools(self):
+        """List Pools"""
+        pools = [pool.name for pool in Pool.objects.all()]
+
     def is_pool_healthy(self, name):
-        """Checks if Pool is healthy"""
+        """Check if Pool is healthy"""
         pool = Pool.objects.get(name=name)
         return pool.is_healthy()
