@@ -1,30 +1,9 @@
-[submodule "solarsanweb/static/3rd/g.raphael"]
-	path = solarsanweb/static/3rd/g.raphael
-	url = git://github.com/DmitryBaranovskiy/g.raphael.git
-[submodule "solarsanweb/static/3rd/g.raphael2"]
-	path = solarsanweb/static/3rd/g.raphael2
-	url = git://github.com/kennyshen/g.raphael.git
-[submodule "solarsanweb/static/jquery/packages/jquery-colors"]
-	path = solarsanweb/static/jquery/packages/jquery-colors
-	url = git://github.com/Enideo/jquery-colors.git
-[submodule "solarsanweb/static/jquery/packages/jquery-cron"]
-	path = solarsanweb/static/jquery/packages/jquery-cron
-	url = git://github.com/shawnchin/jquery-cron.git
-[submodule "solarsanweb/static/jquery/packages/jquery-gentleSelect"]
-	path = solarsanweb/static/jquery/packages/jquery-gentleSelect
-	url = git://github.com/shawnchin/jquery-gentleSelect.git
-[submodule "solarsanweb/static/3rd/flot"]
-	path = solarsanweb/static/3rd/flot
-	url = git://github.com/flot/flot.git
 [submodule "solarsanweb/static/3rd/font-Awesome"]
 	path = solarsanweb/static/3rd/font-Awesome
 	url = git://github.com/FortAwesome/Font-Awesome.git
 [submodule "bin/lib/bashism"]
 	path = bin/lib/bashism
 	url = git://github.com/akatrevorjay/bashism.git
-[submodule "vendor-local/pkgs/pyrrd"]
-	path = vendor-local/pkgs/pyrrd
-	url = git://github.com/akatrevorjay/pyrrd.git
 [submodule "solarsanweb/static/3rd/bootstrap"]
 	path = solarsanweb/static/3rd/bootstrap
 	url = git://github.com/twitter/bootstrap.git
@@ -37,24 +16,6 @@
 [submodule "solarsanweb/static/3rd/bootbox"]
 	path = solarsanweb/static/3rd/bootbox
 	url = https://github.com/makeusabrew/bootbox.git
-[submodule "solarsanweb/static/3rd/jquery-cookie"]
-	path = solarsanweb/static/3rd/jquery-cookie
-	url = git://github.com/carhartl/jquery-cookie.git
-[submodule "solarsanweb/static/3rd/json-cookie"]
-	path = solarsanweb/static/3rd/json-cookie
-	url = git://github.com/st3v3nhunt/JSON-Cookie.git
-[submodule "solarsanweb/static/3rd/flot.tooltip"]
-	path = solarsanweb/static/3rd/flot.tooltip
-	url = git://github.com/krzysu/flot.tooltip.git
-[submodule "solarsanweb/static/3rd/flot.curvedlines"]
-	path = solarsanweb/static/3rd/flot.curvedlines
-	url = git://github.com/MichaelZinsmaier/CurvedLines.git
-[submodule "vendor-local/pkgs/pyzfs"]
-	path = vendor-local/pkgs/pyzfs
-	url = gitosis@git.localhostsolutions.com:solarsan/pyzfs.git
-#[submodule "solarsanweb/templates/3rd/bootstrap-django-admin"]
-#	path = solarsanweb/templates/3rd/bootstrap-django-admin
-#	url = git://github.com/aobo711/bootstrap-django-admin.git
 [submodule "solarsanweb/static/3rd/cubism"]
 	path = solarsanweb/static/3rd/cubism
 	url = git://github.com/square/cubism.git
@@ -64,234 +25,18 @@
 [submodule "solarsanweb/static/3rd/nvd3"]
 	path = solarsanweb/static/3rd/nvd3
 	url = git://github.com/novus/nvd3.git
-[submodule "vendor-local/pkgs/gluster"]
-	path = vendor-local/pkgs/gluster
-	url = git://github.com/joejulian/python-gluster.git
-[submodule "vendor-local/pkgs/django-mongokit"]
-	path = vendor-local/pkgs/django-mongokit
-	url = git://github.com/dgladkov/django-mongokit.git
-[submodule "vendor-local/pkgs/djblets"]
-	path = vendor-local/pkgs/djblets
-	url = git://github.com/djblets/djblets.git
-[submodule "vendor-local/pkgs/django-pickling"]
-	path = vendor-local/pkgs/django-pickling
-	url = git://github.com/Suor/django-pickling.git
-[submodule "vendor-local/pkgs/django-sitetree"]
-	path = vendor-local/pkgs/django-sitetree
-	url = git://github.com/idlesign/django-sitetree.git
-[submodule "vendor-local/pkgs/django-actuary"]
-	path = vendor-local/pkgs/django-actuary
-	url = git://github.com/bmelton/Django-Actuary.git
-[submodule "vendor-local/pkgs/overseer"]
-	path = vendor-local/pkgs/overseer
-	url = git://github.com/disqus/overseer.git
-[submodule "vendor-local/pkgs/djando-dockit"]
-	path = vendor-local/pkgs/djando-dockit
-	url = git://github.com/zbyte64/django-dockit.git
-[submodule "vendor-local/pkgs/django-dockit"]
-	path = vendor-local/pkgs/django-dockit
-	url = git://github.com/zbyte64/django-dockit.git
-[submodule "vendor-local/pkgs/mongoengine"]
-	path = vendor-local/pkgs/mongoengine
-	url = https://github.com/MongoEngine/mongoengine.git
-[submodule "vendor-local/pkgs/django-nonrel__mongodb-engine"]
-	path = vendor-local/pkgs/django-nonrel__mongodb-engine
-	url = git://github.com/django-nonrel/mongodb-engine.git
-[submodule "vendor-local/pkgs/django-nonrel__django-1.4"]
-	path = vendor-local/pkgs/django-nonrel__django-1.4
-	url = git://github.com/django-nonrel/django-1.4.git
-[submodule "vendor-local/pkgs/django-permission-backend-nonrel"]
-	path = vendor-local/pkgs/django-permission-backend-nonrel
-	url = git://github.com/django-nonrel/django-permission-backend-nonrel.git
-[submodule "vendor-local/pkgs/django-dbindexer"]
-	path = vendor-local/pkgs/django-dbindexer
-	url = git://github.com/django-nonrel/django-dbindexer.git
-[submodule "vendor-local/pkgs/django-debug-toolbar"]
-	path = vendor-local/pkgs/django-debug-toolbar
-	url = git://github.com/akatrevorjay/django-debug-toolbar.git
-#[submodule "vendor-local/pkgs/mongodb-cache"]
-#	path = vendor-local/pkgs/mongodb-cache
-#	url = git://github.com/django-nonrel/mongodb-cache.git
-[submodule "vendor-local/pkgs/mongodb-cache"]
-	path = vendor-local/pkgs/mongodb-cache
-	url = git://github.com/akatrevorjay/mongodb-cache.git
-[submodule "vendor-local/pkgs/django-waffle"]
-	path = vendor-local/pkgs/django-waffle
-	url = git://github.com/jsocol/django-waffle.git
-[submodule "vendor-local/pkgs/django-smuggler"]
-	path = vendor-local/pkgs/django-smuggler
-	url = git://github.com/semente/django-smuggler.git
-[submodule "vendor-local/pkgs/djangotoolbox"]
-	path = vendor-local/pkgs/djangotoolbox
-	url = git://github.com/django-nonrel/djangotoolbox.git
-[submodule "vendor-local/pkgs/django-devserver"]
-	path = vendor-local/pkgs/django-devserver
-	url = git://github.com/dcramer/django-devserver
-[submodule "vendor-local/pkgs/django-mongonaut"]
-	path = vendor-local/pkgs/django-mongonaut
-	url = git://github.com/pydanny/django-mongonaut.git
-[submodule "vendor-local/pkgs/mongokit"]
-	path = vendor-local/pkgs/mongokit
-	url = git://github.com/namlook/mongokit.git
-[submodule "vendor-local/pkgs/coffin"]
-	path = vendor-local/pkgs/coffin
-	url = git://github.com/GaretJax/coffin.git
-[submodule "vendor-local/pkgs/debug-toolbar-mongo"]
-	path = vendor-local/pkgs/debug-toolbar-mongo
-	url = git://github.com/brianz/django-debug-toolbar-mongo.git
-[submodule "vendor-local/pkgs/django"]
-	path = vendor-local/pkgs/django
-	url = git://github.com/django/django.git
-[submodule "vendor-local/pkgs/django-debug-toolbar-mongo"]
-	path = vendor-local/pkgs/django-debug-toolbar-mongo
-	url = git://github.com/brianz/django-debug-toolbar-mongo.git
-[submodule "vendor-local/pkgs/pyinotify"]
-	path = vendor-local/pkgs/pyinotify
-	url = git://github.com/seb-m/pyinotify.git
-[submodule "vendor-local/pkgs/django-tastypie"]
-	path = vendor-local/pkgs/django-tastypie
-	url = git://github.com/toastdriven/django-tastypie.git
-[submodule "vendor-local/pkgs/watchdog"]
-	path = vendor-local/pkgs/watchdog
-	url = git://github.com/gorakhargosh/watchdog.git
-[submodule "vendor-local/pkgs/johnny-cache"]
-	path = vendor-local/pkgs/johnny-cache
-	url = https://github.com/jmoiron/johnny-cache.git
-[submodule "solarsanweb/static/3rd/raven-js"]
-	path = solarsanweb/static/3rd/raven-js
-	url = git://github.com/lincolnloop/raven-js.git
-[submodule "vendor-local/pkgs/django-pretty-times"]
-	path = vendor-local/pkgs/django-pretty-times
-	url = git://github.com/imtapps/django-pretty-times.git
-[submodule "vendor-local/pkgs/django_compressor"]
-	path = vendor-local/pkgs/django_compressor
-	url = git://github.com/jezdez/django_compressor.git
-[submodule "vendor-local/pkgs/django-extensions"]
-	path = vendor-local/pkgs/django-extensions
-	url = git://github.com/django-extensions/django-extensions.git
-[submodule "vendor-local/pkgs/py-statsd"]
-	path = vendor-local/pkgs/py-statsd
-	url = git://github.com/sivy/py-statsd.git
-[submodule "vendor-local/pkgs/carbon"]
-	path = vendor-local/pkgs/carbon
-	url = git://github.com/graphite-project/carbon.git
-[submodule "vendor-local/pkgs/whisper"]
-	path = vendor-local/pkgs/whisper
-	url = git://github.com/graphite-project/whisper.git
-[submodule "vendor-local/pkgs/graphite-web"]
-	path = vendor-local/pkgs/graphite-web
-	url = git://github.com/graphite-project/graphite-web.git
-[submodule "vendor-local/pkgs/statsite"]
-	path = vendor-local/pkgs/statsite
-	url = git://github.com/kiip/statsite.git
-[submodule "vendor-local/pkgs/ceres"]
-	path = vendor-local/pkgs/ceres
-	url = git://github.com/graphite-project/ceres.git
-[submodule "vendor-local/pkgs/django-statsd"]
-	path = vendor-local/pkgs/django-statsd
-	url = git://github.com/andymckay/django-statsd.git
-[submodule "solarsanweb/static/3rd/boomerang"]
-	path = solarsanweb/static/3rd/boomerang
-	url = git://github.com/lognormal/boomerang.git
-[submodule "vendor-local/pkgs/django-statsd-wolph"]
-	path = vendor-local/pkgs/django-statsd-wolph
-	url = git://github.com/WoLpH/django-statsd.git
-[submodule "vendor-local/pkgs/django-minify"]
-	path = vendor-local/pkgs/django-minify
-	url = git://github.com/WoLpH/django-minify.git
-[submodule "solarsanweb/static/3rd/requirejs"]
-	path = solarsanweb/static/3rd/requirejs
-	url = git://github.com/jrburke/requirejs.git
 [submodule "solarsanweb/static/3rd/gritter"]
 	path = solarsanweb/static/3rd/gritter
 	url = git://github.com/jboesch/Gritter.git
-[submodule "vendor-local/pkgs/collectd-carbon"]
-	path = vendor-local/pkgs/collectd-carbon
-	url = git://github.com/indygreg/collectd-carbon.git
-[submodule "vendor-local/pkgs/rtslib-fb"]
-	path = vendor-local/pkgs/rtslib-fb
-	url = git://github.com/agrover/rtslib-fb.git
-[submodule "vendor-local/pkgs/targetcli-fb"]
-	path = vendor-local/pkgs/targetcli-fb
-	url = git://github.com/agrover/targetcli-fb.git
-[submodule "vendor-local/pkgs/configshell-fb"]
-	path = vendor-local/pkgs/configshell-fb
-	url = git://github.com/agrover/configshell-fb.git
-[submodule "vendor-local/pkgs/pypercube"]
-	path = vendor-local/pkgs/pypercube
-	url = git://github.com/sbuss/pypercube.git
-[submodule "vendor-local/pkgs/spark.py"]
-	path = vendor-local/pkgs/spark.py
-	url = git://github.com/kennethreitz/spark.py.git
-[submodule "vendor-local/pkgs/cement"]
-	path = vendor-local/pkgs/cement
-	url = git://github.com/cement/cement.git
 [submodule "solarsanweb/static/3rd/bootstrap-editable"]
 	path = solarsanweb/static/3rd/bootstrap-editable
 	url = git://github.com/vitalets/bootstrap-editable.git
 [submodule "solarsanweb/static/3rd/animate.css"]
 	path = solarsanweb/static/3rd/animate.css
 	url = git://github.com/daneden/animate.css.git
-[submodule "vendor-local/pkgs/python-kmod"]
-	path = vendor-local/pkgs/python-kmod
-	url = git://github.com/agrover/python-kmod.git
-[submodule "vendor-local/pkgs/python-lvm"]
-	path = vendor-local/pkgs/python-lvm
-	url = git://github.com/agrover/python-lvm.git
-[submodule "vendor-local/pkgs/targetd"]
-	path = vendor-local/pkgs/targetd
-	url = git://github.com/agrover/targetd.git
-[submodule "vendor-local/pkgs/urwid"]
-	path = vendor-local/pkgs/urwid
-	url = git://github.com/wardi/urwid.git
-[submodule "vendor-local/pkgs/django-mongoengine"]
-	path = vendor-local/pkgs/django-mongoengine
-	url = git://github.com/MongoEngine/django-mongoengine.git
-[submodule "solarsanweb/static/3rd/icomoon"]
-	path = solarsanweb/static/3rd/icomoon
-	url = git://github.com/Keyamoon/IcoMoon--limited-.git
-[submodule "solarsanweb/static/3rd/kickstrap"]
-	path = solarsanweb/static/3rd/kickstrap
-	url = git://github.com/ajkochanowicz/Kickstrap.git
-[submodule "vendor-local/pkgs/relish"]
-	path = vendor-local/pkgs/relish
-	url = git://github.com/dolph/relish.git
-[submodule "vendor-local/pkgs/pylibssh2"]
-	path = vendor-local/pkgs/pylibssh2
-	url = git://github.com/wallix/pylibssh2.git
-[submodule "solarsanweb/static/3rd/slickgrid"]
-	path = solarsanweb/static/3rd/slickgrid
-	url = https://github.com/mleibman/SlickGrid.git
-[submodule "vendor-local/pkgs/django-mongogeneric"]
-	path = vendor-local/pkgs/django-mongogeneric
-	url = git://github.com/jschrewe/django-mongogeneric.git
-[submodule "vendor-local/pkgs/django-mongodbforms"]
-	path = vendor-local/pkgs/django-mongodbforms
-	url = git://github.com/jschrewe/django-mongodbforms.git
 [submodule "solarsanweb/static/3rd/bootstrap-toggle-buttons"]
 	path = solarsanweb/static/3rd/bootstrap-toggle-buttons
 	url = git://github.com/nostalgiaz/bootstrap-toggle-buttons.git
-[submodule "vendor-local/pkgs/celerymon"]
-	path = vendor-local/pkgs/celerymon
-	url = git://github.com/celery/celerymon.git
-[submodule "solarsanweb/static/3rd/backbone"]
-	path = solarsanweb/static/3rd/backbone
-	url = git://github.com/documentcloud/backbone.git
-[submodule "solarsanweb/static/3rd/underscore"]
-	path = solarsanweb/static/3rd/underscore
-	url = git://github.com/documentcloud/underscore.git
-[submodule "solarsanweb/static/3rd/backbone-relational"]
-	path = solarsanweb/static/3rd/backbone-relational
-	url = git://github.com/PaulUithol/Backbone-relational.git
 [submodule "vendor"]
 	path = vendor
 	url = gitosis@git.localhostsolutions.com:solarsan/solarsanweb/vendor.git
-[submodule "static/3rd/less.js"]
-	path = static/3rd/less.js
-	url = git://github.com/cloudhead/less.js.git
-[submodule "static/3rd/requirejs"]
-	path = static/3rd/requirejs
-	url = git://github.com/jrburke/requirejs.git
-[submodule "solarsanweb/static/3rd/requirecs"]
-	path = solarsanweb/static/3rd/requirecs
-	url = git://github.com/jrburke/require-cs.git
