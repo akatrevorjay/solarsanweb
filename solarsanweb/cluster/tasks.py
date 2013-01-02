@@ -103,10 +103,12 @@ def discover_neighbor_nodes():
     c()
 
 
-# TODO Cluster Node Cleanup Periodic Task (run weekly/monthly)
-@periodic_task(run_every=timedelta(days=7))
-def cleanup_ancient_discovered_nodes():
-    logger.warning("TODO")
+@periodic_task(run_every=timedelta(days=1))
+def cleanup_ancient_nodes():
+    """Cleans up old nodes that haven't been seen in a while"""
+    old_nodes = Node.objects.filter(last_seen__lt=timezone.now() - timedelta(days=7))
+    logger.warning("Deleting non-recently seen Nodes: %s", old_nodes)
+    old_nodes.delete()
 
 
 """

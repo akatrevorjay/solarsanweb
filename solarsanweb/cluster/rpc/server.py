@@ -35,7 +35,7 @@ class ClusterRPC(object):
 
     def pools(self):
         """List Pools"""
-        pools = [pool.name for pool in Pool.objects.all()]
+        return [pool.name for pool in Pool.objects.all()]
 
     def is_pool_healthy(self, name):
         """Check if Pool is healthy"""

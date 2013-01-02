@@ -17,6 +17,8 @@ import zfs
 import kstats
 #from statsd import statsd
 
+
+'''
 """
 Per-File IO Monitor
 """
@@ -172,6 +174,7 @@ class File_IO_Monitor_Py2(Task):
             self.observer = Observer()
             self.observer.schedule(event_handler, path='/tmp/montest', recursive=True)
             self.observer.start()
+'''
 
 
 """
