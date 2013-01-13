@@ -403,12 +403,13 @@ class CliRoot(ConfigNode):
         #self.rtsnode.set_parameter(parameter, value)
 
 
-def main():
-    from storage.cli import Storage
-    from logs.cli import Logs
-    from configure.cli import Configure
-    from cluster.cli import Cluster
+from storage.cli import Storage
+from logs.cli import Logs
+from configure.cli import Configure
+from cluster.cli import Cluster
 
+
+def main():
     CLI_TOP_SECTIONS = [Storage, Logs, Configure, Cluster]
 
     shell = configshell.shell.ConfigShell('~/.solarsancli')

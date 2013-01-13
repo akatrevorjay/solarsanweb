@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 #import configshell
 #from solarsan.utils import LoggedException, FormattedException
 
-from solarsan.cli import *
+import solarsan.cli
 
 
 class Command(BaseCommand):
@@ -20,4 +20,4 @@ class Command(BaseCommand):
     #label = 'annotation tag (TODO, FIXME, HACK, XXX)'
 
     def handle(self, *args, **options):
-        main()
+        solarsan.cli.main()
